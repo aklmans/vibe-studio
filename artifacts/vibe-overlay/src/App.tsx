@@ -186,38 +186,27 @@ export default function App() {
         </div>
 
         {/* Scaled Canvas Container */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            minHeight: 0,
-          }}
+        <PreviewFrame
+          nativeW={CANVAS_NATIVE_W}
+          nativeH={CANVAS_NATIVE_H}
         >
-          <ScaledCanvas
-            nativeW={CANVAS_NATIVE_W}
-            nativeH={CANVAS_NATIVE_H}
-          >
-            {state.activeTab === "overlay" ? (
-              <OverlayCanvas
-                ref={overlayRef}
-                state={state}
-                sidebarRef={sidebarRef}
-                bottomBarRef={bottomBarRef}
-              />
-            ) : (
-              <CoverCanvas ref={coverRef} state={state} />
-            )}
-          </ScaledCanvas>
-        </div>
+          {state.activeTab === "overlay" ? (
+            <OverlayCanvas
+              ref={overlayRef}
+              state={state}
+              sidebarRef={sidebarRef}
+              bottomBarRef={bottomBarRef}
+            />
+          ) : (
+            <CoverCanvas ref={coverRef} state={state} />
+          )}
+        </PreviewFrame>
       </div>
     </div>
   );
 }
 
-function ScaledCanvas({
+function PreviewFrame({
   nativeW,
   nativeH,
   children,
@@ -228,6 +217,7 @@ function ScaledCanvas({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(0.5);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -235,9 +225,9 @@ function ScaledCanvas({
     const update = () => {
       const cw = el.clientWidth;
       const ch = el.clientHeight;
-      const sw = cw / nativeW;
-      const sh = ch / nativeH;
-      setScale(Math.min(sw, sh, 1) * 0.97);
+      const s = Math.min(cw / nativeW, ch / nativeH);
+      setScale(s);
+      setContainerSize({ w: cw, h: ch });
     };
     update();
     const ro = new ResizeObserver(update);
@@ -245,23 +235,68 @@ function ScaledCanvas({
     return () => ro.disconnect();
   }, [nativeW, nativeH]);
 
+  const scaledW = Math.round(nativeW * scale);
+  const scaledH = Math.round(nativeH * scale);
+
   return (
     <div
       ref={containerRef}
-      style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      style={{
+        flex: 1,
+        minHeight: 0,
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
     >
+      {/* Outer wrapper sized to the scaled dimensions — no overflow clipping */}
       <div
         data-testid="canvas-scale-wrapper"
         style={{
-          transform: `scale(${scale})`,
-          transformOrigin: "center center",
-          display: "inline-block",
-          borderRadius: 12,
-          overflow: "hidden",
+          width: scaledW,
+          height: scaledH,
+          position: "relative",
+          flexShrink: 0,
           boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(141,168,255,0.1)",
+          borderRadius: 12,
         }}
       >
-        {children}
+        {/* Inner canvas at native resolution, scaled from top-left */}
+        <div
+          style={{
+            width: nativeW,
+            height: nativeH,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+
+      {/* Debug info */}
+      <div
+        data-testid="preview-debug"
+        style={{
+          position: "absolute",
+          bottom: 8,
+          right: 12,
+          fontSize: 10,
+          color: "#3a4060",
+          fontFamily: "monospace",
+          lineHeight: 1.6,
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      >
+        container {containerSize.w}×{containerSize.h} · scale {scale.toFixed(4)} · canvas {scaledW}×{scaledH}
       </div>
     </div>
   );
