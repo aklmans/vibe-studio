@@ -1,0 +1,168 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+
+  --background: 234 31% 9%;
+  --foreground: 224 71% 97%;
+  --border: 229 47% 28%;
+  --card: 233 32% 14%;
+  --card-foreground: 224 71% 97%;
+  --card-border: 229 47% 22%;
+  --sidebar: 233 32% 11%;
+  --sidebar-foreground: 224 71% 97%;
+  --sidebar-border: 229 47% 20%;
+  --sidebar-primary: 224 100% 71%;
+  --sidebar-primary-foreground: 234 31% 9%;
+  --sidebar-accent: 233 32% 18%;
+  --sidebar-accent-foreground: 224 71% 97%;
+  --sidebar-ring: 224 100% 71%;
+  --popover: 233 32% 14%;
+  --popover-foreground: 224 71% 97%;
+  --popover-border: 229 47% 22%;
+  --primary: 224 100% 71%;
+  --primary-foreground: 234 31% 9%;
+  --secondary: 233 32% 18%;
+  --secondary-foreground: 224 71% 97%;
+  --muted: 233 32% 17%;
+  --muted-foreground: 228 48% 82%;
+  --accent: 224 100% 71%;
+  --accent-foreground: 234 31% 9%;
+  --destructive: 340 82% 72%;
+  --destructive-foreground: 234 31% 9%;
+  --input: 229 47% 22%;
+  --ring: 224 100% 71%;
+  --chart-1: 224 100% 71%;
+  --chart-2: 198 93% 73%;
+  --chart-3: 340 100% 72%;
+  --chart-4: 34 100% 70%;
+  --chart-5: 260 80% 70%;
+
+  --app-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "SF Mono", Menlo, Monaco, "Cascadia Code", monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0px 2px 4px 0px rgba(0,0,0, 0.4);
+  --shadow-xs: 0px 2px 4px 0px rgba(0,0,0, 0.4);
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0, 0.4), 0px 1px 2px -1px rgba(0,0,0, 0.3);
+  --shadow: 0px 2px 4px 0px rgba(0,0,0, 0.4), 0px 1px 2px -1px rgba(0,0,0, 0.3);
+  --shadow-md: 0px 4px 8px 0px rgba(0,0,0, 0.4), 0px 2px 4px -1px rgba(0,0,0, 0.3);
+  --shadow-lg: 0px 8px 16px 0px rgba(0,0,0, 0.4), 0px 4px 6px -1px rgba(0,0,0, 0.3);
+  --shadow-xl: 0px 16px 24px 0px rgba(0,0,0, 0.4), 0px 8px 10px -1px rgba(0,0,0, 0.3);
+  --shadow-2xl: 0px 24px 32px 0px rgba(0,0,0, 0.5);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Overlay canvas styles */
+.overlay-canvas-font {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Dot pattern background */
+.dot-pattern {
+  background-image: radial-gradient(circle, rgba(141, 168, 255, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Grid pattern */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(141, 168, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141, 168, 255, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #10111d;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2235;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2d4a;
+}
