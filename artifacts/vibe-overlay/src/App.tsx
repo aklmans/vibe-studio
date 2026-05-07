@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { OverlayState, DEFAULT_STATE } from "./types";
 import OverlayCanvas from "./components/OverlayCanvas";
 import CoverCanvas from "./components/CoverCanvas";
+import SidebarPanel from "./components/SidebarPanel";
+import BottomBarPanel from "./components/BottomBarPanel";
 import EditorPanel from "./components/EditorPanel";
 import {
   exportFullOverlay,
@@ -33,15 +35,30 @@ function saveState(state: OverlayState) {
   }
 }
 
+// Offscreen export stage styles — rendered at native resolution, invisible to user
+const exportStageStyle: React.CSSProperties = {
+  position: "fixed",
+  left: -10000,
+  top: 0,
+  pointerEvents: "none",
+  opacity: 1,
+  zIndex: -1,
+};
+
 export default function App() {
   const [state, setStateRaw] = useState<OverlayState>(loadState);
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-  const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const bottomBarRef = useRef<HTMLDivElement | null>(null);
-  const coverRef = useRef<HTMLDivElement | null>(null);
+  // Preview ref (for the visible scaled canvas — not used for export)
+  const previewOverlayRef = useRef<HTMLDivElement | null>(null);
+  const previewCoverRef = useRef<HTMLDivElement | null>(null);
+
+  // Offscreen export-only refs — always mounted, no transforms
+  const exportOverlayRef = useRef<HTMLDivElement | null>(null);
+  const exportSidebarRef = useRef<HTMLDivElement | null>(null);
+  const exportBottomBarRef = useRef<HTMLDivElement | null>(null);
+  const exportCoverRef = useRef<HTMLDivElement | null>(null);
 
   const setState = useCallback((next: OverlayState) => {
     setStateRaw(next);
@@ -71,26 +88,26 @@ export default function App() {
   );
 
   const handleExportOverlay = useCallback(() => {
-    if (!overlayRef.current) return;
-    const el = overlayRef.current;
+    const el = exportOverlayRef.current;
+    if (!el) { setExportError("Export node not ready"); return; }
     handleExport("overlay", () => exportFullOverlay(el));
   }, [handleExport]);
 
   const handleExportSidebar = useCallback(() => {
-    if (!sidebarRef.current) return;
-    const el = sidebarRef.current;
+    const el = exportSidebarRef.current;
+    if (!el) { setExportError("Export node not ready"); return; }
     handleExport("sidebar", () => exportSidebar(el));
   }, [handleExport]);
 
   const handleExportBottomBar = useCallback(() => {
-    if (!bottomBarRef.current) return;
-    const el = bottomBarRef.current;
+    const el = exportBottomBarRef.current;
+    if (!el) { setExportError("Export node not ready"); return; }
     handleExport("bottom-bar", () => exportBottomBar(el));
   }, [handleExport]);
 
   const handleExportCover = useCallback(() => {
-    if (!coverRef.current) return;
-    const el = coverRef.current;
+    const el = exportCoverRef.current;
+    if (!el) { setExportError("Export node not ready"); return; }
     handleExport("cover", () => exportCover(el));
   }, [handleExport]);
 
@@ -102,107 +119,126 @@ export default function App() {
   const CANVAS_NATIVE_H = 1080;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        background: "#070A12",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
-        overflow: "hidden",
-      }}
-    >
-      {/* Left Editor Panel */}
-      <EditorPanel
-        state={state}
-        onChange={setState}
-        onExportOverlay={handleExportOverlay}
-        onExportSidebar={handleExportSidebar}
-        onExportBottomBar={handleExportBottomBar}
-        onExportCover={handleExportCover}
-        onReset={handleReset}
-        exporting={exporting}
-      />
+    <>
+      {/* ─── Offscreen export-only nodes ────────────────────────────────────
+          Always mounted. Positioned far off-screen so they are painted by the
+          browser (opacity:1, no display:none) but never seen by the user.
+          No CSS transform or scaling — native resolution only.
+      ─────────────────────────────────────────────────────────────────────── */}
 
-      {/* Main Preview Area */}
+      {/* Full 1920×1080 overlay export */}
+      <div style={exportStageStyle}>
+        <OverlayCanvas
+          ref={exportOverlayRef}
+          state={state}
+        />
+      </div>
+
+      {/* Sidebar-only export — 470×760 */}
+      <div style={exportStageStyle}>
+        <SidebarPanel ref={exportSidebarRef} state={state} />
+      </div>
+
+      {/* Bottom bar-only export — 1856×180 */}
+      <div style={exportStageStyle}>
+        <BottomBarPanel ref={exportBottomBarRef} state={state} />
+      </div>
+
+      {/* Cover export — always mounted regardless of active tab */}
+      <div style={exportStageStyle}>
+        <CoverCanvas ref={exportCoverRef} state={state} />
+      </div>
+
+      {/* ─── Main UI ──────────────────────────────────────────────────────── */}
       <div
         style={{
-          flex: 1,
-          overflow: "auto",
           display: "flex",
-          flexDirection: "column",
-          padding: "24px",
-          gap: 16,
+          height: "100vh",
           background: "#070A12",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
+          overflow: "hidden",
         }}
       >
-        {/* Top bar */}
+        {/* Left Editor Panel */}
+        <EditorPanel
+          state={state}
+          onChange={setState}
+          onExportOverlay={handleExportOverlay}
+          onExportSidebar={handleExportSidebar}
+          onExportBottomBar={handleExportBottomBar}
+          onExportCover={handleExportCover}
+          onReset={handleReset}
+          exporting={exporting}
+        />
+
+        {/* Main Preview Area */}
         <div
           style={{
+            flex: 1,
+            overflow: "hidden",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
+            flexDirection: "column",
+            padding: "24px",
+            gap: 16,
+            background: "#070A12",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#8DA8FF",
-                background: "#1A1C2E",
-                padding: "4px 10px",
-                borderRadius: 6,
-                border: "1px solid #2a3060",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {state.activeTab === "overlay" ? "OVERLAY · 1920×1080" : "COVER · 1920×1080"}
+          {/* Top bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#8DA8FF",
+                  background: "#1A1C2E",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  border: "1px solid #2a3060",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {state.activeTab === "overlay" ? "OVERLAY · 1920×1080" : "COVER · 1920×1080"}
+              </div>
+              <div style={{ fontSize: 11, color: "#6B7CA8" }}>
+                Scaled preview — export at full resolution
+              </div>
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#6B7CA8",
-              }}
-            >
-              Scaled preview — export at full resolution
-            </div>
+
+            {exportError && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#FF6FAE",
+                  background: "#1A0A12",
+                  border: "1px solid #FF6FAE30",
+                  borderRadius: 6,
+                  padding: "4px 12px",
+                }}
+              >
+                {exportError}
+              </div>
+            )}
           </div>
 
-          {exportError && (
-            <div
-              style={{
-                fontSize: 12,
-                color: "#FF6FAE",
-                background: "#1A0A12",
-                border: "1px solid #FF6FAE30",
-                borderRadius: 6,
-                padding: "4px 12px",
-              }}
-            >
-              {exportError}
-            </div>
-          )}
+          {/* Scaled Canvas Preview */}
+          <PreviewFrame nativeW={CANVAS_NATIVE_W} nativeH={CANVAS_NATIVE_H}>
+            {state.activeTab === "overlay" ? (
+              <OverlayCanvas ref={previewOverlayRef} state={state} />
+            ) : (
+              <CoverCanvas ref={previewCoverRef} state={state} />
+            )}
+          </PreviewFrame>
         </div>
-
-        {/* Scaled Canvas Container */}
-        <PreviewFrame
-          nativeW={CANVAS_NATIVE_W}
-          nativeH={CANVAS_NATIVE_H}
-        >
-          {state.activeTab === "overlay" ? (
-            <OverlayCanvas
-              ref={overlayRef}
-              state={state}
-              sidebarRef={sidebarRef}
-              bottomBarRef={bottomBarRef}
-            />
-          ) : (
-            <CoverCanvas ref={coverRef} state={state} />
-          )}
-        </PreviewFrame>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -249,9 +285,10 @@ function PreviewFrame({
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        position: "relative",
       }}
     >
-      {/* Outer wrapper sized to the scaled dimensions — no overflow clipping */}
+      {/* Outer wrapper sized to scaled dimensions */}
       <div
         data-testid="canvas-scale-wrapper"
         style={{
@@ -263,7 +300,7 @@ function PreviewFrame({
           borderRadius: 12,
         }}
       >
-        {/* Inner canvas at native resolution, scaled from top-left */}
+        {/* Inner canvas at native resolution, scaled top-left */}
         <div
           style={{
             width: nativeW,
@@ -281,7 +318,7 @@ function PreviewFrame({
         </div>
       </div>
 
-      {/* Debug info */}
+      {/* Debug readout */}
       <div
         data-testid="preview-debug"
         style={{
