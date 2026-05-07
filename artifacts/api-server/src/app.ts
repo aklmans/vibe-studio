@@ -3,6 +3,7 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { internalServerErrorResponse, notFoundResponse } from "./httpResponses";
 
 const app: Express = express();
 
@@ -30,5 +31,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+app.use((_req, res) => {
+  res.status(404).json(notFoundResponse());
+});
+
+app.use(
+  (
+    err: unknown,
+    _req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
+
+    logger.error({ err }, "Unhandled request error");
+    res.status(500).json(internalServerErrorResponse());
+  },
+);
 
 export default app;

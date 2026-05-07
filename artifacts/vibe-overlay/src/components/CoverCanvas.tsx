@@ -5,6 +5,10 @@ interface CoverCanvasProps {
   state: OverlayState;
 }
 
+function publicAsset(path: string): string {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+}
+
 const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
   ({ state }, ref) => {
     const { cover, colors } = state;
@@ -72,10 +76,34 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
 
         {/* Corner decorations */}
         {[
-          { top: 40, left: 40, borderTop: true, borderLeft: true, radius: "2px 0 0 0" },
-          { top: 40, right: 40, borderTop: true, borderRight: true, radius: "0 2px 0 0" },
-          { bottom: 40, left: 40, borderBottom: true, borderLeft: true, radius: "0 0 0 2px" },
-          { bottom: 40, right: 40, borderBottom: true, borderRight: true, radius: "0 0 2px 0" },
+          {
+            top: 40,
+            left: 40,
+            borderTop: true,
+            borderLeft: true,
+            radius: "2px 0 0 0",
+          },
+          {
+            top: 40,
+            right: 40,
+            borderTop: true,
+            borderRight: true,
+            radius: "0 2px 0 0",
+          },
+          {
+            bottom: 40,
+            left: 40,
+            borderBottom: true,
+            borderLeft: true,
+            radius: "0 0 0 2px",
+          },
+          {
+            bottom: 40,
+            right: 40,
+            borderBottom: true,
+            borderRight: true,
+            radius: "0 0 2px 0",
+          },
         ].map((c, i) => (
           <div
             key={i}
@@ -88,9 +116,15 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               width: 60,
               height: 60,
               borderTop: c.borderTop ? `2px solid ${borderColor}35` : undefined,
-              borderBottom: c.borderBottom ? `2px solid ${borderColor}35` : undefined,
-              borderLeft: c.borderLeft ? `2px solid ${borderColor}35` : undefined,
-              borderRight: c.borderRight ? `2px solid ${borderColor}35` : undefined,
+              borderBottom: c.borderBottom
+                ? `2px solid ${borderColor}35`
+                : undefined,
+              borderLeft: c.borderLeft
+                ? `2px solid ${borderColor}35`
+                : undefined,
+              borderRight: c.borderRight
+                ? `2px solid ${borderColor}35`
+                : undefined,
               borderRadius: c.radius,
             }}
           />
@@ -135,7 +169,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                 }}
               >
                 <img
-                  src="/icons/claude.svg"
+                  src={publicAsset("icons/claude.svg")}
                   alt="Claude"
                   style={{ width: 32, height: 32, objectFit: "contain" }}
                 />
@@ -170,7 +204,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                 }}
               >
                 <img
-                  src="/icons/codex.svg"
+                  src={publicAsset("icons/codex.svg")}
                   alt="Codex"
                   style={{ width: 32, height: 32, objectFit: "contain" }}
                 />
@@ -265,23 +299,25 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               marginBottom: 36,
             }}
           >
-            {[cover.manifestoLine1, cover.manifestoLine2, cover.manifestoLine3].map(
-              (line, i) => (
-                <div
-                  key={i}
-                  style={{
-                    fontFamily: 'ui-serif, Georgia, "Times New Roman", serif',
-                    fontSize: 64,
-                    lineHeight: 0.95,
-                    fontWeight: 800,
-                    letterSpacing: "-0.02em",
-                    color: textColor,
-                  }}
-                >
-                  {line}
-                </div>
-              )
-            )}
+            {[
+              cover.manifestoLine1,
+              cover.manifestoLine2,
+              cover.manifestoLine3,
+            ].map((line, i) => (
+              <div
+                key={i}
+                style={{
+                  fontFamily: 'ui-serif, Georgia, "Times New Roman", serif',
+                  fontSize: 64,
+                  lineHeight: 0.95,
+                  fontWeight: 800,
+                  letterSpacing: "-0.02em",
+                  color: textColor,
+                }}
+              >
+                {line}
+              </div>
+            ))}
           </div>
 
           {/* Closing sentence */}
@@ -315,7 +351,9 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             >
               {cover.closingHighlight}
             </span>
-            <span style={{ color: `${mutedText}80` }}>{cover.closingSuffix}</span>
+            <span style={{ color: `${mutedText}80` }}>
+              {cover.closingSuffix}
+            </span>
           </div>
         </div>
 
@@ -332,7 +370,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
         />
       </div>
     );
-  }
+  },
 );
 
 CoverCanvas.displayName = "CoverCanvas";

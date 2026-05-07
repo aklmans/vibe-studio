@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { OverlayState, DEFAULT_STATE } from "./types";
+import { DEFAULT_STATE, type OverlayState } from "./types";
 import OverlayCanvas from "./components/OverlayCanvas";
 import CoverCanvas from "./components/CoverCanvas";
 import SidebarPanel from "./components/SidebarPanel";
@@ -11,29 +11,7 @@ import {
   exportBottomBar,
   exportCover,
 } from "./utils/exportImage";
-
-const STORAGE_KEY = "vibe-overlay-state";
-
-function loadState(): OverlayState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as OverlayState;
-      return { ...DEFAULT_STATE, ...parsed, colors: { ...DEFAULT_STATE.colors, ...parsed.colors } };
-    }
-  } catch {
-    // ignore
-  }
-  return DEFAULT_STATE;
-}
-
-function saveState(state: OverlayState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
-}
+import { loadOverlayState, saveOverlayState } from "./stateStorage";
 
 // Offscreen export stage styles — rendered at native resolution, invisible to user
 const exportStageStyle: React.CSSProperties = {
@@ -46,7 +24,7 @@ const exportStageStyle: React.CSSProperties = {
 };
 
 export default function App() {
-  const [state, setStateRaw] = useState<OverlayState>(loadState);
+  const [state, setStateRaw] = useState<OverlayState>(loadOverlayState);
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -62,17 +40,16 @@ export default function App() {
 
   const setState = useCallback((next: OverlayState) => {
     setStateRaw(next);
-    saveState(next);
   }, []);
 
   useEffect(() => {
-    saveState(state);
+    saveOverlayState(state);
   }, [state]);
 
   const handleExport = useCallback(
     async (
       type: "overlay" | "sidebar" | "bottom-bar" | "cover",
-      fn: () => Promise<void>
+      fn: () => Promise<void>,
     ) => {
       setExporting(type);
       setExportError(null);
@@ -84,30 +61,42 @@ export default function App() {
         setExporting(null);
       }
     },
-    []
+    [],
   );
 
   const handleExportOverlay = useCallback(() => {
     const el = exportOverlayRef.current;
-    if (!el) { setExportError("Export node not ready"); return; }
+    if (!el) {
+      setExportError("Export node not ready");
+      return;
+    }
     handleExport("overlay", () => exportFullOverlay(el));
   }, [handleExport]);
 
   const handleExportSidebar = useCallback(() => {
     const el = exportSidebarRef.current;
-    if (!el) { setExportError("Export node not ready"); return; }
+    if (!el) {
+      setExportError("Export node not ready");
+      return;
+    }
     handleExport("sidebar", () => exportSidebar(el));
   }, [handleExport]);
 
   const handleExportBottomBar = useCallback(() => {
     const el = exportBottomBarRef.current;
-    if (!el) { setExportError("Export node not ready"); return; }
+    if (!el) {
+      setExportError("Export node not ready");
+      return;
+    }
     handleExport("bottom-bar", () => exportBottomBar(el));
   }, [handleExport]);
 
   const handleExportCover = useCallback(() => {
     const el = exportCoverRef.current;
-    if (!el) { setExportError("Export node not ready"); return; }
+    if (!el) {
+      setExportError("Export node not ready");
+      return;
+    }
     handleExport("cover", () => exportCover(el));
   }, [handleExport]);
 
@@ -128,10 +117,7 @@ export default function App() {
 
       {/* Full 1920×1080 overlay export */}
       <div style={exportStageStyle}>
-        <OverlayCanvas
-          ref={exportOverlayRef}
-          state={state}
-        />
+        <OverlayCanvas ref={exportOverlayRef} state={state} />
       </div>
 
       {/* Sidebar-only export — 470×760 */}
@@ -205,7 +191,9 @@ export default function App() {
                   letterSpacing: "0.04em",
                 }}
               >
-                {state.activeTab === "overlay" ? "OVERLAY · 1920×1080" : "COVER · 1920×1080"}
+                {state.activeTab === "overlay"
+                  ? "OVERLAY · 1920×1080"
+                  : "COVER · 1920×1080"}
               </div>
               <div style={{ fontSize: 11, color: "#6B7CA8" }}>
                 Scaled preview — export at full resolution
@@ -296,7 +284,8 @@ function PreviewFrame({
           height: scaledH,
           position: "relative",
           flexShrink: 0,
-          boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(141,168,255,0.1)",
+          boxShadow:
+            "0 8px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(141,168,255,0.1)",
           borderRadius: 12,
         }}
       >
@@ -333,7 +322,8 @@ function PreviewFrame({
           userSelect: "none",
         }}
       >
-        container {containerSize.w}×{containerSize.h} · scale {scale.toFixed(4)} · canvas {scaledW}×{scaledH}
+        container {containerSize.w}×{containerSize.h} · scale {scale.toFixed(4)}{" "}
+        · canvas {scaledW}×{scaledH}
       </div>
     </div>
   );
