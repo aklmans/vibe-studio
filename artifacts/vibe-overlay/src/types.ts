@@ -18,9 +18,15 @@ export interface OverlayState {
   };
   cover: {
     title: string;
-    subtitle: string;
     badge1: string;
     badge2: string;
+    manifestoLine1: string;
+    manifestoLine2: string;
+    manifestoLine3: string;
+    closingPrefix: string;
+    closingStruck: string;
+    closingHighlight: string;
+    closingSuffix: string;
   };
   colors: {
     bgDark: string;
@@ -66,9 +72,15 @@ export const DEFAULT_STATE: OverlayState = {
   },
   cover: {
     title: "Vibe Coding With Me",
-    subtitle: "Claude × Codex · AI Coding Study Live",
     badge1: "Claude",
     badge2: "Codex",
+    manifestoLine1: "Think clearly.",
+    manifestoLine2: "Build with agents.",
+    manifestoLine3: "Keep growing.",
+    closingPrefix: "Enjoy",
+    closingStruck: "programming",
+    closingHighlight: "building with agents.",
+    closingSuffix: "Have a great life.",
   },
   colors: {
     bgDark: "#10111D",

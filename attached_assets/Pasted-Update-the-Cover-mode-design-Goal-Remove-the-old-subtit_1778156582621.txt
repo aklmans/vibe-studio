@@ -1,0 +1,99 @@
+Update the Cover mode design.
+
+  Goal:
+  Remove the old subtitle. Add a manifesto-style text block inspired by the reference image, but adapted to the dark macOS AI coding livestream cover.
+
+  Main title:
+  Vibe Coding With Me
+
+  Remove subtitle:
+  Do not show the old subtitle line.
+
+  Add manifesto text block:
+  Think clearly.
+  Build with agents.
+  Keep growing.
+
+  Enjoy programming building with agents. Have a great life.
+
+  Important text styling:
+  - The three main manifesto lines should be stacked, large, bold, and readable.
+  - The small sentence should be below them.
+  - In the small sentence, the word “programming” must have a strikethrough.
+  - The phrase “building with agents” should be highlighted with the accent color.
+  - The final sentence “Have a great life.” should be normal muted text.
+
+  Suggested layout:
+  - Keep “Vibe Coding With Me” as the main cover title.
+  - Place the manifesto text block below the title or in a clean left-side panel.
+  - Keep Claude and Codex icons as small secondary badges, not dominant.
+  - Maintain lots of breathing room.
+  - Do not use the previous subtitle.
+
+  Visual style:
+  - Dark premium macOS developer livestream cover.
+  - Deep navy / graphite background.
+  - Subtle SketchyBar-like blue outlines.
+  - Minimal purple-pink accents.
+  - Clean, editorial, thoughtful.
+  - Less like a marketing poster, more like a calm high-quality developer manifesto.
+
+  Typography:
+  - Manifesto lines can use a slightly editorial serif or strong semi-bold display font.
+  - Main title should remain clean and readable.
+  - Chinese fonts are not needed for this cover.
+  - The text must be crisp and selectable in the browser.
+  - Do not render the manifesto as an image if avoidable; use real HTML/CSS text.
+
+  Exact copy:
+  Think clearly.
+  Build with agents.
+  Keep growing.
+
+  Enjoy programming building with agents. Have a great life.
+
+  Implementation details:
+  - Add a new cover field group if needed:
+    - manifestoLine1
+    - manifestoLine2
+    - manifestoLine3
+    - closingPrefix = Enjoy
+    - closingStruck = programming
+    - closingHighlight = building with agents
+    - closingSuffix = Have a great life.
+  - Apply CSS strikethrough only to “programming”.
+  - Apply accent color only to “building with agents”.
+  - Export Cover PNG must still work at 1920x1080.
+
+  Suggested CSS:
+  .manifesto {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .manifesto-main {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: 64px;
+    line-height: 0.95;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #F4F7FF;
+  }
+
+  .manifesto-small {
+    margin-top: 28px;
+    font-size: 24px;
+    color: #C7D2FE;
+  }
+
+  .manifesto-small del {
+    color: #9CA3AF;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #FF6FAE;
+  }
+
+  .manifesto-small .highlight {
+    color: #FFB86B;
+    font-weight: 700;
+  }
