@@ -115,44 +115,110 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           }}
         />
 
-        {/* App Badges */}
+        {/* App Icon Badges */}
         <div
           style={{
             display: "flex",
-            gap: 20,
+            gap: 28,
             marginBottom: 56,
             zIndex: 1,
+            alignItems: "flex-end",
           }}
         >
-          {[cover.badge1, cover.badge2].map((badge, idx) => (
+          {/* Claude icon */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
             <div
-              key={idx}
               style={{
-                padding: "8px 20px",
+                width: 64,
+                height: 64,
                 background: `${bgPanel}CC`,
-                border: `1px solid ${borderColor}40`,
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                color: idx === 0 ? cyanAccent : pinkAccent,
-                letterSpacing: "0.04em",
+                border: `1px solid ${borderColor}35`,
+                borderRadius: 14,
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                justifyContent: "center",
+                padding: 8,
               }}
             >
-              <div
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: idx === 0 ? cyanAccent : pinkAccent,
-                  opacity: 0.8,
-                }}
+              <img
+                src="/icons/claude.svg"
+                alt="Claude"
+                style={{ width: 48, height: 48, objectFit: "contain" }}
               />
-              {badge}
             </div>
-          ))}
+            <span
+              style={{
+                fontSize: 11,
+                color: `${mutedText}70`,
+                letterSpacing: "0.06em",
+                fontWeight: 500,
+                textTransform: "uppercase",
+              }}
+            >
+              {cover.badge1}
+            </span>
+          </div>
+
+          {/* × separator */}
+          <div
+            style={{
+              fontSize: 28,
+              color: `${borderColor}40`,
+              fontWeight: 300,
+              marginBottom: 28,
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </div>
+
+          {/* Codex icon */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                background: `${bgPanel}CC`,
+                border: `1px solid ${borderColor}35`,
+                borderRadius: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 8,
+              }}
+            >
+              <img
+                src="/icons/codex.svg"
+                alt="Codex"
+                style={{ width: 48, height: 48, objectFit: "contain" }}
+              />
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                color: `${mutedText}70`,
+                letterSpacing: "0.06em",
+                fontWeight: 500,
+                textTransform: "uppercase",
+              }}
+            >
+              {cover.badge2}
+            </span>
+          </div>
         </div>
 
         {/* Main Title */}

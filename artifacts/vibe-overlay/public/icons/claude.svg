@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="claudeGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E8835A"/>
+      <stop offset="100%" stop-color="#C96A3E"/>
+    </linearGradient>
+  </defs>
+  <!-- Claude stylized symbol: two overlapping diagonal bars -->
+  <rect x="10" y="22" width="28" height="5" rx="2.5" fill="url(#claudeGrad)" transform="rotate(-30 24 24)"/>
+  <rect x="10" y="22" width="28" height="5" rx="2.5" fill="url(#claudeGrad)" transform="rotate(30 24 24)"/>
+  <rect x="10" y="22" width="28" height="5" rx="2.5" fill="url(#claudeGrad)" transform="rotate(90 24 24)" opacity="0.5"/>
+</svg>

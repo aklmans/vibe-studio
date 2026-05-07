@@ -330,16 +330,63 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   />
                   {seg.title}
                 </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    color: textColor,
-                    fontWeight: 400,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {seg.text}
-                </div>
+                {/* Middle segment gets the LIVE pill inline */}
+                {idx === 1 ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: "#E62117",
+                        borderRadius: 999,
+                        padding: "0 14px",
+                        height: 32,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "rgba(255,255,255,0.9)",
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#fff",
+                          letterSpacing: "0.08em",
+                        }}
+                      >
+                        LIVE
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 22,
+                        color: textColor,
+                        fontWeight: 400,
+                        letterSpacing: "-0.01em",
+                      }}
+                    >
+                      {seg.text}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 22,
+                      color: textColor,
+                      fontWeight: 400,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {seg.text}
+                  </div>
+                )}
               </div>
             ))}
           </div>
