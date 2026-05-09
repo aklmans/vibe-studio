@@ -675,6 +675,39 @@ export default function EditorPanel({
                 </>
               )}
             </div>
+
+            {/* Social Info */}
+            <SectionHeading>Cover — Social Info</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <ToggleButton
+                label="Show Social Info"
+                checked={state.cover.socialVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialVisible: v } })}
+                testId="cover-social-visible"
+              />
+              {state.cover.socialVisible && (
+                <>
+                  <SectionInput
+                    label="B站 用户名 / 直播间"
+                    value={state.cover.socialBilibili}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialBilibili: v } })}
+                    testId="cover-social-bilibili"
+                  />
+                  <SectionInput
+                    label="Blog / 网站"
+                    value={state.cover.socialBlog}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialBlog: v } })}
+                    testId="cover-social-blog"
+                  />
+                  <SectionInput
+                    label="GitHub 用户名"
+                    value={state.cover.socialGithub}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialGithub: v } })}
+                    testId="cover-social-github"
+                  />
+                </>
+              )}
+            </div>
           </>
         )}
 

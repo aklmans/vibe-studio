@@ -399,7 +399,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           )}
         </div>
 
-        {/* ── RIGHT COLUMN — avatar only, lots of breathing room ── */}
+        {/* ── RIGHT COLUMN — avatar + optional social info ── */}
         <div
           style={{
             position: "absolute",
@@ -408,13 +408,15 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             width: 800,
             bottom: 0,
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            gap: 40,
           }}
         >
+          {/* Avatar */}
           {cover.avatarVisible && (
-            <div style={{ position: "relative" }}>
-              {/* Glow ring */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
               <div
                 style={{
                   position: "absolute",
@@ -424,7 +426,6 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                   zIndex: 0,
                 }}
               />
-              {/* Gap ring */}
               <div
                 style={{
                   position: "absolute",
@@ -447,6 +448,114 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                   display: "block",
                 }}
               />
+            </div>
+          )}
+
+          {/* Social info block */}
+          {cover.socialVisible && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                alignItems: "flex-start",
+                padding: "24px 32px",
+                background: `${bgPanel}A0`,
+                border: `1px solid ${borderColor}18`,
+                borderRadius: 14,
+                minWidth: 320,
+              }}
+            >
+              {cover.socialBilibili && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 20,
+                      background: "#E62117",
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", letterSpacing: "0.01em" }}>
+                      B站
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 20,
+                      color: mutedText,
+                      fontWeight: 500,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {cover.socialBilibili}
+                  </span>
+                </div>
+              )}
+              {cover.socialBlog && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 20,
+                      background: `${cyanAccent}25`,
+                      border: `1px solid ${cyanAccent}40`,
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: cyanAccent }}>⊕</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 20,
+                      color: mutedText,
+                      fontWeight: 500,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {cover.socialBlog}
+                  </span>
+                </div>
+              )}
+              {cover.socialGithub && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 20,
+                      background: `${borderColor}18`,
+                      border: `1px solid ${borderColor}30`,
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: 10, fontWeight: 700, color: mutedText, letterSpacing: "0.01em" }}>
+                      GH
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 20,
+                      color: mutedText,
+                      fontWeight: 500,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {cover.socialGithub}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

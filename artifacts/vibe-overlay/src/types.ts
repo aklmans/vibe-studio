@@ -35,6 +35,10 @@ export interface OverlayState {
     closingStruck: string;
     closingHighlight: string;
     closingSuffix: string;
+    socialVisible: boolean;
+    socialBilibili: string;
+    socialBlog: string;
+    socialGithub: string;
   };
   colors: {
     bgDark: string;
@@ -97,6 +101,10 @@ export const DEFAULT_STATE: OverlayState = {
     closingStruck: "programming",
     closingHighlight: "building with agents.",
     closingSuffix: "Have a great life.",
+    socialVisible: false,
+    socialBilibili: "",
+    socialBlog: "",
+    socialGithub: "",
   },
   colors: {
     bgDark: "#10111D",
