@@ -27,6 +27,11 @@ export interface OverlayState {
     closingStruck: string;
     closingHighlight: string;
     closingSuffix: string;
+    avatarUrl: string;
+    avatarVisible: boolean;
+    hookText: string;
+    todayLabel: string;
+    todayTopic: string;
   };
   colors: {
     bgDark: string;
@@ -81,6 +86,11 @@ export const DEFAULT_STATE: OverlayState = {
     closingStruck: "programming",
     closingHighlight: "building with agents.",
     closingSuffix: "Have a great life.",
+    avatarUrl: "",
+    avatarVisible: true,
+    hookText: "用 AI 写代码，全程真实演示",
+    todayLabel: "今天做什么",
+    todayTopic: "用 Claude + Codex 搭一个 AI Agent",
   },
   colors: {
     bgDark: "#10111D",

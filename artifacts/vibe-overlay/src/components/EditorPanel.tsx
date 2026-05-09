@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { OverlayState } from "../types";
 
 interface EditorPanelProps {
@@ -253,6 +254,20 @@ export default function EditorPanel({
     onChange({ ...state, colors: { ...state.colors, [key]: value } });
   };
 
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      onChange({ ...state, cover: { ...state.cover, avatarUrl: url } });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   return (
     <div
       data-testid="editor-panel"
@@ -458,6 +473,107 @@ export default function EditorPanel({
 
         {state.activeTab === "cover" && (
           <>
+            {/* Avatar */}
+            <SectionHeading>Cover — Avatar</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <ToggleButton
+                label="Show Avatar"
+                checked={state.cover.avatarVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, avatarVisible: v } })}
+                testId="cover-avatar-visible"
+              />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleAvatarUpload}
+              />
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  style={{
+                    flex: 1,
+                    padding: "7px 10px",
+                    background: "#3B4FD818",
+                    border: "1px solid #3B4FD840",
+                    borderRadius: 7,
+                    color: "#7C9FFF",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    textAlign: "center",
+                  }}
+                >
+                  {state.cover.avatarUrl ? "Replace Photo" : "Upload Photo"}
+                </button>
+                {state.cover.avatarUrl && (
+                  <button
+                    onClick={() => onChange({ ...state, cover: { ...state.cover, avatarUrl: "" } })}
+                    style={{
+                      padding: "7px 10px",
+                      background: "#FF6FAE12",
+                      border: "1px solid #FF6FAE30",
+                      borderRadius: 7,
+                      color: "#FF6FAE",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {state.cover.avatarUrl && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <img
+                    src={state.cover.avatarUrl}
+                    alt="Avatar preview"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "1px solid #2a3060",
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "#6B7CA8" }}>Photo uploaded</span>
+                </div>
+              )}
+            </div>
+
+            {/* Hook text */}
+            <SectionHeading>Cover — Hook Text</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <SectionInput
+                label="Chinese Hook"
+                value={state.cover.hookText}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, hookText: v } })}
+                testId="cover-hook-text"
+              />
+            </div>
+
+            {/* Today's topic */}
+            <SectionHeading>Cover — Today's Topic</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <SectionInput
+                label="Card Label"
+                value={state.cover.todayLabel}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, todayLabel: v } })}
+                testId="cover-today-label"
+              />
+              <SectionInput
+                label="Topic"
+                value={state.cover.todayTopic}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, todayTopic: v } })}
+                testId="cover-today-topic"
+              />
+            </div>
+
+            {/* Title & Badges */}
             <SectionHeading>Cover — Title</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput
@@ -480,6 +596,7 @@ export default function EditorPanel({
               />
             </div>
 
+            {/* Manifesto */}
             <SectionHeading>Cover — Manifesto</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput
@@ -502,6 +619,7 @@ export default function EditorPanel({
               />
             </div>
 
+            {/* Closing Line */}
             <SectionHeading>Cover — Closing Line</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput

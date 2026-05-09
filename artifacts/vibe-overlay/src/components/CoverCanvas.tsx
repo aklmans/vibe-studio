@@ -5,6 +5,20 @@ interface CoverCanvasProps {
   state: OverlayState;
 }
 
+const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B4FD8"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#g)"/>
+  <text x="100" y="118" text-anchor="middle" font-family="system-ui,sans-serif"
+    font-size="68" font-weight="700" fill="rgba(255,255,255,0.9)">VC</text>
+</svg>
+`)}`;
+
 const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
   ({ state }, ref) => {
     const { cover, colors } = state;
@@ -18,6 +32,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
       pinkAccent,
       warmAccent,
     } = colors;
+
+    const avatarSrc = cover.avatarUrl || AVATAR_PLACEHOLDER;
 
     return (
       <div
@@ -48,12 +64,22 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           }}
         />
 
-        {/* Radial glow — left-center biased for editorial feel */}
+        {/* Radial glow — left-center biased */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: `radial-gradient(ellipse 90% 70% at 40% 55%, ${bgPanel}D0 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse 75% 80% at 38% 55%, ${bgPanel}E0 0%, transparent 68%)`,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Right-side subtle glow for avatar area */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(ellipse 50% 60% at 78% 42%, ${borderColor}08 0%, transparent 60%)`,
             pointerEvents: "none",
           }}
         />
@@ -87,27 +113,39 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               right: c.right,
               width: 60,
               height: 60,
-              borderTop: c.borderTop ? `2px solid ${borderColor}35` : undefined,
-              borderBottom: c.borderBottom ? `2px solid ${borderColor}35` : undefined,
-              borderLeft: c.borderLeft ? `2px solid ${borderColor}35` : undefined,
-              borderRight: c.borderRight ? `2px solid ${borderColor}35` : undefined,
+              borderTop: c.borderTop ? `2px solid ${borderColor}30` : undefined,
+              borderBottom: c.borderBottom ? `2px solid ${borderColor}30` : undefined,
+              borderLeft: c.borderLeft ? `2px solid ${borderColor}30` : undefined,
+              borderRight: c.borderRight ? `2px solid ${borderColor}30` : undefined,
               borderRadius: c.radius,
             }}
           />
         ))}
 
-        {/* ── Main content — left-aligned editorial layout ── */}
+        {/* Vertical divider between columns */}
+        <div
+          style={{
+            position: "absolute",
+            top: 120,
+            bottom: 120,
+            left: 1100,
+            width: 1,
+            background: `linear-gradient(180deg, transparent 0%, ${borderColor}18 25%, ${borderColor}25 50%, ${borderColor}18 75%, transparent 100%)`,
+          }}
+        />
+
+        {/* ── LEFT COLUMN — editorial content ── */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
-            right: 0,
+            width: 1100,
             bottom: 0,
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            padding: "0 160px",
+            padding: "0 80px 0 160px",
           }}
         >
           {/* Top row: icon badges + LIVE pill */}
@@ -116,34 +154,34 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               display: "flex",
               alignItems: "center",
               gap: 20,
-              marginBottom: 72,
+              marginBottom: 56,
             }}
           >
             {/* Claude badge */}
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   background: `${bgPanel}CC`,
-                  border: `1px solid ${borderColor}30`,
-                  borderRadius: 10,
+                  border: `1px solid ${borderColor}28`,
+                  borderRadius: 9,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: 6,
+                  padding: 5,
                 }}
               >
                 <img
                   src="/icons/claude.svg"
                   alt="Claude"
-                  style={{ width: 32, height: 32, objectFit: "contain" }}
+                  style={{ width: 30, height: 30, objectFit: "contain" }}
                 />
               </div>
               <span
                 style={{
                   fontSize: 13,
-                  color: `${mutedText}60`,
+                  color: `${mutedText}55`,
                   fontWeight: 500,
                   letterSpacing: "0.04em",
                 }}
@@ -152,33 +190,33 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               </span>
             </div>
 
-            <span style={{ color: `${borderColor}35`, fontSize: 18 }}>×</span>
+            <span style={{ color: `${borderColor}30`, fontSize: 16 }}>×</span>
 
             {/* Codex badge */}
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   background: `${bgPanel}CC`,
-                  border: `1px solid ${borderColor}30`,
-                  borderRadius: 10,
+                  border: `1px solid ${borderColor}28`,
+                  borderRadius: 9,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: 6,
+                  padding: 5,
                 }}
               >
                 <img
                   src="/icons/codex.svg"
                   alt="Codex"
-                  style={{ width: 32, height: 32, objectFit: "contain" }}
+                  style={{ width: 30, height: 30, objectFit: "contain" }}
                 />
               </div>
               <span
                 style={{
                   fontSize: 13,
-                  color: `${mutedText}60`,
+                  color: `${mutedText}55`,
                   fontWeight: 500,
                   letterSpacing: "0.04em",
                 }}
@@ -191,8 +229,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             <div
               style={{
                 width: 1,
-                height: 24,
-                background: `${borderColor}25`,
+                height: 22,
+                background: `${borderColor}20`,
                 margin: "0 4px",
               }}
             />
@@ -206,7 +244,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                 background: "#E62117",
                 borderRadius: 999,
                 padding: "0 14px",
-                height: 32,
+                height: 30,
               }}
             >
               <div
@@ -233,13 +271,13 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           {/* Main title */}
           <h1
             style={{
-              fontSize: 100,
+              fontSize: 88,
               fontWeight: 700,
               color: textColor,
               letterSpacing: "-0.03em",
               lineHeight: 1,
               margin: 0,
-              marginBottom: 64,
+              marginBottom: 52,
             }}
           >
             {cover.title}
@@ -248,10 +286,10 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           {/* Thin divider */}
           <div
             style={{
-              width: 48,
+              width: 40,
               height: 2,
-              background: `linear-gradient(90deg, ${borderColor}60, transparent)`,
-              marginBottom: 48,
+              background: `linear-gradient(90deg, ${borderColor}55, transparent)`,
+              marginBottom: 40,
               borderRadius: 1,
             }}
           />
@@ -261,8 +299,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 6,
-              marginBottom: 36,
+              gap: 4,
+              marginBottom: 32,
             }}
           >
             {[cover.manifestoLine1, cover.manifestoLine2, cover.manifestoLine3].map(
@@ -271,7 +309,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                   key={i}
                   style={{
                     fontFamily: 'ui-serif, Georgia, "Times New Roman", serif',
-                    fontSize: 64,
+                    fontSize: 58,
                     lineHeight: 0.95,
                     fontWeight: 800,
                     letterSpacing: "-0.02em",
@@ -287,13 +325,14 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           {/* Closing sentence */}
           <div
             style={{
-              fontSize: 24,
+              fontSize: 22,
               color: mutedText,
               display: "flex",
               alignItems: "baseline",
               flexWrap: "wrap",
-              gap: "0 8px",
+              gap: "0 7px",
               lineHeight: 1.5,
+              marginBottom: 40,
             }}
           >
             <span>{cover.closingPrefix}</span>
@@ -307,15 +346,132 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             >
               {cover.closingStruck}
             </span>
-            <span
-              style={{
-                color: warmAccent,
-                fontWeight: 700,
-              }}
-            >
+            <span style={{ color: warmAccent, fontWeight: 700 }}>
               {cover.closingHighlight}
             </span>
-            <span style={{ color: `${mutedText}80` }}>{cover.closingSuffix}</span>
+            <span style={{ color: `${mutedText}70` }}>{cover.closingSuffix}</span>
+          </div>
+
+          {/* Chinese hook text */}
+          {cover.hookText && (
+            <div
+              style={{
+                fontSize: 26,
+                fontWeight: 600,
+                color: cyanAccent,
+                letterSpacing: "0.02em",
+                opacity: 0.85,
+              }}
+            >
+              {cover.hookText}
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT COLUMN — avatar + today's topic ── */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: 820,
+            bottom: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 100px",
+            gap: 52,
+          }}
+        >
+          {/* Avatar */}
+          {cover.avatarVisible && (
+            <div style={{ position: "relative" }}>
+              {/* Outer glow ring */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: -6,
+                  borderRadius: "50%",
+                  background: `conic-gradient(from 0deg, ${borderColor}50, ${cyanAccent}40, ${pinkAccent}30, ${borderColor}50)`,
+                  zIndex: 0,
+                }}
+              />
+              {/* Inner border ring */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: -2,
+                  borderRadius: "50%",
+                  background: bgDark,
+                  zIndex: 1,
+                }}
+              />
+              <img
+                src={avatarSrc}
+                alt="Avatar"
+                style={{
+                  position: "relative",
+                  zIndex: 2,
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Today's topic card */}
+          <div
+            style={{
+              width: "100%",
+              background: `${bgPanel}CC`,
+              border: `1px solid ${borderColor}22`,
+              borderRadius: 16,
+              padding: "28px 32px",
+              backdropFilter: "blur(8px)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Card top accent */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 2,
+                background: `linear-gradient(90deg, ${warmAccent}60, ${cyanAccent}40, transparent)`,
+                borderRadius: "16px 16px 0 0",
+              }}
+            />
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: warmAccent,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 14,
+                opacity: 0.9,
+              }}
+            >
+              {cover.todayLabel}
+            </div>
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 700,
+                color: textColor,
+                lineHeight: 1.35,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {cover.todayTopic}
+            </div>
           </div>
         </div>
 
