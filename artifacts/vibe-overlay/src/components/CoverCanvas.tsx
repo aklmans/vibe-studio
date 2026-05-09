@@ -268,16 +268,16 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             </div>
           </div>
 
-          {/* Main title */}
+          {/* Main title — level 1: 92px */}
           <h1
             style={{
-              fontSize: 88,
+              fontSize: 92,
               fontWeight: 700,
               color: textColor,
               letterSpacing: "-0.03em",
               lineHeight: 1,
               margin: 0,
-              marginBottom: 52,
+              marginBottom: 48,
             }}
           >
             {cover.title}
@@ -289,18 +289,18 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               width: 40,
               height: 2,
               background: `linear-gradient(90deg, ${borderColor}55, transparent)`,
-              marginBottom: 40,
+              marginBottom: 36,
               borderRadius: 1,
             }}
           />
 
-          {/* Manifesto lines */}
+          {/* Manifesto lines — level 2: 52px serif */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: 4,
-              marginBottom: 32,
+              marginBottom: 36,
             }}
           >
             {[cover.manifestoLine1, cover.manifestoLine2, cover.manifestoLine3].map(
@@ -309,8 +309,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                   key={i}
                   style={{
                     fontFamily: 'ui-serif, Georgia, "Times New Roman", serif',
-                    fontSize: 58,
-                    lineHeight: 0.95,
+                    fontSize: 52,
+                    lineHeight: 1,
                     fontWeight: 800,
                     letterSpacing: "-0.02em",
                     color: textColor,
@@ -322,17 +322,32 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             )}
           </div>
 
-          {/* Closing sentence */}
+          {/* Chinese hook text — level 3: 24px */}
+          {cover.hookText && (
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: cyanAccent,
+                letterSpacing: "0.02em",
+                marginBottom: 20,
+                opacity: 0.9,
+              }}
+            >
+              {cover.hookText}
+            </div>
+          )}
+
+          {/* Closing sentence — level 4: 20px */}
           <div
             style={{
-              fontSize: 22,
+              fontSize: 20,
               color: mutedText,
               display: "flex",
               alignItems: "baseline",
               flexWrap: "wrap",
-              gap: "0 7px",
-              lineHeight: 1.5,
-              marginBottom: 40,
+              gap: "0 6px",
+              lineHeight: 1.6,
             }}
           >
             <span>{cover.closingPrefix}</span>
@@ -346,26 +361,11 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             >
               {cover.closingStruck}
             </span>
-            <span style={{ color: warmAccent, fontWeight: 700 }}>
+            <span style={{ color: warmAccent, fontWeight: 600 }}>
               {cover.closingHighlight}
             </span>
-            <span style={{ color: `${mutedText}70` }}>{cover.closingSuffix}</span>
+            <span style={{ color: `${mutedText}60` }}>{cover.closingSuffix}</span>
           </div>
-
-          {/* Chinese hook text */}
-          {cover.hookText && (
-            <div
-              style={{
-                fontSize: 26,
-                fontWeight: 600,
-                color: cyanAccent,
-                letterSpacing: "0.02em",
-                opacity: 0.85,
-              }}
-            >
-              {cover.hookText}
-            </div>
-          )}
         </div>
 
         {/* ── RIGHT COLUMN — avatar + today's topic ── */}

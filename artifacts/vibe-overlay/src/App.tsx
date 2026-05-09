@@ -19,7 +19,12 @@ function loadState(): OverlayState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as OverlayState;
-      return { ...DEFAULT_STATE, ...parsed, colors: { ...DEFAULT_STATE.colors, ...parsed.colors } };
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        cover: { ...DEFAULT_STATE.cover, ...parsed.cover },
+        colors: { ...DEFAULT_STATE.colors, ...parsed.colors },
+      };
     }
   } catch {
     // ignore
