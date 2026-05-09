@@ -36,6 +36,22 @@ function normalizeBullets(value: unknown, fallback: string[]): string[] {
   return bullets.length > 0 ? bullets : [...fallback];
 }
 
+function normalizeBoolGrid(
+  value: unknown,
+  fallback: boolean[][],
+): boolean[][] {
+  if (!Array.isArray(value)) return fallback.map((row) => [...row]);
+
+  return fallback.map((defaultRow, rowIdx) => {
+    const row = Array.isArray((value as unknown[])[rowIdx])
+      ? ((value as unknown[])[rowIdx] as unknown[])
+      : [];
+    return defaultRow.map((defaultVal, colIdx) =>
+      typeof row[colIdx] === "boolean" ? (row[colIdx] as boolean) : defaultVal,
+    );
+  });
+}
+
 function normalizeSections(value: unknown): SidebarSection[] {
   const items = Array.isArray(value) ? value : [];
   const length = Math.max(items.length, DEFAULT_STATE.sidebar.sections.length);
@@ -120,6 +136,14 @@ export function normalizeOverlayState(value: unknown): OverlayState {
   return {
     sidebar: {
       visible: boolOrDefault(sidebar?.visible, DEFAULT_STATE.sidebar.visible),
+      socialVisible: boolOrDefault(
+        sidebar?.socialVisible,
+        DEFAULT_STATE.sidebar.socialVisible,
+      ),
+      sectionsDone: normalizeBoolGrid(
+        sidebar?.sectionsDone,
+        DEFAULT_STATE.sidebar.sectionsDone,
+      ),
       sections: normalizeSections(sidebar?.sections),
     },
     bottomBar: {
@@ -134,11 +158,35 @@ export function normalizeOverlayState(value: unknown): OverlayState {
         mainScreen?.visible,
         DEFAULT_STATE.mainScreen.visible,
       ),
+      cameraVisible: boolOrDefault(
+        mainScreen?.cameraVisible,
+        DEFAULT_STATE.mainScreen.cameraVisible,
+      ),
     },
     cover: {
       title: stringOrDefault(cover?.title, DEFAULT_STATE.cover.title),
       badge1: stringOrDefault(cover?.badge1, DEFAULT_STATE.cover.badge1),
       badge2: stringOrDefault(cover?.badge2, DEFAULT_STATE.cover.badge2),
+      avatarUrl: stringOrDefault(
+        cover?.avatarUrl,
+        DEFAULT_STATE.cover.avatarUrl,
+      ),
+      avatarVisible: boolOrDefault(
+        cover?.avatarVisible,
+        DEFAULT_STATE.cover.avatarVisible,
+      ),
+      todayLabel: stringOrDefault(
+        cover?.todayLabel,
+        DEFAULT_STATE.cover.todayLabel,
+      ),
+      todayTopic: stringOrDefault(
+        cover?.todayTopic,
+        DEFAULT_STATE.cover.todayTopic,
+      ),
+      manifestoVisible: boolOrDefault(
+        cover?.manifestoVisible,
+        DEFAULT_STATE.cover.manifestoVisible,
+      ),
       manifestoLine1: stringOrDefault(
         cover?.manifestoLine1,
         DEFAULT_STATE.cover.manifestoLine1,
@@ -150,6 +198,18 @@ export function normalizeOverlayState(value: unknown): OverlayState {
       manifestoLine3: stringOrDefault(
         cover?.manifestoLine3,
         DEFAULT_STATE.cover.manifestoLine3,
+      ),
+      hookVisible: boolOrDefault(
+        cover?.hookVisible,
+        DEFAULT_STATE.cover.hookVisible,
+      ),
+      hookText: stringOrDefault(
+        cover?.hookText,
+        DEFAULT_STATE.cover.hookText,
+      ),
+      closingVisible: boolOrDefault(
+        cover?.closingVisible,
+        DEFAULT_STATE.cover.closingVisible,
       ),
       closingPrefix: stringOrDefault(
         cover?.closingPrefix,
@@ -166,6 +226,26 @@ export function normalizeOverlayState(value: unknown): OverlayState {
       closingSuffix: stringOrDefault(
         cover?.closingSuffix,
         DEFAULT_STATE.cover.closingSuffix,
+      ),
+      socialVisible: boolOrDefault(
+        cover?.socialVisible,
+        DEFAULT_STATE.cover.socialVisible,
+      ),
+      socialBilibili: stringOrDefault(
+        cover?.socialBilibili,
+        DEFAULT_STATE.cover.socialBilibili,
+      ),
+      socialBlog: stringOrDefault(
+        cover?.socialBlog,
+        DEFAULT_STATE.cover.socialBlog,
+      ),
+      socialGithub: stringOrDefault(
+        cover?.socialGithub,
+        DEFAULT_STATE.cover.socialGithub,
+      ),
+      socialQQ: stringOrDefault(
+        cover?.socialQQ,
+        DEFAULT_STATE.cover.socialQQ,
       ),
     },
     colors: normalizeColors(source?.colors),

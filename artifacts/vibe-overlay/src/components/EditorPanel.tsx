@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { OverlayState } from "../types";
 
 interface EditorPanelProps {
@@ -233,6 +234,15 @@ export default function EditorPanel({
     onChange({ ...state, sidebar: { ...state.sidebar, sections } });
   };
 
+  const toggleBulletDone = (sectionIdx: number, bulletIdx: number) => {
+    const sectionsDone = (state.sidebar.sectionsDone ?? []).map((row, i) =>
+      i === sectionIdx
+        ? row.map((v, j) => (j === bulletIdx ? !v : v))
+        : row
+    );
+    onChange({ ...state, sidebar: { ...state.sidebar, sectionsDone } });
+  };
+
   const updateSidebarBullet = (sectionIdx: number, bulletIdx: number, value: string) => {
     const sections = state.sidebar.sections.map((s, i) => {
       if (i !== sectionIdx) return s;
@@ -251,6 +261,20 @@ export default function EditorPanel({
 
   const updateColor = (key: keyof typeof state.colors, value: string) => {
     onChange({ ...state, colors: { ...state.colors, [key]: value } });
+  };
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      onChange({ ...state, cover: { ...state.cover, avatarUrl: url } });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   return (
@@ -331,14 +355,26 @@ export default function EditorPanel({
             <ToggleButton
               label="Main Screen"
               checked={state.mainScreen.visible}
-              onChange={(v) => onChange({ ...state, mainScreen: { visible: v } })}
+              onChange={(v) => onChange({ ...state, mainScreen: { ...state.mainScreen, visible: v } })}
               testId="toggle-main-screen"
+            />
+            <ToggleButton
+              label="Camera Frame"
+              checked={state.mainScreen.cameraVisible}
+              onChange={(v) => onChange({ ...state, mainScreen: { ...state.mainScreen, cameraVisible: v } })}
+              testId="toggle-camera"
             />
             <ToggleButton
               label="Right Sidebar"
               checked={state.sidebar.visible}
               onChange={(v) => onChange({ ...state, sidebar: { ...state.sidebar, visible: v } })}
               testId="toggle-sidebar"
+            />
+            <ToggleButton
+              label="Sidebar Social Info"
+              checked={state.sidebar.socialVisible}
+              onChange={(v) => onChange({ ...state, sidebar: { ...state.sidebar, socialVisible: v } })}
+              testId="toggle-sidebar-social"
             />
             <ToggleButton
               label="Bottom Bar"
@@ -356,15 +392,34 @@ export default function EditorPanel({
                 onChange={(v) => updateSidebarSection(0, "title", v)}
                 testId="sidebar-s1-title"
               />
-              {state.sidebar.sections[0].bullets.map((b, i) => (
-                <SectionInput
-                  key={i}
-                  label={`Bullet ${i + 1}`}
-                  value={b}
-                  onChange={(v) => updateSidebarBullet(0, i, v)}
-                  testId={`sidebar-s1-bullet-${i}`}
-                />
-              ))}
+              {state.sidebar.sections[0].bullets.map((b, i) => {
+                const done = state.sidebar.sectionsDone?.[0]?.[i] ?? false;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <SectionInput
+                        label={`Bullet ${i + 1}`}
+                        value={b}
+                        onChange={(v) => updateSidebarBullet(0, i, v)}
+                        testId={`sidebar-s1-bullet-${i}`}
+                      />
+                    </div>
+                    <button
+                      onClick={() => toggleBulletDone(0, i)}
+                      title={done ? "Mark undone" : "Mark done"}
+                      style={{
+                        width: 28, height: 28, borderRadius: 6, border: `1px solid ${done ? "#7DD3FC60" : "#2a3060"}`,
+                        background: done ? "#7DD3FC20" : "#0F1122",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 1,
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M2 5.5L4.5 8L9 3" stroke={done ? "#7DD3FC" : "#3a4060"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <SectionHeading>Sidebar — Section 2</SectionHeading>
@@ -375,15 +430,34 @@ export default function EditorPanel({
                 onChange={(v) => updateSidebarSection(1, "title", v)}
                 testId="sidebar-s2-title"
               />
-              {state.sidebar.sections[1].bullets.map((b, i) => (
-                <SectionInput
-                  key={i}
-                  label={`Bullet ${i + 1}`}
-                  value={b}
-                  onChange={(v) => updateSidebarBullet(1, i, v)}
-                  testId={`sidebar-s2-bullet-${i}`}
-                />
-              ))}
+              {state.sidebar.sections[1].bullets.map((b, i) => {
+                const done = state.sidebar.sectionsDone?.[1]?.[i] ?? false;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <SectionInput
+                        label={`Bullet ${i + 1}`}
+                        value={b}
+                        onChange={(v) => updateSidebarBullet(1, i, v)}
+                        testId={`sidebar-s2-bullet-${i}`}
+                      />
+                    </div>
+                    <button
+                      onClick={() => toggleBulletDone(1, i)}
+                      title={done ? "Mark undone" : "Mark done"}
+                      style={{
+                        width: 28, height: 28, borderRadius: 6, border: `1px solid ${done ? "#FF6FAE60" : "#2a3060"}`,
+                        background: done ? "#FF6FAE20" : "#0F1122",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 1,
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M2 5.5L4.5 8L9 3" stroke={done ? "#FF6FAE" : "#3a4060"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <SectionHeading>Sidebar — Section 3</SectionHeading>
@@ -394,15 +468,34 @@ export default function EditorPanel({
                 onChange={(v) => updateSidebarSection(2, "title", v)}
                 testId="sidebar-s3-title"
               />
-              {state.sidebar.sections[2].bullets.map((b, i) => (
-                <SectionInput
-                  key={i}
-                  label={`Bullet ${i + 1}`}
-                  value={b}
-                  onChange={(v) => updateSidebarBullet(2, i, v)}
-                  testId={`sidebar-s3-bullet-${i}`}
-                />
-              ))}
+              {state.sidebar.sections[2].bullets.map((b, i) => {
+                const done = state.sidebar.sectionsDone?.[2]?.[i] ?? false;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <SectionInput
+                        label={`Bullet ${i + 1}`}
+                        value={b}
+                        onChange={(v) => updateSidebarBullet(2, i, v)}
+                        testId={`sidebar-s3-bullet-${i}`}
+                      />
+                    </div>
+                    <button
+                      onClick={() => toggleBulletDone(2, i)}
+                      title={done ? "Mark undone" : "Mark done"}
+                      style={{
+                        width: 28, height: 28, borderRadius: 6, border: `1px solid ${done ? "#FFB86B60" : "#2a3060"}`,
+                        background: done ? "#FFB86B20" : "#0F1122",
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 1,
+                      }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M2 5.5L4.5 8L9 3" stroke={done ? "#FFB86B" : "#3a4060"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Bottom Bar */}
@@ -458,6 +551,79 @@ export default function EditorPanel({
 
         {state.activeTab === "cover" && (
           <>
+            {/* Avatar */}
+            <SectionHeading>Cover — Avatar</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <ToggleButton
+                label="Show Avatar"
+                checked={state.cover.avatarVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, avatarVisible: v } })}
+                testId="cover-avatar-visible"
+              />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleAvatarUpload}
+              />
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  style={{
+                    flex: 1,
+                    padding: "7px 10px",
+                    background: "#3B4FD818",
+                    border: "1px solid #3B4FD840",
+                    borderRadius: 7,
+                    color: "#7C9FFF",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    textAlign: "center",
+                  }}
+                >
+                  {state.cover.avatarUrl ? "Replace Photo" : "Upload Photo"}
+                </button>
+                {state.cover.avatarUrl && (
+                  <button
+                    onClick={() => onChange({ ...state, cover: { ...state.cover, avatarUrl: "" } })}
+                    style={{
+                      padding: "7px 10px",
+                      background: "#FF6FAE12",
+                      border: "1px solid #FF6FAE30",
+                      borderRadius: 7,
+                      color: "#FF6FAE",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {state.cover.avatarUrl && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <img
+                    src={state.cover.avatarUrl}
+                    alt="Avatar preview"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "1px solid #2a3060",
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "#6B7CA8" }}>Photo uploaded</span>
+                </div>
+              )}
+            </div>
+
+            {/* Title & Badges */}
             <SectionHeading>Cover — Title</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput
@@ -480,54 +646,151 @@ export default function EditorPanel({
               />
             </div>
 
-            <SectionHeading>Cover — Manifesto</SectionHeading>
+            {/* Today's topic */}
+            <SectionHeading>Cover — Today's Topic</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput
-                label="Line 1"
-                value={state.cover.manifestoLine1}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine1: v } })}
-                testId="cover-manifesto-1"
+                label="Card Label"
+                value={state.cover.todayLabel}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, todayLabel: v } })}
+                testId="cover-today-label"
               />
               <SectionInput
-                label="Line 2"
-                value={state.cover.manifestoLine2}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine2: v } })}
-                testId="cover-manifesto-2"
-              />
-              <SectionInput
-                label="Line 3"
-                value={state.cover.manifestoLine3}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine3: v } })}
-                testId="cover-manifesto-3"
+                label="Topic"
+                value={state.cover.todayTopic}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, todayTopic: v } })}
+                testId="cover-today-topic"
               />
             </div>
 
+            {/* Manifesto — optional */}
+            <SectionHeading>Cover — Manifesto</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <ToggleButton
+                label="Show Manifesto"
+                checked={state.cover.manifestoVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoVisible: v } })}
+                testId="cover-manifesto-visible"
+              />
+              {state.cover.manifestoVisible && (
+                <>
+                  <SectionInput
+                    label="Line 1"
+                    value={state.cover.manifestoLine1}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine1: v } })}
+                    testId="cover-manifesto-1"
+                  />
+                  <SectionInput
+                    label="Line 2"
+                    value={state.cover.manifestoLine2}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine2: v } })}
+                    testId="cover-manifesto-2"
+                  />
+                  <SectionInput
+                    label="Line 3"
+                    value={state.cover.manifestoLine3}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, manifestoLine3: v } })}
+                    testId="cover-manifesto-3"
+                  />
+                </>
+              )}
+            </div>
+
+            {/* Hook text — optional */}
+            <SectionHeading>Cover — Hook Text</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <ToggleButton
+                label="Show Hook Text"
+                checked={state.cover.hookVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, hookVisible: v } })}
+                testId="cover-hook-visible"
+              />
+              {state.cover.hookVisible && (
+                <SectionInput
+                  label="Chinese Hook"
+                  value={state.cover.hookText}
+                  onChange={(v) => onChange({ ...state, cover: { ...state.cover, hookText: v } })}
+                  testId="cover-hook-text"
+                />
+              )}
+            </div>
+
+            {/* Closing Line — optional */}
             <SectionHeading>Cover — Closing Line</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <SectionInput
-                label="Prefix"
-                value={state.cover.closingPrefix}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingPrefix: v } })}
-                testId="cover-closing-prefix"
+              <ToggleButton
+                label="Show Closing Line"
+                checked={state.cover.closingVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingVisible: v } })}
+                testId="cover-closing-visible"
               />
-              <SectionInput
-                label="Strikethrough word"
-                value={state.cover.closingStruck}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingStruck: v } })}
-                testId="cover-closing-struck"
+              {state.cover.closingVisible && (
+                <>
+                  <SectionInput
+                    label="Prefix"
+                    value={state.cover.closingPrefix}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingPrefix: v } })}
+                    testId="cover-closing-prefix"
+                  />
+                  <SectionInput
+                    label="Strikethrough word"
+                    value={state.cover.closingStruck}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingStruck: v } })}
+                    testId="cover-closing-struck"
+                  />
+                  <SectionInput
+                    label="Highlighted phrase"
+                    value={state.cover.closingHighlight}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingHighlight: v } })}
+                    testId="cover-closing-highlight"
+                  />
+                  <SectionInput
+                    label="Suffix"
+                    value={state.cover.closingSuffix}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingSuffix: v } })}
+                    testId="cover-closing-suffix"
+                  />
+                </>
+              )}
+            </div>
+
+            {/* Social Info */}
+            <SectionHeading>Cover — Social Info</SectionHeading>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <ToggleButton
+                label="Show Social Info"
+                checked={state.cover.socialVisible}
+                onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialVisible: v } })}
+                testId="cover-social-visible"
               />
-              <SectionInput
-                label="Highlighted phrase"
-                value={state.cover.closingHighlight}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingHighlight: v } })}
-                testId="cover-closing-highlight"
-              />
-              <SectionInput
-                label="Suffix"
-                value={state.cover.closingSuffix}
-                onChange={(v) => onChange({ ...state, cover: { ...state.cover, closingSuffix: v } })}
-                testId="cover-closing-suffix"
-              />
+              {state.cover.socialVisible && (
+                <>
+                  <SectionInput
+                    label="B站 用户名 / 直播间"
+                    value={state.cover.socialBilibili}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialBilibili: v } })}
+                    testId="cover-social-bilibili"
+                  />
+                  <SectionInput
+                    label="Blog / 网站"
+                    value={state.cover.socialBlog}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialBlog: v } })}
+                    testId="cover-social-blog"
+                  />
+                  <SectionInput
+                    label="GitHub 用户名"
+                    value={state.cover.socialGithub}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialGithub: v } })}
+                    testId="cover-social-github"
+                  />
+                  <SectionInput
+                    label="QQ 群号"
+                    value={state.cover.socialQQ}
+                    onChange={(v) => onChange({ ...state, cover: { ...state.cover, socialQQ: v } })}
+                    testId="cover-social-qq"
+                  />
+                </>
+              )}
             </div>
           </>
         )}

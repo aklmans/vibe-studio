@@ -15,8 +15,8 @@ const BottomBarPanel = forwardRef<HTMLDivElement, BottomBarPanelProps>(
         ref={ref}
         data-testid="export-bottom-bar-panel"
         style={{
-          width: 1856,
-          height: 180,
+          width: 1448,
+          height: 162,
           background: `${bgPanel}F0`,
           border: `1.5px solid ${borderColor}45`,
           borderRadius: 12,
