@@ -15,17 +15,19 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
       sidebar.socialVisible &&
       (cover.socialBilibili || cover.socialBlog || cover.socialGithub || cover.socialQQ);
 
-    // Small-card label baseline (Sidebar export slice)
+    // Small-card label baseline (Sidebar export slice).
+    // All labels carry a 1px border so heights match even when colors differ.
     const labelBase = {
       fontSize: 12,
       fontWeight: 700,
       borderRadius: 4,
       padding: "3px 8px",
       flexShrink: 0,
-      minWidth: 64,
-      textAlign: "left" as const,
+      minWidth: 76,
+      textAlign: "center" as const,
       boxSizing: "border-box" as const,
       letterSpacing: "0.04em",
+      border: "1px solid transparent",
     };
 
     return (
@@ -89,7 +91,7 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
             </div>
             {cover.socialBilibili && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ ...labelBase, color: "#fff", background: "#E62117" }}>B站</span>
+                <span style={{ ...labelBase, color: "#fff", background: "#E62117", border: "1px solid #E62117" }}>B站</span>
                 <span style={{ fontSize: 14, color: textColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cover.socialBilibili}</span>
               </div>
             )}
