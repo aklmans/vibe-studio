@@ -4,6 +4,7 @@ export interface OverlayState {
   sidebar: {
     visible: boolean;
     socialVisible: boolean;
+    activeSection: number;
     sectionsDone: boolean[][];
     sections: {
       title: string;
@@ -55,6 +56,7 @@ export const DEFAULT_STATE: OverlayState = {
   sidebar: {
     visible: true,
     socialVisible: false,
+    activeSection: 0,
     sectionsDone: [
       [false, false, false],
       [false, false, false],

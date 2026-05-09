@@ -433,6 +433,53 @@ export default function EditorPanel({
             />
 
             {/* Sidebar Sections */}
+            <SectionHeading>Active Section</SectionHeading>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                background: "#0F1122",
+                padding: 3,
+                borderRadius: 8,
+                border: "1px solid #1F2235",
+              }}
+            >
+              {state.sidebar.sections.map((s, idx) => (
+                <button
+                  key={idx}
+                  data-testid={`active-section-${idx}`}
+                  onClick={() =>
+                    onChange({
+                      ...state,
+                      sidebar: { ...state.sidebar, activeSection: idx },
+                    })
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "5px 0",
+                    background:
+                      state.sidebar.activeSection === idx
+                        ? "#1F2235"
+                        : "transparent",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color:
+                      state.sidebar.activeSection === idx
+                        ? "#F4F7FF"
+                        : "#6B7CA8",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    letterSpacing: "0.04em",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {s.title || `Section ${idx + 1}`}
+                </button>
+              ))}
+            </div>
+
             <SectionHeading>Sidebar — Section 1</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <SectionInput

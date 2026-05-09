@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
+import SidebarSections from "./SidebarSections";
 
 interface OverlayCanvasProps {
   state: OverlayState;
@@ -122,24 +123,65 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               >
                 Screen Capture
               </div>
+              {/* LIVE pill — always visible while overlay is on air */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#E62117",
+                  borderRadius: 999,
+                  padding: "0 10px",
+                  height: 20,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.95)",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#fff",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  LIVE
+                </span>
+              </div>
             </div>
 
-            {/* Main content area */}
+            {/* Main content area — large idle watermark */}
             <div
               style={{
                 flex: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                flexDirection: "column",
-                gap: 16,
+                position: "relative",
+                overflow: "hidden",
               }}
             >
-              <div style={{ fontSize: 18, color: `${mutedText}40`, letterSpacing: "0.05em", fontWeight: 300, textTransform: "uppercase" }}>
-                Main Screen Capture
+              <div
+                style={{
+                  fontSize: 120,
+                  fontWeight: 700,
+                  color: mutedText,
+                  opacity: 0.05,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  userSelect: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                VIBE CODING
               </div>
-              <div style={{ width: 40, height: 1, background: `${borderColor}30` }} />
-              <div style={{ fontSize: 12, color: `${mutedText}25`, letterSpacing: "0.08em" }}>1920 × 1080</div>
             </div>
           </div>
         )}
@@ -150,7 +192,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             style={{
               position: "absolute",
               left: 1496,
-              top: 756,
+              top: 720,
               width: 400,
               height: 300,
               background: "#050710",
@@ -263,7 +305,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               left: 1496,
               top: 48,
               width: 400,
-              height: 684,
+              height: 660,
               background: `${bgPanel}F0`,
               border: `1.5px solid ${borderColor}45`,
               borderRadius: 0,
@@ -283,151 +325,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
 
             {/* Sections — flex so they fill available space above social footer */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              {sidebar.sections.map((section, idx) => {
-                const sectionAccent = idx === 0 ? cyanAccent : idx === 1 ? pinkAccent : warmAccent;
-                const doneBullets = sidebar.sectionsDone?.[idx] ?? [];
-                const doneCount = doneBullets.filter(Boolean).length;
-                const totalCount = section.bullets.length;
-
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "16px 24px",
-                      borderBottom:
-                        idx < sidebar.sections.length - 1
-                          ? `1px solid ${borderColor}25`
-                          : "none",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* Section title + progress badge */}
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: sectionAccent,
-                        marginBottom: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 3,
-                          height: 10,
-                          borderRadius: 2,
-                          background: sectionAccent,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span style={{ flex: 1 }}>{section.title}</span>
-                      {/* Progress pill — only show when at least one done */}
-                      {doneCount > 0 && (
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            color: sectionAccent,
-                            background: `${sectionAccent}18`,
-                            border: `1px solid ${sectionAccent}30`,
-                            borderRadius: 10,
-                            padding: "1px 7px",
-                            letterSpacing: "0.04em",
-                          }}
-                        >
-                          {doneCount}/{totalCount}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Progress bar — only render when any done */}
-                    {doneCount > 0 && (
-                      <div
-                        style={{
-                          height: 2,
-                          background: `${sectionAccent}15`,
-                          borderRadius: 1,
-                          marginBottom: 10,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${(doneCount / totalCount) * 100}%`,
-                            background: `linear-gradient(90deg, ${sectionAccent}90, ${sectionAccent}50)`,
-                            borderRadius: 1,
-                            transition: "width 0.3s ease",
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Bullets */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {section.bullets.map((bullet, bIdx) => {
-                        const done = doneBullets[bIdx] ?? false;
-                        return (
-                          <div
-                            key={bIdx}
-                            style={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: 10,
-                              fontSize: 14,
-                              color: done ? `${textColor}55` : textColor,
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {done ? (
-                              /* ✓ checkmark */
-                              <div
-                                style={{
-                                  width: 16,
-                                  height: 16,
-                                  borderRadius: "50%",
-                                  background: `${sectionAccent}25`,
-                                  border: `1px solid ${sectionAccent}60`,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  marginTop: 3,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-                                  <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={sectionAccent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </div>
-                            ) : (
-                              <div
-                                style={{
-                                  width: 5,
-                                  height: 5,
-                                  borderRadius: "50%",
-                                  background: `${borderColor}80`,
-                                  marginTop: 7,
-                                  flexShrink: 0,
-                                }}
-                              />
-                            )}
-                            <span style={{ textDecoration: done ? "line-through" : "none" }}>
-                              {bullet}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+              <SidebarSections state={state} />
             </div>
 
             {/* Social footer */}
@@ -513,19 +411,29 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 style={{
                   flex: 1,
                   padding: "20px 32px",
-                  borderRight:
-                    idx < bottomBar.segments.length - 1
-                      ? `1px solid ${borderColor}25`
-                      : "none",
+                  position: "relative",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
                   gap: 10,
                 }}
               >
+                {/* Soft fade-out divider, top->bottom transparent gradient */}
+                {idx < bottomBar.segments.length - 1 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      top: 16,
+                      bottom: 16,
+                      width: 1,
+                      background: `linear-gradient(180deg, transparent 0%, ${borderColor}40 50%, transparent 100%)`,
+                    }}
+                  />
+                )}
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
@@ -538,7 +446,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   <div
                     style={{
                       width: 3,
-                      height: 10,
+                      height: 12,
                       borderRadius: 2,
                       background: idx === 0 ? cyanAccent : idx === 1 ? warmAccent : pinkAccent,
                       flexShrink: 0,
@@ -548,9 +456,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 </div>
                 <div
                   style={{
-                    fontSize: 22,
+                    fontSize: 28,
                     color: textColor,
-                    fontWeight: 400,
+                    fontWeight: 500,
                     letterSpacing: "-0.01em",
                   }}
                 >

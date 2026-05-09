@@ -127,6 +127,14 @@ function normalizeColors(value: unknown): OverlayColors {
   };
 }
 
+function normalizeActiveSection(value: unknown, max: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  const idx = Math.floor(value);
+  if (idx < 0) return 0;
+  if (idx >= max) return Math.max(0, max - 1);
+  return idx;
+}
+
 function normalizeTheme(value: unknown): ThemeMode {
   return value === "editorial" ? "editorial" : "neon";
 }
@@ -148,6 +156,10 @@ export function normalizeOverlayState(value: unknown): OverlayState {
       socialVisible: boolOrDefault(
         sidebar?.socialVisible,
         DEFAULT_STATE.sidebar.socialVisible,
+      ),
+      activeSection: normalizeActiveSection(
+        sidebar?.activeSection,
+        DEFAULT_STATE.sidebar.sections.length,
       ),
       sectionsDone: normalizeBoolGrid(
         sidebar?.sectionsDone,
