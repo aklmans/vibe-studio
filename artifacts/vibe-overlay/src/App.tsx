@@ -24,6 +24,12 @@ function loadState(): OverlayState {
         ...parsed,
         cover: { ...DEFAULT_STATE.cover, ...parsed.cover },
         colors: { ...DEFAULT_STATE.colors, ...parsed.colors },
+        sidebar: {
+          ...DEFAULT_STATE.sidebar,
+          ...parsed.sidebar,
+          sectionsDone: parsed.sidebar?.sectionsDone ?? DEFAULT_STATE.sidebar.sectionsDone,
+        },
+        mainScreen: { ...DEFAULT_STATE.mainScreen, ...parsed.mainScreen },
       };
     }
   } catch {

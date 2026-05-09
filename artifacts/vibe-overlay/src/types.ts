@@ -1,6 +1,8 @@
 export interface OverlayState {
   sidebar: {
     visible: boolean;
+    socialVisible: boolean;
+    sectionsDone: boolean[][];
     sections: {
       title: string;
       bullets: string[];
@@ -15,6 +17,7 @@ export interface OverlayState {
   };
   mainScreen: {
     visible: boolean;
+    cameraVisible: boolean;
   };
   cover: {
     title: string;
@@ -39,6 +42,7 @@ export interface OverlayState {
     socialBilibili: string;
     socialBlog: string;
     socialGithub: string;
+    socialQQ: string;
   };
   colors: {
     bgDark: string;
@@ -56,6 +60,12 @@ export interface OverlayState {
 export const DEFAULT_STATE: OverlayState = {
   sidebar: {
     visible: true,
+    socialVisible: false,
+    sectionsDone: [
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+    ],
     sections: [
       {
         title: "今日目标",
@@ -81,6 +91,7 @@ export const DEFAULT_STATE: OverlayState = {
   },
   mainScreen: {
     visible: true,
+    cameraVisible: false,
   },
   cover: {
     title: "和 Aklman 一起 Vibe Coding",
@@ -105,6 +116,7 @@ export const DEFAULT_STATE: OverlayState = {
     socialBilibili: "",
     socialBlog: "",
     socialGithub: "",
+    socialQQ: "",
   },
   colors: {
     bgDark: "#10111D",

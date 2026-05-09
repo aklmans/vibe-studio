@@ -7,8 +7,12 @@ interface SidebarPanelProps {
 
 const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ state }, ref) => {
-    const { sidebar, colors } = state;
-    const { bgPanel, borderColor, textColor, cyanAccent, pinkAccent, warmAccent } = colors;
+    const { sidebar, cover, colors } = state;
+    const { bgDark, bgPanel, borderColor, textColor, mutedText, cyanAccent, pinkAccent, warmAccent } = colors;
+
+    const hasSocial =
+      sidebar.socialVisible &&
+      (cover.socialBilibili || cover.socialBlog || cover.socialGithub || cover.socialQQ);
 
     return (
       <div
@@ -36,75 +40,190 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
           }}
         />
 
-        {sidebar.sections.map((section, idx) => (
-          <div
-            key={idx}
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              padding: "20px 24px",
-              borderBottom:
-                idx < sidebar.sections.length - 1
-                  ? `1px solid ${borderColor}25`
-                  : "none",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: idx === 0 ? cyanAccent : idx === 1 ? pinkAccent : warmAccent,
-                marginBottom: 14,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 3,
-                  height: 10,
-                  borderRadius: 2,
-                  background: idx === 0 ? cyanAccent : idx === 1 ? pinkAccent : warmAccent,
-                  flexShrink: 0,
-                }}
-              />
-              {section.title}
-            </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {sidebar.sections.map((section, idx) => {
+            const sectionAccent = idx === 0 ? cyanAccent : idx === 1 ? pinkAccent : warmAccent;
+            const doneBullets = sidebar.sectionsDone?.[idx] ?? [];
+            const doneCount = doneBullets.filter(Boolean).length;
+            const totalCount = section.bullets.length;
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {section.bullets.map((bullet, bIdx) => (
+            return (
+              <div
+                key={idx}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "16px 24px",
+                  borderBottom:
+                    idx < sidebar.sections.length - 1
+                      ? `1px solid ${borderColor}25`
+                      : "none",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Title + progress badge */}
                 <div
-                  key={bIdx}
                   style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: sectionAccent,
+                    marginBottom: 10,
                     display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    fontSize: 14,
-                    color: textColor,
-                    lineHeight: 1.5,
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
                   <div
                     style={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: "50%",
-                      background: `${borderColor}80`,
-                      marginTop: 7,
+                      width: 3,
+                      height: 10,
+                      borderRadius: 2,
+                      background: sectionAccent,
                       flexShrink: 0,
                     }}
                   />
-                  {bullet}
+                  <span style={{ flex: 1 }}>{section.title}</span>
+                  {doneCount > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: sectionAccent,
+                        background: `${sectionAccent}18`,
+                        border: `1px solid ${sectionAccent}30`,
+                        borderRadius: 10,
+                        padding: "1px 7px",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {doneCount}/{totalCount}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
+
+                {/* Progress bar */}
+                {doneCount > 0 && (
+                  <div
+                    style={{
+                      height: 2,
+                      background: `${sectionAccent}15`,
+                      borderRadius: 1,
+                      marginBottom: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${(doneCount / totalCount) * 100}%`,
+                        background: `linear-gradient(90deg, ${sectionAccent}90, ${sectionAccent}50)`,
+                        borderRadius: 1,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Bullets */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {section.bullets.map((bullet, bIdx) => {
+                    const done = doneBullets[bIdx] ?? false;
+                    return (
+                      <div
+                        key={bIdx}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          fontSize: 14,
+                          color: done ? `${textColor}55` : textColor,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {done ? (
+                          <div
+                            style={{
+                              width: 16,
+                              height: 16,
+                              borderRadius: "50%",
+                              background: `${sectionAccent}25`,
+                              border: `1px solid ${sectionAccent}60`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              marginTop: 3,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                              <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={sectionAccent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              width: 5,
+                              height: 5,
+                              borderRadius: "50%",
+                              background: `${borderColor}80`,
+                              marginTop: 7,
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <span style={{ textDecoration: done ? "line-through" : "none" }}>
+                          {bullet}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Social footer */}
+        {hasSocial && (
+          <div
+            style={{
+              borderTop: `1px solid ${borderColor}20`,
+              padding: "12px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 7,
+              flexShrink: 0,
+              background: `${bgDark}60`,
+            }}
+          >
+            {cover.socialBilibili && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#fff", background: "#E62117", borderRadius: 3, padding: "1px 5px", flexShrink: 0 }}>B站</span>
+                <span style={{ fontSize: 12, color: `${mutedText}BB`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cover.socialBilibili}</span>
+              </div>
+            )}
+            {cover.socialBlog && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: cyanAccent, background: `${cyanAccent}18`, border: `1px solid ${cyanAccent}30`, borderRadius: 3, padding: "1px 5px", flexShrink: 0 }}>博客</span>
+                <span style={{ fontSize: 12, color: `${mutedText}BB`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cover.socialBlog}</span>
+              </div>
+            )}
+            {cover.socialGithub && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: mutedText, background: `${borderColor}15`, border: `1px solid ${borderColor}25`, borderRadius: 3, padding: "1px 5px", flexShrink: 0 }}>GH</span>
+                <span style={{ fontSize: 12, color: `${mutedText}BB`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cover.socialGithub}</span>
+              </div>
+            )}
+            {cover.socialQQ && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: warmAccent, background: `${warmAccent}15`, border: `1px solid ${warmAccent}28`, borderRadius: 3, padding: "1px 5px", flexShrink: 0 }}>QQ</span>
+                <span style={{ fontSize: 12, color: `${mutedText}BB`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cover.socialQQ}</span>
+              </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
     );
   }
