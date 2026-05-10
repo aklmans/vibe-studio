@@ -6,18 +6,20 @@ import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
+import type { ObsCameraMode } from "../lib/obs-camera";
 
 interface OverlayCanvasProps {
   state: OverlayState;
   onChange?: (state: OverlayState) => void;
   sidebarRef?: React.RefObject<HTMLDivElement | null>;
   bottomBarRef?: React.RefObject<HTMLDivElement | null>;
+  cameraMode?: ObsCameraMode;
 }
 
 const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(255,255,255,0.9)", "VC", 68);
 
 const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
-  ({ state, onChange, sidebarRef, bottomBarRef }, ref) => {
+  ({ state, onChange, sidebarRef, bottomBarRef, cameraMode = "avatar" }, ref) => {
     const { t } = useLocale();
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
     const {
@@ -36,6 +38,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
       (s) => s.visible && s.value.trim().length > 0,
     );
     const hasSocial = sidebar.socialVisible && hasVisibleSocial;
+    const showCameraAvatar = cameraMode === "avatar";
 
     return (
       <div
@@ -231,62 +234,76 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               </div>
             </div>
 
-            {/* Camera content — avatar or placeholder */}
+            {/* Camera content — avatar placeholder or transparent OBS video slot */}
             <div
               style={{
                 flex: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: UI_COLORS.cameraStage,
+                background: showCameraAvatar ? UI_COLORS.cameraStage : "transparent",
                 position: "relative",
                 overflow: "hidden",
               }}
             >
-              <img
-                src={avatarSrc}
-                alt={t("canvas.camera")}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-              {/* Subtle vignette */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 50%, rgba(0,0,0,0.4) 100%)",
-                  pointerEvents: "none",
-                }}
-              />
-              {/* Live indicator */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 8,
-                  right: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "rgba(0,0,0,0.55)",
-                  borderRadius: 4,
-                  padding: "2px 7px",
-                }}
-              >
+              {showCameraAvatar && (
+                <>
+                  <img
+                    src={avatarSrc}
+                    alt={t("canvas.camera")}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                  {/* Subtle vignette */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 50%, rgba(0,0,0,0.4) 100%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {/* Live indicator */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 8,
+                      right: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      background: "rgba(0,0,0,0.55)",
+                      borderRadius: 4,
+                      padding: "2px 7px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: UI_COLORS.macRed,
+                        boxShadow: `0 0 4px ${UI_COLORS.macRed}`,
+                      }}
+                    />
+                    <span style={{ fontSize: 9, color: UI_COLORS.white, fontWeight: 600, letterSpacing: "0.08em" }}>{t("canvas.liveBadge")}</span>
+                  </div>
+                </>
+              )}
+              {!showCameraAvatar && (
                 <div
+                  aria-hidden="true"
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: UI_COLORS.macRed,
-                    boxShadow: `0 0 4px ${UI_COLORS.macRed}`,
+                    position: "absolute",
+                    inset: 0,
+                    pointerEvents: "none",
                   }}
                 />
-                <span style={{ fontSize: 9, color: UI_COLORS.white, fontWeight: 600, letterSpacing: "0.08em" }}>{t("canvas.liveBadge")}</span>
-              </div>
+              )}
             </div>
           </div>
         )}

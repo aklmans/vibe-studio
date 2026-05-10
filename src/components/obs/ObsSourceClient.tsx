@@ -10,6 +10,7 @@ import {
   normalizeLiveStatePayload,
   type LiveStateSnapshot,
 } from "../../lib/live-state";
+import type { ObsCameraMode } from "../../lib/obs-camera";
 import { OBS_SOURCES, type ObsSource } from "../../lib/obs-sources";
 
 function parseLiveSnapshot(
@@ -23,10 +24,14 @@ function parseLiveSnapshot(
   }
 }
 
-function renderSource(source: ObsSource, snapshot: LiveStateSnapshot) {
+function renderSource(
+  source: ObsSource,
+  snapshot: LiveStateSnapshot,
+  cameraMode: ObsCameraMode,
+) {
   switch (source) {
     case "overlay":
-      return <OverlayCanvas state={snapshot.state} />;
+      return <OverlayCanvas state={snapshot.state} cameraMode={cameraMode} />;
     case "sidebar":
       return <SidebarPanel state={snapshot.state} />;
     case "bottom-bar":
@@ -34,7 +39,13 @@ function renderSource(source: ObsSource, snapshot: LiveStateSnapshot) {
   }
 }
 
-export default function ObsSourceClient({ source }: { source: ObsSource }) {
+export default function ObsSourceClient({
+  source,
+  cameraMode = "avatar",
+}: {
+  source: ObsSource;
+  cameraMode?: ObsCameraMode;
+}) {
   const [snapshot, setSnapshot] = useState<LiveStateSnapshot>(() =>
     normalizeLiveStatePayload({
       locale: "zh",
@@ -86,7 +97,7 @@ export default function ObsSourceClient({ source }: { source: ObsSource }) {
           overflow: "hidden",
         }}
       >
-        {renderSource(source, snapshot)}
+        {renderSource(source, snapshot, cameraMode)}
       </div>
     </LocaleProvider>
   );
