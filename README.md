@@ -1,6 +1,6 @@
 # Vibe Coding Live
 
-A pnpm workspace for building, exporting, and serving livestream graphics for a Vibe Coding session. The main artifact is a React overlay builder that edits the cover screen, full overlay, sidebar panel, and bottom status bar, then exports broadcast-ready PNG assets.
+A pnpm workspace for building, exporting, and serving livestream graphics for a Vibe Coding session. The main artifact is a React overlay builder that edits the cover screen, pre-stream poster, full overlay, sidebar panel, and bottom status bar, then exports broadcast-ready PNG assets.
 
 ## Preview
 
@@ -8,6 +8,12 @@ A pnpm workspace for building, exporting, and serving livestream graphics for a 
 
 <p align="center">
   <img src="docs/assets/vibe-coding-cover.png" alt="Vibe Coding cover screen" width="820">
+</p>
+
+### Poster
+
+<p align="center">
+  <img src="docs/assets/vibe-coding-poster.png" alt="Vibe Coding poster" width="820">
 </p>
 
 ### Full live overlay
@@ -62,13 +68,14 @@ By default the overlay app runs on `http://localhost:8081`. Set `PORT` or `BASE_
 ## Export Workflow
 
 1. Open the overlay builder.
-2. Adjust the cover, sidebar, bottom bar, colors, links, and status copy.
-3. Use the export controls to generate PNGs for the full canvas or individual broadcast slices.
+2. Switch between the Overlay, Cover, and Poster tabs and adjust copy, sections, badges, social links, live session start time, and the tool stack.
+3. Use the export controls to generate PNGs for the cover, poster, full overlay, or individual broadcast slices (sidebar / bottom bar).
 4. Keep polished example exports in `docs/assets/` when they should be shown in this README.
 
 Current example dimensions:
 
 - Cover screen: `1920x1080`
+- Poster: `1920x1080`
 - Full overlay: `1920x1080`
 - Sidebar: `470x760`
 - Bottom bar: `1856x180`
