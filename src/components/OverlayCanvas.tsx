@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import { OverlayState } from "../types";
 import { avatarPlaceholder } from "../lib/avatar";
 import { UI_COLORS } from "../lib/design-tokens";
@@ -6,7 +6,7 @@ import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
-import type { ObsCameraMode } from "../lib/obs-camera";
+import { getObsCameraFrameColors, type ObsCameraMode } from "../lib/obs-camera";
 
 interface OverlayCanvasProps {
   state: OverlayState;
@@ -17,9 +17,22 @@ interface OverlayCanvasProps {
 }
 
 const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(255,255,255,0.9)", "VC", 68);
+const OBS_CAMERA_SLOT = {
+  left: 1498,
+  top: 786,
+  width: 400,
+  height: 272,
+} as const;
+
+function cameraSlotCutoutPath(): string {
+  const right = OBS_CAMERA_SLOT.left + OBS_CAMERA_SLOT.width;
+  const bottom = OBS_CAMERA_SLOT.top + OBS_CAMERA_SLOT.height;
+  return `M0 0H1920V1080H0Z M${OBS_CAMERA_SLOT.left} ${OBS_CAMERA_SLOT.top}H${right}V${bottom}H${OBS_CAMERA_SLOT.left}Z`;
+}
 
 const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
   ({ state, onChange, sidebarRef, bottomBarRef, cameraMode = "avatar" }, ref) => {
+    const dotPatternId = useId().replaceAll(":", "");
     const { t } = useLocale();
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
     const {
@@ -39,6 +52,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     );
     const hasSocial = sidebar.socialVisible && hasVisibleSocial;
     const showCameraAvatar = cameraMode === "avatar";
+    const cameraFrameColors = getObsCameraFrameColors(cameraMode);
+    const hasTransparentCameraSlot = cameraMode === "empty" && mainScreen.cameraVisible;
+    const cutoutPath = cameraSlotCutoutPath();
 
     return (
       <div
@@ -48,23 +64,46 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           width: 1920,
           height: 1080,
           position: "relative",
-          background: `${bgDark}`,
+          background: hasTransparentCameraSlot ? "transparent" : `${bgDark}`,
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
           overflow: "hidden",
           flexShrink: 0,
         }}
       >
-        {/* Dot pattern background */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `radial-gradient(circle, ${borderColor}18 1px, transparent 1px)`,
-            backgroundSize: "32px 32px",
-            pointerEvents: "none",
-          }}
-        />
+        {hasTransparentCameraSlot && (
+          <svg
+            aria-hidden="true"
+            width="1920"
+            height="1080"
+            viewBox="0 0 1920 1080"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+            }}
+          >
+            <defs>
+              <pattern id={dotPatternId} width="32" height="32" patternUnits="userSpaceOnUse">
+                <circle cx="0" cy="0" r="1" fill={`${borderColor}18`} />
+              </pattern>
+            </defs>
+            <path d={cutoutPath} fill={bgDark} fillRule="evenodd" />
+            <path d={cutoutPath} fill={`url(#${dotPatternId})`} fillRule="evenodd" />
+          </svg>
+        )}
+
+        {!hasTransparentCameraSlot && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `radial-gradient(circle, ${borderColor}18 1px, transparent 1px)`,
+              backgroundSize: "32px 32px",
+              pointerEvents: "none",
+            }}
+          />
+        )}
 
         {/* Subtle top gradient */}
         <div
@@ -194,7 +233,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               top: 756,
               width: 400,
               height: 300,
-              background: UI_COLORS.cameraShell,
+              background: cameraFrameColors.shellBackground,
               border: `2px solid ${borderColor}55`,
               borderRadius: 0,
               overflow: "hidden",
@@ -241,7 +280,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: showCameraAvatar ? UI_COLORS.cameraStage : "transparent",
+                background: cameraFrameColors.stageBackground,
                 position: "relative",
                 overflow: "hidden",
               }}
