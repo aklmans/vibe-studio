@@ -1,8 +1,10 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # compiled output
+.next
 dist
 tmp
+out
 out-tsc
 *.tsbuildinfo
 .expo
@@ -10,6 +12,7 @@ out-tsc
 
 # dependencies
 node_modules
+.pnpm-store
 
 # IDEs and editors
 /.idea
@@ -28,6 +31,7 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+/.local
 /.sass-cache
 /connect.lock
 /coverage
@@ -43,7 +47,3 @@ Thumbs.db
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
-
-# Replit
-.cache/
-.local/

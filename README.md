@@ -1,6 +1,6 @@
 # Vibe Coding Live
 
-A pnpm workspace for building, exporting, and serving livestream graphics for a Vibe Coding session. The main artifact is a React overlay builder that edits the cover screen, pre-stream poster, full overlay, sidebar panel, bottom status bar, and brand wallpapers, then exports broadcast-ready PNG assets.
+A Next.js app for building and exporting livestream graphics for Vibe Coding sessions. It edits cover screens, posters, full overlays, sidebar panels, bottom status bars, and brand wallpapers, then exports broadcast-ready PNG assets.
 
 ## Preview
 
@@ -43,10 +43,10 @@ The preview images below are the latest checked-in exports from the overlay buil
 
 ### Wallpapers
 
-A single wallpaper export action emits three sizes that share the Cover/Poster brand language but drop livestream-specific elements (LIVE pill, TODAY'S BUILD card, Manifesto), so they read as quiet brand wallpapers when shown on a screen-share.
+A single wallpaper export action emits three sizes that share the Cover/Poster brand language but drop livestream-specific elements, so they read as quiet brand wallpapers when shown on a screen-share.
 
 <p align="center">
-  <img src="docs/assets/vibe-coding-wallpaper-desktop-4k.png" alt="Vibe Coding wallpaper — Desktop 4K" width="820">
+  <img src="docs/assets/vibe-coding-wallpaper-desktop-4k.png" alt="Vibe Coding wallpaper - Desktop 4K" width="820">
 </p>
 
 <table>
@@ -56,23 +56,13 @@ A single wallpaper export action emits three sizes that share the Cover/Poster b
   </tr>
   <tr>
     <td width="70%">
-      <img src="docs/assets/vibe-coding-wallpaper-desktop-qhd.png" alt="Vibe Coding wallpaper — Desktop QHD">
+      <img src="docs/assets/vibe-coding-wallpaper-desktop-qhd.png" alt="Vibe Coding wallpaper - Desktop QHD">
     </td>
     <td width="30%">
-      <img src="docs/assets/vibe-coding-wallpaper-mobile.png" alt="Vibe Coding wallpaper — Mobile">
+      <img src="docs/assets/vibe-coding-wallpaper-mobile.png" alt="Vibe Coding wallpaper - Mobile">
     </td>
   </tr>
 </table>
-
-## What's Included
-
-- `@workspace/vibe-overlay`: React and Vite app for editing livestream visuals and exporting PNG assets.
-- `@workspace/api-server`: Express API server scaffold with typed request and response helpers.
-- `@workspace/mockup-sandbox`: UI sandbox for previewing shared components and mockups.
-- `@workspace/api-spec`: OpenAPI source and generated schema artifacts.
-- `@workspace/api-client-react`: React Query client generated from the OpenAPI contract.
-- `@workspace/api-zod`: Zod schemas generated from the OpenAPI contract.
-- `@workspace/db`: Drizzle database schema and migration tooling.
 
 ## Quick Start
 
@@ -82,20 +72,32 @@ Install dependencies:
 pnpm install
 ```
 
-Run the overlay builder:
+Run the app:
 
 ```bash
-pnpm --filter @workspace/vibe-overlay run dev
+pnpm dev
 ```
 
-By default the overlay app runs on `http://localhost:8081`. Set `PORT` or `BASE_PATH` when the hosting environment needs different values.
+Open `http://localhost:3000`. If that port is occupied, Next.js will choose the next available port and print it in the terminal.
+
+## Common Commands
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm start
+```
+
+Tests use Node.js built-in test runner with `tsx`. Test files are colocated with source as `*.test.ts`.
 
 ## Export Workflow
 
 1. Open the overlay builder.
-2. Switch between the Overlay, Cover, Poster, and Wallpaper tabs and adjust copy, sections, badges, social links, live session start time, the tool stack, and wallpaper-only fields (brand label / slogan / element toggles).
-3. Use the export controls to generate PNGs for the cover, poster, full overlay, individual broadcast slices (sidebar / bottom bar), or the wallpaper set (3 sizes saved in one click).
-4. Keep polished example exports in `docs/assets/` when they should be shown in this README.
+2. Switch between the Overlay, Cover, Poster, and Wallpaper tabs.
+3. Adjust copy, sections, badges, social links, live session start time, tool stack, and wallpaper-only fields.
+4. Use the export controls to generate PNGs for the cover, poster, full overlay, sidebar, bottom bar, or wallpaper set.
+5. Keep polished example exports in `docs/assets/` when they should be shown in this README.
 
 Current example dimensions:
 
@@ -104,53 +106,33 @@ Current example dimensions:
 - Full overlay: `1920x1080`
 - Sidebar: `470x760`
 - Bottom bar: `1856x180`
-- Wallpaper · Desktop 4K: `3840x2160`
-- Wallpaper · Desktop QHD: `2560x1440`
-- Wallpaper · Mobile: `1290x2796`
+- Wallpaper desktop 4K: `3840x2160`
+- Wallpaper desktop QHD: `2560x1440`
+- Wallpaper mobile: `1290x2796`
 
 Current default social stacks:
 
 - Chinese: Bilibili `Aklman`, personal website `aklman.com`, QQ group `205359827`, WeChat `aklman1`, GitHub `aklmans`.
 - English: YouTube `@aklman2018`, personal website `aklman.com`, Discord `aklman`, X `@Aklman2018`, GitHub `aklmans`.
 
-## Common Commands
-
-```bash
-pnpm test
-pnpm run typecheck
-pnpm run build
-```
-
-Run the API server locally:
-
-```bash
-PORT=5000 pnpm --filter @workspace/api-server run dev
-```
-
-Regenerate API clients and schemas after changing the OpenAPI contract:
-
-```bash
-pnpm --filter @workspace/api-spec run codegen
-```
-
-Database commands require `DATABASE_URL`:
-
-```bash
-pnpm --filter @workspace/db run db:push
-```
-
-## Repository Layout
+## Project Layout
 
 ```text
-artifacts/
-  api-server/       Express API server
-  mockup-sandbox/   Component and UI preview sandbox
-  vibe-overlay/     Livestream overlay builder
-docs/
-  assets/           README images and exported examples
-lib/
-  api-client-react/ Generated React Query client
-  api-spec/         OpenAPI contract and codegen entry point
-  api-zod/          Generated Zod schemas
-  db/               Drizzle schema and database tooling
+src/
+  app/              Next.js App Router entry, layout, and global CSS
+  components/       Builder shell, canvas renderers, inspectors, and shared UI
+  hooks/            Locale, keyboard shortcut, and time helpers
+  lib/              Design tokens, i18n dictionaries, state helpers, and model helpers
+  utils/            PNG export utilities
+public/             Static assets used by the app
+docs/assets/        README images and exported examples
 ```
+
+## Implementation Notes
+
+- The app is a client-rendered overlay builder mounted from the App Router.
+- Canvas output is rendered as DOM/CSS and exported with `html-to-image`.
+- Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
+- State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
+- Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
+- Package management is pnpm only.

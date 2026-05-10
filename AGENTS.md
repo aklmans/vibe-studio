@@ -4,127 +4,88 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-A pnpm monorepo for building livestream graphics for Vibe Coding sessions. The primary artifact is a React overlay builder (`@workspace/vibe-overlay`) that edits cover screens, full overlays, sidebar panels, and bottom status bars, then exports broadcast-ready PNG assets at 1920×1080.
+This repository is a single Next.js App Router application for building livestream graphics for Vibe Coding sessions. The app edits cover screens, posters, full overlays, sidebar panels, bottom status bars, and brand wallpapers, then exports broadcast-ready PNG assets.
+
+The application is intentionally frontend-only. State is stored in `localStorage`; export uses always-mounted off-screen DOM nodes and `html-to-image`.
 
 ## Commands
 
 ### Install dependencies
-```
+
+```bash
 pnpm install
 ```
 
-### Run the overlay builder (main app)
-```
-pnpm --filter @workspace/vibe-overlay run dev
-```
-Runs on `http://localhost:8081` by default. Set `PORT` or `BASE_PATH` env vars to change.
+### Run the app
 
-### Run the API server
+```bash
+pnpm dev
 ```
-PORT=5000 pnpm --filter @workspace/api-server run dev
-```
-This builds with esbuild first, then starts the server.
+
+Next.js serves on `http://localhost:3000` by default. If the port is already in use, it will select the next available port.
 
 ### Typecheck
-```
-pnpm run typecheck
-```
-Runs `tsc --build` on libs first, then typechecks artifacts and scripts. To typecheck a single package:
-```
-pnpm --filter @workspace/<package-name> run typecheck
-```
 
-### Build all
+```bash
+pnpm typecheck
 ```
-pnpm run build
-```
-Runs typecheck, then builds all packages.
 
 ### Run tests
-```
+
+```bash
 pnpm test
 ```
-Tests use Node.js built-in test runner (`node:test`) with `tsx` for TypeScript. To run tests for a single package:
-```
-pnpm --filter @workspace/api-server run test
-pnpm --filter @workspace/vibe-overlay run test
-```
-Test files are colocated with source as `*.test.ts`.
 
-### Regenerate API clients from OpenAPI spec
-```
-pnpm --filter @workspace/api-spec run codegen
-```
-Run this after any change to `lib/api-spec/openapi.yaml`. It regenerates both the React Query client and Zod schemas, then runs `typecheck:libs`.
+Tests use Node.js built-in test runner with `tsx`. Test files are colocated with source as `*.test.ts`.
 
-### Database schema push (requires DATABASE_URL)
+### Production build
+
+```bash
+pnpm build
 ```
-pnpm --filter @workspace/db run db:push
+
+### Run the production server
+
+```bash
+pnpm start
 ```
 
 ## Architecture
 
-### Workspace structure
+### Application entry
 
-The monorepo uses two top-level directories to separate deployable apps from shared libraries:
+- `src/app/layout.tsx` defines the root document and metadata.
+- `src/app/page.tsx` renders the page.
+- `src/app/client-page.tsx` mounts the client-only builder and locale provider.
+- `src/components/OverlayBuilderApp.tsx` contains the main editor shell, top bar, inspectors, previews, export nodes, and modal/drawer state.
 
-- **`artifacts/`** — Deployable applications (Vite frontends, Express server)
-- **`lib/`** — Shared libraries consumed by artifacts via `workspace:*` dependencies
+### Rendering and export
 
-### Package dependency flow
+- Canvas components live in `src/components/*Canvas.tsx`.
+- Shared canvas primitives live in `src/components/shared/`.
+- Export helpers live in `src/utils/exportImage.ts`.
+- Keep the off-screen export architecture intact: preview and export should continue to render from the same state and component logic.
 
-```
-openapi.yaml (lib/api-spec)
-    │
-    │  orval codegen
-    ├────────────────► lib/api-zod (generated Zod schemas)
-    │                        │
-    │                        ▼
-    │                  artifacts/api-server (Express 5, validates with api-zod)
-    │
-    └────────────────► lib/api-client-react (generated React Query hooks)
-                             │
-                             ▼
-                       artifacts/vibe-overlay (React + Vite frontend)
+### State and localization
 
-lib/db (Drizzle ORM + PostgreSQL) ──► artifacts/api-server
-```
+- Shared types and defaults live in `src/types.ts`.
+- State migration and normalization live in `src/stateStorage.ts`.
+- Patch/update helpers live in `src/lib/state.ts`.
+- Locale dictionaries and the custom `t()` helper live in `src/lib/i18n.ts`.
+- `src/hooks/useLocale.tsx` owns locale context and persistence.
 
-The OpenAPI spec in `lib/api-spec/openapi.yaml` is the **single source of truth** for the API contract. Orval generates two outputs from it:
-- `lib/api-zod` — Zod validation schemas used server-side in route handlers
-- `lib/api-client-react` — React Query hooks with a custom fetch wrapper, used client-side
+### Styling
 
-**Do not edit files in `lib/api-zod/src/generated/` or `lib/api-client-react/src/generated/` by hand** — they are overwritten by codegen.
+- Global styles are in `src/app/globals.css`.
+- Tailwind CSS is wired through `postcss.config.mjs`.
+- The canvas components rely heavily on inline styles to preserve pixel output. Do not replace them with a component framework.
 
-### API server (artifacts/api-server)
+## Key Conventions
 
-- Express 5 app with routes mounted under `/api`
-- Built with esbuild into a single ESM bundle (`dist/index.mjs`) with CJS compatibility banner
-- Routes are in `src/routes/`, each file exports a Router. The index aggregates them.
-- Uses `@workspace/api-zod` schemas to validate responses (e.g. `HealthCheckResponse.parse(...)`)
-- Logging via pino + pino-http
-- Tests use `node:test` + `node:assert/strict`
-
-### Overlay app (artifacts/vibe-overlay)
-
-- React + Vite + Tailwind CSS v4 frontend
-- Uses `html-to-image` for PNG export of broadcast graphics
-- State is persisted to localStorage via `stateStorage.ts` with migration/normalization logic
-- Path alias: `@` → `src/`, `@assets` → `attached_assets/`
-- UI components in `src/components/ui/` (shadcn/ui pattern with Radix primitives)
-- Routing via `wouter`
-
-### Database (lib/db)
-
-- Drizzle ORM with PostgreSQL (`node-postgres` driver)
-- Schema defined in `lib/db/src/schema/` — each table should be its own file using the `pgTable` + `createInsertSchema` + type export pattern (see template in `schema/index.ts`)
-- Requires `DATABASE_URL` env var
-
-### Key conventions
-
-- Package manager is **pnpm only** — the preinstall script rejects npm/yarn
-- All packages use ESM (`"type": "module"`)
-- TypeScript strict null checks and no-implicit-any are enabled
-- `pnpm-workspace.yaml` enforces a 1-day minimum release age on npm packages for supply-chain security; do not disable this
-- Zod is imported from `zod/v4` in Drizzle schema files
-- The `catalog:` protocol in package.json pins shared dependency versions in `pnpm-workspace.yaml`
+- Package manager is pnpm only; the `preinstall` script rejects npm and yarn.
+- The codebase is ESM and uses strict TypeScript settings.
+- Do not add new shadcn/ui components. Existing local UI files are only kept when imported.
+- Do not introduce a new runtime dependency unless it substantially reduces complexity.
+- Preserve visual output for canvas components: colors, layout, typography, and spacing should remain pixel-equivalent.
+- Preserve the existing export behavior and `localStorage` persistence behavior.
+- Keep documentation and generated design notes out of the repository unless they are intended as durable project docs.
