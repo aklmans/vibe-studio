@@ -91,56 +91,6 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
 
         {/* ── Ghost UI corners ── */}
 
-        {/* Top-left: terminal window */}
-        <div
-          style={{
-            position: "absolute",
-            top: 96,
-            left: 96,
-            width: 320,
-            height: 180,
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.022)",
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            style={{
-              height: 26,
-              borderBottom: "1px solid rgba(255,255,255,0.05)",
-              display: "flex",
-              alignItems: "center",
-              padding: "0 12px",
-              gap: 6,
-            }}
-          >
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.10)",
-                }}
-              />
-            ))}
-          </div>
-          {[80, 55, 70, 40, 65].map((w, i) => (
-            <div
-              key={i}
-              style={{
-                margin: "10px 16px 0",
-                height: 3,
-                width: `${w}%`,
-                background: "rgba(255,255,255,0.06)",
-                borderRadius: 2,
-              }}
-            />
-          ))}
-        </div>
-
         {/* Bottom-left: commit graph */}
         <div
           style={{
@@ -258,97 +208,137 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             padding: "0 96px 0 160px",
           }}
         >
-          {/* Badge row + LIVE pill */}
+          {/* Badge window — macOS-styled, contains badges + LIVE pill.
+              Width pinned to 720px so it edge-aligns with TODAY'S BUILD. */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 18,
-              marginBottom: hasOptionalContent ? 44 : 52,
+              width: 720,
+              background: "rgba(17, 24, 39, 0.85)",
+              border: `1px solid ${E.glassBorder}`,
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.02)",
+              borderRadius: 14,
+              overflow: "hidden",
+              marginBottom: hasOptionalContent ? 36 : 44,
             }}
           >
-            {cover.badges
-              .filter((b) => b.visible)
-              .map((badge, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {i > 0 && (
-                    <span style={{ color: "rgba(255,255,255,0.22)", fontSize: 15, marginRight: 2 }}>
-                      ×
-                    </span>
-                  )}
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 8,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 6,
-                    }}
-                  >
-                    {badgeIconUrl(badge) && (
-                      <img
-                        src={badgeIconUrl(badge)}
-                        alt={badge.label}
-                        style={{ width: 28, height: 28, objectFit: "contain", opacity: 0.85 }}
-                      />
-                    )}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 14,
-                      color: E.muted,
-                      fontWeight: 500,
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {badge.label}
-                  </span>
-                </div>
-              ))}
-
+            {/* Window titlebar with macOS traffic lights */}
             <div
               style={{
-                width: 1,
-                height: 22,
-                background: "rgba(255,255,255,0.12)",
-                margin: "0 2px",
-              }}
-            />
-
-            {/* LIVE pill */}
-            <div
-              style={{
-                display: "inline-flex",
+                height: 36,
+                display: "flex",
                 alignItems: "center",
-                gap: 6,
-                background: "#E62117",
-                borderRadius: 999,
-                padding: "0 13px",
-                height: 28,
+                padding: "0 16px",
+                gap: 8,
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.025)",
               }}
             >
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF5F57", opacity: 0.85 }} />
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E", opacity: 0.85 }} />
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840", opacity: 0.85 }} />
+              </div>
               <div
                 style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.95)",
-                }}
-              />
-              <span
-                style={{
+                  flex: 1,
+                  textAlign: "center",
                   fontSize: 11,
-                  fontWeight: 700,
-                  color: "#fff",
-                  letterSpacing: "0.12em",
+                  color: `${E.muted}55`,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                 }}
               >
-                LIVE
-              </span>
+                vibe-coding · session
+              </div>
+              <div style={{ width: 33 /* balance traffic-light width on right */ }} />
+            </div>
+
+            {/* Badge body row */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 18,
+                padding: "16px 24px",
+              }}
+            >
+              {cover.badges
+                .filter((b) => b.visible)
+                .map((badge, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {i > 0 && (
+                      <span style={{ color: "rgba(255,255,255,0.22)", fontSize: 15, marginRight: 2 }}>
+                        ×
+                      </span>
+                    )}
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 6,
+                      }}
+                    >
+                      {badgeIconUrl(badge) && (
+                        <img
+                          src={badgeIconUrl(badge)}
+                          alt={badge.label}
+                          style={{ width: 28, height: 28, objectFit: "contain", opacity: 0.85 }}
+                        />
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: E.muted,
+                        fontWeight: 500,
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {badge.label}
+                    </span>
+                  </div>
+                ))}
+
+              <div style={{ flex: 1 }} />
+
+              {/* LIVE pill — pinned right edge */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#E62117",
+                  borderRadius: 999,
+                  padding: "0 13px",
+                  height: 28,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.95)",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#fff",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  LIVE
+                </span>
+              </div>
             </div>
           </div>
 
@@ -385,6 +375,8 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
           {/* Today's topic card */}
           <div
             style={{
+              width: 720,
+              boxSizing: "border-box",
               background: "rgba(17, 24, 39, 0.85)",
               border: `1px solid ${E.glassBorder}`,
               boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.02)",
@@ -392,7 +384,6 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               padding: "20px 32px 22px",
               position: "relative",
               marginBottom: hasOptionalContent ? 36 : 0,
-              maxWidth: 720,
             }}
           >
             <div
