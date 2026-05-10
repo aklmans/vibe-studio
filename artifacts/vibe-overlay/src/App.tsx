@@ -49,7 +49,7 @@ export default function App() {
   useEffect(() => {
     if (prevLocaleRef.current !== locale) {
       prevLocaleRef.current = locale;
-      setState({ ...DEFAULT_STATE_BY_LOCALE[locale] });
+setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
     }
   }, [locale]);
 
