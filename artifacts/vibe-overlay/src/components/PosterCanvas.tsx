@@ -208,140 +208,65 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             padding: "0 96px 0 160px",
           }}
         >
-          {/* Badge window — small macOS-styled chip aligned to title's left
-              edge. Sized by content, not pinned to TODAY'S BUILD width, so
-              it reads as a supporting "dev environment" cue rather than a
-              hero element. */}
-          <div
-            style={{
-              alignSelf: "flex-start",
-              background: "rgba(17, 24, 39, 0.50)",
-              border: `1px solid ${E.glassBorder}`,
-              borderRadius: 10,
-              overflow: "hidden",
-              marginBottom: hasOptionalContent ? 28 : 32,
-            }}
-          >
-            {/* Window titlebar with macOS traffic lights */}
-            <div
-              style={{
-                height: 24,
-                display: "flex",
-                alignItems: "center",
-                padding: "0 10px",
-                gap: 8,
-                borderBottom: "1px solid rgba(255,255,255,0.05)",
-                background: "rgba(255,255,255,0.02)",
-              }}
-            >
-              <div style={{ display: "flex", gap: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,95,87,0.6)" }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(254,188,46,0.6)" }} />
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(40,200,64,0.6)" }} />
-              </div>
+          {/* ── Agent badges toolbar — same style as CoverCanvas, but in flow ── */}
+          {(() => {
+            const visibleBadges = cover.badges.filter((b) => b.visible);
+            if (visibleBadges.length === 0) return null;
+            return (
               <div
                 style={{
-                  flex: 1,
-                  textAlign: "center",
-                  fontSize: 9,
-                  color: `${E.muted}40`,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  paddingRight: 31 /* balance traffic-light width */,
+                  alignSelf: "flex-start",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 10,
+                  padding: "10px 24px",
+                  marginBottom: hasOptionalContent ? 28 : 36,
                 }}
               >
-                session
-              </div>
-            </div>
-
-            {/* Badge body row */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "8px 12px",
-              }}
-            >
-              {cover.badges
-                .filter((b) => b.visible)
-                .map((badge, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                {visibleBadges.map((badge, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
                     {i > 0 && (
-                      <span style={{ color: "rgba(255,255,255,0.18)", fontSize: 11, marginRight: 1 }}>
+                      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.22)" }}>
                         ×
                       </span>
                     )}
-                    <div
-                      style={{
-                        width: 26,
-                        height: 26,
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        borderRadius: 6,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 4,
-                      }}
-                    >
-                      {badgeIconUrl(badge) && (
-                        <img
-                          src={badgeIconUrl(badge)}
-                          alt={badge.label}
-                          style={{ width: 16, height: 16, objectFit: "contain", opacity: 0.75 }}
-                        />
-                      )}
-                    </div>
+                    {badgeIconUrl(badge) && (
+                      <img
+                        src={badgeIconUrl(badge)}
+                        alt={badge.label}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          objectFit: "contain",
+                          opacity: 0.85,
+                        }}
+                      />
+                    )}
                     <span
                       style={{
-                        fontSize: 12,
-                        color: `${E.muted}AA`,
+                        fontSize: 14,
+                        color: E.muted,
                         fontWeight: 500,
-                        letterSpacing: "0.03em",
+                        letterSpacing: "0.04em",
                       }}
                     >
                       {badge.label}
                     </span>
                   </div>
                 ))}
-
-              <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.10)", margin: "0 2px" }} />
-
-              {/* LIVE pill — small, sits inline with badges */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "rgba(230,33,23,0.85)",
-                  borderRadius: 999,
-                  padding: "0 9px",
-                  height: 20,
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.95)",
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: "#fff",
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  LIVE
-                </span>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Eyebrow — hookText */}
           {cover.hookVisible && cover.hookText && (
@@ -398,6 +323,41 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 borderRadius: 1,
               }}
             />
+            {/* UPCOMING pill — top-right, semantic pair with TODAY'S BUILD */}
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                right: 20,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "3px 10px",
+                borderRadius: 999,
+                background: `${E.accent}18`,
+                border: `1px solid ${E.accent}55`,
+              }}
+            >
+              <div
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: E.accent,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: E.accent,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Upcoming
+              </span>
+            </div>
             <div
               style={{
                 fontSize: 11,
