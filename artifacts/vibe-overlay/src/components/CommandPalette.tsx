@@ -127,12 +127,20 @@ export default function CommandPalette({
     <>
       {/* Selection / hover styles for cmdk items — inline-styled siblings can't pick these up. */}
       <style>{`
-        [data-cmdk-item][data-selected="true"] {
+        [cmdk-item=""][data-selected="true"] {
           background: #1F2235;
         }
-        [data-cmdk-item][data-disabled="true"] {
+        [cmdk-item=""][data-disabled="true"] {
           opacity: 0.5;
           pointer-events: none;
+        }
+        [cmdk-group-heading=""] {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #8DA8FF;
+          padding: 8px 12px 4px;
         }
       `}</style>
 
@@ -228,6 +236,7 @@ export default function CommandPalette({
 
             <Group heading="Switch tab">
               <Item
+                value="tab-overlay"
                 onSelect={run(() => switchTab("overlay"))}
                 shortcut={`${Mod} 1`}
                 active={state.activeTab === "overlay"}
@@ -236,6 +245,7 @@ export default function CommandPalette({
                 Go to Overlay
               </Item>
               <Item
+                value="tab-cover"
                 onSelect={run(() => switchTab("cover"))}
                 shortcut={`${Mod} 2`}
                 active={state.activeTab === "cover"}
@@ -244,6 +254,7 @@ export default function CommandPalette({
                 Go to Cover
               </Item>
               <Item
+                value="tab-poster"
                 onSelect={run(() => switchTab("poster"))}
                 shortcut={`${Mod} 3`}
                 active={state.activeTab === "poster"}
@@ -252,6 +263,7 @@ export default function CommandPalette({
                 Go to Poster
               </Item>
               <Item
+                value="tab-wallpaper"
                 onSelect={run(() => switchTab("wallpaper"))}
                 shortcut={`${Mod} 4`}
                 active={state.activeTab === "wallpaper"}
@@ -263,6 +275,7 @@ export default function CommandPalette({
 
             <Group heading="Export">
               <Item
+                value="export-current"
                 onSelect={run(currentTabExporter(state, {
                   onExportOverlay,
                   onExportCover,
@@ -274,25 +287,27 @@ export default function CommandPalette({
               >
                 Export current tab
               </Item>
-              <Item onSelect={run(onExportOverlay)} testId="cmdk-export-overlay">
+              <Item value="export-overlay" onSelect={run(onExportOverlay)} testId="cmdk-export-overlay">
                 Export Full Overlay PNG
               </Item>
-              <Item onSelect={run(onExportCover)} testId="cmdk-export-cover">
+              <Item value="export-cover" onSelect={run(onExportCover)} testId="cmdk-export-cover">
                 Export Cover PNG
               </Item>
-              <Item onSelect={run(onExportPoster)} testId="cmdk-export-poster">
+              <Item value="export-poster" onSelect={run(onExportPoster)} testId="cmdk-export-poster">
                 Export Poster PNG
               </Item>
               <Item
+                value="export-wallpaper"
                 onSelect={run(onExportWallpaper)}
                 testId="cmdk-export-wallpaper"
               >
                 Export Wallpaper Set (3 PNGs)
               </Item>
-              <Item onSelect={run(onExportSidebar)} testId="cmdk-export-sidebar">
+              <Item value="export-sidebar" onSelect={run(onExportSidebar)} testId="cmdk-export-sidebar">
                 Export Sidebar slice
               </Item>
               <Item
+                value="export-bottom-bar"
                 onSelect={run(onExportBottomBar)}
                 testId="cmdk-export-bottom-bar"
               >
@@ -302,6 +317,7 @@ export default function CommandPalette({
 
             <Group heading="Theme">
               <Item
+                value="theme-neon"
                 onSelect={run(() => applyTheme("neon"))}
                 active={state.theme === "neon"}
                 testId="cmdk-theme-neon"
@@ -309,6 +325,7 @@ export default function CommandPalette({
                 Apply Neon theme
               </Item>
               <Item
+                value="theme-editorial"
                 onSelect={run(() => applyTheme("editorial"))}
                 active={state.theme === "editorial"}
                 testId="cmdk-theme-editorial"
@@ -319,24 +336,28 @@ export default function CommandPalette({
 
             <Group heading="Visibility">
               <Item
+                value="toggle-main"
                 onSelect={run(() => toggleVisibility("main"))}
                 testId="cmdk-toggle-main"
               >
                 {state.mainScreen.visible ? "Hide" : "Show"} Main Screen
               </Item>
               <Item
+                value="toggle-camera"
                 onSelect={run(() => toggleVisibility("camera"))}
                 testId="cmdk-toggle-camera"
               >
                 {state.mainScreen.cameraVisible ? "Hide" : "Show"} Camera Frame
               </Item>
               <Item
+                value="toggle-sidebar"
                 onSelect={run(() => toggleVisibility("sidebar"))}
                 testId="cmdk-toggle-sidebar"
               >
                 {state.sidebar.visible ? "Hide" : "Show"} Right Sidebar
               </Item>
               <Item
+                value="toggle-sidebar-social"
                 onSelect={run(() => toggleVisibility("sidebar-social"))}
                 testId="cmdk-toggle-sidebar-social"
               >
@@ -344,6 +365,7 @@ export default function CommandPalette({
                 Info
               </Item>
               <Item
+                value="toggle-bottom-bar"
                 onSelect={run(() => toggleVisibility("bottom-bar"))}
                 testId="cmdk-toggle-bottom-bar"
               >
@@ -353,6 +375,7 @@ export default function CommandPalette({
 
             <Group heading="App">
               <Item
+                value="open-settings"
                 onSelect={run(onOpenSettings)}
                 shortcut={`${Mod} ,`}
                 testId="cmdk-open-settings"
@@ -360,6 +383,7 @@ export default function CommandPalette({
                 Open Settings
               </Item>
               <Item
+                value="reset-defaults"
                 onSelect={run(onReset)}
                 testId="cmdk-reset"
                 tone="danger"
@@ -431,27 +455,9 @@ function Group({ heading, children }: GroupProps) {
   return (
     <Command.Group
       heading={heading}
-      style={
-        {
-          padding: "6px 0",
-        } as React.CSSProperties
-      }
+      style={{ padding: "6px 0" }}
     >
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#8DA8FF",
-          padding: "8px 12px 4px",
-        }}
-      >
-        {heading}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {children}
-      </div>
+      {children}
     </Command.Group>
   );
 }
@@ -459,6 +465,7 @@ function Group({ heading, children }: GroupProps) {
 interface ItemProps {
   children: React.ReactNode;
   onSelect: () => void;
+  value: string;
   shortcut?: string;
   active?: boolean;
   tone?: "default" | "danger";
@@ -468,6 +475,7 @@ interface ItemProps {
 function Item({
   children,
   onSelect,
+  value,
   shortcut,
   active,
   tone = "default",
@@ -476,6 +484,7 @@ function Item({
   return (
     <Command.Item
       data-testid={testId}
+      value={value}
       onSelect={onSelect}
       style={{
         padding: "8px 12px",
