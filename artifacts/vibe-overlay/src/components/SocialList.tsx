@@ -6,6 +6,10 @@ import { socialStyle } from "../lib/socials";
 import EditableText from "./edit/EditableText";
 
 type Size = "small" | "large";
+const LABEL_WIDTH: Record<Size, number> = {
+  small: 76,
+  large: 96,
+};
 
 interface SocialListProps {
   state: OverlayState;
@@ -30,7 +34,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
         borderRadius: 5,
         padding: "4px 12px",
         flexShrink: 0,
-        minWidth: 84,
+        width: LABEL_WIDTH.large,
         textAlign: "center",
         boxSizing: "border-box",
         letterSpacing: "0.04em",
@@ -42,7 +46,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
         borderRadius: 4,
         padding: "3px 8px",
         flexShrink: 0,
-        minWidth: 76,
+        width: LABEL_WIDTH.small,
         textAlign: "center",
         boxSizing: "border-box",
         letterSpacing: "0.04em",

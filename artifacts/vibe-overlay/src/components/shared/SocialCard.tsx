@@ -11,6 +11,8 @@ interface SocialCardProps {
   t: (key: TranslationKey) => string;
 }
 
+const LABEL_WIDTH = 132;
+
 export default function SocialCard({
   S,
   socials,
@@ -73,6 +75,7 @@ export default function SocialCard({
                 borderRadius: S(8),
                 padding: `${S(4)}px ${S(14)}px`,
                 flexShrink: 0,
+                width: S(LABEL_WIDTH),
                 textAlign: "center",
                 boxSizing: "border-box",
                 letterSpacing: "0.04em",
