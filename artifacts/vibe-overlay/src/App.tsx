@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { DEFAULT_STATE, type OverlayState } from "./types";
+import { DEFAULT_STATE_BY_LOCALE, type OverlayState } from "./types";
 import OverlayCanvas from "./components/OverlayCanvas";
 import CoverCanvas from "./components/CoverCanvas";
 import PosterCanvas from "./components/PosterCanvas";
@@ -22,8 +22,10 @@ import { loadOverlayState, saveOverlayState } from "./stateStorage";
 import {
   WALLPAPER_PRESETS,
   getWallpaperPreset,
+  getPresetLabels,
 } from "./lib/wallpaper";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useLocale, loadLocale } from "./hooks/useLocale";
 
 // Offscreen export stage styles — rendered at native resolution, invisible to user
 const exportStageStyle: React.CSSProperties = {
@@ -36,11 +38,20 @@ const exportStageStyle: React.CSSProperties = {
 };
 
 export default function App() {
-  const [state, setStateRaw] = useState<OverlayState>(loadOverlayState);
+  const { t, locale } = useLocale();
+  const [state, setStateRaw] = useState<OverlayState>(() => loadOverlayState(undefined, DEFAULT_STATE_BY_LOCALE[loadLocale()]));
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const prevLocaleRef = useRef(locale);
+
+  useEffect(() => {
+    if (prevLocaleRef.current !== locale) {
+      prevLocaleRef.current = locale;
+      setState({ ...DEFAULT_STATE_BY_LOCALE[locale] });
+    }
+  }, [locale]);
 
   // Preview ref (for the visible scaled canvas — not used for export)
   const previewOverlayRef = useRef<HTMLDivElement | null>(null);
@@ -75,58 +86,58 @@ export default function App() {
       try {
         await fn();
       } catch (err) {
-        setExportError(err instanceof Error ? err.message : "Export failed");
+        setExportError(err instanceof Error ? err.message : t("export.failed"));
       } finally {
         setExporting(null);
       }
     },
-    [],
+    [t],
   );
 
   const handleExportOverlay = useCallback(() => {
     const el = exportOverlayRef.current;
     if (!el) {
-      setExportError("Export node not ready");
+      setExportError(t("export.notReady"));
       return;
     }
     handleExport("overlay", () => exportFullOverlay(el));
-  }, [handleExport]);
+  }, [handleExport, t]);
 
   const handleExportSidebar = useCallback(() => {
     const el = exportSidebarRef.current;
     if (!el) {
-      setExportError("Export node not ready");
+      setExportError(t("export.notReady"));
       return;
     }
     handleExport("sidebar", () => exportSidebar(el));
-  }, [handleExport]);
+  }, [handleExport, t]);
 
   const handleExportBottomBar = useCallback(() => {
     const el = exportBottomBarRef.current;
     if (!el) {
-      setExportError("Export node not ready");
+      setExportError(t("export.notReady"));
       return;
     }
     handleExport("bottom-bar", () => exportBottomBar(el));
-  }, [handleExport]);
+  }, [handleExport, t]);
 
   const handleExportCover = useCallback(() => {
     const el = exportCoverRef.current;
     if (!el) {
-      setExportError("Export node not ready");
+      setExportError(t("export.notReady"));
       return;
     }
     handleExport("cover", () => exportCover(el));
-  }, [handleExport]);
+  }, [handleExport, t]);
 
   const handleExportPoster = useCallback(() => {
     const el = exportPosterRef.current;
     if (!el) {
-      setExportError("Export node not ready");
+      setExportError(t("export.notReady"));
       return;
     }
     handleExport("poster", () => exportPoster(el));
-  }, [handleExport]);
+  }, [handleExport, t]);
 
   const handleExportWallpaper = useCallback(() => {
     handleExport("wallpaper", async () => {
@@ -146,8 +157,8 @@ export default function App() {
   }, [handleExport]);
 
   const handleReset = useCallback(() => {
-    setState({ ...DEFAULT_STATE });
-  }, [setState]);
+    setState({ ...DEFAULT_STATE_BY_LOCALE[locale] });
+  }, [setState, locale]);
 
   const handleExportCurrent = useCallback(() => {
     switch (state.activeTab) {
@@ -200,13 +211,13 @@ export default function App() {
   const tabBadge = (() => {
     switch (state.activeTab) {
       case "overlay":
-        return "OVERLAY · 1920×1080";
+        return t("tabBadge.overlay");
       case "cover":
-        return "COVER · 1920×1080";
+        return t("tabBadge.cover");
       case "poster":
-        return "POSTER · 1920×1080";
+        return t("tabBadge.poster");
       case "wallpaper":
-        return `WALLPAPER · ${wallpaperPreset.label} · ${wallpaperPreset.width}×${wallpaperPreset.height}`;
+        return `${t("tab.wallpaper").toUpperCase()} · ${getPresetLabels(locale)[wallpaperPreset.id].label} · ${wallpaperPreset.width}×${wallpaperPreset.height}`;
     }
   })();
 
@@ -326,7 +337,7 @@ export default function App() {
                   {tabBadge}
                 </div>
                 <div style={{ fontSize: 11, color: "#6B7CA8" }}>
-                  Scaled preview — export at full resolution
+                  {t("app.previewHint")}
                 </div>
               </div>
 
@@ -349,7 +360,7 @@ export default function App() {
             {/* Scaled Canvas Preview */}
             <PreviewFrame nativeW={previewW} nativeH={previewH}>
               {state.activeTab === "overlay" ? (
-                <OverlayCanvas ref={previewOverlayRef} state={state} />
+                <OverlayCanvas ref={previewOverlayRef} state={state} onChange={setState} />
               ) : state.activeTab === "cover" ? (
                 <CoverCanvas
                   ref={previewCoverRef}

@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { OverlayState } from "../types";
 import { fontFamilies, typography } from "../lib/typography";
 import { badgeIconUrl } from "../lib/badges";
+import { useLocale } from "../hooks/useLocale";
 import SocialList from "./SocialList";
 import EditableText from "./edit/EditableText";
 
@@ -39,6 +40,7 @@ const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
 
 const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
   ({ state, editable = false, onChange }, ref) => {
+    const { t } = useLocale();
     const { cover } = state;
 
     const avatarSrc = cover.avatarUrl || AVATAR_PLACEHOLDER;
@@ -384,7 +386,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                   textTransform: "uppercase",
                 }}
               >
-                Upcoming
+                {t("canvas.upcoming")}
               </span>
             </div>
             <EditableText
@@ -583,9 +585,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 }}
               >
                 <div style={{ width: 3, height: 12, borderRadius: 2, background: E.accent, flexShrink: 0 }} />
-                Follow me
+                {t("canvas.followMe")}
               </div>
-              <SocialList state={state} size="large" />
+              <SocialList state={state} size="large" editable={editable} onChange={onChange} />
             </div>
           )}
         </div>

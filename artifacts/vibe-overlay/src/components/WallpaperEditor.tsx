@@ -1,8 +1,10 @@
 import type { OverlayState } from "../types";
 import {
   WALLPAPER_PRESETS,
+  getPresetLabels,
   type WallpaperPresetId,
 } from "../lib/wallpaper";
+import { useLocale } from "../hooks/useLocale";
 
 interface WallpaperEditorProps {
   state: OverlayState;
@@ -19,6 +21,7 @@ export default function WallpaperEditor({
   state,
   onChange,
 }: WallpaperEditorProps) {
+  const { locale } = useLocale();
   const { wallpaper } = state;
 
   const writeWallpaper = (patch: Partial<OverlayState["wallpaper"]>) => {
@@ -44,6 +47,7 @@ export default function WallpaperEditor({
         }}
       >
         {WALLPAPER_PRESETS.map((preset) => {
+          const labels = getPresetLabels(locale);
           const active = wallpaper.previewPresetId === preset.id;
           return (
             <button
@@ -64,7 +68,7 @@ export default function WallpaperEditor({
                 transition: "all 0.15s",
               }}
             >
-              {preset.shortLabel}
+              {labels[preset.id].shortLabel}
               <span
                 style={{
                   display: "block",

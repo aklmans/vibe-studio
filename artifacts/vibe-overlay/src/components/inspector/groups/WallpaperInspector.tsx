@@ -2,7 +2,8 @@ import type { OverlayState } from "../../../types";
 import InspectorGroup from "../InspectorGroup";
 import BrandIdentityEditor from "../BrandIdentityEditor";
 import { SectionInput, ToggleButton } from "../../shared/Field";
-import { WALLPAPER_PRESETS, type WallpaperPresetId } from "../../../lib/wallpaper";
+import { WALLPAPER_PRESETS, getPresetLabels, type WallpaperPresetId } from "../../../lib/wallpaper";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface WallpaperInspectorProps {
   state: OverlayState;
@@ -18,6 +19,7 @@ export default function WallpaperInspector({
   state,
   onChange,
 }: WallpaperInspectorProps) {
+  const { locale, t } = useLocale();
   const { wallpaper } = state;
 
   const writeWallpaper = (patch: Partial<OverlayState["wallpaper"]>) => {
@@ -31,8 +33,8 @@ export default function WallpaperInspector({
   return (
     <>
       <InspectorGroup
-        title="Brand"
-        hint="Avatar · title · agent badges (shared)"
+        title={t("group.brand")}
+        hint={t("group.brand.hintAlt")}
         testId="group-wallpaper-brand"
       >
         <BrandIdentityEditor
@@ -43,8 +45,8 @@ export default function WallpaperInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Preview Size"
-        hint="Pick which size renders in the stage"
+        title={t("group.previewSize")}
+        hint={t("group.previewSize.hint")}
         testId="group-wallpaper-size"
       >
         <div
@@ -59,6 +61,7 @@ export default function WallpaperInspector({
           }}
         >
           {WALLPAPER_PRESETS.map((preset) => {
+            const labels = getPresetLabels(locale);
             const active = wallpaper.previewPresetId === preset.id;
             return (
               <button
@@ -79,7 +82,7 @@ export default function WallpaperInspector({
                   transition: "all 0.15s",
                 }}
               >
-                {preset.shortLabel}
+                {labels[preset.id].shortLabel}
                 <span
                   style={{
                     display: "block",
@@ -99,19 +102,19 @@ export default function WallpaperInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Brand Label & Slogan"
-        hint="Wallpaper-only copy"
+        title={t("group.brandLabel")}
+        hint={t("group.brandLabel.hint")}
         testId="group-wallpaper-copy"
       >
         <ToggleButton
-          label="Show Brand Label"
+          label={t("toggle.showBrandLabel")}
           checked={wallpaper.brandLabelVisible}
           onChange={(v) => writeWallpaper({ brandLabelVisible: v })}
           testId="wallpaper-brand-visible"
         />
         {wallpaper.brandLabelVisible && (
           <SectionInput
-            label="Brand Label"
+            label={t("label.brandLabel")}
             value={wallpaper.brandLabel}
             onChange={(v) => writeWallpaper({ brandLabel: v })}
             testId="wallpaper-brand-label"
@@ -120,14 +123,14 @@ export default function WallpaperInspector({
         )}
 
         <ToggleButton
-          label="Show Slogan"
+          label={t("toggle.showSlogan")}
           checked={wallpaper.sloganVisible}
           onChange={(v) => writeWallpaper({ sloganVisible: v })}
           testId="wallpaper-slogan-visible"
         />
         {wallpaper.sloganVisible && (
           <SectionInput
-            label="Slogan"
+            label={t("label.slogan")}
             value={wallpaper.slogan}
             onChange={(v) => writeWallpaper({ slogan: v })}
             testId="wallpaper-slogan"
@@ -137,24 +140,24 @@ export default function WallpaperInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Visibility"
-        hint="Toggle wallpaper elements"
+        title={t("group.visibility")}
+        hint={t("group.visibility.hint")}
         testId="group-wallpaper-visibility"
       >
         <ToggleButton
-          label="Show Avatar"
+          label={t("toggle.showAvatar")}
           checked={wallpaper.avatarVisible}
           onChange={(v) => writeWallpaper({ avatarVisible: v })}
           testId="wallpaper-avatar-visible"
         />
         <ToggleButton
-          label="Show Agent Badges"
+          label={t("toggle.showAgentBadges")}
           checked={wallpaper.badgesVisible}
           onChange={(v) => writeWallpaper({ badgesVisible: v })}
           testId="wallpaper-badges-visible"
         />
         <ToggleButton
-          label="Show Social Card"
+          label={t("toggle.showSocialCard")}
           checked={wallpaper.socialVisible}
           onChange={(v) => writeWallpaper({ socialVisible: v })}
           testId="wallpaper-social-visible"

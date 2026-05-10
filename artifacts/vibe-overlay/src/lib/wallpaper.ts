@@ -1,3 +1,6 @@
+import type { Locale } from "./i18n";
+import { dict } from "./i18n";
+
 export type WallpaperPresetId = "desktop-4k" | "desktop-qhd" | "mobile";
 
 export type WallpaperOrientation = "horizontal" | "portrait";
@@ -54,4 +57,13 @@ export function isWallpaperPresetId(value: unknown): value is WallpaperPresetId 
 
 export function getWallpaperPreset(id: WallpaperPresetId): WallpaperPreset {
   return WALLPAPER_PRESETS.find((p) => p.id === id) ?? WALLPAPER_PRESETS[0];
+}
+
+export function getPresetLabels(locale: Locale): Record<WallpaperPresetId, { label: string; shortLabel: string }> {
+  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
+  return {
+    "desktop-4k": { label: t("wallpaper.desktop4k"), shortLabel: "4K" },
+    "desktop-qhd": { label: t("wallpaper.desktopQhd"), shortLabel: "QHD" },
+    "mobile": { label: t("wallpaper.mobile"), shortLabel: t("wallpaper.mobile") },
+  };
 }

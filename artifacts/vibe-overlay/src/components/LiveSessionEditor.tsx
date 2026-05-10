@@ -1,5 +1,6 @@
 import type { OverlayState } from "../types";
 import { formatStartLabel } from "../lib/bottomBar";
+import { useLocale } from "../hooks/useLocale";
 
 interface LiveSessionEditorProps {
   state: OverlayState;
@@ -27,6 +28,7 @@ export default function LiveSessionEditor({
   state,
   onChange,
 }: LiveSessionEditorProps) {
+  const { t } = useLocale();
   const { startedAt } = state.liveSession;
   const ready = Boolean(startedAt) && !Number.isNaN(new Date(startedAt).getTime());
 
@@ -89,7 +91,7 @@ export default function LiveSessionEditor({
             letterSpacing: "0.04em",
           }}
         >
-          现在开播
+          {t("btn.startNow")}
         </button>
         {ready && (
           <button
@@ -107,15 +109,15 @@ export default function LiveSessionEditor({
               fontFamily: "inherit",
             }}
           >
-            Clear
+{t("btn.clear")}
           </button>
         )}
       </div>
 
       <div style={{ fontSize: 11, color: "#6B7CA8", lineHeight: 1.5 }}>
         {ready
-          ? `已开始 · ${formatStartLabel(startedAt)}`
-          : "未设置开始时间，On Air 段会显示 —:——"}
+          ? `${t("live.started")} · ${formatStartLabel(startedAt)}`
+          : t("live.notSet")}
       </div>
     </div>
   );

@@ -4,20 +4,13 @@ import {
   type BadgeConfig,
   type BadgeKind,
 } from "../lib/badges";
+import { useLocale } from "../hooks/useLocale";
 
 interface BadgesEditorProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
   testIdPrefix?: string;
 }
-
-const KIND_OPTIONS: { value: BadgeKind; label: string }[] = [
-  { value: "claude", label: "Claude" },
-  { value: "codex", label: "Codex" },
-  { value: "gemini", label: "Gemini" },
-  { value: "grok", label: "Grok" },
-  { value: "custom", label: "Custom…" },
-];
 
 /**
  * Editor for the agent badges shown on Cover/Poster top toolbar.
@@ -29,6 +22,15 @@ export default function BadgesEditor({
   onChange,
   testIdPrefix = "badge",
 }: BadgesEditorProps) {
+  const { t } = useLocale();
+  const KIND_OPTIONS: { value: BadgeKind; label: string }[] = [
+    { value: "claude", label: t("badge.claude") },
+    { value: "codex", label: t("badge.codex") },
+    { value: "gemini", label: t("badge.gemini") },
+    { value: "grok", label: t("badge.grok") },
+    { value: "custom", label: t("badge.custom") },
+  ];
+
   const updateBadge = (idx: number, patch: Partial<BadgeConfig>) => {
     const badges = state.cover.badges.map((b, i) =>
       i === idx ? { ...b, ...patch } : b,
@@ -102,7 +104,7 @@ export default function BadgesEditor({
                   letterSpacing: "0.04em",
                 }}
               >
-                Badge {idx + 1}
+                {`${t("label.badge")} ${idx + 1}`}
               </span>
               <button
                 data-testid={`${testIdPrefix}-${idx}-visible`}
@@ -184,7 +186,7 @@ export default function BadgesEditor({
               data-testid={`${testIdPrefix}-${idx}-label`}
               value={badge.label}
               onChange={(e) => updateBadge(idx, { label: e.target.value })}
-              placeholder="Display label"
+              placeholder={t("label.displayLabel")}
               style={{
                 background: "#080A14",
                 border: "1px solid #2a3060",
@@ -209,7 +211,7 @@ export default function BadgesEditor({
                 onChange={(e) =>
                   updateBadge(idx, { customIconUrl: e.target.value })
                 }
-                placeholder="Icon URL (e.g. /icons/my.svg or https://…)"
+                placeholder={t("label.iconUrl")}
                 style={{
                   background: "#080A14",
                   border: "1px solid #2a3060",

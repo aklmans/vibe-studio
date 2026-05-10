@@ -1,4 +1,5 @@
 import type { OverlayState } from "../types";
+import { useLocale } from "../hooks/useLocale";
 
 interface SectionInputProps {
   label: string;
@@ -62,6 +63,7 @@ export default function SidebarSectionEditor({
   index,
   accentColor,
 }: SidebarSectionEditorProps) {
+  const { t } = useLocale();
   const section = state.sidebar.sections[index];
   if (!section) return null;
 
@@ -91,7 +93,7 @@ export default function SidebarSectionEditor({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <SectionInput
-        label="Title"
+        label={t("label.title")}
         value={section.title}
         onChange={updateTitle}
         testId={`sidebar-s${index + 1}-title`}
@@ -105,7 +107,7 @@ export default function SidebarSectionEditor({
           >
             <div style={{ flex: 1 }}>
               <SectionInput
-                label={`Bullet ${i + 1}`}
+                label={`${t("label.bullet")} ${i + 1}`}
                 value={b}
                 onChange={(v) => updateBullet(i, v)}
                 testId={`sidebar-s${index + 1}-bullet-${i}`}
@@ -113,7 +115,7 @@ export default function SidebarSectionEditor({
             </div>
             <button
               onClick={() => toggleBulletDone(i)}
-              title={done ? "Mark undone" : "Mark done"}
+              title={done ? t("btn.markUndone") : t("btn.markDone")}
               style={{
                 width: 28,
                 height: 28,

@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import { fontFamilies } from "../lib/typography";
 import { badgeIconUrl } from "../lib/badges";
 import { socialStyle } from "../lib/socials";
+import { useLocale } from "../hooks/useLocale";
 import {
   HORIZONTAL_BASE,
   PORTRAIT_BASE,
@@ -47,6 +48,7 @@ const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
 
 const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
   ({ state, preset, editable = false, onChange }, ref) => {
+    const { t } = useLocale();
     const { cover, wallpaper } = state;
     const isPortrait = preset.orientation === "portrait";
     const base = isPortrait ? PORTRAIT_BASE : HORIZONTAL_BASE;
@@ -168,6 +170,7 @@ const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
             writeCover={writeCover}
             writeWallpaper={writeWallpaper}
             writeBadgeLabel={writeBadgeLabel}
+            t={t}
           />
         ) : (
           <HorizontalLayout
@@ -183,6 +186,7 @@ const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
             writeCover={writeCover}
             writeWallpaper={writeWallpaper}
             writeBadgeLabel={writeBadgeLabel}
+            t={t}
           />
         )}
       </div>
@@ -208,6 +212,7 @@ interface LayoutProps {
   writeCover: (patch: Partial<OverlayState["cover"]>) => void;
   writeWallpaper: (patch: Partial<OverlayState["wallpaper"]>) => void;
   writeBadgeLabel: (originalIdx: number, label: string) => void;
+  t: (key: import("../lib/i18n").TranslationKey) => string;
 }
 
 function HorizontalLayout({
@@ -223,6 +228,7 @@ function HorizontalLayout({
   writeCover,
   writeWallpaper,
   writeBadgeLabel,
+  t,
 }: LayoutProps) {
   /* Title block sits left-of-center, avatar floats right.
    * Badges + social card occupy the bottom band, mirroring across the gutter. */
@@ -435,7 +441,7 @@ function HorizontalLayout({
         )}
 
         {visibleSocials.length > 0 && (
-          <SocialCard S={S} socials={visibleSocials} colors={colors} />
+          <SocialCard S={S} socials={visibleSocials} colors={colors} t={t} />
         )}
       </div>
     </>
@@ -457,6 +463,7 @@ function PortraitLayout({
   writeCover,
   writeWallpaper,
   writeBadgeLabel,
+  t,
 }: LayoutProps) {
   /* Stack from top: safe area → avatar → brand → title → slogan → spacer →
    * badges → social card → bottom safe area. Sizes tuned for iPhone Pro Max. */
@@ -642,6 +649,7 @@ function PortraitLayout({
           socials={visibleSocials}
           colors={colors}
           fullWidth
+          t={t}
         />
       )}
     </div>
@@ -655,9 +663,10 @@ interface SocialCardProps {
   socials: OverlayState["cover"]["socials"];
   colors: OverlayState["colors"];
   fullWidth?: boolean;
+  t: (key: import("../lib/i18n").TranslationKey) => string;
 }
 
-function SocialCard({ S, socials, colors, fullWidth }: SocialCardProps) {
+function SocialCard({ S, socials, colors, fullWidth, t }: SocialCardProps) {
   return (
     <div
       style={{
@@ -696,7 +705,7 @@ function SocialCard({ S, socials, colors, fullWidth }: SocialCardProps) {
             flexShrink: 0,
           }}
         />
-        Follow me
+        {t("canvas.followMe")}
       </div>
       {socials.map((social, idx) => {
         const style = socialStyle(social, colors);

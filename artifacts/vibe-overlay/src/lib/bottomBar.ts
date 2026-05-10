@@ -2,6 +2,9 @@
 // fields shown and the canvas renderer. Keeps the existing 3-segment width
 // budget; lets each segment carry structured info instead of free-form text.
 
+import type { Locale } from "./i18n";
+import { dict } from "./i18n";
+
 export type BottomBarKind =
   | "live"     // elapsed since liveSession.startedAt + start time
   | "progress" // section completion bar from sidebar.sectionsDone[sectionIndex]
@@ -43,14 +46,16 @@ export const BOTTOM_BAR_KIND_VALUES: BottomBarKind[] = [
   "text",
 ];
 
-export const BOTTOM_BAR_KIND_OPTIONS: { value: BottomBarKind; label: string }[] =
-  [
-    { value: "live", label: "On Air" },
-    { value: "progress", label: "Progress" },
-    { value: "stack", label: "Stack" },
-    { value: "topic", label: "Topic" },
-    { value: "text", label: "Text" },
+export function getBottomBarKindOptions(locale: Locale): { value: BottomBarKind; label: string }[] {
+  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
+  return [
+    { value: "live", label: t("bar.onAir") },
+    { value: "progress", label: t("bar.progress") },
+    { value: "stack", label: t("bar.stack") },
+    { value: "topic", label: t("bar.topic") },
+    { value: "text", label: t("bar.text") },
   ];
+}
 
 export function isBottomBarKind(value: unknown): value is BottomBarKind {
   return (
@@ -59,7 +64,7 @@ export function isBottomBarKind(value: unknown): value is BottomBarKind {
   );
 }
 
-export function defaultSlotForKind(kind: BottomBarKind): BottomBarSlot {
+export function defaultSlotForKind(kind: BottomBarKind, locale: Locale = "zh"): BottomBarSlot {
   switch (kind) {
     case "live":
       return { kind: "live" };
@@ -70,7 +75,7 @@ export function defaultSlotForKind(kind: BottomBarKind): BottomBarSlot {
     case "topic":
       return { kind: "topic" };
     case "text":
-      return { kind: "text", title: "正在做", text: "AI 工作流直播搭建" };
+      return { kind: "text", title: dict[locale]["segmentEditor.title"] ?? "Title", text: dict[locale]["segmentEditor.text"] ?? "Text" };
   }
 }
 

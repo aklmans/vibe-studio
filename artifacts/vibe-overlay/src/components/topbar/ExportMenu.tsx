@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { OverlayState } from "../../types";
+import { useLocale } from "../../hooks/useLocale";
 
 type ExportKind =
   | "current"
@@ -20,13 +21,6 @@ interface ExportMenuProps {
   onExportSidebar: () => void;
   onExportBottomBar: () => void;
 }
-
-const PRIMARY_LABEL: Record<OverlayState["activeTab"], string> = {
-  overlay: "Export Overlay",
-  cover: "Export Cover",
-  poster: "Export Poster",
-  wallpaper: "Export Wallpaper Set",
-};
 
 const PRIMARY_KIND: Record<OverlayState["activeTab"], ExportKind> = {
   overlay: "overlay",
@@ -50,6 +44,7 @@ export default function ExportMenu({
   onExportSidebar,
   onExportBottomBar,
 }: ExportMenuProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -144,7 +139,7 @@ export default function ExportMenu({
           {label}
         </span>
         {loading && (
-          <span style={{ fontSize: 10, color: "#6B7CA8" }}>exporting…</span>
+          <span style={{ fontSize: 10, color: "#6B7CA8" }}>{t("export.exporting")}</span>
         )}
       </button>
     );
@@ -179,7 +174,7 @@ export default function ExportMenu({
           letterSpacing: "0.02em",
         }}
       >
-        {isCurrentLoading ? "Exporting…" : PRIMARY_LABEL[state.activeTab]}
+        {isCurrentLoading ? t("export.exporting") : t(`export.${state.activeTab}`)}
       </button>
       <div style={{ width: 1, background: "#2a3060", flexShrink: 0 }} />
       <button
@@ -194,7 +189,7 @@ export default function ExportMenu({
           cursor: "pointer",
           fontFamily: "inherit",
         }}
-        aria-label="More export options"
+        aria-label={t("export.moreOptions")}
       >
         ▾
       </button>
@@ -214,11 +209,11 @@ export default function ExportMenu({
             boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
           }}
         >
-          {itemRow("Full Overlay PNG", onExportOverlay, "overlay", "#8DA8FF")}
-          {itemRow("Cover PNG", onExportCover, "cover", "#FF6FAE")}
-          {itemRow("Poster PNG", onExportPoster, "poster", "#C084FC")}
+          {itemRow(t("export.fullOverlay"), onExportOverlay, "overlay", "#8DA8FF")}
+          {itemRow(t("export.cover"), onExportCover, "cover", "#FF6FAE")}
+          {itemRow(t("export.poster"), onExportPoster, "poster", "#C084FC")}
           {itemRow(
-            "Wallpaper Set (3 PNGs)",
+            t("export.wallpaper"),
             onExportWallpaper,
             "wallpaper",
             "#5EEAD4",
@@ -227,9 +222,9 @@ export default function ExportMenu({
             style={{ height: 1, background: "#1F2235", margin: "4px 0" }}
             aria-hidden
           />
-          {itemRow("Sidebar slice", onExportSidebar, "sidebar", "#7DD3FC")}
+          {itemRow(t("export.sidebar"), onExportSidebar, "sidebar", "#7DD3FC")}
           {itemRow(
-            "Bottom Bar slice",
+            t("export.bottomBar"),
             onExportBottomBar,
             "bottom-bar",
             "#FFB86B",

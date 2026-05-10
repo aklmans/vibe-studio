@@ -5,6 +5,7 @@ import SidebarSectionEditor from "../../SidebarSectionEditor";
 import LiveSessionEditor from "../../LiveSessionEditor";
 import StackEditor from "../../StackEditor";
 import BottomBarSegmentEditor from "../../BottomBarSegmentEditor";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface OverlayInspectorProps {
   state: OverlayState;
@@ -17,15 +18,16 @@ export default function OverlayInspector({
   state,
   onChange,
 }: OverlayInspectorProps) {
+  const { t } = useLocale();
   return (
     <>
       <InspectorGroup
-        title="Visibility"
-        hint="Toggle major surfaces"
+        title={t("group.visibility")}
+        hint={t("group.visibility.hint")}
         testId="group-overlay-visibility"
       >
         <ToggleButton
-          label="Main Screen"
+          label={t("toggle.mainScreen")}
           checked={state.mainScreen.visible}
           onChange={(v) =>
             onChange({ ...state, mainScreen: { ...state.mainScreen, visible: v } })
@@ -33,7 +35,7 @@ export default function OverlayInspector({
           testId="toggle-main-screen"
         />
         <ToggleButton
-          label="Camera Frame"
+          label={t("toggle.cameraFrame")}
           checked={state.mainScreen.cameraVisible}
           onChange={(v) =>
             onChange({
@@ -44,7 +46,7 @@ export default function OverlayInspector({
           testId="toggle-camera"
         />
         <ToggleButton
-          label="Right Sidebar"
+          label={t("toggle.rightSidebar")}
           checked={state.sidebar.visible}
           onChange={(v) =>
             onChange({ ...state, sidebar: { ...state.sidebar, visible: v } })
@@ -52,7 +54,7 @@ export default function OverlayInspector({
           testId="toggle-sidebar"
         />
         <ToggleButton
-          label="Sidebar Social Info"
+          label={t("toggle.sidebarSocial")}
           checked={state.sidebar.socialVisible}
           onChange={(v) =>
             onChange({
@@ -63,7 +65,7 @@ export default function OverlayInspector({
           testId="toggle-sidebar-social"
         />
         <ToggleButton
-          label="Bottom Bar"
+          label={t("toggle.bottomBar")}
           checked={state.bottomBar.visible}
           onChange={(v) =>
             onChange({ ...state, bottomBar: { ...state.bottomBar, visible: v } })
@@ -73,8 +75,8 @@ export default function OverlayInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Sections"
-        hint="Three sidebar tracks"
+        title={t("group.sections")}
+        hint={t("group.sections.hint")}
         testId="group-overlay-sections"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -87,7 +89,7 @@ export default function OverlayInspector({
               textTransform: "uppercase",
             }}
           >
-            Active Section
+            {t("label.activeSection")}
           </span>
           <div
             style={{
@@ -127,7 +129,7 @@ export default function OverlayInspector({
                   transition: "all 0.15s",
                 }}
               >
-                {s.title || `Section ${idx + 1}`}
+                {s.title || `${t("label.section")} ${idx + 1}`}
               </button>
             ))}
           </div>
@@ -145,7 +147,7 @@ export default function OverlayInspector({
                 marginTop: 4,
               }}
             >
-              Section {idx + 1}
+              {`${t("label.section")} ${idx + 1}`}
             </span>
             <SidebarSectionEditor
               state={state}
@@ -158,8 +160,8 @@ export default function OverlayInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Live Bar"
-        hint="On-Air timer · stack · 3 segments"
+        title={t("group.liveBar")}
+        hint={t("group.liveBar.hint")}
         testId="group-overlay-live-bar"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -172,7 +174,7 @@ export default function OverlayInspector({
               textTransform: "uppercase",
             }}
           >
-            Live Session
+            {t("label.liveSession")}
           </span>
           <LiveSessionEditor state={state} onChange={onChange} />
         </div>
@@ -187,7 +189,7 @@ export default function OverlayInspector({
               textTransform: "uppercase",
             }}
           >
-            Stack
+{t("label.stack")}
           </span>
           <StackEditor state={state} onChange={onChange} />
         </div>
@@ -203,7 +205,7 @@ export default function OverlayInspector({
                 textTransform: "uppercase",
               }}
             >
-              Segment {idx + 1}
+              {`${t("label.segment")} ${idx + 1}`}
             </span>
             <BottomBarSegmentEditor
               state={state}

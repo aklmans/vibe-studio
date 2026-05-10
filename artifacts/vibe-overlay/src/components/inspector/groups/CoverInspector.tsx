@@ -3,6 +3,7 @@ import InspectorGroup from "../InspectorGroup";
 import BrandIdentityEditor from "../BrandIdentityEditor";
 import { SectionInput, ToggleButton } from "../../shared/Field";
 import SocialsEditor from "../../SocialsEditor";
+import { useLocale } from "../../../hooks/useLocale";
 
 interface CoverInspectorProps {
   state: OverlayState;
@@ -13,6 +14,7 @@ export default function CoverInspector({
   state,
   onChange,
 }: CoverInspectorProps) {
+  const { t } = useLocale();
   const writeCover = (patch: Partial<OverlayState["cover"]>) => {
     onChange({ ...state, cover: { ...state.cover, ...patch } });
   };
@@ -20,8 +22,8 @@ export default function CoverInspector({
   return (
     <>
       <InspectorGroup
-        title="Brand"
-        hint="Avatar · title · subtitle · agent badges"
+        title={t("group.brand")}
+        hint={t("group.brand.hint")}
         testId="group-cover-brand"
       >
         <BrandIdentityEditor
@@ -33,18 +35,18 @@ export default function CoverInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Today's Build"
-        hint="Card label + topic copy"
+        title={t("group.todaysBuild")}
+        hint={t("group.todaysBuild.hint")}
         testId="group-cover-today"
       >
         <SectionInput
-          label="Card Label"
+          label={t("label.cardLabel")}
           value={state.cover.todayLabel}
           onChange={(v) => writeCover({ todayLabel: v })}
           testId="cover-today-label"
         />
         <SectionInput
-          label="Topic"
+          label={t("label.topic")}
           value={state.cover.todayTopic}
           onChange={(v) => writeCover({ todayTopic: v })}
           testId="cover-today-topic"
@@ -52,13 +54,13 @@ export default function CoverInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title="Socials"
-        hint="Visible only when toggled on"
+        title={t("group.socials")}
+        hint={t("group.socials.hint")}
         testId="group-cover-socials"
         defaultOpen={false}
       >
         <ToggleButton
-          label="Show Social Card"
+          label={t("toggle.showSocialCard")}
           checked={state.cover.socialVisible}
           onChange={(v) => writeCover({ socialVisible: v })}
           testId="cover-social-visible"

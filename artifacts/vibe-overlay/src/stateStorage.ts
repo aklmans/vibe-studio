@@ -7,7 +7,6 @@ import {
   type SocialKind,
 } from "./lib/socials";
 import {
-  defaultSlotForKind,
   isBottomBarKind,
   type BottomBarKind,
   type BottomBarSlot,
@@ -485,16 +484,17 @@ export function normalizeOverlayState(value: unknown): OverlayState {
 
 export function loadOverlayState(
   storage: StorageLike | null = browserStorage(),
+  defaultValue: OverlayState = DEFAULT_STATE,
 ): OverlayState {
-  if (!storage) return normalizeOverlayState(DEFAULT_STATE);
+  if (!storage) return normalizeOverlayState(defaultValue);
 
   try {
     const raw = storage.getItem(STORAGE_KEY);
     return raw
       ? normalizeOverlayState(JSON.parse(raw))
-      : normalizeOverlayState(DEFAULT_STATE);
+      : normalizeOverlayState(defaultValue);
   } catch {
-    return normalizeOverlayState(DEFAULT_STATE);
+    return normalizeOverlayState(defaultValue);
   }
 }
 

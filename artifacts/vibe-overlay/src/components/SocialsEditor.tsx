@@ -1,10 +1,11 @@
 import type { OverlayState } from "../types";
 import {
-  SOCIAL_KIND_OPTIONS,
+  getSocialKindOptions,
   defaultSocialLabel,
   type SocialConfig,
   type SocialKind,
 } from "../lib/socials";
+import { useLocale } from "../hooks/useLocale";
 
 interface SocialsEditorProps {
   state: OverlayState;
@@ -22,6 +23,7 @@ export default function SocialsEditor({
   onChange,
   testIdPrefix = "social",
 }: SocialsEditorProps) {
+  const { locale, t } = useLocale();
   const updateSocial = (idx: number, patch: Partial<SocialConfig>) => {
     const socials = state.cover.socials.map((s, i) =>
       i === idx ? { ...s, ...patch } : s,
@@ -62,7 +64,7 @@ export default function SocialsEditor({
                 letterSpacing: "0.04em",
               }}
             >
-              {social.label || `Social ${idx + 1}`}
+              {social.label || `${t("label.social")} ${idx + 1}`}
             </span>
             <button
               data-testid={`${testIdPrefix}-${idx}-visible`}
@@ -106,7 +108,7 @@ export default function SocialsEditor({
               border: "1px solid #1F2235",
             }}
           >
-            {SOCIAL_KIND_OPTIONS.map((opt) => {
+            {getSocialKindOptions(locale).map((opt) => {
               const active = social.kind === opt.value;
               return (
                 <button
@@ -118,9 +120,9 @@ export default function SocialsEditor({
                     // presets. Keep custom labels intact when they switch *to*
                     // custom from a preset.
                     if (opt.value !== "custom") {
-                      patch.label = defaultSocialLabel(opt.value as SocialKind);
+                      patch.label = defaultSocialLabel(opt.value as SocialKind, locale);
                     } else if (!social.label.trim()) {
-                      patch.label = "Custom";
+                      patch.label = t("label.custom");
                     }
                     updateSocial(idx, patch);
                   }}
@@ -149,7 +151,7 @@ export default function SocialsEditor({
             data-testid={`${testIdPrefix}-${idx}-label`}
             value={social.label}
             onChange={(e) => updateSocial(idx, { label: e.target.value })}
-            placeholder="Label (e.g. B站)"
+            placeholder={t("label.socialLabel")}
             style={{
               background: "#080A14",
               border: "1px solid #2a3060",
@@ -171,7 +173,7 @@ export default function SocialsEditor({
             data-testid={`${testIdPrefix}-${idx}-value`}
             value={social.value}
             onChange={(e) => updateSocial(idx, { value: e.target.value })}
-            placeholder="Value (e.g. bili.com/aklman)"
+            placeholder={t("label.socialValue")}
             style={{
               background: "#080A14",
               border: "1px solid #2a3060",
@@ -202,7 +204,7 @@ export default function SocialsEditor({
                 style={{ flex: 1, fontSize: 11, color: "#8DA8FF" }}
                 title="Drives chip text/border/fill colors"
               >
-                Custom color
+                {t("label.customColor")}
               </span>
               <input
                 data-testid={`${testIdPrefix}-${idx}-color`}

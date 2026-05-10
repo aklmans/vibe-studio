@@ -1,10 +1,11 @@
 import type { OverlayState } from "../types";
 import {
-  BOTTOM_BAR_KIND_OPTIONS,
+  getBottomBarKindOptions,
   defaultSlotForKind,
   type BottomBarKind,
   type BottomBarSlot,
 } from "../lib/bottomBar";
+import { useLocale } from "../hooks/useLocale";
 
 interface BottomBarSegmentEditorProps {
   state: OverlayState;
@@ -21,6 +22,7 @@ export default function BottomBarSegmentEditor({
   onChange,
   index,
 }: BottomBarSegmentEditorProps) {
+  const { locale, t } = useLocale();
   const slot = state.bottomBar.segments[index];
   if (!slot) return null;
 
@@ -33,7 +35,7 @@ export default function BottomBarSegmentEditor({
 
   const setKind = (kind: BottomBarKind) => {
     if (kind === slot.kind) return;
-    writeSlot(defaultSlotForKind(kind));
+    writeSlot(defaultSlotForKind(kind, locale));
   };
 
   return (
@@ -50,7 +52,7 @@ export default function BottomBarSegmentEditor({
           border: "1px solid #1F2235",
         }}
       >
-        {BOTTOM_BAR_KIND_OPTIONS.map((opt) => {
+        {getBottomBarKindOptions(locale).map((opt) => {
           const active = slot.kind === opt.value;
           return (
             <button
@@ -90,7 +92,7 @@ export default function BottomBarSegmentEditor({
             borderRadius: 6,
           }}
         >
-          直播开始时间在 Live Session 区设置，时长会按秒自动刷新。
+          {t("segmentEditor.liveDesc")}
         </div>
       )}
 
@@ -127,7 +129,7 @@ export default function BottomBarSegmentEditor({
                   transition: "all 0.15s",
                 }}
               >
-                {section.title || `Section ${sIdx + 1}`}
+                {section.title || `${t("label.section")} ${sIdx + 1}`}
               </button>
             );
           })}
@@ -146,7 +148,7 @@ export default function BottomBarSegmentEditor({
             borderRadius: 6,
           }}
         >
-          内容在 Live Session › Stack 列表中编辑。
+          {t("segmentEditor.stackDesc")}
         </div>
       )}
 
@@ -162,20 +164,20 @@ export default function BottomBarSegmentEditor({
             borderRadius: 6,
           }}
         >
-          自动镜像 Cover/Poster 中的 TODAY'S BUILD。
+          {t("segmentEditor.mirrorDesc")}
         </div>
       )}
 
       {slot.kind === "text" && (
         <>
           <PlainInput
-            label="Title"
+            label={t("segmentEditor.title")}
             value={slot.title}
             onChange={(v) => writeSlot({ ...slot, title: v })}
             testId={`bottom-seg${index + 1}-title`}
           />
           <PlainInput
-            label="Text"
+            label={t("segmentEditor.text")}
             value={slot.text}
             onChange={(v) => writeSlot({ ...slot, text: v })}
             testId={`bottom-seg${index + 1}-text`}

@@ -1,4 +1,5 @@
 import type { OverlayState } from "../../types";
+import { useLocale } from "../../hooks/useLocale";
 import OverlayInspector from "./groups/OverlayInspector";
 import CoverInspector from "./groups/CoverInspector";
 import PosterInspector from "./groups/PosterInspector";
@@ -9,26 +10,13 @@ interface InspectorProps {
   onChange: (state: OverlayState) => void;
 }
 
-const TAB_TITLES: Record<OverlayState["activeTab"], string> = {
-  overlay: "Overlay",
-  cover: "Cover",
-  poster: "Poster",
-  wallpaper: "Wallpaper",
-};
-
-const TAB_HINTS: Record<OverlayState["activeTab"], string> = {
-  overlay: "Live broadcast composition",
-  cover: "Pre-stream / post-stream cover",
-  poster: "Long-form pre-stream poster",
-  wallpaper: "Brand wallpapers — 4K · QHD · Mobile",
-};
-
 /**
  * Right-hand inspector. Sole left-rail-replacement: shows a header and a
  * stack of context-aware accordion groups for the current tab. Container
  * width is owned by App.tsx.
  */
 export default function Inspector({ state, onChange }: InspectorProps) {
+  const { t } = useLocale();
   return (
     <aside
       data-testid="inspector"
@@ -58,7 +46,7 @@ export default function Inspector({ state, onChange }: InspectorProps) {
             letterSpacing: "0.02em",
           }}
         >
-          {TAB_TITLES[state.activeTab]}
+          {t(`tab.${state.activeTab}`)}
         </div>
         <div
           style={{
@@ -67,7 +55,7 @@ export default function Inspector({ state, onChange }: InspectorProps) {
             marginTop: 2,
           }}
         >
-          {TAB_HINTS[state.activeTab]}
+          {t(`inspector.${state.activeTab}.hint`)}
         </div>
       </div>
 

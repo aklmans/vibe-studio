@@ -2,6 +2,7 @@ import type { OverlayState } from "../../types";
 import AvatarUploader from "../shared/AvatarUploader";
 import { SectionInput } from "../shared/Field";
 import BadgesEditor from "../BadgesEditor";
+import { useLocale } from "../../hooks/useLocale";
 
 interface BrandIdentityEditorProps {
   state: OverlayState;
@@ -22,6 +23,7 @@ export default function BrandIdentityEditor({
   testIdPrefix,
   showSubtitle = false,
 }: BrandIdentityEditorProps) {
+  const { t } = useLocale();
   const writeCover = (patch: Partial<OverlayState["cover"]>) => {
     onChange({ ...state, cover: { ...state.cover, ...patch } });
   };
@@ -37,7 +39,7 @@ export default function BrandIdentityEditor({
       />
 
       <SectionInput
-        label="Title"
+        label={t("label.title")}
         value={state.cover.title}
         onChange={(v) => writeCover({ title: v })}
         testId={`${testIdPrefix}-title`}
@@ -45,7 +47,7 @@ export default function BrandIdentityEditor({
 
       {showSubtitle && (
         <SectionInput
-          label="Subtitle"
+          label={t("label.subtitle")}
           value={state.cover.hookText}
           onChange={(v) => writeCover({ hookText: v })}
           testId={`${testIdPrefix}-subtitle`}
@@ -62,7 +64,7 @@ export default function BrandIdentityEditor({
             textTransform: "uppercase",
           }}
         >
-          Agent Badges
+          {t("label.badge")}s
         </span>
         <BadgesEditor
           state={state}
@@ -82,7 +84,7 @@ export default function BrandIdentityEditor({
           borderRadius: 6,
         }}
       >
-        Avatar · Title · Badges 在 Cover · Poster · Wallpaper 之间共享，改一处三处都生效。
+        {t("brandIdentity.note")}
       </div>
     </div>
   );

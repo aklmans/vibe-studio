@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import type { BottomBarSlot } from "../lib/bottomBar";
 import { formatElapsed, formatStartLabel } from "../lib/bottomBar";
 import { useNow } from "../hooks/useNow";
+import { useLocale } from "../hooks/useLocale";
 
 type Size = "small" | "large";
 
@@ -20,6 +21,7 @@ export default function BottomBarSegments({
   state,
   size = "small",
 }: BottomBarSegmentsProps) {
+  const { t } = useLocale();
   const { bottomBar, colors } = state;
   const { borderColor, textColor, mutedText, cyanAccent, pinkAccent, warmAccent } = colors;
   const accents = [cyanAccent, warmAccent, pinkAccent];
@@ -72,6 +74,7 @@ export default function BottomBarSegments({
               textColor={textColor}
               mutedText={mutedText}
               borderColor={borderColor}
+              t={t}
             />
           </div>
         );
@@ -90,6 +93,7 @@ interface SegmentBodyProps {
   textColor: string;
   mutedText: string;
   borderColor: string;
+  t: (key: import("../lib/i18n").TranslationKey) => string;
 }
 
 function SegmentBody({
@@ -102,6 +106,7 @@ function SegmentBody({
   textColor,
   mutedText,
   borderColor,
+  t,
 }: SegmentBodyProps) {
   const titleStyle: CSSProperties = {
     fontSize: titleSize,
@@ -138,7 +143,7 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>On Air</span>
+            <span>{t("bar.onAir")}</span>
             <span
               style={{
                 display: "inline-flex",
@@ -195,7 +200,7 @@ function SegmentBody({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                started · {startLabel}
+                {t("live.started")} · {startLabel}
               </span>
             )}
           </div>
@@ -211,12 +216,12 @@ function SegmentBody({
       const total = section?.bullets.length ?? 0;
       const done = doneRow.filter(Boolean).length;
       const ratio = total === 0 ? 0 : done / total;
-      const titleText = section?.title || "进度";
+      const titleText = section?.title || t("bar.progress");
       return (
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>Progress · {titleText}</span>
+            <span>{t("bar.progress")} · {titleText}</span>
           </div>
           <div
             style={{
@@ -268,10 +273,10 @@ function SegmentBody({
           <>
             <div style={titleStyle}>
               <div style={railStyle} />
-              <span>Stack</span>
+              <span>{t("bar.stack")}</span>
             </div>
             <span style={{ ...valueStyle, color: `${mutedText}80`, fontSize: titleSize + 2 }}>
-              点击编辑器添加工具
+              {t("bar.emptyStack")}
             </span>
           </>
         );
@@ -280,7 +285,7 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>Stack</span>
+            <span>{t("bar.stack")}</span>
           </div>
           <div
             style={{
@@ -318,7 +323,7 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>{state.cover.todayLabel || "Topic"}</span>
+            <span>{state.cover.todayLabel || t("bar.topic")}</span>
           </div>
           <div style={valueStyle}>{state.cover.todayTopic}</div>
         </>

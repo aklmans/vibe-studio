@@ -3,6 +3,7 @@ import type { BadgeConfig } from "./lib/badges";
 import type { SocialConfig } from "./lib/socials";
 import type { BottomBarSlot } from "./lib/bottomBar";
 import type { WallpaperPresetId } from "./lib/wallpaper";
+import type { Locale } from "./lib/i18n";
 
 export interface OverlayState {
   sidebar: {
@@ -106,7 +107,7 @@ export const DEFAULT_STATE: OverlayState = {
   },
   mainScreen: {
     visible: true,
-    cameraVisible: false,
+    cameraVisible: true,
   },
   cover: {
     title: "Building With Agents",
@@ -116,29 +117,29 @@ export const DEFAULT_STATE: OverlayState = {
       { visible: false, kind: "gemini", label: "Gemini", customIconUrl: "" },
       { visible: false, kind: "grok", label: "Grok", customIconUrl: "" },
     ],
-    avatarUrl: "",
+    avatarUrl: "/avatar.jpg",
     avatarVisible: true,
-    todayLabel: "TODAY'S BUILD",
+    todayLabel: "今日构建",
     todayTopic: "多 Agent Coding 实战",
     manifestoVisible: false,
-    manifestoLine1: "Think clearly.",
-    manifestoLine2: "Build with agents.",
-    manifestoLine3: "Keep growing.",
+    manifestoLine1: "想清楚。",
+    manifestoLine2: "和智能体一起搭。",
+    manifestoLine3: "持续成长。",
     hookVisible: true,
     hookText: "with Aklman",
     closingVisible: false,
-    closingPrefix: "Enjoy",
-    closingStruck: "programming",
-    closingHighlight: "building with agents.",
-    closingSuffix: "Have a great life.",
-    socialVisible: false,
+    closingPrefix: "享受",
+    closingStruck: "编程",
+    closingHighlight: "和智能体一起搭建。",
+    closingSuffix: "拥有美好人生。",
+    socialVisible: true,
     socials: [
-      { visible: true, kind: "bilibili", label: "B站", value: "", customColor: "" },
-      { visible: true, kind: "blog", label: "博客", value: "", customColor: "" },
-      { visible: true, kind: "github", label: "GitHub", value: "", customColor: "" },
-      { visible: true, kind: "qq", label: "QQ群", value: "", customColor: "" },
-      { visible: false, kind: "x", label: "X", value: "", customColor: "" },
-      { visible: false, kind: "youtube", label: "YouTube", value: "", customColor: "" },
+      { visible: true, kind: "bilibili", label: "B站", value: "@aklman", customColor: "" },
+      { visible: true, kind: "blog", label: "博客", value: "blog.aklman.com", customColor: "" },
+      { visible: true, kind: "github", label: "GitHub", value: "github.com/aklman", customColor: "" },
+      { visible: true, kind: "qq", label: "QQ群", value: "123456789", customColor: "" },
+      { visible: false, kind: "x", label: "X", value: "@aklman_", customColor: "" },
+      { visible: false, kind: "youtube", label: "YouTube", value: "@aklman", customColor: "" },
     ],
   },
   wallpaper: {
@@ -156,4 +157,100 @@ export const DEFAULT_STATE: OverlayState = {
   },
   theme: "neon",
   activeTab: "overlay",
+};
+
+export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
+  zh: DEFAULT_STATE,
+  en: {
+    sidebar: {
+      visible: true,
+      socialVisible: false,
+      activeSection: 0,
+      sectionsDone: [
+        [false, false, false],
+        [false, false, false],
+        [false, false, false],
+      ],
+      sections: [
+        {
+          title: "Today's Goal",
+          bullets: ["Set up the stream layout", "Optimize AI workflow", "Explain as we go"],
+        },
+        {
+          title: "Current Problem",
+          bullets: ["What's the bottleneck?", "How to simplify?", "What to test next?"],
+        },
+        {
+          title: "Session Log",
+          bullets: ["Updated layout", "Verified result", "Continue simplifying next"],
+        },
+      ],
+    },
+    bottomBar: {
+      visible: true,
+      segments: [
+        { kind: "live" },
+        { kind: "progress", sectionIndex: 0 },
+        { kind: "stack" },
+      ],
+    },
+    liveSession: {
+      startedAt: "",
+    },
+    stack: {
+      items: ["Claude Opus 4.7", "Cursor", "React + Vite"],
+    },
+    mainScreen: {
+      visible: true,
+      cameraVisible: true,
+    },
+    cover: {
+      title: "Building With Agents",
+      badges: [
+        { visible: true, kind: "claude", label: "Claude", customIconUrl: "" },
+        { visible: true, kind: "codex", label: "Codex", customIconUrl: "" },
+        { visible: false, kind: "gemini", label: "Gemini", customIconUrl: "" },
+        { visible: false, kind: "grok", label: "Grok", customIconUrl: "" },
+      ],
+      avatarUrl: "/avatar.jpg",
+      avatarVisible: true,
+      todayLabel: "TODAY'S BUILD",
+      todayTopic: "Multi-Agent Coding Live",
+      manifestoVisible: false,
+      manifestoLine1: "Think clearly.",
+      manifestoLine2: "Build with agents.",
+      manifestoLine3: "Keep growing.",
+      hookVisible: true,
+      hookText: "with Aklman",
+      closingVisible: false,
+      closingPrefix: "Enjoy",
+      closingStruck: "programming",
+      closingHighlight: "building with agents.",
+      closingSuffix: "Have a great life.",
+      socialVisible: true,
+      socials: [
+        { visible: true, kind: "bilibili", label: "Bilibili", value: "@aklman", customColor: "" },
+        { visible: true, kind: "blog", label: "Blog", value: "blog.aklman.com", customColor: "" },
+        { visible: true, kind: "github", label: "GitHub", value: "github.com/aklman", customColor: "" },
+        { visible: true, kind: "qq", label: "QQ Group", value: "123456789", customColor: "" },
+        { visible: false, kind: "x", label: "X", value: "@aklman_", customColor: "" },
+        { visible: false, kind: "youtube", label: "YouTube", value: "@aklman", customColor: "" },
+      ],
+    },
+    wallpaper: {
+      previewPresetId: "desktop-4k",
+      brandLabel: "VIBE CODING",
+      brandLabelVisible: true,
+      slogan: "Build clearly. Ship loudly.",
+      sloganVisible: true,
+      avatarVisible: true,
+      badgesVisible: true,
+      socialVisible: true,
+    },
+    colors: {
+      ...NEON_PRESET,
+    },
+    theme: "neon",
+    activeTab: "overlay",
+  },
 };

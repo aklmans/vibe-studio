@@ -1,4 +1,5 @@
 import type { OverlayState } from "../../types";
+import { useLocale } from "../../hooks/useLocale";
 import ExportMenu from "./ExportMenu";
 
 interface TopBarProps {
@@ -22,13 +23,6 @@ const TABS: OverlayState["activeTab"][] = [
   "wallpaper",
 ];
 
-const TAB_LABELS: Record<OverlayState["activeTab"], string> = {
-  overlay: "Overlay",
-  cover: "Cover",
-  poster: "Poster",
-  wallpaper: "Wallpaper",
-};
-
 /**
  * Top application bar — replaces the legacy 280px left rail's header. Holds
  * brand mark, tab segmented control, primary export action + dropdown, and
@@ -48,6 +42,7 @@ export default function TopBar({
   onOpenSettings,
   onOpenCommandPalette,
 }: TopBarProps) {
+  const { t } = useLocale();
   const isMac =
     typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
   const Mod = isMac ? "⌘" : "Ctrl";
@@ -100,7 +95,7 @@ export default function TopBar({
             letterSpacing: "0.01em",
           }}
         >
-          Vibe Overlay
+          {t("app.brand")}
         </div>
       </div>
 
@@ -136,7 +131,7 @@ export default function TopBar({
                 transition: "all 0.15s",
               }}
             >
-              {TAB_LABELS[tab]}
+              {t(`tab.${tab}`)}
             </button>
           );
         })}
@@ -148,8 +143,8 @@ export default function TopBar({
       <button
         data-testid="btn-open-cmdk"
         onClick={onOpenCommandPalette}
-        title={`Command palette (${Mod}K)`}
-        aria-label="Open command palette"
+        title={t("topbar.commandPalette") + " (" + Mod + "K)"}
+        aria-label={t("topbar.commandPalette")}
         style={{
           height: 32,
           padding: "0 10px 0 12px",
@@ -175,7 +170,7 @@ export default function TopBar({
         }}
       >
         <span aria-hidden>⌕</span>
-        <span>Search…</span>
+        <span>{t("topbar.search")}</span>
         <span
           style={{
             fontFamily: "monospace",
@@ -196,8 +191,8 @@ export default function TopBar({
       <button
         data-testid="btn-open-settings"
         onClick={onOpenSettings}
-        title="Settings"
-        aria-label="Open settings"
+        title={t("topbar.settings")}
+        aria-label={t("topbar.settings")}
         style={{
           width: 32,
           height: 32,

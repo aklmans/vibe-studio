@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
+import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 
@@ -9,6 +10,7 @@ interface SidebarPanelProps {
 
 const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ state }, ref) => {
+    const { t } = useLocale();
     const { sidebar, cover, colors } = state;
     const { bgDark, bgPanel, borderColor, cyanAccent, pinkAccent } = colors;
 
@@ -74,7 +76,7 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
               }}
             >
               <div style={{ width: 3, height: 10, borderRadius: 2, background: pinkAccent, flexShrink: 0 }} />
-              关注我
+              {t("canvas.followMe")}
             </div>
             <SocialList state={state} size="small" />
           </div>

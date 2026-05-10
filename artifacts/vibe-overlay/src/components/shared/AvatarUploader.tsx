@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useLocale } from "../../hooks/useLocale";
 
 interface AvatarUploaderProps {
   url: string;
@@ -21,6 +22,7 @@ export default function AvatarUploader({
   onVisibleChange,
   testIdPrefix = "avatar",
 }: AvatarUploaderProps) {
+  const { t } = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +46,7 @@ export default function AvatarUploader({
           padding: "6px 0",
         }}
       >
-        <span style={{ fontSize: 13, color: "#C7D2FE" }}>Show Avatar</span>
+        <span style={{ fontSize: 13, color: "#C7D2FE" }}>{t("toggle.showAvatar")}</span>
         <button
           data-testid={`${testIdPrefix}-visible`}
           onClick={() => onVisibleChange(!visible)}
@@ -102,7 +104,7 @@ export default function AvatarUploader({
             textAlign: "center",
           }}
         >
-          {url ? "Replace Photo" : "Upload Photo"}
+          {url ? t("btn.replace") : t("btn.upload")}
         </button>
         {url && (
           <button
@@ -120,7 +122,7 @@ export default function AvatarUploader({
               fontFamily: "inherit",
             }}
           >
-            Clear
+            {t("btn.clear")}
           </button>
         )}
       </div>
@@ -138,7 +140,7 @@ export default function AvatarUploader({
               border: "1px solid #2a3060",
             }}
           />
-          <span style={{ fontSize: 11, color: "#6B7CA8" }}>Photo uploaded</span>
+          <span style={{ fontSize: 11, color: "#6B7CA8" }}>{t("avatar.uploaded")}</span>
         </div>
       )}
     </div>

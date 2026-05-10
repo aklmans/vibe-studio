@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { OverlayState } from "../types";
+import { useLocale } from "../hooks/useLocale";
 
 interface StackEditorProps {
   state: OverlayState;
@@ -12,6 +13,7 @@ interface StackEditorProps {
  * inline edit + delete, and a single input at the bottom appends.
  */
 export default function StackEditor({ state, onChange }: StackEditorProps) {
+  const { t } = useLocale();
   const [draft, setDraft] = useState("");
 
   const writeItems = (items: string[]) => {
@@ -59,7 +61,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
           <button
             data-testid={`stack-remove-${idx}`}
             onClick={() => removeItem(idx)}
-            title="Remove"
+            title={t("btn.remove")}
             style={{
               width: 28,
               height: 28,
@@ -100,7 +102,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
               addItem();
             }
           }}
-          placeholder="新增工具，回车确认"
+          placeholder={t("stackEditor.placeholder")}
           style={{
             flex: 1,
             background: "#0F1122",

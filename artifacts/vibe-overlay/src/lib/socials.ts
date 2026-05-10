@@ -5,6 +5,8 @@
 // "kind: 'custom'" lets the user invent their own label and color when none
 // of the presets match the platform they want to show.
 
+import type { Locale } from "./i18n";
+import { dict } from "./i18n";
 import type { ColorTokens } from "./theme";
 
 export type SocialKind =
@@ -31,7 +33,6 @@ export interface SocialStyle {
   border: string;
 }
 
-// Presets that don't depend on user theme tokens (fixed brand colors).
 interface BrandPreset {
   label: string;
   style: SocialStyle;
@@ -75,38 +76,48 @@ const BRAND_PRESETS: Record<
   },
 };
 
-export const SOCIAL_KIND_OPTIONS: { value: SocialKind; label: string }[] = [
-  { value: "bilibili", label: "B站" },
-  { value: "blog", label: "博客" },
-  { value: "github", label: "GitHub" },
-  { value: "qq", label: "QQ群" },
-  { value: "x", label: "X" },
-  { value: "youtube", label: "YouTube" },
-  { value: "wechat", label: "微信" },
-  { value: "custom", label: "Custom…" },
+export const SOCIAL_KIND_VALUES: SocialKind[] = [
+  "bilibili",
+  "blog",
+  "github",
+  "qq",
+  "x",
+  "youtube",
+  "wechat",
+  "custom",
 ];
 
-export const SOCIAL_KIND_VALUES: SocialKind[] = SOCIAL_KIND_OPTIONS.map(
-  (o) => o.value,
-);
+export function getSocialKindOptions(locale: Locale): { value: SocialKind; label: string }[] {
+  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
+  return [
+    { value: "bilibili", label: t("social.bilibili") },
+    { value: "blog", label: t("social.blog") },
+    { value: "github", label: t("social.github") },
+    { value: "qq", label: t("social.qq") },
+    { value: "x", label: t("social.x") },
+    { value: "youtube", label: t("social.youtube") },
+    { value: "wechat", label: t("social.wechat") },
+    { value: "custom", label: t("social.custom") },
+  ];
+}
 
-// Default label shown when the user picks a kind from the dropdown.
-export function defaultSocialLabel(kind: SocialKind): string {
+export function defaultSocialLabel(kind: SocialKind, locale: Locale = "zh"): string {
+  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
   switch (kind) {
     case "bilibili":
-      return "B站";
+      return t("social.bilibili");
     case "blog":
-      return "博客";
+      return t("social.blog");
     case "github":
-      return "GitHub";
+      return t("social.github");
     case "qq":
-      return "QQ群";
+      return t("social.qq");
     case "x":
-      return "X";
+      return t("social.x");
     case "youtube":
-      return "YouTube";
+      return t("social.youtube");
     case "wechat":
-      return "微信";
+      return t("social.wechat");
     case "custom":
       return "";
   }

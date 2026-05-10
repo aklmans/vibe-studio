@@ -1,11 +1,13 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
+import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
 
 interface OverlayCanvasProps {
   state: OverlayState;
+  onChange?: (state: OverlayState) => void;
   sidebarRef?: React.RefObject<HTMLDivElement | null>;
   bottomBarRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -25,7 +27,8 @@ const AVATAR_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
 `)}`;
 
 const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
-  ({ state, sidebarRef, bottomBarRef }, ref) => {
+  ({ state, onChange, sidebarRef, bottomBarRef }, ref) => {
+    const { t } = useLocale();
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
     const {
       bgDark,
@@ -124,7 +127,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   letterSpacing: "0.02em",
                 }}
               >
-                Screen Capture
+                {t("canvas.screenCapture")}
               </div>
               {/* LIVE pill — always visible while overlay is on air */}
               <div
@@ -234,7 +237,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   letterSpacing: "0.06em",
                 }}
               >
-                Camera
+                {t("canvas.camera")}
               </div>
             </div>
 
@@ -252,7 +255,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             >
               <img
                 src={avatarSrc}
-                alt="Camera"
+                alt={t("canvas.camera")}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -359,9 +362,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   }}
                 >
                   <div style={{ width: 3, height: 10, borderRadius: 2, background: pinkAccent, flexShrink: 0 }} />
-                  关注我
+                  {t("canvas.followMe")}
                 </div>
-                <SocialList state={state} size="small" />
+                <SocialList state={state} size="small" editable={!!onChange} onChange={onChange} />
               </div>
             )}
           </div>

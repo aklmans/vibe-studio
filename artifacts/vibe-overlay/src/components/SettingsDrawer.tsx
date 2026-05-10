@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { OverlayState } from "../types";
 import { THEME_PRESETS, type ThemeMode } from "../lib/theme";
+import { useLocale } from "../hooks/useLocale";
+import type { Locale } from "../lib/i18n";
 import { ColorInput } from "./shared/Field";
 import {
   AlertDialog,
@@ -22,10 +24,6 @@ interface SettingsDrawerProps {
   onReset: () => void;
 }
 
-/**
- * Right-edge settings drawer. Houses theme switcher, color tokens, and reset
- * — all the rarely-touched controls that used to clutter the primary panel.
- */
 export default function SettingsDrawer({
   open,
   onClose,
@@ -34,6 +32,7 @@ export default function SettingsDrawer({
   onReset,
 }: SettingsDrawerProps) {
   const drawerRef = useRef<HTMLDivElement | null>(null);
+  const { t, locale, setLocale } = useLocale();
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +57,6 @@ export default function SettingsDrawer({
 
   return (
     <>
-      {/* Scrim */}
       <div
         data-testid="settings-scrim"
         onClick={onClose}
@@ -72,7 +70,6 @@ export default function SettingsDrawer({
           zIndex: 60,
         }}
       />
-      {/* Drawer */}
       <aside
         ref={drawerRef}
         data-testid="settings-drawer"
@@ -110,7 +107,7 @@ export default function SettingsDrawer({
                 color: "#F4F7FF",
               }}
             >
-              Settings
+              {t("settings.title")}
             </div>
             <div
               style={{
@@ -119,7 +116,7 @@ export default function SettingsDrawer({
                 marginTop: 2,
               }}
             >
-              Theme · colors · reset
+              {t("settings.subtitle")}
             </div>
           </div>
           <button
@@ -136,7 +133,7 @@ export default function SettingsDrawer({
               fontFamily: "inherit",
               fontSize: 14,
             }}
-            aria-label="Close settings"
+            aria-label={t("settings.closeSettings")}
           >
             ×
           </button>
@@ -152,7 +149,43 @@ export default function SettingsDrawer({
             gap: 18,
           }}
         >
-          <Section title="Theme" hint="Preset color sets">
+          <Section title={t("language.zh") === "中文" ? "语言 / Language" : "Language / 语言"}>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                background: "#0F1122",
+                padding: 3,
+                borderRadius: 8,
+                border: "1px solid #1F2235",
+              }}
+            >
+              {(["zh", "en"] as const).map((loc) => (
+                <button
+                  key={loc}
+                  data-testid={`locale-${loc}`}
+                  onClick={() => setLocale(loc as Locale)}
+                  style={{
+                    flex: 1,
+                    padding: "7px 0",
+                    background: locale === loc ? "#1F2235" : "transparent",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: locale === loc ? "#F4F7FF" : "#6B7CA8",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {loc === "zh" ? "中文" : "English"}
+                </button>
+              ))}
+            </div>
+          </Section>
+
+          <Section title={t("settings.theme")} hint={t("settings.themeHint")}>
             <div
               style={{
                 display: "flex",
@@ -189,79 +222,79 @@ export default function SettingsDrawer({
             </div>
           </Section>
 
-          <Section title="Colors — Surface">
+          <Section title={t("settings.colorsSurface")}>
             <ColorInput
-              label="Background Dark"
-              hint="Outer canvas background"
+              label={t("color.bgDark")}
+              hint={t("color.bgDarkHint")}
               value={state.colors.bgDark}
               onChange={(v) => updateColor("bgDark", v)}
               testId="color-bg-dark"
             />
             <ColorInput
-              label="Panel Background"
-              hint="Sidebar / bottom-bar / camera tile fill"
+              label={t("color.bgPanel")}
+              hint={t("color.bgPanelHint")}
               value={state.colors.bgPanel}
               onChange={(v) => updateColor("bgPanel", v)}
               testId="color-bg-panel"
             />
             <ColorInput
-              label="Border"
-              hint="Panel hairline borders + accent dividers"
+              label={t("color.border")}
+              hint={t("color.borderHint")}
               value={state.colors.borderColor}
               onChange={(v) => updateColor("borderColor", v)}
               testId="color-border"
             />
           </Section>
 
-          <Section title="Colors — Text">
+          <Section title={t("settings.colorsText")}>
             <ColorInput
-              label="Text"
-              hint="Main bullet copy and titles"
+              label={t("color.text")}
+              hint={t("color.textHint")}
               value={state.colors.textColor}
               onChange={(v) => updateColor("textColor", v)}
               testId="color-text"
             />
             <ColorInput
-              label="Muted Text"
-              hint="Secondary captions and inactive sections"
+              label={t("color.mutedText")}
+              hint={t("color.mutedTextHint")}
               value={state.colors.mutedText}
               onChange={(v) => updateColor("mutedText", v)}
               testId="color-muted"
             />
             <ColorInput
-              label="Subtle Text"
-              hint="Eyebrow labels and footnote-level text"
+              label={t("color.subtleText")}
+              hint={t("color.subtleTextHint")}
               value={state.colors.subtleText}
               onChange={(v) => updateColor("subtleText", v)}
               testId="color-subtle"
             />
           </Section>
 
-          <Section title="Colors — Accent">
+          <Section title={t("settings.colorsAccent")}>
             <ColorInput
-              label="Cyan"
-              hint="Section 1 accent (sidebar + bottom bar)"
+              label={t("color.cyan")}
+              hint={t("color.cyanHint")}
               value={state.colors.cyanAccent}
               onChange={(v) => updateColor("cyanAccent", v)}
               testId="color-cyan"
             />
             <ColorInput
-              label="Pink"
-              hint="Section 2 accent + 'Follow me' header"
+              label={t("color.pink")}
+              hint={t("color.pinkHint")}
               value={state.colors.pinkAccent}
               onChange={(v) => updateColor("pinkAccent", v)}
               testId="color-pink"
             />
             <ColorInput
-              label="Warm"
-              hint="Section 3 accent + warm preset chips"
+              label={t("color.warm")}
+              hint={t("color.warmHint")}
               value={state.colors.warmAccent}
               onChange={(v) => updateColor("warmAccent", v)}
               testId="color-warm"
             />
           </Section>
 
-          <Section title="Danger Zone">
+          <Section title={t("group.dangerZone")}>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button
@@ -287,21 +320,19 @@ export default function SettingsDrawer({
                     (e.target as HTMLElement).style.borderColor = "#2a2d4a";
                   }}
                 >
-                  Reset Defaults
+                  {t("reset.button")}
                 </button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Reset to defaults?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("reset.title")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will discard all of your edits — sections, bullets,
-                    bottom-bar text, cover/poster copy, and color overrides —
-                    and load the factory state. This action cannot be undone.
+                    {t("reset.description")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel data-testid="btn-reset-cancel">
-                    Cancel
+                    {t("btn.cancel")}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     data-testid="btn-reset-confirm"
@@ -310,7 +341,7 @@ export default function SettingsDrawer({
                       onClose();
                     }}
                   >
-                    Reset everything
+                    {t("reset.confirm")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Command } from "cmdk";
 import type { OverlayState } from "../types";
 import { THEME_PRESETS, type ThemeMode } from "../lib/theme";
+import { useLocale } from "../hooks/useLocale";
+import type { Locale } from "../lib/i18n";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -22,13 +24,6 @@ const isMac =
   typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 const Mod = isMac ? "⌘" : "Ctrl";
 
-/**
- * ⌘K command palette. Fuzzy-searchable list of every action that's reachable
- * elsewhere in the UI: tab switch, export, settings, theme, and toggles.
- *
- * Uses cmdk for the matching/keyboard logic but is styled inline to match the
- * rest of the app — the shadcn wrapper would force Tailwind class layout.
- */
 export default function CommandPalette({
   open,
   onClose,
@@ -43,13 +38,10 @@ export default function CommandPalette({
   onOpenSettings,
   onReset,
 }: CommandPaletteProps) {
+  const { t, locale, setLocale } = useLocale();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [search, setSearch] = useState("");
 
-  // When the palette opens, drive focus into the cmdk input. cmdk attaches its
-  // arrow/enter keydown handler to the Command root and only sees events that
-  // bubble from a focused descendant — without this, the trigger button keeps
-  // focus and navigation/select are silently dead.
   useEffect(() => {
     if (!open) return;
     setSearch("");
@@ -69,9 +61,8 @@ export default function CommandPalette({
   if (!open) return null;
 
   const run = (fn: () => void) => () => {
+    fn();
     onClose();
-    // Defer one tick so cmdk can finish its own keydown handling first.
-    setTimeout(fn, 0);
   };
 
   const switchTab = (tab: OverlayState["activeTab"]) =>
@@ -125,7 +116,6 @@ export default function CommandPalette({
 
   return (
     <>
-      {/* Selection / hover styles for cmdk items — inline-styled siblings can't pick these up. */}
       <style>{`
         [cmdk-item=""][data-selected="true"] {
           background: #1F2235;
@@ -144,7 +134,6 @@ export default function CommandPalette({
         }
       `}</style>
 
-      {/* Scrim */}
       <div
         data-testid="cmdk-scrim"
         onClick={onClose}
@@ -156,11 +145,10 @@ export default function CommandPalette({
         }}
       />
 
-      {/* Dialog */}
       <div
         data-testid="cmdk-dialog"
         role="dialog"
-        aria-label="Command palette"
+        aria-label={t("topbar.commandPalette")}
         style={{
           position: "fixed",
           top: "18vh",
@@ -202,7 +190,7 @@ export default function CommandPalette({
               value={search}
               onValueChange={setSearch}
               autoFocus
-              placeholder="Type a command or search…"
+              placeholder={t("cmdk.placeholder")}
               style={{
                 flex: 1,
                 background: "transparent",
@@ -231,51 +219,51 @@ export default function CommandPalette({
                 textAlign: "center",
               }}
             >
-              No matching command.
+              {t("cmdk.empty")}
             </Command.Empty>
 
-            <Group heading="Switch tab">
+            <Group heading={t("cmdk.group.switchTab")}>
               <Item
-                value="tab-overlay"
+                value="tab-overlay 合成画面 overlay"
                 onSelect={run(() => switchTab("overlay"))}
                 shortcut={`${Mod} 1`}
                 active={state.activeTab === "overlay"}
                 testId="cmdk-tab-overlay"
               >
-                Go to Overlay
+                {t("cmdk.tab.overlay")}
               </Item>
               <Item
-                value="tab-cover"
+                value="tab-cover 封面 cover"
                 onSelect={run(() => switchTab("cover"))}
                 shortcut={`${Mod} 2`}
                 active={state.activeTab === "cover"}
                 testId="cmdk-tab-cover"
               >
-                Go to Cover
+                {t("cmdk.tab.cover")}
               </Item>
               <Item
-                value="tab-poster"
+                value="tab-poster 海报 poster"
                 onSelect={run(() => switchTab("poster"))}
                 shortcut={`${Mod} 3`}
                 active={state.activeTab === "poster"}
                 testId="cmdk-tab-poster"
               >
-                Go to Poster
+                {t("cmdk.tab.poster")}
               </Item>
               <Item
-                value="tab-wallpaper"
+                value="tab-wallpaper 壁纸 wallpaper"
                 onSelect={run(() => switchTab("wallpaper"))}
                 shortcut={`${Mod} 4`}
                 active={state.activeTab === "wallpaper"}
                 testId="cmdk-tab-wallpaper"
               >
-                Go to Wallpaper
+                {t("cmdk.tab.wallpaper")}
               </Item>
             </Group>
 
-            <Group heading="Export">
+            <Group heading={t("cmdk.group.export")}>
               <Item
-                value="export-current"
+                value="export-current 导出当前 export current"
                 onSelect={run(currentTabExporter(state, {
                   onExportOverlay,
                   onExportCover,
@@ -285,110 +273,126 @@ export default function CommandPalette({
                 shortcut={`${Mod} E`}
                 testId="cmdk-export-current"
               >
-                Export current tab
+                {t("cmdk.export.current")}
               </Item>
-              <Item value="export-overlay" onSelect={run(onExportOverlay)} testId="cmdk-export-overlay">
-                Export Full Overlay PNG
+              <Item value="export-overlay 导出 overlay full png" onSelect={run(onExportOverlay)} testId="cmdk-export-overlay">
+                {t("export.fullOverlay")}
               </Item>
-              <Item value="export-cover" onSelect={run(onExportCover)} testId="cmdk-export-cover">
-                Export Cover PNG
+              <Item value="export-cover 导出封面 cover png" onSelect={run(onExportCover)} testId="cmdk-export-cover">
+                {t("export.coverPng")}
               </Item>
-              <Item value="export-poster" onSelect={run(onExportPoster)} testId="cmdk-export-poster">
-                Export Poster PNG
+              <Item value="export-poster 导出海报 poster png" onSelect={run(onExportPoster)} testId="cmdk-export-poster">
+                {t("export.posterPng")}
               </Item>
               <Item
-                value="export-wallpaper"
+                value="export-wallpaper 导出壁纸 wallpaper set png"
                 onSelect={run(onExportWallpaper)}
                 testId="cmdk-export-wallpaper"
               >
-                Export Wallpaper Set (3 PNGs)
+                {t("export.wallpaperSet")}
               </Item>
-              <Item value="export-sidebar" onSelect={run(onExportSidebar)} testId="cmdk-export-sidebar">
-                Export Sidebar slice
+              <Item value="export-sidebar 导出侧栏 sidebar slice" onSelect={run(onExportSidebar)} testId="cmdk-export-sidebar">
+                {t("export.sidebar")}
               </Item>
               <Item
-                value="export-bottom-bar"
+                value="export-bottom-bar 导出底栏 bottom bar slice"
                 onSelect={run(onExportBottomBar)}
                 testId="cmdk-export-bottom-bar"
               >
-                Export Bottom Bar slice
+                {t("export.bottomBar")}
               </Item>
             </Group>
 
-            <Group heading="Theme">
+            <Group heading={t("cmdk.group.theme")}>
               <Item
-                value="theme-neon"
+                value="theme-neon 主题 neon"
                 onSelect={run(() => applyTheme("neon"))}
                 active={state.theme === "neon"}
                 testId="cmdk-theme-neon"
               >
-                Apply Neon theme
+                {t("cmdk.theme.neon")}
               </Item>
               <Item
-                value="theme-editorial"
+                value="theme-editorial 主题 editorial"
                 onSelect={run(() => applyTheme("editorial"))}
                 active={state.theme === "editorial"}
                 testId="cmdk-theme-editorial"
               >
-                Apply Editorial theme
+                {t("cmdk.theme.editorial")}
               </Item>
             </Group>
 
-            <Group heading="Visibility">
+            <Group heading={t("cmdk.group.visibility")}>
               <Item
-                value="toggle-main"
+                value="toggle-main 显示切换 main screen 主画面"
                 onSelect={run(() => toggleVisibility("main"))}
                 testId="cmdk-toggle-main"
               >
-                {state.mainScreen.visible ? "Hide" : "Show"} Main Screen
+                {state.mainScreen.visible ? t("cmdk.hide") : t("cmdk.show")} {t("toggle.mainScreen")}
               </Item>
               <Item
-                value="toggle-camera"
+                value="toggle-camera 显示切换 camera frame 摄像头"
                 onSelect={run(() => toggleVisibility("camera"))}
                 testId="cmdk-toggle-camera"
               >
-                {state.mainScreen.cameraVisible ? "Hide" : "Show"} Camera Frame
+                {state.mainScreen.cameraVisible ? t("cmdk.hide") : t("cmdk.show")} {t("toggle.cameraFrame")}
               </Item>
               <Item
-                value="toggle-sidebar"
+                value="toggle-sidebar 显示切换 sidebar 侧栏"
                 onSelect={run(() => toggleVisibility("sidebar"))}
                 testId="cmdk-toggle-sidebar"
               >
-                {state.sidebar.visible ? "Hide" : "Show"} Right Sidebar
+                {state.sidebar.visible ? t("cmdk.hide") : t("cmdk.show")} {t("toggle.rightSidebar")}
               </Item>
               <Item
-                value="toggle-sidebar-social"
+                value="toggle-sidebar-social 显示切换 social 社交 sidebar"
                 onSelect={run(() => toggleVisibility("sidebar-social"))}
                 testId="cmdk-toggle-sidebar-social"
               >
-                {state.sidebar.socialVisible ? "Hide" : "Show"} Sidebar Social
-                Info
+                {state.sidebar.socialVisible ? t("cmdk.hide") : t("cmdk.show")} {t("toggle.sidebarSocial")}
               </Item>
               <Item
-                value="toggle-bottom-bar"
+                value="toggle-bottom-bar 显示切换 bottom bar 底栏"
                 onSelect={run(() => toggleVisibility("bottom-bar"))}
                 testId="cmdk-toggle-bottom-bar"
               >
-                {state.bottomBar.visible ? "Hide" : "Show"} Bottom Bar
+                {state.bottomBar.visible ? t("cmdk.hide") : t("cmdk.show")} {t("toggle.bottomBar")}
               </Item>
             </Group>
 
-            <Group heading="App">
+            <Group heading={t("cmdk.group.language")}>
               <Item
-                value="open-settings"
+                value="locale language 语言 english"
+                onSelect={run(() => setLocale("en"))}
+                testId="cmdk-locale-en"
+              >
+                {t("cmdk.locale.en")}
+              </Item>
+              <Item
+                value="locale language 语言 chinese 中文"
+                onSelect={run(() => setLocale("zh"))}
+                testId="cmdk-locale-zh"
+              >
+                {t("cmdk.locale.zh")}
+              </Item>
+            </Group>
+
+            <Group heading={t("cmdk.group.app")}>
+              <Item
+                value="settings 设置 preferences"
                 onSelect={run(onOpenSettings)}
                 shortcut={`${Mod} ,`}
                 testId="cmdk-open-settings"
               >
-                Open Settings
+                {t("cmdk.settings")}
               </Item>
               <Item
-                value="reset-defaults"
+                value="reset defaults 重置 reset"
                 onSelect={run(onReset)}
                 testId="cmdk-reset"
                 tone="danger"
               >
-                Reset to Defaults…
+                {t("cmdk.reset")}
               </Item>
             </Group>
           </Command.List>
@@ -407,14 +411,14 @@ export default function CommandPalette({
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Kbd>↑</Kbd>
               <Kbd>↓</Kbd>
-              <span>navigate</span>
+              <span>{t("cmdk.navigate")}</span>
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Kbd>↵</Kbd>
-              <span>select</span>
+              <span>{t("cmdk.select")}</span>
             </span>
             <span style={{ marginLeft: "auto" }}>
-              {Mod}K toggles this palette
+              {Mod}K {t("cmdk.toggleHint")}
             </span>
           </div>
         </Command>
@@ -422,8 +426,6 @@ export default function CommandPalette({
     </>
   );
 }
-
-/* ─── Sub-components ───────────────────────────────────────────────────── */
 
 function currentTabExporter(
   state: OverlayState,
