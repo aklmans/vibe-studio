@@ -85,9 +85,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             style={{
               position: "absolute",
               left: 24,
-              top: 48,
+              top: 24,
               width: 1448,
-              height: 822,
+              height: 846,
               background: "#070A12",
               border: `2px solid ${borderColor}50`,
               borderRadius: 0,
@@ -194,7 +194,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             style={{
               position: "absolute",
               left: 1496,
-              top: 720,
+              top: 756,
               width: 400,
               height: 300,
               background: "#050710",
@@ -305,9 +305,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             style={{
               position: "absolute",
               left: 1496,
-              top: 48,
+              top: 24,
               width: 400,
-              height: 660,
+              height: 708,
               background: `${bgPanel}F0`,
               border: `2px solid ${borderColor}45`,
               borderRadius: 0,
