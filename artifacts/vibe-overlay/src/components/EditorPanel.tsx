@@ -7,6 +7,7 @@ import SocialsEditor from "./SocialsEditor";
 import BottomBarSegmentEditor from "./BottomBarSegmentEditor";
 import LiveSessionEditor from "./LiveSessionEditor";
 import StackEditor from "./StackEditor";
+import WallpaperEditor from "./WallpaperEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ interface EditorPanelProps {
   onExportBottomBar: () => void;
   onExportCover: () => void;
   onExportPoster: () => void;
+  onExportWallpaper: () => void;
   onReset: () => void;
   exporting: string | null;
 }
@@ -275,6 +277,7 @@ export default function EditorPanel({
   onExportBottomBar,
   onExportCover,
   onExportPoster,
+  onExportWallpaper,
   onReset,
   exporting,
 }: EditorPanelProps) {
@@ -388,7 +391,7 @@ export default function EditorPanel({
             border: "1px solid #1F2235",
           }}
         >
-          {(["overlay", "cover", "poster"] as const).map((tab) => (
+          {(["overlay", "cover", "poster", "wallpaper"] as const).map((tab) => (
             <button
               key={tab}
               data-testid={`tab-${tab}`}
@@ -399,7 +402,7 @@ export default function EditorPanel({
                 background: state.activeTab === tab ? "#1F2235" : "transparent",
                 border: "none",
                 borderRadius: 6,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 500,
                 color: state.activeTab === tab ? "#F4F7FF" : "#6B7CA8",
                 cursor: "pointer",
@@ -408,7 +411,7 @@ export default function EditorPanel({
                 transition: "all 0.15s",
               }}
             >
-              {tab === "overlay" ? "Overlay" : tab === "cover" ? "Cover" : "Poster"}
+              {tab}
             </button>
           ))}
         </div>
@@ -903,6 +906,13 @@ export default function EditorPanel({
           </>
         )}
 
+        {state.activeTab === "wallpaper" && (
+          <>
+            <SectionHeading>Wallpaper</SectionHeading>
+            <WallpaperEditor state={state} onChange={onChange} />
+          </>
+        )}
+
         {/* Colors */}
         <SectionHeading>Colors — Surface</SectionHeading>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1016,6 +1026,13 @@ export default function EditorPanel({
             loading={exporting === "poster"}
             testId="btn-export-poster"
             accent="#C084FC"
+          />
+          <ExportButton
+            label="Export Wallpaper Set (3 PNGs)"
+            onClick={onExportWallpaper}
+            loading={exporting === "wallpaper"}
+            testId="btn-export-wallpaper"
+            accent="#5EEAD4"
           />
         </div>
 

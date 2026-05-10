@@ -75,3 +75,17 @@ export async function exportPoster(posterEl: HTMLElement): Promise<void> {
     backgroundColor: null,
   });
 }
+
+export async function exportWallpaper(
+  wallpaperEl: HTMLElement,
+  filename: string,
+  width: number,
+  height: number,
+): Promise<void> {
+  await exportElementAsPng(wallpaperEl, {
+    filename,
+    width,
+    height,
+    backgroundColor: null,
+  });
+}

@@ -3,6 +3,7 @@ import { DEFAULT_STATE, type OverlayState } from "./types";
 import OverlayCanvas from "./components/OverlayCanvas";
 import CoverCanvas from "./components/CoverCanvas";
 import PosterCanvas from "./components/PosterCanvas";
+import WallpaperCanvas from "./components/WallpaperCanvas";
 import SidebarPanel from "./components/SidebarPanel";
 import BottomBarPanel from "./components/BottomBarPanel";
 import EditorPanel from "./components/EditorPanel";
@@ -12,8 +13,13 @@ import {
   exportBottomBar,
   exportCover,
   exportPoster,
+  exportWallpaper,
 } from "./utils/exportImage";
 import { loadOverlayState, saveOverlayState } from "./stateStorage";
+import {
+  WALLPAPER_PRESETS,
+  getWallpaperPreset,
+} from "./lib/wallpaper";
 
 // Offscreen export stage styles — rendered at native resolution, invisible to user
 const exportStageStyle: React.CSSProperties = {
@@ -41,6 +47,9 @@ export default function App() {
   const exportBottomBarRef = useRef<HTMLDivElement | null>(null);
   const exportCoverRef = useRef<HTMLDivElement | null>(null);
   const exportPosterRef = useRef<HTMLDivElement | null>(null);
+  const exportWallpaperRefs = useRef<Map<string, HTMLDivElement | null>>(
+    new Map(),
+  );
 
   const setState = useCallback((next: OverlayState) => {
     setStateRaw(next);
@@ -52,7 +61,7 @@ export default function App() {
 
   const handleExport = useCallback(
     async (
-      type: "overlay" | "sidebar" | "bottom-bar" | "cover" | "poster",
+      type: "overlay" | "sidebar" | "bottom-bar" | "cover" | "poster" | "wallpaper",
       fn: () => Promise<void>,
     ) => {
       setExporting(type);
@@ -113,12 +122,47 @@ export default function App() {
     handleExport("poster", () => exportPoster(el));
   }, [handleExport]);
 
+  const handleExportWallpaper = useCallback(() => {
+    handleExport("wallpaper", async () => {
+      for (const preset of WALLPAPER_PRESETS) {
+        const el = exportWallpaperRefs.current.get(preset.id);
+        if (!el) {
+          throw new Error(`Wallpaper export node missing: ${preset.id}`);
+        }
+        await exportWallpaper(
+          el,
+          `vibe-coding-wallpaper-${preset.id}.png`,
+          preset.width,
+          preset.height,
+        );
+      }
+    });
+  }, [handleExport]);
+
   const handleReset = useCallback(() => {
     setState({ ...DEFAULT_STATE });
   }, [setState]);
 
   const CANVAS_NATIVE_W = 1920;
   const CANVAS_NATIVE_H = 1080;
+
+  const wallpaperPreset = getWallpaperPreset(state.wallpaper.previewPresetId);
+  const isWallpaperTab = state.activeTab === "wallpaper";
+  const previewW = isWallpaperTab ? wallpaperPreset.width : CANVAS_NATIVE_W;
+  const previewH = isWallpaperTab ? wallpaperPreset.height : CANVAS_NATIVE_H;
+
+  const tabBadge = (() => {
+    switch (state.activeTab) {
+      case "overlay":
+        return "OVERLAY · 1920×1080";
+      case "cover":
+        return "COVER · 1920×1080";
+      case "poster":
+        return "POSTER · 1920×1080";
+      case "wallpaper":
+        return `WALLPAPER · ${wallpaperPreset.label} · ${wallpaperPreset.width}×${wallpaperPreset.height}`;
+    }
+  })();
 
   return (
     <>
@@ -153,6 +197,20 @@ export default function App() {
         <PosterCanvas ref={exportPosterRef} state={state} />
       </div>
 
+      {/* Wallpaper exports — one offscreen node per preset (4K / QHD / Mobile) */}
+      {WALLPAPER_PRESETS.map((preset) => (
+        <div key={preset.id} style={exportStageStyle}>
+          <WallpaperCanvas
+            ref={(node) => {
+              if (node) exportWallpaperRefs.current.set(preset.id, node);
+              else exportWallpaperRefs.current.delete(preset.id);
+            }}
+            state={state}
+            preset={preset}
+          />
+        </div>
+      ))}
+
       {/* ─── Main UI ──────────────────────────────────────────────────────── */}
       <div
         style={{
@@ -173,6 +231,7 @@ export default function App() {
           onExportBottomBar={handleExportBottomBar}
           onExportCover={handleExportCover}
           onExportPoster={handleExportPoster}
+          onExportWallpaper={handleExportWallpaper}
           onReset={handleReset}
           exporting={exporting}
         />
@@ -210,11 +269,7 @@ export default function App() {
                   letterSpacing: "0.04em",
                 }}
               >
-                {state.activeTab === "overlay"
-                  ? "OVERLAY · 1920×1080"
-                  : state.activeTab === "cover"
-                    ? "COVER · 1920×1080"
-                    : "POSTER · 1920×1080"}
+                {tabBadge}
               </div>
               <div style={{ fontSize: 11, color: "#6B7CA8" }}>
                 Scaled preview — export at full resolution
@@ -238,13 +293,15 @@ export default function App() {
           </div>
 
           {/* Scaled Canvas Preview */}
-          <PreviewFrame nativeW={CANVAS_NATIVE_W} nativeH={CANVAS_NATIVE_H}>
+          <PreviewFrame nativeW={previewW} nativeH={previewH}>
             {state.activeTab === "overlay" ? (
               <OverlayCanvas ref={previewOverlayRef} state={state} />
             ) : state.activeTab === "cover" ? (
               <CoverCanvas ref={previewCoverRef} state={state} />
-            ) : (
+            ) : state.activeTab === "poster" ? (
               <PosterCanvas ref={previewPosterRef} state={state} />
+            ) : (
+              <WallpaperCanvas state={state} preset={wallpaperPreset} />
             )}
           </PreviewFrame>
         </div>

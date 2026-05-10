@@ -2,6 +2,7 @@ import { NEON_PRESET, type ColorTokens, type ThemeMode } from "./lib/theme";
 import type { BadgeConfig } from "./lib/badges";
 import type { SocialConfig } from "./lib/socials";
 import type { BottomBarSlot } from "./lib/bottomBar";
+import type { WallpaperPresetId } from "./lib/wallpaper";
 
 export interface OverlayState {
   sidebar: {
@@ -49,9 +50,19 @@ export interface OverlayState {
     socialVisible: boolean;
     socials: SocialConfig[];
   };
+  wallpaper: {
+    previewPresetId: WallpaperPresetId;
+    brandLabel: string;
+    brandLabelVisible: boolean;
+    slogan: string;
+    sloganVisible: boolean;
+    avatarVisible: boolean;
+    badgesVisible: boolean;
+    socialVisible: boolean;
+  };
   colors: ColorTokens;
   theme: ThemeMode;
-  activeTab: "overlay" | "cover" | "poster";
+  activeTab: "overlay" | "cover" | "poster" | "wallpaper";
 }
 
 export const DEFAULT_STATE: OverlayState = {
@@ -129,6 +140,16 @@ export const DEFAULT_STATE: OverlayState = {
       { visible: false, kind: "x", label: "X", value: "", customColor: "" },
       { visible: false, kind: "youtube", label: "YouTube", value: "", customColor: "" },
     ],
+  },
+  wallpaper: {
+    previewPresetId: "desktop-4k",
+    brandLabel: "VIBE CODING",
+    brandLabelVisible: true,
+    slogan: "Build clearly. Ship loudly.",
+    sloganVisible: true,
+    avatarVisible: true,
+    badgesVisible: true,
+    socialVisible: true,
   },
   colors: {
     ...NEON_PRESET,

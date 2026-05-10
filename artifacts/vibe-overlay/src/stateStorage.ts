@@ -12,6 +12,7 @@ import {
   type BottomBarKind,
   type BottomBarSlot,
 } from "./lib/bottomBar";
+import { isWallpaperPresetId, type WallpaperPresetId } from "./lib/wallpaper";
 
 const STORAGE_KEY = "vibe-overlay-state";
 
@@ -298,6 +299,12 @@ function normalizeSocials(
   }));
 }
 
+function normalizeWallpaperPresetId(value: unknown): WallpaperPresetId {
+  return isWallpaperPresetId(value)
+    ? value
+    : DEFAULT_STATE.wallpaper.previewPresetId;
+}
+
 function browserStorage(): StorageLike | null {
   return typeof localStorage === "undefined" ? null : localStorage;
 }
@@ -310,6 +317,7 @@ export function normalizeOverlayState(value: unknown): OverlayState {
   const cover = record(source?.cover);
   const liveSession = record(source?.liveSession);
   const stack = record(source?.stack);
+  const wallpaper = record(source?.wallpaper);
 
   return {
     sidebar: {
@@ -431,6 +439,37 @@ export function normalizeOverlayState(value: unknown): OverlayState {
         socialQQ: cover?.socialQQ,
       }),
     },
+    wallpaper: {
+      previewPresetId: normalizeWallpaperPresetId(wallpaper?.previewPresetId),
+      brandLabel: stringOrDefault(
+        wallpaper?.brandLabel,
+        DEFAULT_STATE.wallpaper.brandLabel,
+      ),
+      brandLabelVisible: boolOrDefault(
+        wallpaper?.brandLabelVisible,
+        DEFAULT_STATE.wallpaper.brandLabelVisible,
+      ),
+      slogan: stringOrDefault(
+        wallpaper?.slogan,
+        DEFAULT_STATE.wallpaper.slogan,
+      ),
+      sloganVisible: boolOrDefault(
+        wallpaper?.sloganVisible,
+        DEFAULT_STATE.wallpaper.sloganVisible,
+      ),
+      avatarVisible: boolOrDefault(
+        wallpaper?.avatarVisible,
+        DEFAULT_STATE.wallpaper.avatarVisible,
+      ),
+      badgesVisible: boolOrDefault(
+        wallpaper?.badgesVisible,
+        DEFAULT_STATE.wallpaper.badgesVisible,
+      ),
+      socialVisible: boolOrDefault(
+        wallpaper?.socialVisible,
+        DEFAULT_STATE.wallpaper.socialVisible,
+      ),
+    },
     colors: normalizeColors(source?.colors),
     theme: normalizeTheme(source?.theme),
     activeTab:
@@ -438,7 +477,9 @@ export function normalizeOverlayState(value: unknown): OverlayState {
         ? "cover"
         : source?.activeTab === "poster"
           ? "poster"
-          : "overlay",
+          : source?.activeTab === "wallpaper"
+            ? "wallpaper"
+            : "overlay",
   };
 }
 
