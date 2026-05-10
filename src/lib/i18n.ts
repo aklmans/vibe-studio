@@ -9,15 +9,18 @@ export const dict = {
 
     // ─── Tabs / tab badges ────────────────────────────────────────────
     "tab.overlay": "合成画面",
+    "tab.live": "直播数据",
     "tab.cover": "封面",
     "tab.poster": "海报",
     "tab.wallpaper": "壁纸",
     "tabBadge.overlay": "合成画面 · 1920×1080",
+    "tabBadge.live": "直播数据 · 侧栏 / 底栏",
     "tabBadge.cover": "封面 · 1920×1080",
     "tabBadge.poster": "海报 · 1920×1080",
 
     // ─── Inspector ────────────────────────────────────────────────────
     "inspector.overlay.hint": "直播合成画面",
+    "inspector.live.hint": "侧栏与底栏数据管理",
     "inspector.cover.hint": "开播前 / 结束后封面",
     "inspector.poster.hint": "长版开播预告海报",
     "inspector.wallpaper.hint": "品牌壁纸 — 4K · QHD · 手机",
@@ -157,6 +160,7 @@ export const dict = {
 
     // ─── cmdk items ──────────────────────────────────────────────────
     "cmdk.tab.overlay": "跳到 合成画面 (Overlay)",
+    "cmdk.tab.live": "跳到 直播数据",
     "cmdk.tab.cover": "跳到 封面 (Cover)",
     "cmdk.tab.poster": "跳到 海报 (Poster)",
     "cmdk.tab.wallpaper": "跳到 壁纸 (Wallpaper)",
@@ -170,6 +174,7 @@ export const dict = {
 
     // ─── Export ───────────────────────────────────────────────────────
     "export.overlay": "导出 合成画面",
+    "export.live": "导出 合成画面",
     "export.cover": "导出 封面",
     "export.poster": "导出 海报",
     "export.wallpaper": "导出壁纸集",
@@ -186,6 +191,7 @@ export const dict = {
 
     // ─── App ─────────────────────────────────────────────────────────
     "app.previewHint": "缩放预览 — 导出为原始分辨率",
+    "app.liveDataHint": "管理侧栏和底栏 — 自动同步到 OBS",
     "app.brand": "Vibe Overlay",
 
     // ─── Live bar / canvas ────────────────────────────────────────────
@@ -266,15 +272,18 @@ export const dict = {
 
     // ─── Tabs / tab badges ────────────────────────────────────────────
     "tab.overlay": "Overlay",
+    "tab.live": "Live Data",
     "tab.cover": "Cover",
     "tab.poster": "Poster",
     "tab.wallpaper": "Wallpaper",
     "tabBadge.overlay": "OVERLAY · 1920×1080",
+    "tabBadge.live": "LIVE DATA · SIDEBAR / LIVE BAR",
     "tabBadge.cover": "COVER · 1920×1080",
     "tabBadge.poster": "POSTER · 1920×1080",
 
     // ─── Inspector ────────────────────────────────────────────────────
     "inspector.overlay.hint": "Live broadcast composition",
+    "inspector.live.hint": "Sidebar and live bar data management",
     "inspector.cover.hint": "Pre-stream / post-stream cover",
     "inspector.poster.hint": "Long-form pre-stream poster",
     "inspector.wallpaper.hint": "Brand wallpapers — 4K · QHD · Mobile",
@@ -414,6 +423,7 @@ export const dict = {
 
     // ─── cmdk items ──────────────────────────────────────────────────
     "cmdk.tab.overlay": "Go to Overlay",
+    "cmdk.tab.live": "Go to Live Data",
     "cmdk.tab.cover": "Go to Cover",
     "cmdk.tab.poster": "Go to Poster",
     "cmdk.tab.wallpaper": "Go to Wallpaper",
@@ -427,6 +437,7 @@ export const dict = {
 
     // ─── Export ───────────────────────────────────────────────────────
     "export.overlay": "Export Overlay",
+    "export.live": "Export Overlay",
     "export.cover": "Export Cover",
     "export.poster": "Export Poster",
     "export.wallpaper": "Export Wallpaper Set",
@@ -443,6 +454,7 @@ export const dict = {
 
     // ─── App ─────────────────────────────────────────────────────────
     "app.previewHint": "Scaled preview — export at full resolution",
+    "app.liveDataHint": "Manage sidebar and live bar data — syncs to OBS automatically",
     "app.brand": "Vibe Overlay",
 
     // ─── Live bar / canvas ────────────────────────────────────────────

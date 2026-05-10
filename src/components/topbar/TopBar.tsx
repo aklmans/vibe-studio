@@ -2,6 +2,7 @@ import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { produceState } from "../../lib/state";
 import { useLocale } from "../../hooks/useLocale";
+import { APP_TABS } from "../../lib/tabs";
 import ExportMenu from "./ExportMenu";
 
 interface TopBarProps {
@@ -18,12 +19,7 @@ interface TopBarProps {
   onOpenCommandPalette: () => void;
 }
 
-const TABS: OverlayState["activeTab"][] = [
-  "overlay",
-  "cover",
-  "poster",
-  "wallpaper",
-];
+const TABS = APP_TABS;
 
 /**
  * Top application bar — replaces the legacy 280px left rail's header. Holds

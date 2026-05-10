@@ -25,6 +25,7 @@ interface ExportMenuProps {
 
 const PRIMARY_KIND: Record<OverlayState["activeTab"], ExportKind> = {
   overlay: "overlay",
+  live: "overlay",
   cover: "cover",
   poster: "poster",
   wallpaper: "wallpaper",
@@ -74,6 +75,7 @@ export default function ExportMenu({
   const handlePrimary = () => {
     switch (state.activeTab) {
       case "overlay":
+      case "live":
         onExportOverlay();
         break;
       case "cover":

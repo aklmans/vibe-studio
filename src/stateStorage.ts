@@ -12,6 +12,7 @@ import {
   type BottomBarSlot,
 } from "./lib/bottomBar";
 import { isWallpaperPresetId, type WallpaperPresetId } from "./lib/wallpaper";
+import { isAppTab } from "./lib/tabs";
 
 const STORAGE_KEY = "vibe-overlay-state";
 
@@ -290,6 +291,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
   const liveSession = record(source?.liveSession);
   const stack = record(source?.stack);
   const wallpaper = record(source?.wallpaper);
+  const activeTab = source?.activeTab;
 
   return {
     sidebar: {
@@ -444,14 +446,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
     },
     colors: normalizeColors(source?.colors, defaultValue.colors),
     theme: normalizeTheme(source?.theme, defaultValue.theme),
-    activeTab:
-      source?.activeTab === "cover"
-        ? "cover"
-        : source?.activeTab === "poster"
-          ? "poster"
-          : source?.activeTab === "wallpaper"
-            ? "wallpaper"
-            : "overlay",
+    activeTab: isAppTab(activeTab) ? activeTab : "overlay",
   };
 }
 

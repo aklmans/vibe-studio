@@ -68,6 +68,12 @@ test("saveOverlayState writes normalized JSON", () => {
   assert.equal(JSON.parse(saved).activeTab, "cover");
 });
 
+test("normalizeOverlayState preserves the live data tab", () => {
+  const state = normalizeOverlayState({ activeTab: "live" });
+
+  assert.equal(state.activeTab, "live");
+});
+
 test("normalizeOverlayState fills missing fields from the provided locale defaults", () => {
   const state = normalizeOverlayState(
     {

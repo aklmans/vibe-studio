@@ -4,6 +4,7 @@ import type { SocialConfig } from "./lib/socials";
 import type { BottomBarSlot } from "./lib/bottomBar";
 import type { WallpaperPresetId } from "./lib/wallpaper";
 import type { Locale } from "./lib/i18n";
+import type { AppTab } from "./lib/tabs";
 
 export interface OverlayState {
   sidebar: {
@@ -63,7 +64,7 @@ export interface OverlayState {
   };
   colors: ColorTokens;
   theme: ThemeMode;
-  activeTab: "overlay" | "cover" | "poster" | "wallpaper";
+  activeTab: AppTab;
 }
 
 export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {

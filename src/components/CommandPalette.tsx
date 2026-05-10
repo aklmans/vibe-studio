@@ -231,6 +231,14 @@ export default function CommandPalette({
                 {t("cmdk.tab.overlay")}
               </Item>
               <Item
+                value="tab-live 直播数据 live data sections live bar"
+                onSelect={run(() => switchTab("live"))}
+                active={state.activeTab === "live"}
+                testId="cmdk-tab-live"
+              >
+                {t("cmdk.tab.live")}
+              </Item>
+              <Item
                 value="tab-cover 封面 cover"
                 onSelect={run(() => switchTab("cover"))}
                 shortcut={`${Mod} 2`}
@@ -436,6 +444,7 @@ function currentTabExporter(
 ): () => void {
   switch (state.activeTab) {
     case "overlay":
+    case "live":
       return exporters.onExportOverlay;
     case "cover":
       return exporters.onExportCover;

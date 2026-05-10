@@ -8,6 +8,7 @@ import PosterCanvas from "./PosterCanvas";
 import WallpaperCanvas from "./WallpaperCanvas";
 import SidebarPanel from "./SidebarPanel";
 import BottomBarPanel from "./BottomBarPanel";
+import LiveDataManager from "./live-data/LiveDataManager";
 import TopBar from "./topbar/TopBar";
 import Inspector from "./inspector/Inspector";
 import SettingsDrawer from "./SettingsDrawer";
@@ -24,6 +25,7 @@ import { loadOverlayState, saveOverlayState } from "../stateStorage";
 import { UI_BORDERS, UI_COLORS } from "../lib/design-tokens";
 import { produceState } from "../lib/state";
 import { publishLiveState } from "../lib/live-state-client";
+import { CANVAS_TABS } from "../lib/tabs";
 import {
   WALLPAPER_PRESETS,
   getWallpaperPreset,
@@ -57,7 +59,7 @@ export default function App() {
   useEffect(() => {
     if (prevLocaleRef.current !== locale) {
       prevLocaleRef.current = locale;
-setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
+      setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
     }
   }, [locale]);
 
@@ -180,6 +182,7 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
   const handleExportCurrent = useCallback(() => {
     switch (state.activeTab) {
       case "overlay":
+      case "live":
         handleExportOverlay();
         break;
       case "cover":
@@ -200,12 +203,7 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
     handleExportWallpaper,
   ]);
 
-  const TAB_ORDER: OverlayState["activeTab"][] = [
-    "overlay",
-    "cover",
-    "poster",
-    "wallpaper",
-  ];
+  const TAB_ORDER = CANVAS_TABS;
 
   useKeyboardShortcuts({
     onCommandPalette: () => setCmdkOpen((v) => !v),
@@ -227,6 +225,7 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
   const CANVAS_NATIVE_H = 1080;
 
   const wallpaperPreset = getWallpaperPreset(state.wallpaper.previewPresetId);
+  const isLiveDataTab = state.activeTab === "live";
   const isWallpaperTab = state.activeTab === "wallpaper";
   const previewW = isWallpaperTab ? wallpaperPreset.width : CANVAS_NATIVE_W;
   const previewH = isWallpaperTab ? wallpaperPreset.height : CANVAS_NATIVE_H;
@@ -235,6 +234,8 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
     switch (state.activeTab) {
       case "overlay":
         return t("tabBadge.overlay");
+      case "live":
+        return t("tabBadge.live");
       case "cover":
         return t("tabBadge.cover");
       case "poster":
@@ -360,7 +361,7 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
                   {tabBadge}
                 </div>
                 <div style={{ fontSize: 11, color: UI_COLORS.textMuted }}>
-                  {t("app.previewHint")}
+                  {isLiveDataTab ? t("app.liveDataHint") : t("app.previewHint")}
                 </div>
               </div>
 
@@ -373,7 +374,7 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
                   minWidth: 0,
                 }}
               >
-                {previewMetrics && (
+                {previewMetrics && !isLiveDataTab && (
                   <div
                     data-testid="preview-debug"
                     style={{
@@ -407,40 +408,43 @@ setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
               </div>
             </div>
 
-            {/* Scaled Canvas Preview */}
-            <PreviewFrame
-              nativeW={previewW}
-              nativeH={previewH}
-              onMetricsChange={setPreviewMetrics}
-            >
-              {state.activeTab === "overlay" ? (
-                <OverlayCanvas ref={previewOverlayRef} state={state} onChange={setState} />
-              ) : state.activeTab === "cover" ? (
-                <CoverCanvas
-                  ref={previewCoverRef}
-                  state={state}
-                  editable
-                  onChange={setState}
-                />
-              ) : state.activeTab === "poster" ? (
-                <PosterCanvas
-                  ref={previewPosterRef}
-                  state={state}
-                  editable
-                  onChange={setState}
-                />
-              ) : (
-                <WallpaperCanvas
-                  state={state}
-                  preset={wallpaperPreset}
-                  editable
-                  onChange={setState}
-                />
-              )}
-            </PreviewFrame>
+            {isLiveDataTab ? (
+              <LiveDataManager state={state} onChange={setState} />
+            ) : (
+              <PreviewFrame
+                nativeW={previewW}
+                nativeH={previewH}
+                onMetricsChange={setPreviewMetrics}
+              >
+                {state.activeTab === "overlay" ? (
+                  <OverlayCanvas ref={previewOverlayRef} state={state} onChange={setState} />
+                ) : state.activeTab === "cover" ? (
+                  <CoverCanvas
+                    ref={previewCoverRef}
+                    state={state}
+                    editable
+                    onChange={setState}
+                  />
+                ) : state.activeTab === "poster" ? (
+                  <PosterCanvas
+                    ref={previewPosterRef}
+                    state={state}
+                    editable
+                    onChange={setState}
+                  />
+                ) : (
+                  <WallpaperCanvas
+                    state={state}
+                    preset={wallpaperPreset}
+                    editable
+                    onChange={setState}
+                  />
+                )}
+              </PreviewFrame>
+            )}
           </div>
 
-          <Inspector state={state} onChange={setState} />
+          {!isLiveDataTab && <Inspector state={state} onChange={setState} />}
         </div>
       </div>
 
