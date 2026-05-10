@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Command } from "cmdk";
 import type { OverlayState } from "../types";
 import { THEME_PRESETS, type ThemeMode } from "../lib/theme";
@@ -43,6 +43,20 @@ export default function CommandPalette({
   onOpenSettings,
   onReset,
 }: CommandPaletteProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [search, setSearch] = useState("");
+
+  // When the palette opens, drive focus into the cmdk input. cmdk attaches its
+  // arrow/enter keydown handler to the Command root and only sees events that
+  // bubble from a focused descendant — without this, the trigger button keeps
+  // focus and navigation/select are silently dead.
+  useEffect(() => {
+    if (!open) return;
+    setSearch("");
+    const id = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -175,7 +189,11 @@ export default function CommandPalette({
           >
             <span style={{ fontSize: 14, color: "#6B7CA8" }}>⌕</span>
             <Command.Input
+              ref={inputRef}
               data-testid="cmdk-input"
+              value={search}
+              onValueChange={setSearch}
+              autoFocus
               placeholder="Type a command or search…"
               style={{
                 flex: 1,
