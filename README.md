@@ -4,6 +4,8 @@ A pnpm workspace for building, exporting, and serving livestream graphics for a 
 
 ## Preview
 
+The preview images below are the latest checked-in exports from the overlay builder, stored in `docs/assets/`.
+
 ### Cover screen
 
 <p align="center">
@@ -105,6 +107,11 @@ Current example dimensions:
 - Wallpaper · Desktop 4K: `3840x2160`
 - Wallpaper · Desktop QHD: `2560x1440`
 - Wallpaper · Mobile: `1290x2796`
+
+Current default social stacks:
+
+- Chinese: Bilibili `Aklman`, personal website `aklman.com`, QQ group `205359827`, WeChat `aklman1`, GitHub `aklmans`.
+- English: YouTube `@aklman2018`, personal website `aklman.com`, Discord `aklman`, X `@Aklman2018`, GitHub `aklmans`.
 
 ## Common Commands
 
