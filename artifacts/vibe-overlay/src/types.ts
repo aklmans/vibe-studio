@@ -228,7 +228,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       socials: [
         { visible: true, kind: "youtube", label: "YouTube", value: "@aklman2018", customColor: "" },
         { visible: true, kind: "blog", label: "Website", value: "aklman.com", customColor: "" },
-        { visible: true, kind: "discord", label: "Discord", value: "discord.gg/UJjzvHck", customColor: "" },
+        { visible: true, kind: "discord", label: "Discord", value: "aklman", customColor: "" },
         { visible: true, kind: "x", label: "X", value: "@Aklman2018", customColor: "" },
         { visible: true, kind: "github", label: "GitHub", value: "aklmans", customColor: "" },
       ],

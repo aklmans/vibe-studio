@@ -70,7 +70,7 @@ test("en defaults show the localized social links in display order", () => {
         visible: true,
         kind: "discord",
         label: "Discord",
-        value: "discord.gg/UJjzvHck",
+        value: "aklman",
       },
       {
         visible: true,
