@@ -1,6 +1,6 @@
 # Vibe Coding Live
 
-A pnpm workspace for building, exporting, and serving livestream graphics for a Vibe Coding session. The main artifact is a React overlay builder that edits the cover screen, pre-stream poster, full overlay, sidebar panel, and bottom status bar, then exports broadcast-ready PNG assets.
+A pnpm workspace for building, exporting, and serving livestream graphics for a Vibe Coding session. The main artifact is a React overlay builder that edits the cover screen, pre-stream poster, full overlay, sidebar panel, bottom status bar, and brand wallpapers, then exports broadcast-ready PNG assets.
 
 ## Preview
 
@@ -39,6 +39,29 @@ A pnpm workspace for building, exporting, and serving livestream graphics for a 
   </tr>
 </table>
 
+### Wallpapers
+
+A single wallpaper export action emits three sizes that share the Cover/Poster brand language but drop livestream-specific elements (LIVE pill, TODAY'S BUILD card, Manifesto), so they read as quiet brand wallpapers when shown on a screen-share.
+
+<p align="center">
+  <img src="docs/assets/vibe-coding-wallpaper-desktop-4k.png" alt="Vibe Coding wallpaper — Desktop 4K" width="820">
+</p>
+
+<table>
+  <tr>
+    <th>Desktop QHD · 2560×1440</th>
+    <th>Mobile · 1290×2796</th>
+  </tr>
+  <tr>
+    <td width="70%">
+      <img src="docs/assets/vibe-coding-wallpaper-desktop-qhd.png" alt="Vibe Coding wallpaper — Desktop QHD">
+    </td>
+    <td width="30%">
+      <img src="docs/assets/vibe-coding-wallpaper-mobile.png" alt="Vibe Coding wallpaper — Mobile">
+    </td>
+  </tr>
+</table>
+
 ## What's Included
 
 - `@workspace/vibe-overlay`: React and Vite app for editing livestream visuals and exporting PNG assets.
@@ -68,8 +91,8 @@ By default the overlay app runs on `http://localhost:8081`. Set `PORT` or `BASE_
 ## Export Workflow
 
 1. Open the overlay builder.
-2. Switch between the Overlay, Cover, and Poster tabs and adjust copy, sections, badges, social links, live session start time, and the tool stack.
-3. Use the export controls to generate PNGs for the cover, poster, full overlay, or individual broadcast slices (sidebar / bottom bar).
+2. Switch between the Overlay, Cover, Poster, and Wallpaper tabs and adjust copy, sections, badges, social links, live session start time, the tool stack, and wallpaper-only fields (brand label / slogan / element toggles).
+3. Use the export controls to generate PNGs for the cover, poster, full overlay, individual broadcast slices (sidebar / bottom bar), or the wallpaper set (3 sizes saved in one click).
 4. Keep polished example exports in `docs/assets/` when they should be shown in this README.
 
 Current example dimensions:
@@ -79,6 +102,9 @@ Current example dimensions:
 - Full overlay: `1920x1080`
 - Sidebar: `470x760`
 - Bottom bar: `1856x180`
+- Wallpaper · Desktop 4K: `3840x2160`
+- Wallpaper · Desktop QHD: `2560x1440`
+- Wallpaper · Mobile: `1290x2796`
 
 ## Common Commands
 
