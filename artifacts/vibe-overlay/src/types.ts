@@ -135,11 +135,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     closingSuffix: "拥有美好人生。",
     socialVisible: true,
     socials: [
-      { visible: true, kind: "bilibili", label: "B站", value: "http://live.bilibili.com/22566414", customColor: "" },
-      { visible: true, kind: "blog", label: "个人网站", value: "https://aklman.com", customColor: "" },
+      { visible: true, kind: "bilibili", label: "B站", value: "Aklman", customColor: "" },
+      { visible: true, kind: "blog", label: "个人网站", value: "aklman.com", customColor: "" },
       { visible: true, kind: "qq", label: "QQ群", value: "205359827", customColor: "" },
       { visible: true, kind: "wechat", label: "微信", value: "aklman1", customColor: "" },
-      { visible: true, kind: "github", label: "GitHub", value: "https://github.com/aklmans", customColor: "" },
+      { visible: true, kind: "github", label: "GitHub", value: "aklmans", customColor: "" },
     ],
   },
   wallpaper: {
@@ -226,11 +226,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       closingSuffix: "Have a great life.",
       socialVisible: true,
       socials: [
-        { visible: true, kind: "youtube", label: "YouTube", value: "https://www.youtube.com/@aklman2018", customColor: "" },
-        { visible: true, kind: "blog", label: "Website", value: "https://aklman.com", customColor: "" },
-        { visible: true, kind: "discord", label: "Discord", value: "https://discord.gg/UJjzvHck", customColor: "" },
-        { visible: true, kind: "x", label: "X", value: "https://x.com/Aklman2018", customColor: "" },
-        { visible: true, kind: "github", label: "GitHub", value: "https://github.com/aklmans", customColor: "" },
+        { visible: true, kind: "youtube", label: "YouTube", value: "@aklman2018", customColor: "" },
+        { visible: true, kind: "blog", label: "Website", value: "aklman.com", customColor: "" },
+        { visible: true, kind: "discord", label: "Discord", value: "discord.gg/UJjzvHck", customColor: "" },
+        { visible: true, kind: "x", label: "X", value: "@Aklman2018", customColor: "" },
+        { visible: true, kind: "github", label: "GitHub", value: "aklmans", customColor: "" },
       ],
     },
     wallpaper: {
