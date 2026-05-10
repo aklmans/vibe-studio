@@ -201,6 +201,22 @@ export const dict = {
     "live.notSet": "未设置开始时间，开播段会显示 —:——",
     "live.startNow": "现在开播",
 
+    // ─── Live data persistence ────────────────────────────────────────
+    "liveData.session": "当前场次",
+    "liveData.date": "日期",
+    "liveData.database": "数据库已连接，修改会自动保存。",
+    "liveData.localMode": "未配置 DATABASE_URL，当前使用本地草稿模式。",
+    "liveData.loading": "正在加载直播数据…",
+    "liveData.saving": "正在保存…",
+    "liveData.saved": "已保存到数据库。",
+    "liveData.reload": "重新加载",
+    "liveData.startSession": "开始直播",
+    "liveData.endSession": "结束直播",
+    "liveData.status.draft": "草稿",
+    "liveData.status.live": "直播中",
+    "liveData.status.ended": "已结束",
+    "liveData.status.local": "本地",
+
     // ─── Bottom bar ──────────────────────────────────────────────────
     "bar.onAir": "开播",
     "bar.progress": "进度",
@@ -463,6 +479,22 @@ export const dict = {
     "live.started": "Started",
     "live.notSet": "No start time set — On Air segment will show —:——",
     "live.startNow": "Start Now",
+
+    // ─── Live data persistence ────────────────────────────────────────
+    "liveData.session": "Current Session",
+    "liveData.date": "Date",
+    "liveData.database": "Database connected. Changes save automatically.",
+    "liveData.localMode": "DATABASE_URL is not configured. Using local draft mode.",
+    "liveData.loading": "Loading live data…",
+    "liveData.saving": "Saving…",
+    "liveData.saved": "Saved to database.",
+    "liveData.reload": "Reload",
+    "liveData.startSession": "Start Live",
+    "liveData.endSession": "End Live",
+    "liveData.status.draft": "Draft",
+    "liveData.status.live": "Live",
+    "liveData.status.ended": "Ended",
+    "liveData.status.local": "Local",
 
     // ─── Bottom bar ──────────────────────────────────────────────────
     "bar.onAir": "On Air",

@@ -25,6 +25,19 @@ import { loadOverlayState, saveOverlayState } from "../stateStorage";
 import { UI_BORDERS, UI_COLORS } from "../lib/design-tokens";
 import { produceState } from "../lib/state";
 import { publishLiveState } from "../lib/live-state-client";
+import {
+  applyLiveDataToOverlayState,
+  overlayStateToLiveData,
+  type LiveSessionSummary,
+} from "../lib/live-data";
+import { formatDateKey } from "../lib/live-data-api";
+import {
+  endCurrentLiveSession as endRemoteLiveSession,
+  fetchCurrentLiveData,
+  saveCurrentLiveData as saveRemoteLiveData,
+  startCurrentLiveSession as startRemoteLiveSession,
+  type LiveDataApiResult,
+} from "../lib/live-data-client";
 import { CANVAS_TABS } from "../lib/tabs";
 import {
   WALLPAPER_PRESETS,
@@ -44,9 +57,19 @@ const exportStageStyle: React.CSSProperties = {
   zIndex: -1,
 };
 
+interface LiveDataPersistenceState {
+  databaseConfigured: boolean;
+  loading: boolean;
+  saving: boolean;
+  error: string | null;
+  savedAt: string | null;
+  session: LiveSessionSummary | null;
+}
+
 export default function App() {
   const { t, locale } = useLocale();
   const [state, setStateRaw] = useState<OverlayState>(() => loadOverlayState(undefined, DEFAULT_STATE_BY_LOCALE[loadLocale()]));
+  const [liveDateKey] = useState(() => formatDateKey(new Date()));
   const [previewMetrics, setPreviewMetrics] = useState<PreviewMetrics | null>(
     null,
   );
@@ -54,7 +77,35 @@ export default function App() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [liveDataPersistence, setLiveDataPersistence] =
+    useState<LiveDataPersistenceState>({
+      databaseConfigured: false,
+      loading: true,
+      saving: false,
+      error: null,
+      savedAt: null,
+      session: null,
+    });
   const prevLocaleRef = useRef(locale);
+  const liveSessionRef = useRef<LiveSessionSummary | null>(null);
+
+  const applyLoadedLiveData = useCallback((result: LiveDataApiResult) => {
+    const liveData = result.liveData;
+    liveSessionRef.current = liveData?.session ?? null;
+    if (liveData) {
+      setStateRaw((current) =>
+        applyLiveDataToOverlayState(current, liveData),
+      );
+    }
+    setLiveDataPersistence((current) => ({
+      ...current,
+      databaseConfigured: result.databaseConfigured,
+      loading: false,
+      saving: false,
+      error: null,
+      session: liveData?.session ?? null,
+    }));
+  }, []);
 
   useEffect(() => {
     if (prevLocaleRef.current !== locale) {
@@ -62,6 +113,30 @@ export default function App() {
       setState({ ...DEFAULT_STATE_BY_LOCALE[locale], activeTab: state.activeTab });
     }
   }, [locale]);
+
+  const reloadLiveData = useCallback(() => {
+    const controller = new AbortController();
+    setLiveDataPersistence((current) => ({
+      ...current,
+      loading: true,
+      error: null,
+    }));
+
+    void fetchCurrentLiveData(locale, liveDateKey, controller.signal)
+      .then(applyLoadedLiveData)
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setLiveDataPersistence((current) => ({
+          ...current,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to load live data",
+        }));
+      });
+
+    return () => controller.abort();
+  }, [applyLoadedLiveData, liveDateKey, locale]);
+
+  useEffect(() => reloadLiveData(), [reloadLiveData]);
 
   // Preview ref (for the visible scaled canvas — not used for export)
   const previewOverlayRef = useRef<HTMLDivElement | null>(null);
@@ -94,6 +169,93 @@ export default function App() {
     });
     return () => controller.abort();
   }, [state, locale]);
+
+  useEffect(() => {
+    if (!liveDataPersistence.databaseConfigured || !liveSessionRef.current) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      const session = {
+        ...liveSessionRef.current!,
+        startedAt: state.liveSession.startedAt,
+        updatedAt: new Date().toISOString(),
+      };
+      const liveData = overlayStateToLiveData(state, session);
+
+      setLiveDataPersistence((current) => ({
+        ...current,
+        saving: true,
+        error: null,
+      }));
+
+      void saveRemoteLiveData(locale, liveDateKey, liveData, controller.signal)
+        .then((result) => {
+          liveSessionRef.current = result.liveData?.session ?? liveSessionRef.current;
+          setLiveDataPersistence((current) => ({
+            ...current,
+            databaseConfigured: result.databaseConfigured,
+            saving: false,
+            error: null,
+            savedAt: result.liveData ? new Date().toISOString() : current.savedAt,
+            session: result.liveData?.session ?? current.session,
+          }));
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setLiveDataPersistence((current) => ({
+            ...current,
+            saving: false,
+            error: err instanceof Error ? err.message : "Failed to save live data",
+          }));
+        });
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [
+    liveDataPersistence.databaseConfigured,
+    liveDateKey,
+    locale,
+    state,
+  ]);
+
+  const handleStartLiveSession = useCallback(() => {
+    setLiveDataPersistence((current) => ({
+      ...current,
+      saving: true,
+      error: null,
+    }));
+    void startRemoteLiveSession(locale, liveDateKey)
+      .then(applyLoadedLiveData)
+      .catch((err) => {
+        setLiveDataPersistence((current) => ({
+          ...current,
+          saving: false,
+          error: err instanceof Error ? err.message : "Failed to start live session",
+        }));
+      });
+  }, [applyLoadedLiveData, liveDateKey, locale]);
+
+  const handleEndLiveSession = useCallback(() => {
+    setLiveDataPersistence((current) => ({
+      ...current,
+      saving: true,
+      error: null,
+    }));
+    void endRemoteLiveSession(locale, liveDateKey)
+      .then(applyLoadedLiveData)
+      .catch((err) => {
+        setLiveDataPersistence((current) => ({
+          ...current,
+          saving: false,
+          error: err instanceof Error ? err.message : "Failed to end live session",
+        }));
+      });
+  }, [applyLoadedLiveData, liveDateKey, locale]);
 
   const handleExport = useCallback(
     async (
@@ -409,7 +571,15 @@ export default function App() {
             </div>
 
             {isLiveDataTab ? (
-              <LiveDataManager state={state} onChange={setState} />
+              <LiveDataManager
+                state={state}
+                onChange={setState}
+                dateKey={liveDateKey}
+                persistence={liveDataPersistence}
+                onReload={reloadLiveData}
+                onStartSession={handleStartLiveSession}
+                onEndSession={handleEndLiveSession}
+              />
             ) : (
               <PreviewFrame
                 nativeW={previewW}

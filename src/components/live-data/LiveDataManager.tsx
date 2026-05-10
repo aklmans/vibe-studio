@@ -11,6 +11,21 @@ import BottomBarSegmentEditor from "../BottomBarSegmentEditor";
 interface LiveDataManagerProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
+  dateKey: string;
+  persistence: {
+    databaseConfigured: boolean;
+    loading: boolean;
+    saving: boolean;
+    error: string | null;
+    savedAt: string | null;
+    session: {
+      status: "draft" | "live" | "ended";
+      title: string;
+    } | null;
+  };
+  onReload: () => void;
+  onStartSession: () => void;
+  onEndSession: () => void;
 }
 
 const SECTION_ACCENTS = [UI_COLORS.cyan, UI_COLORS.danger, UI_COLORS.warm] as const;
@@ -41,8 +56,17 @@ const labelStyle: CSSProperties = {
 export default function LiveDataManager({
   state,
   onChange,
+  dateKey,
+  persistence,
+  onReload,
+  onStartSession,
+  onEndSession,
 }: LiveDataManagerProps) {
   const { t } = useLocale();
+  const canWrite = persistence.databaseConfigured && !persistence.loading;
+  const statusLabel = persistence.session
+    ? t(`liveData.status.${persistence.session.status}`)
+    : t("liveData.status.local");
 
   return (
     <div
@@ -66,6 +90,109 @@ export default function LiveDataManager({
           paddingBottom: 20,
         }}
       >
+        <section
+          data-testid="live-data-session-bar"
+          style={{
+            ...panelStyle,
+            gridColumn: "1 / -1",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              padding: "12px 16px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  minWidth: 0,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: UI_COLORS.text,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {t("liveData.session")}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: UI_COLORS.focus,
+                    background: UI_COLORS.previewBadgeSurface,
+                    border: UI_BORDERS.control,
+                    borderRadius: 6,
+                    padding: "2px 8px",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {statusLabel}
+                </span>
+                <span style={{ fontSize: 11, color: UI_COLORS.textMuted }}>
+                  {`${t("liveData.date")} ${dateKey}`}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: persistence.error ? UI_COLORS.danger : UI_COLORS.textMuted,
+                  lineHeight: 1.4,
+                }}
+              >
+                {persistence.error
+                  ? persistence.error
+                  : persistence.loading
+                    ? t("liveData.loading")
+                    : !persistence.databaseConfigured
+                      ? t("liveData.localMode")
+                      : persistence.saving
+                        ? t("liveData.saving")
+                        : persistence.savedAt
+                          ? t("liveData.saved")
+                          : t("liveData.database")}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <SessionButton onClick={onReload} disabled={persistence.loading}>
+                {t("liveData.reload")}
+              </SessionButton>
+              <SessionButton
+                onClick={onStartSession}
+                disabled={!canWrite || persistence.saving}
+                accentColor={UI_COLORS.cyan}
+              >
+                {t("liveData.startSession")}
+              </SessionButton>
+              <SessionButton
+                onClick={onEndSession}
+                disabled={!canWrite || persistence.saving}
+                accentColor={UI_COLORS.warm}
+              >
+                {t("liveData.endSession")}
+              </SessionButton>
+            </div>
+          </div>
+        </section>
+
         <section data-testid="live-data-sections" style={panelStyle}>
           <PanelHeader
             title={t("group.sections")}
@@ -171,6 +298,40 @@ export default function LiveDataManager({
         </section>
       </div>
     </div>
+  );
+}
+
+function SessionButton({
+  children,
+  onClick,
+  disabled,
+  accentColor = UI_COLORS.textSoft,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  accentColor?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        minWidth: 82,
+        height: 30,
+        borderRadius: 7,
+        border: `1px solid ${disabled ? UI_COLORS.controlBorder : `${accentColor}66`}`,
+        background: disabled ? UI_COLORS.controlSurface : `${accentColor}18`,
+        color: disabled ? UI_COLORS.textSubtle : accentColor,
+        cursor: disabled ? "not-allowed" : "pointer",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

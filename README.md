@@ -87,9 +87,24 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm start
+pnpm db:push
 ```
 
 Tests use Node.js built-in test runner with `tsx`. Test files are colocated with source as `*.test.ts`.
+
+## Live Data Database
+
+The Live Data tab can persist sidebar sections, tasks, bottom-bar segments, stack items, and live session start/end timestamps to PostgreSQL. If `DATABASE_URL` is not configured, the app stays in local draft mode and continues to use `localStorage` plus the in-memory OBS live-state endpoint.
+
+Configure a database:
+
+```bash
+DATABASE_URL=postgres://user:password@localhost:5432/vibe_coding_live
+pnpm db:push
+pnpm dev
+```
+
+The schema lives in `src/db/schema.ts`, with a checked-in SQL migration at `drizzle/0001_live_sessions.sql`. Database APIs are mounted under `/api/sessions`, while `/api/live-state` remains the real-time OBS bridge.
 
 ## Export Workflow
 
@@ -121,11 +136,13 @@ Current default social stacks:
 src/
   app/              Next.js App Router entry, layout, and global CSS
   components/       Builder shell, canvas renderers, inspectors, and shared UI
+  db/               Drizzle schema, PostgreSQL client, and live-data repository
   hooks/            Locale, keyboard shortcut, and time helpers
   lib/              Design tokens, i18n dictionaries, state helpers, and model helpers
   utils/            PNG export utilities
 public/             Static assets used by the app
 docs/assets/        README images and exported examples
+drizzle/            SQL migrations for live data persistence
 ```
 
 ## Implementation Notes
@@ -134,5 +151,6 @@ docs/assets/        README images and exported examples
 - Canvas output is rendered as DOM/CSS and exported with `html-to-image`.
 - Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
+- Live Data persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
 - Package management is pnpm only.
