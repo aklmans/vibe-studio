@@ -7,6 +7,7 @@ import SidebarSectionEditor from "../SidebarSectionEditor";
 import LiveSessionEditor from "../LiveSessionEditor";
 import StackEditor from "../StackEditor";
 import BottomBarSegmentEditor from "../BottomBarSegmentEditor";
+import SessionRecipePanel from "./SessionRecipePanel";
 
 interface LiveDataManagerProps {
   state: OverlayState;
@@ -192,6 +193,10 @@ export default function LiveDataManager({
             </div>
           </div>
         </section>
+
+        <div style={{ gridColumn: "1 / -1" }}>
+          <SessionRecipePanel state={state} onChange={onChange} />
+        </div>
 
         <section data-testid="live-data-sections" style={panelStyle}>
           <PanelHeader

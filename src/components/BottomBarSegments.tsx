@@ -15,7 +15,7 @@ interface BottomBarSegmentsProps {
 
 /**
  * Shared renderer for the three bottom-bar slots. OverlayCanvas uses
- * size="small" (162px tall row), the BottomBarPanel export slice uses
+ * size="small" (208px tall row), the BottomBarPanel export slice uses
  * size="large" (180px tall standalone export).
  */
 export default function BottomBarSegments({

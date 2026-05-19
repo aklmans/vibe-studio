@@ -15,7 +15,7 @@ export const dict = {
     "tab.wallpaper": "壁纸",
     "tabBadge.overlay": "合成画面 · 1920×1080",
     "tabBadge.live": "直播数据 · 侧栏 / 底栏",
-    "tabBadge.cover": "封面 · 1920×1080",
+    "tabBadge.cover": "封面 · 1280×720",
     "tabBadge.poster": "海报 · 1920×1080",
 
     // ─── Inspector ────────────────────────────────────────────────────
@@ -217,6 +217,17 @@ export const dict = {
     "liveData.status.ended": "已结束",
     "liveData.status.local": "本地",
 
+    // ─── Session recipe ──────────────────────────────────────────────
+    "recipe.title": "直播 Recipe",
+    "recipe.hint": "粘贴一句话、直播大纲或 Markdown Recipe，自动更新标题、今日目标、任务、工具栈和社交信息。",
+    "recipe.placeholder": "示例：今天直播学习 Addy Osmani 的 long-running agents 文章。任务是：阅读文章、总结关键观点、设计到 Vibe Coding Live、最后做复盘。技术栈显示 Next.js、OBS、GPT-5.5 Pro、Codex。\n\n也可以粘贴 Markdown：\n# AI Agent 长任务实践\n\n## Goal\n理解 long-running agents，并应用到 Vibe Coding Live。\n\n## Tasks\n- 阅读文章\n- 提炼 Agent 工作流原则\n- 更新直播工具设计\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
+    "recipe.apply": "应用到直播",
+    "recipe.exportCurrent": "导出当前 Recipe",
+    "recipe.empty": "先粘贴一句话或 Recipe。",
+    "recipe.applied": "已应用到直播数据、封面和 OBS 预览。",
+    "recipe.exported": "已生成当前 Recipe，并复制到剪贴板。",
+    "recipe.copyFailed": "已生成 Recipe，但复制到剪贴板失败。",
+
     // ─── Bottom bar ──────────────────────────────────────────────────
     "bar.onAir": "开播",
     "bar.progress": "进度",
@@ -230,6 +241,8 @@ export const dict = {
     "canvas.upcoming": "即将开始",
     "canvas.screenCapture": "屏幕捕获",
     "canvas.camera": "摄像头",
+    "canvas.currentFocus": "当前焦点",
+    "canvas.currentFocusNext": "下一步",
     "canvas.liveBadge": "LIVE",
     "canvas.idleBrand": "VIBE CODING",
 
@@ -294,7 +307,7 @@ export const dict = {
     "tab.wallpaper": "Wallpaper",
     "tabBadge.overlay": "OVERLAY · 1920×1080",
     "tabBadge.live": "LIVE DATA · SIDEBAR / LIVE BAR",
-    "tabBadge.cover": "COVER · 1920×1080",
+    "tabBadge.cover": "COVER · 1280×720",
     "tabBadge.poster": "POSTER · 1920×1080",
 
     // ─── Inspector ────────────────────────────────────────────────────
@@ -496,6 +509,17 @@ export const dict = {
     "liveData.status.ended": "Ended",
     "liveData.status.local": "Local",
 
+    // ─── Session recipe ──────────────────────────────────────────────
+    "recipe.title": "Stream Recipe",
+    "recipe.hint": "Paste a one-line brief, stream outline, or Markdown Recipe to update the title, goal, tasks, stack, and social links.",
+    "recipe.placeholder": "Example: Today I am streaming a reading session on Addy Osmani's long-running agents article. Tasks: read the article, summarize key ideas, apply them to Vibe Coding Live, wrap up. Stack: Next.js, OBS, GPT-5.5 Pro, Codex.\n\nMarkdown works too:\n# Long-running Agents\n\n## Goal\nTurn agent reading notes into stream tasks.\n\n## Tasks\n- Read the article\n- Extract workflow patterns\n- Update Vibe Coding Live design\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
+    "recipe.apply": "Apply to stream",
+    "recipe.exportCurrent": "Export current Recipe",
+    "recipe.empty": "Paste a brief or Recipe first.",
+    "recipe.applied": "Applied to live data, cover, and OBS preview.",
+    "recipe.exported": "Current Recipe generated and copied to clipboard.",
+    "recipe.copyFailed": "Recipe generated, but clipboard copy failed.",
+
     // ─── Bottom bar ──────────────────────────────────────────────────
     "bar.onAir": "On Air",
     "bar.progress": "Progress",
@@ -509,6 +533,8 @@ export const dict = {
     "canvas.upcoming": "Upcoming",
     "canvas.screenCapture": "Screen Capture",
     "canvas.camera": "Camera",
+    "canvas.currentFocus": "CURRENT FOCUS",
+    "canvas.currentFocusNext": "NEXT",
     "canvas.liveBadge": "LIVE",
     "canvas.idleBrand": "VIBE CODING",
 

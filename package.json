@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "live:prepare": "tsx scripts/prepare-live.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",

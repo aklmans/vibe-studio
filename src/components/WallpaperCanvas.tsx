@@ -4,6 +4,7 @@ import { avatarPlaceholder } from "../lib/avatar";
 import { patchSection } from "../lib/state";
 import { fontFamilies } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
+import { UI_COLORS } from "../lib/design-tokens";
 import {
   HORIZONTAL_BASE,
   PORTRAIT_BASE,
@@ -67,7 +68,7 @@ const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
           width: preset.width,
           height: preset.height,
           position: "relative",
-          background: `linear-gradient(${isPortrait ? "180deg" : "170deg"}, ${E.bg2} 0%, ${E.bg1} 55%, ${E.bg3} 100%)`,
+          background: UI_COLORS.appBackground,
           fontFamily: fontFamilies.sans,
           overflow: "hidden",
           flexShrink: 0,

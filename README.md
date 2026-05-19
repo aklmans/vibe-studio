@@ -88,9 +88,55 @@ pnpm test
 pnpm build
 pnpm start
 pnpm db:push
+pnpm live:prepare
 ```
 
 Tests use Node.js built-in test runner with `tsx`. Test files are colocated with source as `*.test.ts`.
+
+## OBS and Bilibili Livehime Setup
+
+For Bilibili accounts that cannot push directly from OBS, use OBS as the compositor and feed Bilibili Livehime through OBS Virtual Camera:
+
+```text
+Vibe web app -> OBS Browser Source -> OBS scene composition -> OBS Virtual Camera -> Bilibili Livehime camera source
+```
+
+Prepare the local live environment with:
+
+```bash
+pnpm live:prepare
+```
+
+The script:
+
+1. Ensures the Next.js app is available on `http://localhost:3000`.
+2. Updates the OBS scene collection `Vibe Coding Live Overlay`.
+3. Points the overlay Browser Sources at:
+   - `http://localhost:3000/obs/overlay?camera=empty`
+   - `http://localhost:3000/obs/overlay?camera=avatar`
+4. Resets the expected OBS source order and visibility.
+5. Opens OBS with the `Vibe Coding Live Overlay` profile, collection, and `Vibe Live Overlay` scene.
+6. Starts OBS Virtual Camera after OBS has finished launching.
+7. Opens the web app and Bilibili Livehime.
+
+The script never clicks Bilibili's start-live button. Confirm the title, category, microphone, preview, and final start action manually in Livehime.
+
+Important OBS note: do not start OBS with `--startvirtualcam`. On macOS this can trigger OBS's "The virtual camera is not installed" dialog before the camera system extension has finished loading. `pnpm live:prepare` intentionally starts OBS first, enables obs-websocket, then calls `StartVirtualCam` through WebSocket after OBS is ready.
+
+If OBS still reports that the virtual camera is not installed:
+
+1. Open `System Settings -> General -> Login Items & Extensions -> Camera Extensions`.
+2. Enable `OBS Virtual Camera`.
+3. Restart OBS, or restart macOS if the extension state looks stale.
+4. Run `pnpm live:prepare` again.
+
+You can verify the extension state with:
+
+```bash
+systemextensionsctl list
+```
+
+The expected entry is `OBS Virtual Camera` with `[activated enabled]`.
 
 ## Live Data Database
 
@@ -140,6 +186,7 @@ src/
   hooks/            Locale, keyboard shortcut, and time helpers
   lib/              Design tokens, i18n dictionaries, state helpers, and model helpers
   utils/            PNG export utilities
+scripts/            Local automation such as OBS/Bilibili live preparation
 public/             Static assets used by the app
 docs/assets/        README images and exported examples
 drizzle/            SQL migrations for live data persistence
@@ -153,4 +200,5 @@ drizzle/            SQL migrations for live data persistence
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
 - Live Data persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
+- `pnpm live:prepare` edits local OBS config files under `~/Library/Application Support/obs-studio/` and writes timestamped backups before changing them.
 - Package management is pnpm only.

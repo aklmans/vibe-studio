@@ -50,6 +50,16 @@ pnpm build
 pnpm start
 ```
 
+### Prepare OBS and Bilibili Livehime
+
+```bash
+pnpm live:prepare
+```
+
+This is a local macOS automation script for the author's streaming setup. It starts or reuses the Next.js app on `http://localhost:3000`, updates the OBS scene collection `Vibe Coding Live Overlay`, opens OBS, starts OBS Virtual Camera, opens the web app, and opens Bilibili Livehime. It does not start the Bilibili livestream.
+
+Important: do not reintroduce OBS's `--startvirtualcam` launch argument. On macOS it can trigger OBS's "The virtual camera is not installed" dialog before the Camera Extension has finished loading. The script intentionally starts OBS first, enables obs-websocket, then starts the virtual camera through WebSocket after OBS is ready.
+
 ## Architecture
 
 ### Application entry
@@ -71,8 +81,16 @@ pnpm start
 - Shared types and defaults live in `src/types.ts`.
 - State migration and normalization live in `src/stateStorage.ts`.
 - Patch/update helpers live in `src/lib/state.ts`.
+- OBS preparation helpers live in `src/lib/live-prepare.ts`.
 - Locale dictionaries and the custom `t()` helper live in `src/lib/i18n.ts`.
 - `src/hooks/useLocale.tsx` owns locale context and persistence.
+
+### Local automation
+
+- `scripts/prepare-live.ts` owns the OBS/Bilibili setup flow.
+- The script may edit files under `~/Library/Application Support/obs-studio/` and must write timestamped backups before modifying OBS config.
+- Keep OBS source names in sync with the configured scene collection: `Vibe Live Overlay`, `Vibe Overlay Empty Frame`, `Vibe Overlay Avatar Frame`, `Vibe Camera Capture`, `Vibe Main Display Capture`, and `Vibe Main App Capture`.
+- If OBS Virtual Camera fails, verify `System Settings -> General -> Login Items & Extensions -> Camera Extensions -> OBS Virtual Camera` and `systemextensionsctl list` before changing code.
 
 ### Styling
 

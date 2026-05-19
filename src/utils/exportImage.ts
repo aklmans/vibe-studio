@@ -1,4 +1,9 @@
 import { toPng } from "html-to-image";
+import {
+  COVER_CANVAS_DIMENSIONS,
+  OVERLAY_CANVAS_DIMENSIONS,
+  POSTER_CANVAS_DIMENSIONS,
+} from "../lib/canvas-dimensions";
 
 interface ExportOptions {
   filename: string;
@@ -38,8 +43,8 @@ export async function exportElementAsPng(
 export async function exportFullOverlay(canvasEl: HTMLElement): Promise<void> {
   await exportElementAsPng(canvasEl, {
     filename: "vibe-coding-overlay.png",
-    width: 1920,
-    height: 1080,
+    width: OVERLAY_CANVAS_DIMENSIONS.width,
+    height: OVERLAY_CANVAS_DIMENSIONS.height,
     backgroundColor: null,
   });
 }
@@ -61,8 +66,8 @@ export async function exportBottomBar(bottomBarEl: HTMLElement): Promise<void> {
 export async function exportCover(coverEl: HTMLElement): Promise<void> {
   await exportElementAsPng(coverEl, {
     filename: "vibe-coding-cover.png",
-    width: 1920,
-    height: 1080,
+    width: COVER_CANVAS_DIMENSIONS.width,
+    height: COVER_CANVAS_DIMENSIONS.height,
     backgroundColor: null,
   });
 }
@@ -70,8 +75,8 @@ export async function exportCover(coverEl: HTMLElement): Promise<void> {
 export async function exportPoster(posterEl: HTMLElement): Promise<void> {
   await exportElementAsPng(posterEl, {
     filename: "vibe-coding-poster.png",
-    width: 1920,
-    height: 1080,
+    width: POSTER_CANVAS_DIMENSIONS.width,
+    height: POSTER_CANVAS_DIMENSIONS.height,
     backgroundColor: null,
   });
 }

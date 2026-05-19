@@ -23,6 +23,82 @@ const OBS_CAMERA_SLOT = {
   width: 400,
   height: 272,
 } as const;
+const CAMERA_PANEL_SLOT = {
+  left: 1496,
+  top: 756,
+  width: 400,
+  height: 300,
+} as const;
+const OVERLAY_EDGE = 24;
+const MAIN_SCREEN_SLOT = {
+  left: OVERLAY_EDGE,
+  top: OVERLAY_EDGE,
+  width: 1448,
+  height: Math.round(1448 / (3760 / 2078)),
+} as const;
+const BOTTOM_BAR_SLOT = {
+  left: OVERLAY_EDGE,
+  top: MAIN_SCREEN_SLOT.top + MAIN_SCREEN_SLOT.height + OVERLAY_EDGE,
+  width: MAIN_SCREEN_SLOT.width,
+  height: 1080 - (MAIN_SCREEN_SLOT.top + MAIN_SCREEN_SLOT.height + OVERLAY_EDGE) - OVERLAY_EDGE,
+} as const;
+
+function pickIncompleteBullet(
+  bullets: string[],
+  doneRow: boolean[] | undefined,
+  startIndex = 0,
+): { text: string; index: number } | null {
+  for (let i = Math.max(0, startIndex); i < bullets.length; i++) {
+    if (!doneRow?.[i] && bullets[i]?.trim()) {
+      return { text: bullets[i], index: i };
+    }
+  }
+  return null;
+}
+
+function getCurrentFocus(state: OverlayState): {
+  title: string;
+  sectionTitle: string;
+  current: string;
+  next: string;
+} {
+  const { sidebar, cover } = state;
+  const activeIndex = Math.min(
+    Math.max(0, sidebar.activeSection),
+    Math.max(0, sidebar.sections.length - 1),
+  );
+  const activeSection = sidebar.sections[activeIndex] ?? sidebar.sections[0];
+  const activeDone = sidebar.sectionsDone[activeIndex];
+  const current =
+    activeSection
+      ? pickIncompleteBullet(activeSection.bullets, activeDone) ??
+        (activeSection.bullets[0]
+          ? { text: activeSection.bullets[0], index: 0 }
+          : null)
+      : null;
+
+  let next =
+    activeSection && current
+      ? pickIncompleteBullet(activeSection.bullets, activeDone, current.index + 1)
+      : null;
+
+  if (!next) {
+    for (let i = activeIndex + 1; i < sidebar.sections.length; i++) {
+      next = pickIncompleteBullet(
+        sidebar.sections[i].bullets,
+        sidebar.sectionsDone[i],
+      );
+      if (next) break;
+    }
+  }
+
+  return {
+    title: cover.todayTopic.trim() || cover.title,
+    sectionTitle: activeSection?.title || cover.todayLabel || "Focus",
+    current: current?.text || cover.title,
+    next: next?.text || cover.hookText || cover.title,
+  };
+}
 
 function cameraSlotCutoutPath(): string {
   const right = OBS_CAMERA_SLOT.left + OBS_CAMERA_SLOT.width;
@@ -55,6 +131,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     const cameraFrameColors = getObsCameraFrameColors(cameraMode);
     const hasTransparentCameraSlot = cameraMode === "empty" && mainScreen.cameraVisible;
     const cutoutPath = cameraSlotCutoutPath();
+    const currentFocus = getCurrentFocus(state);
 
     return (
       <div
@@ -120,10 +197,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           <div
             style={{
               position: "absolute",
-              left: 24,
-              top: 24,
-              width: 1448,
-              height: 846,
+              left: MAIN_SCREEN_SLOT.left,
+              top: MAIN_SCREEN_SLOT.top,
+              width: MAIN_SCREEN_SLOT.width,
+              height: MAIN_SCREEN_SLOT.height,
               background: UI_COLORS.appBackground,
               border: `2px solid ${borderColor}50`,
               borderRadius: 0,
@@ -132,68 +209,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               flexDirection: "column",
             }}
           >
-            {/* macOS-style titlebar */}
-            <div
-              style={{
-                height: 36,
-                background: `${bgPanel}CC`,
-                borderBottom: `1px solid ${borderColor}30`,
-                display: "flex",
-                alignItems: "center",
-                padding: "0 12px",
-                gap: 8,
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ display: "flex", gap: 6 }}>
-                <div style={{ width: 11, height: 11, borderRadius: "50%", background: UI_COLORS.macRed, opacity: 0.7 }} />
-                <div style={{ width: 11, height: 11, borderRadius: "50%", background: UI_COLORS.macYellow, opacity: 0.7 }} />
-                <div style={{ width: 11, height: 11, borderRadius: "50%", background: UI_COLORS.macGreen, opacity: 0.7 }} />
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  fontSize: 12,
-                  color: `${mutedText}60`,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {t("canvas.screenCapture")}
-              </div>
-              {/* LIVE pill — always visible while overlay is on air */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: UI_COLORS.live,
-                  borderRadius: 999,
-                  padding: "0 10px",
-                  height: 20,
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.95)",
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: UI_COLORS.white,
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  {t("canvas.liveBadge")}
-                </span>
-              </div>
-            </div>
+            {/* Main screen capture titlebar intentionally hidden.
+                The captured app already has its own chrome, so the preview area
+                gets the full frame height here. */}
 
             {/* Main content area — large idle watermark */}
             <div
@@ -229,10 +247,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           <div
             style={{
               position: "absolute",
-              left: 1496,
-              top: 756,
-              width: 400,
-              height: 300,
+              left: CAMERA_PANEL_SLOT.left,
+              top: CAMERA_PANEL_SLOT.top,
+              width: CAMERA_PANEL_SLOT.width,
+              height: CAMERA_PANEL_SLOT.height,
               background: cameraFrameColors.shellBackground,
               border: `2px solid ${borderColor}55`,
               borderRadius: 0,
@@ -347,6 +365,143 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           </div>
         )}
 
+        {!mainScreen.cameraVisible && (
+          <div
+            data-testid="overlay-current-focus"
+            style={{
+              position: "absolute",
+              left: CAMERA_PANEL_SLOT.left,
+              top: CAMERA_PANEL_SLOT.top,
+              width: CAMERA_PANEL_SLOT.width,
+              height: CAMERA_PANEL_SLOT.height,
+              background: `${bgPanel}F0`,
+              border: `2px solid ${borderColor}45`,
+              borderRadius: 0,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${bgPanel}`,
+            }}
+          >
+            <div
+              style={{
+                height: 3,
+                background: `linear-gradient(90deg, ${cyanAccent}80 0%, ${borderColor}60 50%, ${warmAccent}55 100%)`,
+                flexShrink: 0,
+              }}
+            />
+            <div
+              style={{
+                padding: "24px 26px",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+                flex: 1,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: cyanAccent,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 14,
+                }}
+              >
+                <div
+                  style={{
+                    width: 3,
+                    height: 12,
+                    borderRadius: 2,
+                    background: cyanAccent,
+                    boxShadow: `0 0 8px ${cyanAccent}80`,
+                    flexShrink: 0,
+                  }}
+                />
+                {t("canvas.currentFocus")}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: textColor,
+                  lineHeight: 1.22,
+                  letterSpacing: "0.01em",
+                  marginBottom: 18,
+                }}
+              >
+                {currentFocus.title}
+              </div>
+
+              <div
+                style={{
+                  borderTop: `1px solid ${borderColor}24`,
+                  paddingTop: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                  minHeight: 0,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.11em",
+                      textTransform: "uppercase",
+                      color: pinkAccent,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {currentFocus.sectionTitle}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: textColor,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {currentFocus.current}
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.11em",
+                      textTransform: "uppercase",
+                      color: warmAccent,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {t("canvas.currentFocusNext")}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: `${textColor}CC`,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {currentFocus.next}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right Sidebar */}
         {sidebar.visible && (
           <div
@@ -423,10 +578,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             data-testid="overlay-bottom-bar"
             style={{
               position: "absolute",
-              left: 24,
-              top: 894,
-              width: 1448,
-              height: 162,
+              left: BOTTOM_BAR_SLOT.left,
+              top: BOTTOM_BAR_SLOT.top,
+              width: BOTTOM_BAR_SLOT.width,
+              height: BOTTOM_BAR_SLOT.height,
               background: `${bgPanel}F0`,
               border: `2px solid ${borderColor}45`,
               borderRadius: 0,

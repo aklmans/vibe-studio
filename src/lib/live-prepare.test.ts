@@ -1,0 +1,129 @@
+import { deepStrictEqual, equal } from "node:assert/strict";
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+import {
+  buildObsOverlayUrl,
+  prepareObsSceneConfig,
+  prepareObsWebSocketConfig,
+} from "./live-prepare";
+
+function makeObsSceneConfig() {
+  return {
+    current_scene: "Vibe Live Overlay",
+    sources: [
+      {
+        name: "Vibe Live Overlay",
+        id: "scene",
+        settings: {
+          items: [
+            { name: "Vibe Overlay Empty Frame", visible: false },
+            { name: "Vibe Main Display Capture", visible: false },
+            { name: "Vibe Camera Capture", visible: false },
+            { name: "Vibe Overlay Avatar Frame", visible: true },
+            { name: "Vibe Main App Capture", visible: true },
+          ],
+        },
+      },
+      {
+        name: "Vibe Overlay Empty Frame",
+        id: "browser_source",
+        settings: {
+          url: "http://localhost:3001/obs/overlay?camera=empty",
+        },
+      },
+      {
+        name: "Vibe Overlay Avatar Frame",
+        id: "browser_source",
+        settings: {
+          url: "http://localhost:3001/obs/overlay?camera=avatar",
+        },
+      },
+    ],
+  };
+}
+
+test("buildObsOverlayUrl returns the OBS browser source URL for a camera mode", () => {
+  equal(
+    buildObsOverlayUrl(3000, "empty"),
+    "http://localhost:3000/obs/overlay?camera=empty",
+  );
+  equal(
+    buildObsOverlayUrl(3000, "avatar"),
+    "http://localhost:3000/obs/overlay?camera=avatar",
+  );
+});
+
+test("prepareObsSceneConfig updates overlay URLs and resets the live scene layering", () => {
+  const { config, changes } = prepareObsSceneConfig(makeObsSceneConfig(), {
+    port: 3000,
+  });
+
+  const emptySource = config.sources.find(
+    (source) => source.name === "Vibe Overlay Empty Frame",
+  );
+  const avatarSource = config.sources.find(
+    (source) => source.name === "Vibe Overlay Avatar Frame",
+  );
+  const scene = config.sources.find(
+    (source) => source.name === "Vibe Live Overlay",
+  );
+
+  const sceneItems = scene?.settings.items;
+  assert(sceneItems);
+
+  equal(
+    emptySource?.settings.url,
+    "http://localhost:3000/obs/overlay?camera=empty",
+  );
+  equal(
+    avatarSource?.settings.url,
+    "http://localhost:3000/obs/overlay?camera=avatar",
+  );
+
+  deepStrictEqual(
+    sceneItems.map((item) => [item.name, item.visible]),
+    [
+      ["Vibe Main Display Capture", true],
+      ["Vibe Main App Capture", true],
+      ["Vibe Camera Capture", true],
+      ["Vibe Overlay Avatar Frame", false],
+      ["Vibe Overlay Empty Frame", true],
+    ],
+  );
+  deepStrictEqual(changes, [
+    "Set Vibe Overlay Empty Frame URL",
+    "Set Vibe Overlay Avatar Frame URL",
+    "Reset Vibe Live Overlay source order",
+    "Set Vibe Overlay Empty Frame visible",
+    "Set Vibe Overlay Avatar Frame hidden",
+    "Set Vibe Camera Capture visible",
+    "Set Vibe Main Display Capture visible",
+    "Set Vibe Main App Capture visible",
+  ]);
+});
+
+test("prepareObsWebSocketConfig enables automation without changing authentication", () => {
+  const { config, changes } = prepareObsWebSocketConfig({
+    alerts_enabled: true,
+    auth_required: true,
+    first_load: true,
+    server_enabled: false,
+    server_password: "secret",
+    server_port: 4455,
+  });
+
+  deepStrictEqual(config, {
+    alerts_enabled: false,
+    auth_required: true,
+    first_load: false,
+    server_enabled: true,
+    server_password: "secret",
+    server_port: 4455,
+  });
+  deepStrictEqual(changes, [
+    "Enable OBS WebSocket server",
+    "Disable OBS WebSocket startup alerts",
+    "Mark OBS WebSocket as initialized",
+  ]);
+});

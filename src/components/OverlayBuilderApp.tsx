@@ -23,6 +23,10 @@ import {
 } from "../utils/exportImage";
 import { loadOverlayState, saveOverlayState } from "../stateStorage";
 import { UI_BORDERS, UI_COLORS } from "../lib/design-tokens";
+import {
+  COVER_CANVAS_DIMENSIONS,
+  OVERLAY_CANVAS_DIMENSIONS,
+} from "../lib/canvas-dimensions";
 import { produceState } from "../lib/state";
 import { publishLiveState } from "../lib/live-state-client";
 import {
@@ -383,14 +387,20 @@ export default function App() {
     onOpenSettings: () => setSettingsOpen(true),
   });
 
-  const CANVAS_NATIVE_W = 1920;
-  const CANVAS_NATIVE_H = 1080;
-
   const wallpaperPreset = getWallpaperPreset(state.wallpaper.previewPresetId);
   const isLiveDataTab = state.activeTab === "live";
+  const isCoverTab = state.activeTab === "cover";
   const isWallpaperTab = state.activeTab === "wallpaper";
-  const previewW = isWallpaperTab ? wallpaperPreset.width : CANVAS_NATIVE_W;
-  const previewH = isWallpaperTab ? wallpaperPreset.height : CANVAS_NATIVE_H;
+  const previewW = isWallpaperTab
+    ? wallpaperPreset.width
+    : isCoverTab
+      ? COVER_CANVAS_DIMENSIONS.width
+      : OVERLAY_CANVAS_DIMENSIONS.width;
+  const previewH = isWallpaperTab
+    ? wallpaperPreset.height
+    : isCoverTab
+      ? COVER_CANVAS_DIMENSIONS.height
+      : OVERLAY_CANVAS_DIMENSIONS.height;
 
   const tabBadge = (() => {
     switch (state.activeTab) {
