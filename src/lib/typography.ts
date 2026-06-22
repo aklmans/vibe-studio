@@ -60,6 +60,51 @@ export const fontFamilies = {
   mono: '"SF Mono", Menlo, Monaco, "Cascadia Code", monospace',
 } as const;
 
+// ── Content-resilience helpers ─────────────────────────────────────────────
+// Broadcast assets render real, unbounded user copy (long CJK titles, long
+// English words, raw URLs / handles). These keep long text inside the fixed
+// canvas without overflowing, and render identically in preview and export
+// (no DOM measurement — pure, deterministic CSS, captured the same way by
+// html-to-image as on screen).
+
+// Let regular titles / prose wrap naturally first, only breaking long tokens
+// when the line would otherwise overflow. Use this for editorial text that
+// should keep graceful word rhythm.
+export const wrapProse: CSSProperties = {
+  overflowWrap: "break-word",
+  wordBreak: "normal",
+};
+
+// Let raw URLs / handles / generated identifiers break anywhere instead of
+// pushing fixed broadcast assets wider. Reserve this for token-like content.
+export const wrapAnywhere: CSSProperties = {
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+// Single-line truncation for fixed-width slots (social values, badge labels).
+export const truncateLine: CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  minWidth: 0,
+};
+
+// Cap a wrapped text block to `lines` rows, then clip with an ellipsis. Used
+// where a region has a bounded height (overlay focus, bottom-bar values). Even
+// if a renderer drops the ellipsis, the `-webkit-box` clip still prevents
+// overflow, so it never degrades below a plain `overflow: hidden`.
+export function clampLines(lines: number): CSSProperties {
+  return {
+    display: "-webkit-box",
+    WebkitLineClamp: lines,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  };
+}
+
 // Helper: detect if a string is mostly ASCII so we know whether uppercase +
 // wide letter-spacing should apply. CJK strings should use the no-uppercase,
 // tighter spacing variant of the eyebrow style.

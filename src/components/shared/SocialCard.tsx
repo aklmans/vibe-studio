@@ -1,6 +1,7 @@
 import type { OverlayState } from "../../types";
 import type { TranslationKey } from "../../lib/i18n";
 import { socialStyle } from "../../lib/socials";
+import { fontFamilies } from "../../lib/typography";
 import { editorialPalette } from "../lib/editorial-palette";
 
 interface SocialCardProps {
@@ -29,11 +30,9 @@ export default function SocialCard({
         display: "flex",
         alignItems: "center",
         gap: S(28),
-        padding: `${S(22)}px ${S(44)}px`,
-        background: `${colors.bgPanel}cc`,
-        border: `1px solid ${E.glassBorder}`,
-        borderRadius: S(20),
-        minWidth: fullWidth ? undefined : undefined,
+        padding: `${S(20)}px ${S(8)}px ${S(4)}px`,
+        background: "transparent",
+        borderTop: `1px solid ${E.rule}`,
         width: fullWidth ? "100%" : undefined,
         boxSizing: "border-box",
         flexWrap: "wrap",
@@ -41,8 +40,9 @@ export default function SocialCard({
     >
       <div
         style={{
-          fontSize: S(18),
-          fontWeight: 600,
+          fontFamily: fontFamilies.mono,
+          fontSize: S(17),
+          fontWeight: 500,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: E.subtle,
@@ -54,9 +54,8 @@ export default function SocialCard({
       >
         <div
           style={{
-            width: S(4),
+            width: S(3),
             height: S(16),
-            borderRadius: 2,
             background: E.accent,
             flexShrink: 0,
           }}
@@ -73,9 +72,10 @@ export default function SocialCard({
             <span
               style={{
                 ...style,
-                fontSize: S(20),
-                fontWeight: 600,
-                borderRadius: S(8),
+                fontFamily: fontFamilies.mono,
+                fontSize: S(18),
+                fontWeight: 500,
+                borderRadius: S(6),
                 padding: `${S(4)}px ${S(14)}px`,
                 flexShrink: 0,
                 width: S(LABEL_WIDTH),
@@ -85,8 +85,9 @@ export default function SocialCard({
                 justifyContent: "center",
                 textAlign: "center",
                 boxSizing: "border-box",
-                letterSpacing: "0.04em",
-                border: "1px solid transparent",
+                letterSpacing: "0.06em",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
               }}
             >
               {social.label}
@@ -100,6 +101,8 @@ export default function SocialCard({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                minWidth: 0,
+                maxWidth: S(520),
               }}
             >
               {social.value}

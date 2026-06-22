@@ -38,6 +38,10 @@ test("CoverCanvas centers cover copy in the right-side title safe area", () => {
     html,
     /data-testid="cover-title-stage" style="position:absolute;top:178px;left:460px;width:650px/,
   );
-  assert.match(html, /font-size:60px/);
-  assert.match(html, /white-space:nowrap/);
+  // Editorial cover title: upright serif display copy that can wrap inside the
+  // fixed title safe area instead of overflowing as a forced single line.
+  assert.match(html, /font-family:ui-serif/);
+  assert.match(html, /font-size:58px/);
+  assert.doesNotMatch(html, /white-space:nowrap[^"]*" aria-label="Cover title"/);
+  assert.match(html, /overflow-wrap:break-word[^"]*" aria-label="Cover title"/);
 });

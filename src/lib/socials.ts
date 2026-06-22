@@ -34,57 +34,6 @@ export interface SocialStyle {
   border: string;
 }
 
-interface BrandPreset {
-  label: string;
-  style: SocialStyle;
-}
-
-const BRAND_PRESETS: Record<
-  Exclude<SocialKind, "blog" | "github" | "qq" | "custom">,
-  BrandPreset
-> = {
-  bilibili: {
-    label: "B站",
-    style: {
-      color: "#ffffff",
-      background: "#E62117",
-      border: "1px solid #E62117",
-    },
-  },
-  x: {
-    label: "X",
-    style: {
-      color: "#ffffff",
-      background: "#000000",
-      border: "1px solid #1f1f1f",
-    },
-  },
-  youtube: {
-    label: "YouTube",
-    style: {
-      color: "#ffffff",
-      background: "#FF0000",
-      border: "1px solid #FF0000",
-    },
-  },
-  discord: {
-    label: "Discord",
-    style: {
-      color: "#ffffff",
-      background: "#5865F2",
-      border: "1px solid #5865F2",
-    },
-  },
-  wechat: {
-    label: "微信",
-    style: {
-      color: "#ffffff",
-      background: "#07C160",
-      border: "1px solid #07C160",
-    },
-  },
-};
-
 export const SOCIAL_KIND_VALUES: SocialKind[] = [
   "bilibili",
   "blog",
@@ -137,48 +86,28 @@ export function defaultSocialLabel(kind: SocialKind, locale: Locale = "zh"): str
 }
 
 /**
- * Resolve the visual style for a social label. Token-bound presets (blog /
- * github / qq) follow the active theme so a Neon -> Editorial swap repaints
- * them automatically; brand presets keep their fixed brand color.
+ * Resolve the visual style for a social label. Editorial direction (Phase 2):
+ * social links read as quiet metadata, not colored platform tags. Every preset
+ * uses the same theme-derived hairline chip — the label text carries the brand
+ * — so the footer stays calm and repaints correctly between Light and Dark. A
+ * custom link may keep a restrained outline in the user's chosen color.
  */
 export function socialStyle(
   badge: SocialConfig,
   colors: ColorTokens,
 ): SocialStyle {
-  switch (badge.kind) {
-    case "bilibili":
-    case "x":
-    case "youtube":
-    case "discord":
-    case "wechat":
-      return BRAND_PRESETS[badge.kind].style;
-    case "blog":
-      return {
-        color: colors.cyanAccent,
-        background: `${colors.cyanAccent}18`,
-        border: `1px solid ${colors.cyanAccent}40`,
-      };
-    case "github":
-      return {
-        color: colors.mutedText,
-        background: `${colors.borderColor}15`,
-        border: `1px solid ${colors.borderColor}30`,
-      };
-    case "qq":
-      return {
-        color: colors.warmAccent,
-        background: `${colors.warmAccent}15`,
-        border: `1px solid ${colors.warmAccent}35`,
-      };
-    case "custom": {
-      const c = badge.customColor || colors.borderColor;
-      return {
-        color: c,
-        background: `${c}18`,
-        border: `1px solid ${c}40`,
-      };
-    }
+  if (badge.kind === "custom" && badge.customColor) {
+    return {
+      color: badge.customColor,
+      background: "transparent",
+      border: `1px solid ${badge.customColor}55`,
+    };
   }
+  return {
+    color: colors.mutedText,
+    background: "transparent",
+    border: `1px solid ${colors.borderColor}59`,
+  };
 }
 
 export function isSocialKind(value: unknown): value is SocialKind {

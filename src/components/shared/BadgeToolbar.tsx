@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { BadgeConfig } from "../../lib/badges";
 import { badgeIconUrl } from "../../lib/badges";
+import { truncateLine } from "../../lib/typography";
 import EditableText from "../edit/EditableText";
 
 interface BadgeToolbarProps {
@@ -98,10 +99,12 @@ export default function BadgeToolbar({
               onCommit={(v) => onBadgeLabelChange?.(originalIdx, v)}
               ariaLabel={`Badge ${i + 1} label`}
               style={{
+                ...truncateLine,
                 fontSize: px(labelFontSize),
                 color: labelColor,
                 fontWeight: 500,
                 letterSpacing: "0.04em",
+                maxWidth: px(180),
               }}
             />
           </div>

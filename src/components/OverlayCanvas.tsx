@@ -1,6 +1,7 @@
 import { forwardRef, useId } from "react";
 import { OverlayState } from "../types";
 import { avatarPlaceholder } from "../lib/avatar";
+import { fontFamilies, clampLines } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
@@ -116,10 +117,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
       borderColor,
       textColor,
       mutedText,
-      cyanAccent,
+      subtleText,
       pinkAccent,
-      warmAccent,
     } = colors;
+    const accent = pinkAccent;
 
     const avatarSrc = cover.avatarUrl || AVATAR_PLACEHOLDER;
     const hasVisibleSocial = cover.socials.some(
@@ -201,7 +202,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: MAIN_SCREEN_SLOT.width,
               height: MAIN_SCREEN_SLOT.height,
               background: bgDark,
-              border: `2px solid ${borderColor}50`,
+              border: `1px solid ${borderColor}40`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
@@ -225,12 +226,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             >
               <div
                 style={{
+                  fontFamily: fontFamilies.serif,
                   fontSize: 120,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: mutedText,
-                  opacity: 0.05,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  opacity: 0.06,
+                  letterSpacing: "0.04em",
                   userSelect: "none",
                   whiteSpace: "nowrap",
                 }}
@@ -251,12 +252,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: CAMERA_PANEL_SLOT.width,
               height: CAMERA_PANEL_SLOT.height,
               background: cameraFrameColors.shellBackground,
-              border: `2px solid ${borderColor}55`,
+              border: `1px solid ${borderColor}45`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${bgPanel}`,
+              boxShadow: `0 8px 28px rgba(0,0,0,0.45)`,
             }}
           >
             {/* Camera titlebar */}
@@ -273,17 +274,19 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               }}
             >
               <div style={{ display: "flex", gap: 5 }}>
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF5F57", opacity: 0.7 }} />
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#FEBC2E", opacity: 0.7 }} />
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#28C840", opacity: 0.7 }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF5F57", opacity: 0.55 }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FEBC2E", opacity: 0.55 }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#28C840", opacity: 0.55 }} />
               </div>
               <div
                 style={{
                   flex: 1,
                   textAlign: "center",
-                  fontSize: 10,
-                  color: `${mutedText}50`,
-                  letterSpacing: "0.06em",
+                  fontFamily: fontFamilies.mono,
+                  fontSize: 9,
+                  color: subtleText,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
                 }}
               >
                 {t("canvas.camera")}
@@ -339,14 +342,13 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   >
                     <div
                       style={{
-                        width: 6,
-                        height: 6,
+                        width: 5,
+                        height: 5,
                         borderRadius: "50%",
-                        background: "#FF5F57",
-                        boxShadow: "0 0 4px #FF5F57",
+                        background: "#E62117",
                       }}
                     />
-                    <span style={{ fontSize: 9, color: "#fff", fontWeight: 600, letterSpacing: "0.08em" }}>{t("canvas.liveBadge")}</span>
+                    <span style={{ fontFamily: fontFamilies.mono, fontSize: 9, color: "#fff", fontWeight: 600, letterSpacing: "0.12em" }}>{t("canvas.liveBadge")}</span>
                   </div>
                 </>
               )}
@@ -374,18 +376,19 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: CAMERA_PANEL_SLOT.width,
               height: CAMERA_PANEL_SLOT.height,
               background: `${bgPanel}F0`,
-              border: `2px solid ${borderColor}45`,
+              border: `1px solid ${borderColor}45`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${bgPanel}`,
+              boxShadow: `0 8px 28px rgba(0,0,0,0.4)`,
             }}
           >
             <div
               style={{
-                height: 3,
-                background: `linear-gradient(90deg, ${cyanAccent}80 0%, ${borderColor}60 50%, ${warmAccent}55 100%)`,
+                height: 2,
+                width: 56,
+                background: accent,
                 flexShrink: 0,
               }}
             />
@@ -400,24 +403,23 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             >
               <div
                 style={{
+                  fontFamily: fontFamilies.mono,
                   fontSize: 11,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: cyanAccent,
+                  color: mutedText,
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
+                  gap: 9,
                   marginBottom: 14,
                 }}
               >
                 <div
                   style={{
-                    width: 3,
+                    width: 2,
                     height: 12,
-                    borderRadius: 2,
-                    background: cyanAccent,
-                    boxShadow: `0 0 8px ${cyanAccent}80`,
+                    background: accent,
                     flexShrink: 0,
                   }}
                 />
@@ -426,11 +428,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
 
               <div
                 style={{
-                  fontSize: 22,
-                  fontWeight: 700,
+                  ...clampLines(2),
+                  fontFamily: fontFamilies.serif,
+                  fontSize: 24,
+                  fontWeight: 600,
                   color: textColor,
-                  lineHeight: 1.22,
-                  letterSpacing: "0.01em",
+                  lineHeight: 1.2,
                   marginBottom: 18,
                 }}
               >
@@ -450,18 +453,21 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 <div>
                   <div
                     style={{
+                      ...clampLines(1),
+                      fontFamily: fontFamilies.mono,
                       fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: "0.11em",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      color: pinkAccent,
-                      marginBottom: 6,
+                      color: accent,
+                      marginBottom: 7,
                     }}
                   >
                     {currentFocus.sectionTitle}
                   </div>
                   <div
                     style={{
+                      ...clampLines(3),
                       fontSize: 18,
                       fontWeight: 600,
                       color: textColor,
@@ -475,18 +481,20 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 <div>
                   <div
                     style={{
+                      fontFamily: fontFamilies.mono,
                       fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: "0.11em",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      color: warmAccent,
-                      marginBottom: 6,
+                      color: subtleText,
+                      marginBottom: 7,
                     }}
                   >
                     {t("canvas.currentFocusNext")}
                   </div>
                   <div
                     style={{
+                      ...clampLines(2),
                       fontSize: 14,
                       fontWeight: 500,
                       color: `${textColor}CC`,
@@ -513,18 +521,19 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: 400,
               height: 708,
               background: `${bgPanel}F0`,
-              border: `2px solid ${borderColor}45`,
+              border: `1px solid ${borderColor}45`,
               borderRadius: 0,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
             }}
           >
-            {/* Sidebar header accent */}
+            {/* Sidebar header accent — single quiet mark */}
             <div
               style={{
-                height: 3,
-                background: `linear-gradient(90deg, ${cyanAccent}80 0%, ${borderColor}60 50%, ${pinkAccent}40 100%)`,
+                height: 2,
+                width: 56,
+                background: accent,
                 flexShrink: 0,
               }}
             />
@@ -547,21 +556,22 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   background: `${bgDark}60`,
                 }}
               >
-                {/* Social section title — same style as section headings */}
+                {/* Social section title — quiet mono label */}
                 <div
                   style={{
-                    fontSize: 11,
+                    fontFamily: fontFamilies.mono,
+                    fontSize: 10,
                     fontWeight: 600,
-                    letterSpacing: "0.1em",
+                    letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    color: pinkAccent,
+                    color: mutedText,
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
+                    gap: 9,
                     marginBottom: 2,
                   }}
                 >
-                  <div style={{ width: 3, height: 10, borderRadius: 2, background: pinkAccent, flexShrink: 0 }} />
+                  <div style={{ width: 2, height: 11, background: accent, flexShrink: 0 }} />
                   {t("canvas.followMe")}
                 </div>
                 <SocialList state={state} size="small" editable={!!onChange} onChange={onChange} />
@@ -582,7 +592,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: BOTTOM_BAR_SLOT.width,
               height: BOTTOM_BAR_SLOT.height,
               background: `${bgPanel}F0`,
-              border: `2px solid ${borderColor}45`,
+              border: `1px solid ${borderColor}45`,
               borderRadius: 0,
               display: "flex",
               overflow: "hidden",
@@ -591,18 +601,6 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             <BottomBarSegments state={state} size="small" />
           </div>
         )}
-
-        {/* Bottom accent line */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 2,
-            background: `linear-gradient(90deg, transparent 0%, ${cyanAccent}30 30%, ${borderColor}50 50%, ${pinkAccent}20 80%, transparent 100%)`,
-          }}
-        />
       </div>
     );
   }

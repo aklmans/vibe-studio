@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { OverlayState } from "../types";
 import { avatarPlaceholder } from "../lib/avatar";
 import { patchSection } from "../lib/state";
-import { fontFamilies, typography } from "../lib/typography";
+import { fontFamilies, typography, wrapProse } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import SocialList from "./SocialList";
 import EditableText from "./edit/EditableText";
@@ -57,142 +57,15 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
           flexShrink: 0,
         }}
       >
-        {/* Subtle grid */}
+        {/* Vertical column divider — single quiet hairline */}
         <div
           style={{
             position: "absolute",
-            inset: 0,
-            backgroundImage: `
-              linear-gradient(${E.glassBorder} 1px, transparent 1px),
-              linear-gradient(90deg, ${E.glassBorder} 1px, transparent 1px)
-            `,
-            backgroundSize: "128px 128px",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Left-biased radial glow behind title */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: `radial-gradient(ellipse 80% 90% at 35% 50%, ${E.bg2}F0 0%, transparent 65%)`,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Warm accent glow behind avatar */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: `radial-gradient(ellipse 50% 60% at 78% 48%, ${E.accent}12 0%, transparent 65%)`,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* ── Ghost UI corners ── */}
-
-        {/* Bottom-left: commit graph */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 110,
-            left: 120,
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            pointerEvents: "none",
-          }}
-        >
-          {[180, 140, 200, 120, 160].map((w, i) => (
-            <div
-              key={i}
-              style={{ display: "flex", alignItems: "center", gap: 12 }}
-            >
-              <div
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background:
-                    i === 0 ? `${E.accent}55` : E.glassBorder,
-                  flexShrink: 0,
-                }}
-              />
-              <div
-                style={{
-                  height: 2,
-                  width: w,
-                  background: E.glassBorder,
-                  borderRadius: 1,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Top-right: chat panel */}
-        <div
-          style={{
-            position: "absolute",
-            top: 96,
-            right: 96,
-            width: 280,
-            height: 180,
-            borderRadius: 10,
-            border: `1px solid ${E.glassBorder}`,
-            background: `${E.bg2}99`,
-            pointerEvents: "none",
-          }}
-        >
-          {[60, 45, 75, 50].map((w, i) => (
-            <div
-              key={i}
-              style={{
-                margin: `${i === 0 ? 18 : 14}px ${i % 2 === 0 ? "auto" : "16px"} 0 ${i % 2 === 0 ? "16px" : "auto"}`,
-                height: 14,
-                width: `${w}%`,
-                background: E.glassBorder,
-                borderRadius: 7,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Top accent bar (paired with bottom) */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: `linear-gradient(90deg, transparent 15%, ${E.accent}55 50%, transparent 85%)`,
-          }}
-        />
-
-        {/* Bottom accent bar (mirrored) */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: `linear-gradient(90deg, transparent 15%, ${E.accent}55 50%, transparent 85%)`,
-          }}
-        />
-
-        {/* Vertical column divider */}
-        <div
-          style={{
-            position: "absolute",
-            top: 200,
-            bottom: 200,
+            top: 240,
+            bottom: 240,
             left: 1120,
             width: 1,
-            background: `linear-gradient(180deg, transparent, ${E.glassBorder} 30%, ${E.glassBorder} 50%, ${E.glassBorder} 70%, transparent)`,
+            background: E.hairline,
           }}
         />
 
@@ -216,6 +89,10 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             readonly={readonly}
             onBadgeLabelChange={writeBadgeLabel}
             labelColor={E.muted}
+            background="transparent"
+            border={`1px solid ${E.rule}`}
+            borderRadius={8}
+            separatorColor={E.subtle}
             style={{
               alignSelf: "flex-start",
               marginBottom: hasOptionalContent ? 28 : 36,
@@ -232,8 +109,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               ariaLabel="Hook text"
               style={{
                 ...typography.eyebrow,
+                fontFamily: fontFamilies.mono,
                 color: E.subtle,
-                letterSpacing: "0.18em",
+                letterSpacing: "0.2em",
                 marginBottom: 18,
               }}
             />
@@ -247,6 +125,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             as="h1"
             ariaLabel="Poster title"
             style={{
+              ...wrapProse,
               fontFamily: fontFamilies.serif,
               fontSize: hasOptionalContent ? 88 : 96,
               fontWeight: 600,
@@ -255,6 +134,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               lineHeight: 1.05,
               margin: 0,
               marginBottom: 40,
+              maxWidth: 864,
             }}
           />
 
@@ -263,10 +143,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             style={{
               width: 720,
               boxSizing: "border-box",
-              background: `${E.bg2}dd`,
-              border: `1px solid ${E.glassBorder}`,
-              boxShadow: `inset 0 0 0 1px ${E.glassBorder}`,
-              borderRadius: 14,
+              background: `${E.bg2}cc`,
+              border: `1px solid ${E.rule}`,
+              borderRadius: 10,
               padding: "20px 32px 22px",
               position: "relative",
               marginBottom: hasOptionalContent ? 36 : 0,
@@ -308,8 +187,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               />
               <span
                 style={{
+                  fontFamily: fontFamilies.mono,
                   fontSize: 10,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: E.accent,
                   letterSpacing: "0.16em",
                   textTransform: "uppercase",
@@ -325,6 +205,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               as="div"
               ariaLabel="Today label"
               style={{
+                fontFamily: fontFamilies.mono,
                 fontSize: 11,
                 fontWeight: 500,
                 color: E.subtle,
@@ -340,6 +221,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               as="div"
               ariaLabel="Today topic"
               style={{
+                ...wrapProse,
                 fontSize: 30,
                 fontWeight: 500,
                 color: E.text,
@@ -377,12 +259,14 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                   <div
                     key={i}
                     style={{
+                      ...wrapProse,
                       fontFamily: fontFamilies.serif,
                       fontSize: 48,
                       lineHeight: 1.05,
                       fontWeight: 600,
                       letterSpacing: "-0.015em",
                       color: E.text,
+                      maxWidth: 864,
                     }}
                   >
                     {line}
@@ -396,6 +280,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
           {cover.closingVisible && (
             <div
               style={{
+                ...wrapProse,
                 fontSize: 20,
                 color: E.muted,
                 display: "flex",
@@ -404,6 +289,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 gap: "0 6px",
                 lineHeight: 1.6,
                 opacity: 0.9,
+                maxWidth: 864,
               }}
             >
               <span>{cover.closingPrefix}</span>
@@ -446,7 +332,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
               src={avatarSrc}
               size={260}
               borderInset={4}
-              reflection={{ width: 180, height: 52 }}
+              borderColor={E.rule}
             />
           )}
 
@@ -458,19 +344,19 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 flexDirection: "column",
                 gap: 16,
                 alignItems: "stretch",
-                padding: "28px 36px",
-                background: `${E.bg2}cc`,
-                border: `1px solid ${E.glassBorder}`,
-                boxShadow: `inset 0 0 0 1px ${E.glassBorder}`,
-                borderRadius: 14,
+                padding: "26px 34px",
+                background: `${E.bg2}99`,
+                border: `1px solid ${E.rule}`,
+                borderRadius: 10,
                 minWidth: 340,
               }}
             >
               <div
                 style={{
+                  fontFamily: fontFamilies.mono,
                   fontSize: 12,
                   fontWeight: 600,
-                  letterSpacing: "0.18em",
+                  letterSpacing: "0.16em",
                   textTransform: "uppercase",
                   color: E.subtle,
                   display: "flex",
@@ -479,7 +365,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                   marginBottom: 4,
                 }}
               >
-                <div style={{ width: 3, height: 12, borderRadius: 2, background: E.accent, flexShrink: 0 }} />
+                <div style={{ width: 2, height: 13, background: E.accent, flexShrink: 0 }} />
                 {t("canvas.followMe")}
               </div>
               <SocialList state={state} size="large" editable={editable} onChange={onChange} />

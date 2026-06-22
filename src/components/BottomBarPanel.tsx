@@ -18,7 +18,7 @@ const BottomBarPanel = forwardRef<HTMLDivElement, BottomBarPanelProps>(
           width: 1856,
           height: 180,
           background: `${bgPanel}F0`,
-          border: `1.5px solid ${borderColor}45`,
+          border: `1px solid ${borderColor}45`,
           borderRadius: 0,
           display: "flex",
           overflow: "hidden",

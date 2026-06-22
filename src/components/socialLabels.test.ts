@@ -34,6 +34,15 @@ function childrenOf(node: ReactNode): ReactNode[] {
   return [asElement(node).props.children].flat(Number.POSITIVE_INFINITY) as ReactNode[];
 }
 
+function editableCommitOf(node: ReactNode): (next: string) => void {
+  const element = asElement(node) as ReactElement<{
+    onCommit?: (next: string) => void;
+  }>;
+  const onCommit = element.props.onCommit;
+  assert.ok(onCommit);
+  return onCommit;
+}
+
 test("SocialList renders same-size label chips", () => {
   const state = {
     ...DEFAULT_STATE,
@@ -56,6 +65,40 @@ test("SocialList renders same-size label chips", () => {
     { width: 76, height: 22 },
     { width: 76, height: 22 },
   ]);
+});
+
+test("SocialList edits the original social item when hidden rows precede it", () => {
+  const socials: SocialConfig[] = [
+    { visible: false, kind: "youtube", label: "Hidden", value: "hidden", customColor: "" },
+    { visible: true, kind: "blog", label: "Website", value: "https://example.com", customColor: "" },
+    { visible: true, kind: "github", label: "GitHub", value: "https://github.com/example", customColor: "" },
+  ];
+  let nextState = {
+    ...DEFAULT_STATE,
+    cover: {
+      ...DEFAULT_STATE.cover,
+      socials,
+    },
+  };
+
+  const rows = childrenOf(
+    SocialList({
+      state: nextState,
+      size: "small",
+      editable: true,
+      onChange: (state) => {
+        nextState = state;
+      },
+    }),
+  );
+  const firstVisibleValue = childrenOf(rows[0])[1];
+  const onCommit = editableCommitOf(firstVisibleValue);
+
+  onCommit("https://zhaphar.com");
+
+  assert.equal(nextState.cover.socials[0].value, "hidden");
+  assert.equal(nextState.cover.socials[1].value, "https://zhaphar.com");
+  assert.equal(nextState.cover.socials[2].value, "https://github.com/example");
 });
 
 test("SocialCard renders same-size label chips", () => {

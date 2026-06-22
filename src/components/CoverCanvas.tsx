@@ -1,10 +1,16 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
-import { fontFamilies } from "../lib/typography";
+import { fontFamilies, wrapAnywhere, wrapProse } from "../lib/typography";
 import { COVER_CANVAS_DIMENSIONS } from "../lib/canvas-dimensions";
+import { editorialPalette } from "./lib/editorial-palette";
 import EditableText from "./edit/EditableText";
 import BadgeToolbar from "./shared/BadgeToolbar";
+
+// The cover sits on a fixed dark portrait photo, so its display text stays warm
+// light in both themes for legibility; the accent marks track the active theme.
+const COVER_INK = "#f7f3ec";
+const COVER_INK_SOFT = "#e7dccd";
 
 interface CoverCanvasProps {
   state: OverlayState;
@@ -18,6 +24,7 @@ const COVER_BACKGROUND_URL = "/cover-bg.png";
 const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
   ({ state, editable = false, onChange }, ref) => {
     const { cover } = state;
+    const E = editorialPalette(state.colors);
     const readonly = !editable || !onChange;
 
     const writeCover = (patch: Partial<OverlayState["cover"]>) => {
@@ -41,7 +48,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           width: COVER_CANVAS_DIMENSIONS.width,
           height: COVER_CANVAS_DIMENSIONS.height,
           position: "relative",
-          backgroundColor: "#020817",
+          backgroundColor: "#15120e",
           fontFamily: fontFamilies.sans,
           overflow: "hidden",
           flexShrink: 0,
@@ -66,7 +73,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(90deg, rgba(2,8,23,0) 0%, rgba(2,8,23,0.02) 44%, rgba(2,8,23,0.16) 70%, rgba(2,8,23,0.28) 100%)",
+              "linear-gradient(90deg, rgba(16,13,10,0) 0%, rgba(16,13,10,0.04) 42%, rgba(16,13,10,0.22) 70%, rgba(16,13,10,0.36) 100%)",
             pointerEvents: "none",
           }}
         />
@@ -84,6 +91,26 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             alignItems: "center",
           }}
         >
+          {cover.todayLabel && (
+            <EditableText
+              readonly={readonly}
+              value={cover.todayLabel}
+              onCommit={(v) => writeCover({ todayLabel: v })}
+              as="div"
+              ariaLabel="Cover eyebrow"
+              style={{
+                fontFamily: fontFamilies.mono,
+                fontSize: 16,
+                fontWeight: 500,
+                color: state.colors.warmAccent,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                marginBottom: 16,
+                textAlign: "center",
+              }}
+            />
+          )}
+
           <EditableText
             readonly={readonly}
             value={cover.title}
@@ -91,16 +118,27 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             as="h1"
             ariaLabel="Cover title"
             style={{
-              fontFamily: fontFamilies.sans,
-              fontSize: 60,
-              fontWeight: 900,
-              color: "#F9FCFF",
-              letterSpacing: 0,
-              lineHeight: 1.02,
+              fontFamily: fontFamilies.serif,
+              fontSize: 58,
+              fontWeight: 600,
+              color: COVER_INK,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.06,
               margin: 0,
               maxWidth: 650,
               textAlign: "center",
-              whiteSpace: "nowrap",
+              whiteSpace: "normal",
+              ...wrapProse,
+            }}
+          />
+
+          <div
+            style={{
+              width: 64,
+              height: 2,
+              background: E.accent,
+              borderRadius: 1,
+              marginTop: 22,
             }}
           />
 
@@ -111,12 +149,13 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             as="div"
             ariaLabel="Cover subtitle"
             style={{
-              marginTop: 17,
+              ...wrapProse,
+              marginTop: 20,
               maxWidth: 610,
-              fontSize: 29,
-              fontWeight: 800,
-              color: "#B8F1FF",
-              lineHeight: 1.22,
+              fontSize: 27,
+              fontWeight: 500,
+              color: COVER_INK_SOFT,
+              lineHeight: 1.25,
               letterSpacing: 0,
               textAlign: "center",
             }}
@@ -130,12 +169,13 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               as="div"
               ariaLabel="Hook text"
               style={{
-                marginTop: 15,
-                fontSize: 19,
-                fontWeight: 700,
-                color: "rgba(244, 248, 255, 0.78)",
-                lineHeight: 1.25,
-                letterSpacing: "0.04em",
+                ...wrapAnywhere,
+                marginTop: 14,
+                fontSize: 18,
+                fontWeight: 500,
+                color: "rgba(245, 238, 228, 0.72)",
+                lineHeight: 1.3,
+                letterSpacing: "0.02em",
                 textAlign: "center",
               }}
             />
@@ -145,23 +185,20 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             badges={cover.badges}
             readonly={readonly}
             onBadgeLabelChange={writeBadgeLabel}
-            labelColor="#E8F3FF"
-            background="rgba(3, 13, 36, 0.70)"
-            border="1px solid rgba(111, 201, 255, 0.24)"
-            borderRadius={12}
+            labelColor="#ece3d6"
+            background="rgba(20, 16, 12, 0.58)"
+            border="1px solid rgba(245, 238, 228, 0.16)"
+            borderRadius={10}
             paddingY={9}
-            paddingX={13}
+            paddingX={14}
             outerGap={13}
-            itemGap={7}
+            itemGap={8}
             iconSize={23}
             iconOpacity={0.98}
             labelFontSize={16}
             separatorFontSize={13}
-            separatorColor="rgba(184, 241, 255, 0.36)"
-            style={{
-              marginTop: 27,
-              boxShadow: "0 0 30px rgba(0, 132, 255, 0.18)",
-            }}
+            separatorColor="rgba(245, 238, 228, 0.3)"
+            style={{ marginTop: 26 }}
           />
         </div>
       </div>

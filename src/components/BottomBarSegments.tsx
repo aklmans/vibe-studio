@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import type { BottomBarSlot } from "../lib/bottomBar";
 import { formatElapsed, formatStartLabel } from "../lib/bottomBar";
 import { UI_COLORS } from "../lib/design-tokens";
+import { fontFamilies, wrapProse, clampLines, truncateLine } from "../lib/typography";
 import { useNow } from "../hooks/useNow";
 import { useLocale } from "../hooks/useLocale";
 
@@ -24,8 +25,8 @@ export default function BottomBarSegments({
 }: BottomBarSegmentsProps) {
   const { t } = useLocale();
   const { bottomBar, colors } = state;
-  const { borderColor, textColor, mutedText, cyanAccent, pinkAccent, warmAccent } = colors;
-  const accents = [cyanAccent, warmAccent, pinkAccent];
+  const { borderColor, textColor, mutedText, pinkAccent } = colors;
+  const accent = pinkAccent;
 
   const baseTitleSize = size === "large" ? 13 : 12;
   const baseValueSize = size === "large" ? 32 : 28;
@@ -34,7 +35,6 @@ export default function BottomBarSegments({
   return (
     <>
       {bottomBar.segments.map((seg, idx) => {
-        const accent = accents[idx] ?? cyanAccent;
         return (
           <div
             key={idx}
@@ -53,10 +53,10 @@ export default function BottomBarSegments({
                 style={{
                   position: "absolute",
                   right: 0,
-                  top: 16,
-                  bottom: 16,
+                  top: 18,
+                  bottom: 18,
                   width: 1,
-                  background: `linear-gradient(180deg, transparent 0%, ${borderColor}40 50%, transparent 100%)`,
+                  background: `${borderColor}40`,
                 }}
               />
             )}
@@ -102,27 +102,36 @@ function SegmentBody({
   t,
 }: SegmentBodyProps) {
   const titleStyle: CSSProperties = {
+    fontFamily: fontFamilies.mono,
     fontSize: titleSize,
     fontWeight: 600,
     letterSpacing: "0.1em",
     textTransform: "uppercase",
-    color: accent,
+    color: mutedText,
     display: "flex",
     alignItems: "center",
     gap: 8,
   };
   const railStyle: CSSProperties = {
-    width: 3,
+    width: 2,
     height: 12,
-    borderRadius: 2,
     background: accent,
     flexShrink: 0,
   };
   const valueStyle: CSSProperties = {
+    ...wrapProse,
     fontSize: valueSize,
     color: textColor,
     fontWeight: 500,
     letterSpacing: "-0.01em",
+  };
+  // Title labels are one-line metadata; long section names truncate rather than
+  // wrapping the rail off its row.
+  const ellipsisSpan: CSSProperties = {
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   };
 
   switch (slot.kind) {
@@ -193,7 +202,7 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>{t("bar.progress")} · {titleText}</span>
+            <span style={ellipsisSpan}>{t("bar.progress")} · {titleText}</span>
           </div>
           <div
             style={{
@@ -228,7 +237,7 @@ function SegmentBody({
                 style={{
                   width: `${Math.round(ratio * 100)}%`,
                   height: "100%",
-                  background: `linear-gradient(90deg, ${accent}90, ${accent}55)`,
+                  background: accent,
                   transition: "width 0.4s ease",
                 }}
               />
@@ -265,21 +274,24 @@ function SegmentBody({
               flexWrap: "wrap",
               gap: 6,
               alignItems: "center",
+              minWidth: 0,
             }}
           >
             {items.map((item, i) => (
               <span
                 key={i}
                 style={{
-                  fontSize: 14,
+                  ...truncateLine,
+                  fontFamily: fontFamilies.mono,
+                  fontSize: 13,
                   fontWeight: 500,
                   color: textColor,
-                  background: `${borderColor}15`,
-                  border: `1px solid ${borderColor}30`,
-                  borderRadius: 6,
+                  background: "transparent",
+                  border: `1px solid ${borderColor}45`,
+                  borderRadius: 4,
                   padding: "4px 10px",
                   letterSpacing: "0.01em",
-                  whiteSpace: "nowrap",
+                  maxWidth: valueSize >= 32 ? 220 : 160,
                 }}
               >
                 {item}
@@ -295,9 +307,11 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>{state.cover.todayLabel || t("bar.topic")}</span>
+            <span style={ellipsisSpan}>{state.cover.todayLabel || t("bar.topic")}</span>
           </div>
-          <div style={valueStyle}>{state.cover.todayTopic}</div>
+          <div style={{ ...valueStyle, ...clampLines(2) }}>
+            {state.cover.todayTopic}
+          </div>
         </>
       );
     }
@@ -307,9 +321,9 @@ function SegmentBody({
         <>
           <div style={titleStyle}>
             <div style={railStyle} />
-            <span>{slot.title}</span>
+            <span style={ellipsisSpan}>{slot.title}</span>
           </div>
-          <div style={valueStyle}>{slot.text}</div>
+          <div style={{ ...valueStyle, ...clampLines(2) }}>{slot.text}</div>
         </>
       );
     }

@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import type { OverlayState } from "../types";
 import { avatarPlaceholder } from "../lib/avatar";
 import { patchSection } from "../lib/state";
-import { fontFamilies } from "../lib/typography";
+import { fontFamilies, wrapProse } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import {
   HORIZONTAL_BASE,
@@ -74,68 +74,6 @@ const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
           flexShrink: 0,
         }}
       >
-        {/* Subtle grid background */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `
-              linear-gradient(${E.glassBorder} 1px, transparent 1px),
-              linear-gradient(90deg, ${E.glassBorder} 1px, transparent 1px)
-            `,
-            backgroundSize: `${S(128)}px ${S(128)}px`,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Center radial glow */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: isPortrait
-              ? `radial-gradient(ellipse 90% 50% at 50% 38%, ${E.bg2}E0 0%, transparent 70%)`
-              : `radial-gradient(ellipse 75% 90% at 38% 50%, ${E.bg2}F0 0%, transparent 65%)`,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Warm accent glow behind avatar */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: isPortrait
-              ? `radial-gradient(ellipse 60% 30% at 50% 30%, ${E.accent}10 0%, transparent 70%)`
-              : `radial-gradient(ellipse 40% 70% at 78% 50%, ${E.accent}12 0%, transparent 65%)`,
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Top accent bar */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: S(3),
-            background: `linear-gradient(90deg, transparent 15%, ${E.accent}55 50%, transparent 85%)`,
-          }}
-        />
-
-        {/* Bottom accent bar */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: S(3),
-            background: `linear-gradient(90deg, transparent 15%, ${E.accent}55 50%, transparent 85%)`,
-          }}
-        />
-
         {isPortrait ? (
           <PortraitLayout
             S={S}
@@ -222,18 +160,6 @@ function HorizontalLayout({
    * Badges + social card occupy the bottom band, mirroring across the gutter. */
   return (
     <>
-      {/* Vertical column divider — mirrors Poster */}
-      <div
-        style={{
-          position: "absolute",
-          top: S(360),
-          bottom: S(360),
-          left: preset.width * 0.62,
-          width: 1,
-          background: `linear-gradient(180deg, transparent, ${E.glassBorder} 30%, ${E.glassBorder} 50%, ${E.glassBorder} 70%, transparent)`,
-        }}
-      />
-
       {/* Left column: brand → title → slogan */}
       <div
         style={{
@@ -251,10 +177,11 @@ function HorizontalLayout({
         {wallpaper.brandLabelVisible && wallpaper.brandLabel && (
           <div
             style={{
-              fontSize: S(28),
-              fontWeight: 600,
+              fontFamily: fontFamilies.mono,
+              fontSize: S(26),
+              fontWeight: 500,
               color: E.subtle,
-              letterSpacing: "0.32em",
+              letterSpacing: "0.3em",
               textTransform: "uppercase",
               marginBottom: S(48),
               display: "flex",
@@ -264,9 +191,9 @@ function HorizontalLayout({
           >
             <div
               style={{
-                width: S(64),
+                width: S(56),
                 height: S(2),
-                background: `${E.accent}AA`,
+                background: E.accent,
                 borderRadius: 1,
               }}
             />
@@ -286,6 +213,7 @@ function HorizontalLayout({
           as="h1"
           ariaLabel="Wallpaper title"
           style={{
+            ...wrapProse,
             fontFamily: fontFamilies.serif,
             fontSize: S(208),
             fontWeight: 600,
@@ -294,6 +222,7 @@ function HorizontalLayout({
             lineHeight: 1.02,
             margin: 0,
             marginBottom: wallpaper.sloganVisible && wallpaper.slogan ? S(48) : 0,
+            maxWidth: "100%",
           }}
         />
 
@@ -305,6 +234,7 @@ function HorizontalLayout({
             as="div"
             ariaLabel="Wallpaper slogan"
             style={{
+              ...wrapProse,
               fontSize: S(40),
               fontWeight: 400,
               color: E.muted,
@@ -335,6 +265,7 @@ function HorizontalLayout({
             size={S(620)}
             borderInset={S(8)}
             borderWidth={S(1)}
+            borderColor={E.rule}
           />
         </div>
       )}
@@ -358,17 +289,17 @@ function HorizontalLayout({
             readonly={readonly}
             onBadgeLabelChange={writeBadgeLabel}
             labelColor={E.muted}
-            background={`${colors.bgPanel}cc`}
-            border={`1px solid ${E.glassBorder}`}
-            borderRadius={20}
-            paddingY={22}
-            paddingX={44}
+            background="transparent"
+            border={`1px solid ${E.rule}`}
+            borderRadius={10}
+            paddingY={20}
+            paddingX={40}
             outerGap={28}
             itemGap={18}
             iconSize={40}
             labelFontSize={30}
             separatorFontSize={22}
-            separatorColor={`${colors.borderColor}80`}
+            separatorColor={E.subtle}
           />
         )}
 
@@ -420,16 +351,18 @@ function PortraitLayout({
           size={S(440)}
           borderInset={S(8)}
           borderWidth={S(1)}
+          borderColor={E.rule}
         />
       )}
 
       {wallpaper.brandLabelVisible && wallpaper.brandLabel && (
         <div
           style={{
-            fontSize: S(34),
-            fontWeight: 600,
+            fontFamily: fontFamilies.mono,
+            fontSize: S(32),
+            fontWeight: 500,
             color: E.subtle,
-            letterSpacing: "0.32em",
+            letterSpacing: "0.3em",
             textTransform: "uppercase",
             display: "flex",
             alignItems: "center",
@@ -439,9 +372,9 @@ function PortraitLayout({
         >
           <div
             style={{
-              width: S(46),
+              width: S(40),
               height: S(2),
-              background: `${E.accent}AA`,
+              background: E.accent,
               borderRadius: 1,
             }}
           />
@@ -453,9 +386,9 @@ function PortraitLayout({
           />
           <div
             style={{
-              width: S(46),
+              width: S(40),
               height: S(2),
-              background: `${E.accent}AA`,
+              background: E.accent,
               borderRadius: 1,
             }}
           />
@@ -469,6 +402,7 @@ function PortraitLayout({
         as="h1"
         ariaLabel="Wallpaper title"
         style={{
+          ...wrapProse,
           fontFamily: fontFamilies.serif,
           fontSize: S(160),
           fontWeight: 600,
@@ -489,6 +423,7 @@ function PortraitLayout({
           as="div"
           ariaLabel="Wallpaper slogan"
           style={{
+            ...wrapProse,
             fontSize: S(44),
             fontWeight: 400,
             color: E.muted,
@@ -510,9 +445,9 @@ function PortraitLayout({
           readonly={readonly}
           onBadgeLabelChange={writeBadgeLabel}
           labelColor={E.muted}
-          background={`${colors.bgPanel}cc`}
-          border={`1px solid ${E.glassBorder}`}
-          borderRadius={20}
+          background="transparent"
+          border={`1px solid ${E.rule}`}
+          borderRadius={10}
           paddingY={18}
           paddingX={40}
           outerGap={28}
@@ -520,6 +455,7 @@ function PortraitLayout({
           iconSize={40}
           labelFontSize={30}
           separatorFontSize={22}
+          separatorColor={E.subtle}
         />
       )}
 

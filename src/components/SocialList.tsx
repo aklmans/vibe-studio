@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
 import type { SocialConfig } from "../lib/socials";
 import { socialStyle } from "../lib/socials";
+import { fontFamilies } from "../lib/typography";
 import EditableText from "./edit/EditableText";
 
 type Size = "small" | "large";
@@ -29,9 +30,10 @@ export default function SocialList({ state, size = "small", editable, onChange }
   const isLarge = size === "large";
   const labelBase: CSSProperties = isLarge
     ? {
-        fontSize: 14,
-        fontWeight: 600,
-        borderRadius: 5,
+        fontFamily: fontFamilies.mono,
+        fontSize: 13,
+        fontWeight: 500,
+        borderRadius: 4,
         padding: "4px 12px",
         flexShrink: 0,
         width: LABEL_SIZE.large.width,
@@ -41,12 +43,15 @@ export default function SocialList({ state, size = "small", editable, onChange }
         justifyContent: "center",
         textAlign: "center",
         boxSizing: "border-box",
-        letterSpacing: "0.04em",
+        letterSpacing: "0.06em",
         border: "1px solid transparent",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
       }
     : {
-        fontSize: 12,
-        fontWeight: 700,
+        fontFamily: fontFamilies.mono,
+        fontSize: 11,
+        fontWeight: 500,
         borderRadius: 4,
         padding: "3px 8px",
         flexShrink: 0,
@@ -57,8 +62,10 @@ export default function SocialList({ state, size = "small", editable, onChange }
         justifyContent: "center",
         textAlign: "center",
         boxSizing: "border-box",
-        letterSpacing: "0.04em",
+        letterSpacing: "0.06em",
         border: "1px solid transparent",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
       };
 
   const valueStyle: CSSProperties = isLarge
@@ -70,6 +77,8 @@ export default function SocialList({ state, size = "small", editable, onChange }
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
+        minWidth: 0,
+        maxWidth: 460,
       }
     : {
         fontSize: 14,
@@ -77,16 +86,15 @@ export default function SocialList({ state, size = "small", editable, onChange }
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
+        minWidth: 0,
+        maxWidth: 240,
       };
 
   const rowGap = isLarge ? 14 : 10;
 
-  const updateSocial = (idx: number, patch: Partial<SocialConfig>) => {
+  const updateSocial = (socialIdx: number, patch: Partial<SocialConfig>) => {
     if (!onChange) return;
-    const socialIdx = cover.socials.findIndex(
-      (s, i) => s.visible && s.value.trim().length > 0 && cover.socials.filter((ss, ii) => ii < i && ss.visible && ss.value.trim().length > 0).length === idx,
-    );
-    if (socialIdx === -1) return;
+    if (!cover.socials[socialIdx]) return;
     const socials = cover.socials.map((s, i) =>
       i === socialIdx ? { ...s, ...patch } : s,
     );

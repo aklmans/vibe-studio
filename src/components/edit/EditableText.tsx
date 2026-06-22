@@ -129,7 +129,7 @@ export default function EditableText({
         outline: `1px solid ${ringColor}`,
         outlineOffset: 2,
         borderRadius: 2,
-        background: "rgba(141,168,255,0.08)",
+        background: `${UI_COLORS.accent}1a`,
       }
     : hover
       ? {

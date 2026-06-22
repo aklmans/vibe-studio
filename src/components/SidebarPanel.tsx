@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
+import { fontFamilies } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
@@ -12,7 +13,8 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ state }, ref) => {
     const { t } = useLocale();
     const { sidebar, cover, colors } = state;
-    const { bgDark, bgPanel, borderColor, cyanAccent, pinkAccent } = colors;
+    const { bgDark, bgPanel, borderColor, mutedText, pinkAccent } = colors;
+    const accent = pinkAccent;
 
     const hasVisibleSocial = cover.socials.some(
       (s) => s.visible && s.value.trim().length > 0,
@@ -27,7 +29,7 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
           width: 470,
           height: 760,
           background: `${bgPanel}F0`,
-          border: `1.5px solid ${borderColor}45`,
+          border: `1px solid ${borderColor}45`,
           borderRadius: 0,
           display: "flex",
           flexDirection: "column",
@@ -36,11 +38,12 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
         }}
       >
-        {/* Header accent bar */}
+        {/* Header accent — single quiet mark */}
         <div
           style={{
-            height: 3,
-            background: `linear-gradient(90deg, ${cyanAccent}80 0%, ${borderColor}60 50%, ${pinkAccent}40 100%)`,
+            height: 2,
+            width: 56,
+            background: accent,
             flexShrink: 0,
           }}
         />
@@ -64,18 +67,19 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
           >
             <div
               style={{
-                fontSize: 11,
+                fontFamily: fontFamilies.mono,
+                fontSize: 10,
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                color: pinkAccent,
+                color: mutedText,
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: 9,
                 marginBottom: 2,
               }}
             >
-              <div style={{ width: 3, height: 10, borderRadius: 2, background: pinkAccent, flexShrink: 0 }} />
+              <div style={{ width: 2, height: 11, background: accent, flexShrink: 0 }} />
               {t("canvas.followMe")}
             </div>
             <SocialList state={state} size="small" />
