@@ -134,7 +134,7 @@ test("Poster and Wallpaper titles use natural wrapping before token breaking", (
 
 // ── 3. Long social values never break the fixed label/value rows ─────────────
 
-test("SocialList caps value width and keeps fixed-size label chips (small)", () => {
+test("SocialList caps value width and keeps a fixed-width label column (small)", () => {
   const html = renderToStaticMarkup(
     React.createElement(SocialList, {
       state: coverState({ socials: STRESS_SOCIALS }),
@@ -145,7 +145,7 @@ test("SocialList caps value width and keeps fixed-size label chips (small)", () 
   assert.match(html, /max-width:240px/);
   assert.match(html, /text-overflow:ellipsis/);
   assert.match(html, /white-space:nowrap/);
-  // Label chip: fixed size, clipped (never grows to fit a long custom label).
+  // Label column: fixed width, clipped (never grows to fit a long custom label).
   assert.match(html, /width:76px/);
   assert.match(html, /overflow:hidden/);
 });
@@ -161,20 +161,40 @@ test("SocialList caps value width at the large size", () => {
   assert.match(html, /width:96px/);
 });
 
-test("SocialCard caps value width and keeps fixed-size label chips", () => {
+test("SocialCard (stacked) caps long values and long custom labels", () => {
   const html = renderToStaticMarkup(
     React.createElement(SocialCard, {
       S: (n: number) => n,
       socials: STRESS_SOCIALS,
       colors: DEFAULT_STATE.colors,
-      fullWidth: true,
+      variant: "stacked",
       t: (key: string) => key,
     }),
   );
-  assert.match(html, /max-width:520px/);
+  // Value bounded + ellipsis; label capped so a long custom label can't stretch
+  // the column.
+  assert.match(html, /max-width:420px/);
+  assert.match(html, /max-width:240px/);
   assert.match(html, /text-overflow:ellipsis/);
-  assert.match(html, /width:132px/);
-  assert.match(html, /overflow:hidden/);
+  assert.match(html, /white-space:nowrap/);
+});
+
+test("SocialCard (horizontal) keeps each rail pair bounded", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(SocialCard, {
+      S: (n: number) => n,
+      socials: STRESS_SOCIALS,
+      colors: DEFAULT_STATE.colors,
+      variant: "horizontal",
+      t: (key: string) => key,
+    }),
+  );
+  assert.match(html, /display:flex/);
+  assert.match(html, /flex-wrap:wrap/);
+  // value + label caps for the rail.
+  assert.match(html, /max-width:360px/);
+  assert.match(html, /max-width:200px/);
+  assert.match(html, /text-overflow:ellipsis/);
 });
 
 // ── 4. Badge labels stay bounded ─────────────────────────────────────────────

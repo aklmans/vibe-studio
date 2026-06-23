@@ -50,9 +50,10 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                   ? `1px solid ${E.line}`
                   : "none",
               overflow: "hidden",
-              opacity: isActive ? 1 : 0.82,
-              // Active identity comes from the rail, weight, ink and the "now"
-              // marker below — never a filled accent block.
+              // De-emphasis is by ink colour + weight, not opacity — dimming the
+              // whole block pushed inactive copy under the Light paper contrast
+              // floor. Active identity still comes from the rail, weight, ink and
+              // the "now" marker below — never a filled accent block.
               background: "transparent",
             }}
           >
@@ -137,7 +138,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                       gap: current ? 11 : 10,
                       fontSize: current ? 15 : 14,
                       color: done
-                        ? `${textColor}78`
+                        ? `${textColor}99`
                         : isActive
                           ? textColor
                           : mutedText,

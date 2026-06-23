@@ -270,7 +270,8 @@ function HorizontalLayout({
         </div>
       )}
 
-      {/* Bottom band: badges + social side by side */}
+      {/* Bottom band: one horizontal metadata rail — badges · separator · social.
+          Spans the full content width so it's scannable at a glance on stream. */}
       <div
         style={{
           position: "absolute",
@@ -278,8 +279,10 @@ function HorizontalLayout({
           right: S(200),
           bottom: S(160),
           display: "flex",
-          alignItems: "flex-end",
-          gap: S(48),
+          alignItems: "center",
+          gap: S(40),
+          borderTop: `1px solid ${E.line}`,
+          paddingTop: S(30),
         }}
       >
         {visibleBadges.length > 0 && (
@@ -290,10 +293,10 @@ function HorizontalLayout({
             onBadgeLabelChange={writeBadgeLabel}
             labelColor={E.muted}
             background="transparent"
-            border={`1px solid ${E.line}`}
-            borderRadius={3}
-            paddingY={20}
-            paddingX={40}
+            border="1px solid transparent"
+            borderRadius={0}
+            paddingY={0}
+            paddingX={0}
             outerGap={28}
             itemGap={18}
             iconSize={40}
@@ -304,7 +307,26 @@ function HorizontalLayout({
         )}
 
         {visibleSocials.length > 0 && (
-          <SocialCard S={S} socials={visibleSocials} colors={colors} t={t} />
+          <>
+            {visibleBadges.length > 0 && (
+              <div
+                style={{
+                  width: 1,
+                  alignSelf: "stretch",
+                  minHeight: S(40),
+                  background: E.line,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <SocialCard
+              variant="horizontal"
+              S={S}
+              socials={visibleSocials}
+              colors={colors}
+              t={t}
+            />
+          </>
         )}
       </div>
     </>
@@ -461,10 +483,10 @@ function PortraitLayout({
 
       {visibleSocials.length > 0 && (
         <SocialCard
+          variant="stacked"
           S={S}
           socials={visibleSocials}
           colors={colors}
-          fullWidth
           t={t}
         />
       )}

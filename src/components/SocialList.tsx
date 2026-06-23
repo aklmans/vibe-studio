@@ -2,15 +2,17 @@ import type { CSSProperties } from "react";
 import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
 import type { SocialConfig } from "../lib/socials";
-import { compactSocialValue, socialStyle } from "../lib/socials";
+import { compactSocialValue } from "../lib/socials";
 import { fontFamilies } from "../lib/typography";
 import { editorialPalette } from "./lib/editorial-palette";
 import EditableText from "./edit/EditableText";
 
 type Size = "small" | "large";
-const LABEL_SIZE: Record<Size, { width: number; height: number }> = {
-  small: { width: 76, height: 22 },
-  large: { width: 96, height: 26 },
+// Fixed label column so every platform name aligns and the value column starts
+// at the same x — a stable label/value pair, not a row of button chips.
+const LABEL_WIDTH: Record<Size, number> = {
+  small: 76,
+  large: 96,
 };
 
 interface SocialListProps {
@@ -30,45 +32,20 @@ export default function SocialList({ state, size = "small", editable, onChange }
   if (visibleSocials.length === 0) return null;
 
   const isLarge = size === "large";
-  const labelBase: CSSProperties = isLarge
-    ? {
-        fontFamily: fontFamilies.mono,
-        fontSize: 13,
-        fontWeight: 500,
-        borderRadius: 4,
-        padding: "4px 12px",
-        flexShrink: 0,
-        width: LABEL_SIZE.large.width,
-        height: LABEL_SIZE.large.height,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        boxSizing: "border-box",
-        letterSpacing: "0.06em",
-        border: `1px solid ${E.line}`,
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-      }
-    : {
-        fontFamily: fontFamilies.mono,
-        fontSize: 11,
-        fontWeight: 500,
-        borderRadius: 4,
-        padding: "3px 8px",
-        flexShrink: 0,
-        width: LABEL_SIZE.small.width,
-        height: LABEL_SIZE.small.height,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        boxSizing: "border-box",
-        letterSpacing: "0.06em",
-        border: `1px solid ${E.line}`,
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-      };
+  // Platform label: quiet small-caps mono text in a fixed column — low-key but
+  // clear, no button chip, no fill, no border.
+  const labelBase: CSSProperties = {
+    fontFamily: fontFamilies.mono,
+    fontSize: isLarge ? 13 : 11,
+    fontWeight: 500,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    width: isLarge ? LABEL_WIDTH.large : LABEL_WIDTH.small,
+    flexShrink: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  };
 
   const valueStyle: CSSProperties = isLarge
     ? {
@@ -120,15 +97,18 @@ export default function SocialList({ state, size = "small", editable, onChange }
   return (
     <>
       {visibleSocials.map((social, idx) => {
-        const style = socialStyle(social, colors);
         const srcIdx = findSocialIndex(idx);
         const displayValue = compactSocialValue(social.value, isLarge ? 46 : 34);
+        const labelColor =
+          social.kind === "custom" && social.customColor
+            ? social.customColor
+            : E.subtle;
         return (
           <div
             key={idx}
-            style={{ display: "flex", alignItems: "center", gap: rowGap }}
+            style={{ display: "flex", alignItems: "baseline", gap: rowGap }}
           >
-            <span style={{ ...labelBase, ...style }}>{social.label}</span>
+            <span style={{ ...labelBase, color: labelColor }}>{social.label}</span>
             {editable && onChange && srcIdx >= 0 ? (
               <EditableText
                 value={social.value}

@@ -43,7 +43,7 @@ function editableCommitOf(node: ReactNode): (next: string) => void {
   return onCommit;
 }
 
-test("SocialList renders same-size label chips", () => {
+test("SocialList renders plain-text labels in an aligned column, not button chips", () => {
   const state = {
     ...DEFAULT_STATE,
     cover: {
@@ -52,19 +52,17 @@ test("SocialList renders same-size label chips", () => {
     },
   };
   const rows = childrenOf(SocialList({ state, size: "small" }));
-  const sizes = rows.map((row) => {
-    const label = childrenOf(row)[0];
-    const style = asElement(label).props.style;
-    return { width: style?.width, height: style?.height };
-  });
-
-  assert.deepEqual(sizes, [
-    { width: 76, height: 22 },
-    { width: 76, height: 22 },
-    { width: 76, height: 22 },
-    { width: 76, height: 22 },
-    { width: 76, height: 22 },
-  ]);
+  for (const row of rows) {
+    const style = asElement(childrenOf(row)[0]).props.style ?? {};
+    // No button chrome…
+    assert.equal(style.border, undefined);
+    assert.equal(style.borderRadius, undefined);
+    assert.equal(style.background, undefined);
+    assert.equal(style.height, undefined);
+    // …small-caps mono in a fixed-width column so values line up.
+    assert.equal(style.textTransform, "uppercase");
+    assert.equal(style.width, 76);
+  }
 });
 
 test("SocialList makes values visually stronger than platform labels", () => {
@@ -119,28 +117,46 @@ test("SocialList edits the original social item when hidden rows precede it", ()
   assert.equal(nextState.cover.socials[2].value, "https://github.com/example");
 });
 
-test("SocialCard renders same-size label chips", () => {
+test("SocialCard (stacked) renders a centered label/value grid, not chips", () => {
   const card = SocialCard({
     S: (n) => n,
     socials: SOCIALS,
     colors: DEFAULT_STATE.colors,
-    fullWidth: true,
+    variant: "stacked",
     t: (key) => key,
   });
-  const rows = childrenOf(card).slice(1);
-  const sizes = rows.map((row) => {
-    const label = childrenOf(row)[0];
-    const style = asElement(label).props.style;
-    return { width: style?.width, height: style?.height };
-  });
+  // Children: [FOLLOW ME eyebrow, grid]. The grid is centred and keeps each
+  // label/value pair aligned on one row.
+  const grid = asElement(childrenOf(card)[1]);
+  assert.equal(grid.props.style?.display, "grid");
+  assert.equal(grid.props.style?.justifyContent, "center");
 
-  assert.deepEqual(sizes, [
-    { width: 132, height: 34 },
-    { width: 132, height: 34 },
-    { width: 132, height: 34 },
-    { width: 132, height: 34 },
-    { width: 132, height: 34 },
-  ]);
+  const firstLabelStyle = asElement(childrenOf(grid)[0]).props.style ?? {};
+  assert.equal(firstLabelStyle.border, undefined);
+  assert.equal(firstLabelStyle.background, undefined);
+  assert.equal(firstLabelStyle.borderRadius, undefined);
+  assert.equal(firstLabelStyle.textTransform, "uppercase");
+});
+
+test("SocialCard (horizontal) renders an inline rail, not a card", () => {
+  const card = SocialCard({
+    S: (n) => n,
+    socials: SOCIALS,
+    colors: DEFAULT_STATE.colors,
+    variant: "horizontal",
+    t: (key) => key,
+  });
+  // A wrapping flex rail of [eyebrow, pair, pair, …] — no grid card.
+  assert.equal(asElement(card).props.style?.display, "flex");
+  assert.equal(asElement(card).props.style?.flexWrap, "wrap");
+
+  const [label, value] = childrenOf(childrenOf(card)[1]);
+  const labelStyle = asElement(label).props.style ?? {};
+  const valueStyle = asElement(value).props.style ?? {};
+  assert.equal(labelStyle.border, undefined);
+  assert.notEqual(labelStyle.color, DEFAULT_STATE.colors.textColor);
+  assert.equal(valueStyle.color, DEFAULT_STATE.colors.textColor);
+  assert.ok(Number(valueStyle.fontWeight) > Number(labelStyle.fontWeight));
 });
 
 test("SocialCard makes values visually stronger than platform labels", () => {
@@ -148,13 +164,12 @@ test("SocialCard makes values visually stronger than platform labels", () => {
     S: (n) => n,
     socials: SOCIALS,
     colors: DEFAULT_STATE.colors,
-    fullWidth: true,
+    variant: "stacked",
     t: (key) => key,
   });
-  const firstRow = childrenOf(card)[1];
-  const [label, value] = childrenOf(firstRow);
-  const labelStyle = asElement(label).props.style;
-  const valueStyle = asElement(value).props.style;
+  const cells = childrenOf(childrenOf(card)[1]);
+  const labelStyle = asElement(cells[0]).props.style;
+  const valueStyle = asElement(cells[1]).props.style;
 
   assert.notEqual(labelStyle?.color, DEFAULT_STATE.colors.textColor);
   assert.equal(valueStyle?.color, DEFAULT_STATE.colors.textColor);
