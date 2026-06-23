@@ -51,60 +51,76 @@ test("CoverCanvas renders an editorial typographic stack", () => {
 });
 
 
-test("CoverCanvas uses the default studio subject image as a background subject layer", () => {
+const coverWithVisual = (visual: "avatar" | "scene" | "title", patch = {}) =>
+  renderToStaticMarkup(
+    React.createElement(CoverCanvas, {
+      state: {
+        ...DEFAULT_STATE,
+        cover: { ...DEFAULT_STATE.cover, visual, ...patch },
+      },
+    }),
+  );
+
+test("CoverCanvas defaults to the scene type and renders it as a background subject layer", () => {
+  // DEFAULT_STATE.cover.visual === "scene".
   const html = renderToStaticMarkup(
     React.createElement(CoverCanvas, { state: DEFAULT_STATE }),
   );
 
-  assert.match(html, /data-testid="cover-avatar-image"/);
+  assert.match(html, /data-testid="cover-scene-image"/);
   assert.match(html, /src="\/vibe-studio-bg\.png"/);
   assert.match(html, /object-fit:contain/);
   assert.match(html, /position:absolute/);
-  // The subject is anchored low-left and oversized so it reads as a cropped
-  // studio scene (figure + desk bleeding off the bottom-left), not a centered,
-  // fully-contained illustration with an empty box above it.
+  // Oversized + anchored low-left so the figure + desk bleed off the corner.
   assert.match(html, /left:-140px/);
   assert.match(html, /bottom:-200px/);
   assert.match(html, /width:1560px/);
   assert.match(html, /height:880px/);
   assert.match(html, /pointer-events:none/);
+  // Not the avatar/title layers; never the old built-in headshot url.
+  assert.doesNotMatch(html, /data-testid="cover-portrait-image"/);
   assert.doesNotMatch(html, /src="\/avatar\.jpg"/);
 });
 
-test("CoverCanvas respects the shared avatar visibility toggle", () => {
-  const visibleHtml = renderToStaticMarkup(
-    React.createElement(CoverCanvas, {
-      state: {
-        ...DEFAULT_STATE,
-        cover: {
-          ...DEFAULT_STATE.cover,
-          avatarVisible: true,
-          avatarUrl: "/avatar-visible.jpg",
-        },
-      },
-    }),
-  );
-  assert.match(visibleHtml, /data-testid="cover-identity-lockup"/);
-  assert.match(visibleHtml, /data-testid="cover-avatar-lockup"/);
-  assert.match(visibleHtml, /data-testid="cover-avatar-image"/);
-  assert.match(visibleHtml, /src="\/avatar-visible\.jpg"/);
-  assert.match(visibleHtml, /alt=""/);
-  assert.match(visibleHtml, /object-fit:contain/);
-  assert.match(visibleHtml, /position:absolute/);
-  assert.doesNotMatch(visibleHtml, /right:112px/);
-  assert.doesNotMatch(visibleHtml, /border-radius:50%/);
+test("CoverCanvas (avatar type) renders a portrait panel from portraitUrl, not the scene", () => {
+  const html = coverWithVisual("avatar", { portraitUrl: "/avatar.jpg" });
 
-  const hiddenHtml = renderToStaticMarkup(
-    React.createElement(CoverCanvas, {
-      state: {
-        ...DEFAULT_STATE,
-        cover: {
-          ...DEFAULT_STATE.cover,
-          avatarVisible: false,
-          avatarUrl: "/avatar-hidden.jpg",
-        },
-      },
-    }),
-  );
-  assert.doesNotMatch(hiddenHtml, /avatar-hidden\.jpg/);
+  assert.match(html, /data-testid="cover-portrait-image"/);
+  assert.match(html, /src="\/avatar\.jpg"/);
+  assert.match(html, /alt=""/);
+  // A full-bleed photo panel: object-fit cover, no circular avatar card.
+  assert.match(html, /object-fit:cover/);
+  assert.doesNotMatch(html, /border-radius:50%/);
+  // The scene layer is absent in avatar mode.
+  assert.doesNotMatch(html, /data-testid="cover-scene-image"/);
+  assert.doesNotMatch(html, /vibe-studio-bg\.png/);
+});
+
+test("CoverCanvas (avatar type) keeps a replaced portrait image working", () => {
+  const html = coverWithVisual("avatar", {
+    portraitUrl: "data:image/png;base64,AAAA",
+  });
+  assert.match(html, /src="data:image\/png;base64,AAAA"/);
+  assert.doesNotMatch(html, /src="\/avatar\.jpg"/);
+});
+
+test("CoverCanvas falls back to visual defaults when cover image URLs are cleared", () => {
+  const avatar = coverWithVisual("avatar", { portraitUrl: "" });
+  assert.match(avatar, /src="\/avatar\.jpg"/);
+
+  const scene = coverWithVisual("scene", { sceneUrl: "" });
+  assert.match(scene, /src="\/vibe-studio-bg\.png"/);
+});
+
+test("CoverCanvas (title type) renders no subject image at all", () => {
+  const html = coverWithVisual("title");
+
+  // Pure typographic cover — every image layer is unmounted, not just hidden.
+  assert.doesNotMatch(html, /data-testid="cover-scene-image"/);
+  assert.doesNotMatch(html, /data-testid="cover-portrait-image"/);
+  assert.doesNotMatch(html, /vibe-studio-bg\.png/);
+  assert.doesNotMatch(html, /\/avatar\.jpg/);
+  // …but the editorial title stack is still present.
+  assert.match(html, /data-testid="cover-title-stage"/);
+  assert.match(html, /data-testid="cover-identity-lockup"/);
 });

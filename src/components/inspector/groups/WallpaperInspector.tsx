@@ -43,6 +43,7 @@ export default function WallpaperInspector({
           state={state}
           onChange={onChange}
           testIdPrefix="wallpaper"
+          showAvatarToggle={false}
         />
       </InspectorGroup>
 

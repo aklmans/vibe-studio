@@ -13,6 +13,7 @@ import CommandPalette from "./CommandPalette";
 import SettingsDrawer from "./SettingsDrawer";
 import TopBar from "./topbar/TopBar";
 import BadgesEditor from "./BadgesEditor";
+import WallpaperInspector from "./inspector/groups/WallpaperInspector";
 import { SectionInput, ToggleButton } from "./shared/Field";
 
 test("shared text inputs use the editorial inset control surface", () => {
@@ -357,4 +358,31 @@ test("stack bare tool glyphs keep a generous hit target", () => {
   assert.match(source, /minWidth:\s*30/);
   assert.match(source, /minHeight:\s*30/);
   assert.match(source, /border:\s*"none"/);
+});
+
+
+test("wallpaper inspector exposes only one effective avatar visibility toggle", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(WallpaperInspector, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+
+  const matches = [...html.matchAll(/data-testid="wallpaper-avatar-visible"/g)];
+  assert.equal(matches.length, 1);
+});
+
+test("cover visual editor writes cover-only image URLs and reset defaults", () => {
+  const source = readFileSync(resolve("src/components/inspector/CoverVisualEditor.tsx"), "utf8");
+
+  assert.match(source, /writeCover\(\{ portraitUrl: v \}\)/);
+  assert.match(source, /writeCover\(\{ sceneUrl: v \}\)/);
+  assert.doesNotMatch(source, /writeCover\(\{ avatarUrl:/);
+  assert.match(source, /clearValue="\/avatar\.jpg"/);
+  assert.match(source, /clearValue="\/vibe-studio-bg\.png"/);
 });

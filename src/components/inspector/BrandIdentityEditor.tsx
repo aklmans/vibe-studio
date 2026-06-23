@@ -2,6 +2,7 @@ import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { patchSection } from "../../lib/state";
 import AvatarUploader from "../shared/AvatarUploader";
+import CoverVisualEditor from "./CoverVisualEditor";
 import { SectionInput, WorkbenchLabel } from "../shared/Field";
 import BadgesEditor from "../BadgesEditor";
 import { useLocale } from "../../hooks/useLocale";
@@ -12,6 +13,13 @@ interface BrandIdentityEditorProps {
   testIdPrefix: string;
   /** Some surfaces (Cover) want a subtitle; Poster/Wallpaper don't. */
   showSubtitle?: boolean;
+  /**
+   * Cover replaces the shared "Show Avatar" uploader with the explicit
+   * visual-type control. Poster / Wallpaper keep the shared avatar URL uploader;
+   * individual surfaces may own their own visibility toggle.
+   */
+  coverVisual?: boolean;
+  showAvatarToggle?: boolean;
 }
 
 /**
@@ -24,6 +32,8 @@ export default function BrandIdentityEditor({
   onChange,
   testIdPrefix,
   showSubtitle = false,
+  coverVisual = false,
+  showAvatarToggle = true,
 }: BrandIdentityEditorProps) {
   const { t } = useLocale();
   const writeCover = (patch: Partial<OverlayState["cover"]>) => {
@@ -32,13 +42,18 @@ export default function BrandIdentityEditor({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <AvatarUploader
-        url={state.cover.avatarUrl}
-        visible={state.cover.avatarVisible}
-        onUrlChange={(v) => writeCover({ avatarUrl: v })}
-        onVisibleChange={(v) => writeCover({ avatarVisible: v })}
-        testIdPrefix={`${testIdPrefix}-avatar`}
-      />
+      {coverVisual ? (
+        <CoverVisualEditor state={state} onChange={onChange} />
+      ) : (
+        <AvatarUploader
+          url={state.cover.avatarUrl}
+          visible={state.cover.avatarVisible}
+          onUrlChange={(v) => writeCover({ avatarUrl: v })}
+          onVisibleChange={(v) => writeCover({ avatarVisible: v })}
+          showToggle={showAvatarToggle}
+          testIdPrefix={`${testIdPrefix}-avatar`}
+        />
+      )}
 
       <SectionInput
         label={t("label.title")}

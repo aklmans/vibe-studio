@@ -1,4 +1,4 @@
-import { DEFAULT_STATE, type OverlayState } from "./types";
+import { DEFAULT_STATE, type CoverVisual, type OverlayState } from "./types";
 import {
   THEME_PRESETS,
   isLegacyThemeMode,
@@ -76,6 +76,26 @@ function stringOrDefault(value: unknown, fallback: string): string {
 function normalizeCoverAvatarUrl(value: unknown, fallback: string): string {
   const url = stringOrDefault(value, fallback);
   return url === LEGACY_DEFAULT_COVER_AVATAR_URL ? fallback : url;
+}
+
+/**
+ * Resolve the cover visual type. New states carry it explicitly; older states
+ * are interpreted from the legacy "Show Avatar" toggle and the legacy built-in
+ * avatar URL so nothing breaks:
+ *  - avatarVisible === false  → "title" (pure typographic cover)
+ *  - legacy /avatar.jpg       → "avatar" (the old headshot keeps working)
+ *  - otherwise                → "scene"
+ */
+function normalizeCoverVisual(
+  value: unknown,
+  legacy: { avatarVisible: boolean; rawAvatarUrl: unknown },
+): CoverVisual {
+  if (value === "avatar" || value === "scene" || value === "title") {
+    return value;
+  }
+  if (!legacy.avatarVisible) return "title";
+  if (legacy.rawAvatarUrl === LEGACY_DEFAULT_COVER_AVATAR_URL) return "avatar";
+  return "scene";
 }
 
 function colorOrDefault(value: unknown, fallback: string): string {
@@ -421,6 +441,24 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
       avatarVisible: boolOrDefault(
         cover?.avatarVisible,
         defaultValue.cover.avatarVisible,
+      ),
+      visual: normalizeCoverVisual(cover?.visual, {
+        avatarVisible: boolOrDefault(
+          cover?.avatarVisible,
+          defaultValue.cover.avatarVisible,
+        ),
+        rawAvatarUrl: cover?.avatarUrl,
+      }),
+      // Cover scene image: inherit the old shared avatar so a previously
+      // customized cover subject keeps showing; legacy /avatar.jpg normalizes
+      // to the studio scene (that user lands on the avatar type instead).
+      sceneUrl: stringOrDefault(
+        cover?.sceneUrl,
+        normalizeCoverAvatarUrl(cover?.avatarUrl, defaultValue.cover.sceneUrl),
+      ),
+      portraitUrl: stringOrDefault(
+        cover?.portraitUrl,
+        defaultValue.cover.portraitUrl,
       ),
       todayLabel: stringOrDefault(
         cover?.todayLabel,

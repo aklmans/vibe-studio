@@ -32,6 +32,7 @@ export default function CoverInspector({
           onChange={onChange}
           testIdPrefix="cover"
           showSubtitle
+          coverVisual
         />
       </InspectorGroup>
 

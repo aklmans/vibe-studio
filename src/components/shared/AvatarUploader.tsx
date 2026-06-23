@@ -5,27 +5,35 @@ import { ToggleButton, WorkbenchButton } from "./Field";
 
 interface AvatarUploaderProps {
   url: string;
-  visible: boolean;
   onUrlChange: (url: string) => void;
-  onVisibleChange: (visible: boolean) => void;
+  /** Visibility toggle is optional — the cover visual-type control owns
+   *  visibility itself and reuses just the upload/clear/preview block. */
+  showToggle?: boolean;
+  visible?: boolean;
+  onVisibleChange?: (visible: boolean) => void;
+  /** Value to restore when clearing. Empty string preserves the legacy remove behavior. */
+  clearValue?: string;
   testIdPrefix?: string;
 }
 
 /**
- * Avatar upload + clear + visibility toggle, factored out so Cover, Poster,
- * and the new BrandIdentityEditor can share one implementation. The visual is
- * identical to the legacy inline block but the file input lives inside this
- * component so multiple instances don't fight over a single shared ref.
+ * Avatar upload + clear + (optional) visibility toggle, factored out so Cover,
+ * Poster, and the new BrandIdentityEditor can share one implementation. The
+ * file input lives inside this component so multiple instances don't fight over
+ * a single shared ref.
  */
 export default function AvatarUploader({
   url,
-  visible,
   onUrlChange,
+  showToggle = true,
+  visible = true,
   onVisibleChange,
+  clearValue = "",
   testIdPrefix = "avatar",
 }: AvatarUploaderProps) {
   const { t } = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canClear = Boolean(url) && url !== clearValue;
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,12 +48,14 @@ export default function AvatarUploader({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <ToggleButton
-        label={t("toggle.showAvatar")}
-        checked={visible}
-        onChange={onVisibleChange}
-        testId={`${testIdPrefix}-visible`}
-      />
+      {showToggle && onVisibleChange && (
+        <ToggleButton
+          label={t("toggle.showAvatar")}
+          checked={visible}
+          onChange={onVisibleChange}
+          testId={`${testIdPrefix}-visible`}
+        />
+      )}
 
       <input
         ref={fileInputRef}
@@ -66,10 +76,10 @@ export default function AvatarUploader({
         >
           {url ? t("btn.replace") : t("btn.upload")}
         </WorkbenchButton>
-        {url && (
+        {canClear && (
           <WorkbenchButton
             testId={`${testIdPrefix}-clear`}
-            onClick={() => onUrlChange("")}
+            onClick={() => onUrlChange(clearValue)}
             tone="danger"
             style={{ padding: "0 10px" }}
           >

@@ -4,7 +4,6 @@ import { patchSection } from "../lib/state";
 import { fontFamilies, wrapProse, wrapAnywhere } from "../lib/typography";
 import { COVER_CANVAS_DIMENSIONS } from "../lib/canvas-dimensions";
 import { editorialPalette } from "./lib/editorial-palette";
-import { avatarPlaceholder } from "../lib/avatar";
 import EditableText from "./edit/EditableText";
 import BadgeToolbar from "./shared/BadgeToolbar";
 
@@ -15,7 +14,8 @@ import BadgeToolbar from "./shared/BadgeToolbar";
 // /public/cover-bg.png and could return later as an opt-in background preset,
 // but it is no longer the default export surface.
 
-const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(245,245,242,0.5)", "VC", 56);
+const DEFAULT_COVER_PORTRAIT_URL = "/avatar.jpg";
+const DEFAULT_COVER_SCENE_URL = "/vibe-studio-bg.png";
 
 interface CoverCanvasProps {
   state: OverlayState;
@@ -29,7 +29,12 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
     const { cover } = state;
     const E = editorialPalette(state.colors);
     const readonly = !editable || !onChange;
-    const avatarSrc = cover.avatarUrl || AVATAR_PLACEHOLDER;
+    // The cover subject is chosen explicitly via cover.visual — avatar (a
+    // headshot), scene (the studio figure), or title (none). It is decoupled
+    // from the shared broadcast avatar used by Poster / Wallpaper / Overlay.
+    const hasSubject = cover.visual !== "title";
+    const sceneSrc = cover.sceneUrl || DEFAULT_COVER_SCENE_URL;
+    const portraitSrc = cover.portraitUrl || DEFAULT_COVER_PORTRAIT_URL;
 
     const writeCover = (patch: Partial<OverlayState["cover"]>) => {
       if (!onChange) return;
@@ -63,9 +68,11 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           boxSizing: "border-box",
         }}
       >
-        {cover.avatarVisible && (
+        {/* Scene type — the transparent studio figure as an oversized subject
+            bleeding off the bottom-left corner. */}
+        {cover.visual === "scene" && (
           <div
-            data-testid="cover-avatar-lockup"
+            data-testid="cover-scene-lockup"
             aria-hidden="true"
             style={{
               position: "absolute",
@@ -79,8 +86,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             }}
           >
             <img
-              data-testid="cover-avatar-image"
-              src={avatarSrc}
+              data-testid="cover-scene-image"
+              src={sceneSrc}
               alt=""
               style={{
                 display: "block",
@@ -94,15 +101,48 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           </div>
         )}
 
+        {/* Avatar type — a personal headshot as a full-height left photo panel
+            (full-bleed, no card / circle / frame; a clean edge against the
+            cover surface). */}
+        {cover.visual === "avatar" && (
+          <div
+            data-testid="cover-portrait"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 484,
+              overflow: "hidden",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          >
+            <img
+              data-testid="cover-portrait-image"
+              src={portraitSrc}
+              alt=""
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+              }}
+            />
+          </div>
+        )}
+
         <div
           data-testid="cover-identity-lockup"
           style={{
             position: "relative",
             zIndex: 1,
             display: "flex",
-            justifyContent: cover.avatarVisible ? "flex-end" : "center",
+            justifyContent: hasSubject ? "flex-end" : "center",
             width: "100%",
-            maxWidth: cover.avatarVisible ? 1056 : 1000,
+            maxWidth: hasSubject ? 1056 : 1000,
           }}
         >
           {/* Editorial title stack — eyebrow → serif title → rule → subtitle. */}
@@ -112,7 +152,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
-              maxWidth: cover.avatarVisible ? 560 : 1000,
+              maxWidth: hasSubject ? 560 : 1000,
               minWidth: 0,
             }}
           >
@@ -148,7 +188,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
                 letterSpacing: "-0.01em",
                 lineHeight: 1.04,
                 margin: 0,
-                maxWidth: cover.avatarVisible ? 560 : 1000,
+                maxWidth: hasSubject ? 560 : 1000,
                 whiteSpace: "normal",
                 ...wrapProse,
               }}
@@ -170,7 +210,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               style={{
                 ...wrapProse,
                 marginTop: 26,
-                maxWidth: cover.avatarVisible ? 540 : 820,
+                maxWidth: hasSubject ? 540 : 820,
                 fontFamily: fontFamilies.serif,
                 fontSize: 30,
                 fontWeight: 500,

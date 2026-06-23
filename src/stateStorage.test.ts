@@ -214,6 +214,64 @@ test("normalizeOverlayState migrates the old built-in cover avatar to the studio
   assert.equal(custom.cover.avatarUrl, "/custom-subject.png");
 });
 
+test("normalizeOverlayState derives the cover visual type from legacy state", () => {
+  // New default → scene.
+  assert.equal(normalizeOverlayState({}).cover.visual, "scene");
+
+  // Legacy avatarVisible=false → pure title cover.
+  assert.equal(
+    normalizeOverlayState({ cover: { avatarVisible: false } }).cover.visual,
+    "title",
+  );
+
+  // Legacy built-in /avatar.jpg headshot → avatar type; it stays usable as the
+  // portrait, while the shared avatarUrl still normalizes to the studio scene.
+  const legacy = normalizeOverlayState({
+    cover: { avatarUrl: "/avatar.jpg", avatarVisible: true },
+  });
+  assert.equal(legacy.cover.visual, "avatar");
+  assert.equal(legacy.cover.portraitUrl, "/avatar.jpg");
+  assert.equal(legacy.cover.avatarUrl, "/vibe-studio-bg.png");
+
+  // Legacy studio scene url → scene type.
+  assert.equal(
+    normalizeOverlayState({
+      cover: { avatarUrl: "/vibe-studio-bg.png", avatarVisible: true },
+    }).cover.visual,
+    "scene",
+  );
+
+  // An explicit persisted visual type always wins.
+  assert.equal(
+    normalizeOverlayState({ cover: { visual: "title" } }).cover.visual,
+    "title",
+  );
+});
+
+test("normalizeOverlayState keeps cover images compatible and replaceable", () => {
+  // Both built-in assets resolve to sensible defaults.
+  const def = normalizeOverlayState({});
+  assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
+  assert.equal(def.cover.portraitUrl, "/avatar.jpg");
+
+  // An old custom subject keeps showing on the cover (sceneUrl inherits it).
+  const custom = normalizeOverlayState({
+    cover: { avatarUrl: "/custom-subject.png" },
+  });
+  assert.equal(custom.cover.sceneUrl, "/custom-subject.png");
+
+  // Explicit per-type replacements survive a round-trip.
+  const replaced = normalizeOverlayState({
+    cover: {
+      visual: "avatar",
+      portraitUrl: "data:image/png;base64,AAA",
+      sceneUrl: "data:image/png;base64,BBB",
+    },
+  });
+  assert.equal(replaced.cover.portraitUrl, "data:image/png;base64,AAA");
+  assert.equal(replaced.cover.sceneUrl, "data:image/png;base64,BBB");
+});
+
 test("normalizeOverlayState migrates legacy neon/editorial themes to dark/light", () => {
   const fromNeon = normalizeOverlayState({ theme: "neon" }, DEFAULT_STATE);
   assert.equal(fromNeon.theme, "dark");

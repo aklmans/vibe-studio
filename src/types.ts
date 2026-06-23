@@ -6,6 +6,19 @@ import type { WallpaperPresetId } from "./lib/wallpaper";
 import type { Locale } from "./lib/i18n";
 import type { AppTab } from "./lib/tabs";
 
+/**
+ * Cover visual type — the single, explicit choice for the cover's subject:
+ *  - "avatar"  → a personal headshot (cover.portraitUrl, default /avatar.jpg)
+ *  - "scene"   → the studio figure scene (cover.sceneUrl, default /vibe-studio-bg.png)
+ *  - "title"   → no image, pure editorial typography
+ *
+ * This replaces the ambiguous "Show Avatar" toggle as the cover's primary
+ * abstraction. The legacy shared `cover.avatarUrl` / `cover.avatarVisible` are
+ * intentionally left in place for the Poster / Wallpaper / Overlay broadcast
+ * assets and are no longer read by the cover.
+ */
+export type CoverVisual = "avatar" | "scene" | "title";
+
 export interface OverlayState {
   sidebar: {
     visible: boolean;
@@ -34,8 +47,16 @@ export interface OverlayState {
   cover: {
     title: string;
     badges: BadgeConfig[];
+    // Legacy shared brand subject — still rendered by Poster / Wallpaper /
+    // Overlay. The cover no longer reads these; it uses `visual` + the cover
+    // image fields below.
     avatarUrl: string;
     avatarVisible: boolean;
+    // Cover visual type + its per-type images (cover-scoped, decoupled from the
+    // shared avatar above).
+    visual: CoverVisual;
+    sceneUrl: string;
+    portraitUrl: string;
     todayLabel: string;
     todayTopic: string;
     manifestoVisible: boolean;
@@ -121,6 +142,9 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     ],
     avatarUrl: "/vibe-studio-bg.png",
     avatarVisible: true,
+    visual: "scene",
+    sceneUrl: "/vibe-studio-bg.png",
+    portraitUrl: "/avatar.jpg",
     todayLabel: "今日构建",
     todayTopic: "多 Agent Coding 实战",
     manifestoVisible: false,
@@ -212,6 +236,9 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       ],
       avatarUrl: "/vibe-studio-bg.png",
       avatarVisible: true,
+      visual: "scene",
+      sceneUrl: "/vibe-studio-bg.png",
+      portraitUrl: "/avatar.jpg",
       todayLabel: "TODAY'S BUILD",
       todayTopic: "Multi-Agent Coding Live",
       manifestoVisible: false,
