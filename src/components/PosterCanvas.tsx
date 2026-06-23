@@ -90,8 +90,8 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             onBadgeLabelChange={writeBadgeLabel}
             labelColor={E.muted}
             background="transparent"
-            border={`1px solid ${E.rule}`}
-            borderRadius={8}
+            border={`1px solid ${E.line}`}
+            borderRadius={3}
             separatorColor={E.subtle}
             style={{
               alignSelf: "flex-start",
@@ -143,9 +143,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
             style={{
               width: 720,
               boxSizing: "border-box",
-              background: `${E.bg2}cc`,
-              border: `1px solid ${E.rule}`,
-              borderRadius: 10,
+              background: `${E.bg2}80`,
+              border: `1px solid ${E.line}`,
+              borderRadius: 4,
               padding: "20px 32px 22px",
               position: "relative",
               marginBottom: hasOptionalContent ? 36 : 0,
@@ -162,19 +162,15 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 borderRadius: 1,
               }}
             />
-            {/* UPCOMING pill — top-right, semantic pair with TODAY'S BUILD */}
+            {/* UPCOMING — quiet mono label + small accent dot, not a pill */}
             <div
               style={{
                 position: "absolute",
-                top: 14,
-                right: 20,
+                top: 16,
+                right: 22,
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 6,
-                padding: "3px 10px",
-                borderRadius: 999,
-                background: `${E.accent}18`,
-                border: `1px solid ${E.accent}55`,
+                gap: 7,
               }}
             >
               <div
@@ -191,7 +187,7 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                   fontSize: 10,
                   fontWeight: 600,
                   color: E.accent,
-                  letterSpacing: "0.16em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                 }}
               >
@@ -345,9 +341,9 @@ const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
                 gap: 16,
                 alignItems: "stretch",
                 padding: "26px 34px",
-                background: `${E.bg2}99`,
-                border: `1px solid ${E.rule}`,
-                borderRadius: 10,
+                background: `${E.bg2}66`,
+                border: `1px solid ${E.line}`,
+                borderRadius: 4,
                 minWidth: 340,
               }}
             >

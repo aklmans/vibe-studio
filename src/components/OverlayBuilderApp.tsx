@@ -806,7 +806,9 @@ function PreviewFrame({
           flexShrink: 0,
           boxShadow:
             UI_COLORS.previewShadow,
-          borderRadius: 8,
+          // Exports are square-cornered, so the preview frame is too — it must
+          // not promise a rounded corner the PNG won't have.
+          borderRadius: 2,
         }}
       >
         {/* Inner canvas at native resolution, scaled top-left */}
@@ -819,7 +821,7 @@ function PreviewFrame({
             position: "absolute",
             top: 0,
             left: 0,
-            borderRadius: 8,
+            borderRadius: 2,
             overflow: "hidden",
           }}
         >

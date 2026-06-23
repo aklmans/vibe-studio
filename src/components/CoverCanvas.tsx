@@ -1,16 +1,18 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
-import { fontFamilies, wrapAnywhere, wrapProse } from "../lib/typography";
+import { fontFamilies, wrapProse, wrapAnywhere } from "../lib/typography";
 import { COVER_CANVAS_DIMENSIONS } from "../lib/canvas-dimensions";
 import { editorialPalette } from "./lib/editorial-palette";
 import EditableText from "./edit/EditableText";
 import BadgeToolbar from "./shared/BadgeToolbar";
 
-// The cover sits on a fixed dark portrait photo, so its display text stays warm
-// light in both themes for legibility; the accent marks track the active theme.
-const COVER_INK = "#f7f3ec";
-const COVER_INK_SOFT = "#e7dccd";
+// The default cover is a theme-aware typographic surface driven by
+// editorialPalette(state.colors): warm paper + near-black ink in Light, warm
+// black + warm light ink in Dark — the same editorial system as Poster /
+// Wallpaper. The legacy Bilibili photo template still ships at
+// /public/cover-bg.png and could return later as an opt-in background preset,
+// but it is no longer the default export surface.
 
 interface CoverCanvasProps {
   state: OverlayState;
@@ -18,8 +20,6 @@ interface CoverCanvasProps {
   editable?: boolean;
   onChange?: (next: OverlayState) => void;
 }
-
-const COVER_BACKGROUND_URL = "/cover-bg.png";
 
 const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
   ({ state, editable = false, onChange }, ref) => {
@@ -48,47 +48,25 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
           width: COVER_CANVAS_DIMENSIONS.width,
           height: COVER_CANVAS_DIMENSIONS.height,
           position: "relative",
-          backgroundColor: "#15120e",
+          background: E.bg1,
           fontFamily: fontFamilies.sans,
           overflow: "hidden",
           flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: "0 112px",
+          boxSizing: "border-box",
         }}
       >
-        {/* Bilibili cover template background: character on left, title-safe area on right. */}
-        <div
-          data-testid="cover-background"
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url('${COVER_BACKGROUND_URL}')`,
-            backgroundPosition: "center",
-            backgroundSize: "cover",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Title legibility pass over the right-side safe area. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(90deg, rgba(16,13,10,0) 0%, rgba(16,13,10,0.04) 42%, rgba(16,13,10,0.22) 70%, rgba(16,13,10,0.36) 100%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Right-side Bilibili title safe area. */}
+        {/* Editorial title stack — eyebrow → serif title → rule → subtitle. */}
         <div
           data-testid="cover-title-stage"
           style={{
-            position: "absolute",
-            top: 178,
-            left: 460,
-            width: 650,
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: "flex-start",
+            maxWidth: 1000,
           }}
         >
           {cover.todayLabel && (
@@ -100,13 +78,12 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               ariaLabel="Cover eyebrow"
               style={{
                 fontFamily: fontFamilies.mono,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 500,
-                color: state.colors.warmAccent,
-                letterSpacing: "0.22em",
+                color: E.accent,
+                letterSpacing: "0.24em",
                 textTransform: "uppercase",
-                marginBottom: 16,
-                textAlign: "center",
+                marginBottom: 20,
               }}
             />
           )}
@@ -119,14 +96,13 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             ariaLabel="Cover title"
             style={{
               fontFamily: fontFamilies.serif,
-              fontSize: 58,
+              fontSize: 74,
               fontWeight: 600,
-              color: COVER_INK,
+              color: E.text,
               letterSpacing: "-0.01em",
-              lineHeight: 1.06,
+              lineHeight: 1.04,
               margin: 0,
-              maxWidth: 650,
-              textAlign: "center",
+              maxWidth: 1000,
               whiteSpace: "normal",
               ...wrapProse,
             }}
@@ -134,11 +110,10 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
 
           <div
             style={{
-              width: 64,
+              width: 72,
               height: 2,
               background: E.accent,
-              borderRadius: 1,
-              marginTop: 22,
+              marginTop: 28,
             }}
           />
 
@@ -150,14 +125,14 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             ariaLabel="Cover subtitle"
             style={{
               ...wrapProse,
-              marginTop: 20,
-              maxWidth: 610,
-              fontSize: 27,
+              marginTop: 26,
+              maxWidth: 820,
+              fontFamily: fontFamilies.serif,
+              fontSize: 30,
               fontWeight: 500,
-              color: COVER_INK_SOFT,
-              lineHeight: 1.25,
+              color: E.muted,
+              lineHeight: 1.32,
               letterSpacing: 0,
-              textAlign: "center",
             }}
           />
 
@@ -170,13 +145,14 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
               ariaLabel="Hook text"
               style={{
                 ...wrapAnywhere,
-                marginTop: 14,
-                fontSize: 18,
+                marginTop: 16,
+                fontFamily: fontFamilies.mono,
+                fontSize: 15,
                 fontWeight: 500,
-                color: "rgba(245, 238, 228, 0.72)",
-                lineHeight: 1.3,
-                letterSpacing: "0.02em",
-                textAlign: "center",
+                color: E.subtle,
+                lineHeight: 1.4,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
               }}
             />
           )}
@@ -185,20 +161,20 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             badges={cover.badges}
             readonly={readonly}
             onBadgeLabelChange={writeBadgeLabel}
-            labelColor="#ece3d6"
-            background="rgba(20, 16, 12, 0.58)"
-            border="1px solid rgba(245, 238, 228, 0.16)"
-            borderRadius={10}
-            paddingY={9}
+            labelColor={E.muted}
+            background="transparent"
+            border={`1px solid ${E.line}`}
+            borderRadius={3}
+            paddingY={8}
             paddingX={14}
-            outerGap={13}
-            itemGap={8}
-            iconSize={23}
-            iconOpacity={0.98}
+            outerGap={14}
+            itemGap={9}
+            iconSize={22}
+            iconOpacity={0.9}
             labelFontSize={16}
             separatorFontSize={13}
-            separatorColor="rgba(245, 238, 228, 0.3)"
-            style={{ marginTop: 26 }}
+            separatorColor={E.subtle}
+            style={{ marginTop: 34 }}
           />
         </div>
       </div>

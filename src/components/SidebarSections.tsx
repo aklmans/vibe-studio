@@ -51,7 +51,9 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                   : "none",
               overflow: "hidden",
               opacity: isActive ? 1 : 0.82,
-              background: isActive ? E.accentSoft : "transparent",
+              // Active identity comes from the rail, weight, ink and the "now"
+              // marker below — never a filled accent block.
+              background: "transparent",
             }}
           >
             {/* Title row + progress glyph */}

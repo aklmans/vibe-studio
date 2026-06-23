@@ -32,18 +32,21 @@ export default function BadgeToolbar({
   onBadgeLabelChange,
   labelColor,
   style,
-  background = "rgba(255,255,255,0.04)",
-  border = "1px solid rgba(255,255,255,0.08)",
-  borderRadius = 10,
-  paddingY = 10,
-  paddingX = 24,
+  // Default to a quiet outline, not a filled rounded chip: transparent fill,
+  // a single hairline, and a near-square radius. Callers pass theme-derived
+  // line/label colors so the row reads as editorial metadata in every canvas.
+  background = "transparent",
+  border = "1px solid rgba(120,116,108,0.35)",
+  borderRadius = 3,
+  paddingY = 8,
+  paddingX = 16,
   outerGap = 14,
-  itemGap = 14,
+  itemGap = 12,
   iconSize = 20,
   iconOpacity = 0.85,
   labelFontSize = 14,
   separatorFontSize = 12,
-  separatorColor = "rgba(255,255,255,0.22)",
+  separatorColor = "rgba(120,116,108,0.5)",
 }: BadgeToolbarProps) {
   const visibleBadges = badges
     .map((badge, originalIdx) => ({ badge, originalIdx }))

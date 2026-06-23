@@ -25,7 +25,7 @@ export const fieldLabelStyle: CSSProperties = {
 export const workbenchInputStyle: CSSProperties = {
   background: UI_COLORS.inputInset,
   border: `1px solid ${UI_COLORS.controlBorder}`,
-  borderRadius: 5,
+  borderRadius: 4,
   padding: "6px 10px",
   fontSize: 13,
   color: UI_COLORS.text,
@@ -46,7 +46,7 @@ export const workbenchPanelStyle: CSSProperties = {
   minWidth: 0,
   background: UI_COLORS.appSurface,
   border: `1px solid ${UI_COLORS.border}`,
-  borderRadius: 8,
+  borderRadius: 3,
   overflow: "hidden",
 };
 
@@ -57,7 +57,7 @@ export const workbenchNoteStyle: CSSProperties = {
   padding: "8px 10px",
   background: UI_COLORS.inputInset,
   border: `1px solid ${UI_COLORS.controlBorder}`,
-  borderRadius: 6,
+  borderRadius: 4,
 };
 
 export function applyWorkbenchFocus(el: HTMLElement, color = UI_COLORS.accent) {
@@ -347,7 +347,7 @@ export function WorkbenchSegmented({
         gap: 3,
         background: UI_COLORS.inputInset,
         padding: 3,
-        borderRadius: 6,
+        borderRadius: 4,
         border: `1px solid ${UI_COLORS.controlBorder}`,
       }}
     >
@@ -447,7 +447,7 @@ export const WorkbenchButton = forwardRef<HTMLButtonElement, WorkbenchButtonProp
         disabled={disabled}
         style={{
           minHeight: 30,
-          borderRadius: 6,
+          borderRadius: 4,
           border: `1px solid ${
             disabled
               ? UI_COLORS.controlBorder

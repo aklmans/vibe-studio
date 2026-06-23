@@ -290,8 +290,8 @@ function HorizontalLayout({
             onBadgeLabelChange={writeBadgeLabel}
             labelColor={E.muted}
             background="transparent"
-            border={`1px solid ${E.rule}`}
-            borderRadius={10}
+            border={`1px solid ${E.line}`}
+            borderRadius={3}
             paddingY={20}
             paddingX={40}
             outerGap={28}
@@ -446,8 +446,8 @@ function PortraitLayout({
           onBadgeLabelChange={writeBadgeLabel}
           labelColor={E.muted}
           background="transparent"
-          border={`1px solid ${E.rule}`}
-          borderRadius={10}
+          border={`1px solid ${E.line}`}
+          borderRadius={3}
           paddingY={18}
           paddingX={40}
           outerGap={28}

@@ -179,7 +179,7 @@ export default function ExportMenu({
         alignItems: "stretch",
         background: UI_COLORS.controlSurface,
         border: `1px solid ${UI_COLORS.controlBorder}`,
-        borderRadius: 6,
+        borderRadius: 4,
         overflow: "hidden",
       }}
     >
@@ -208,7 +208,13 @@ export default function ExportMenu({
           (e.currentTarget as HTMLElement).style.background = "transparent";
         }}
       >
-        {isCurrentLoading ? t("export.exporting") : t(`export.${state.activeTab}`)}
+        {isCurrentLoading
+          ? t("export.exporting")
+          : t(
+              state.activeTab === "live"
+                ? "export.overlay"
+                : `export.${state.activeTab}`,
+            )}
       </button>
       <div style={{ width: 1, background: UI_COLORS.border, flexShrink: 0 }} />
       <button
@@ -247,7 +253,7 @@ export default function ExportMenu({
               minWidth: 224,
               background: UI_COLORS.appSurface,
               border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 6,
+              borderRadius: 4,
               padding: "5px 0",
               zIndex: 50,
               boxShadow: UI_COLORS.commandShadow,

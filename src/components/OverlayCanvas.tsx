@@ -181,16 +181,6 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           />
         )}
 
-        {/* Subtle top gradient */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: `radial-gradient(ellipse 120% 60% at 50% 0%, ${bgPanel}80 0%, transparent 70%)`,
-            pointerEvents: "none",
-          }}
-        />
-
         {/* Main Screen Placeholder */}
         {mainScreen.visible && (
           <div

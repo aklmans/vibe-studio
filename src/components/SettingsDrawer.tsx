@@ -179,7 +179,7 @@ export default function SettingsDrawer({
             gap: 18,
           }}
         >
-          <Section title={t("language.zh") === "中文" ? "语言 / Language" : "Language / 语言"}>
+          <Section first title={t("language.zh") === "中文" ? "语言 / Language" : "Language / 语言"}>
             <WorkbenchSegmented
               options={[
                 { value: "zh", label: "中文", testId: "locale-zh" },
@@ -320,18 +320,21 @@ export default function SettingsDrawer({
 interface SectionProps {
   title: string;
   hint?: string;
+  /** The first section sits right under the drawer header rule — skip its own
+   *  top rule so the two don't stack into a double line. */
+  first?: boolean;
   children: React.ReactNode;
 }
 
-function Section({ title, hint, children }: SectionProps) {
+function Section({ title, hint, first, children }: SectionProps) {
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 10,
-        paddingTop: 14,
-        borderTop: `1px solid ${UI_COLORS.border}`,
+        paddingTop: first ? 0 : 14,
+        borderTop: first ? "none" : `1px solid ${UI_COLORS.border}`,
       }}
     >
       <div>
