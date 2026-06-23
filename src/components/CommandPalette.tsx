@@ -140,7 +140,7 @@ export default function CommandPalette({
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.55)",
+          background: UI_COLORS.overlayScrim,
           zIndex: 100,
         }}
       />
@@ -158,7 +158,7 @@ export default function CommandPalette({
           background: UI_COLORS.appSurface,
           border: `1px solid ${UI_COLORS.border}`,
           borderRadius: 8,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+          boxShadow: UI_COLORS.commandShadow,
           zIndex: 110,
           overflow: "hidden",
         }}

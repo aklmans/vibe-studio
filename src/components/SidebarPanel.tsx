@@ -4,6 +4,7 @@ import { fontFamilies } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
+import { editorialPalette } from "./lib/editorial-palette";
 
 interface SidebarPanelProps {
   state: OverlayState;
@@ -13,8 +14,9 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
   ({ state }, ref) => {
     const { t } = useLocale();
     const { sidebar, cover, colors } = state;
-    const { bgDark, bgPanel, borderColor, mutedText, pinkAccent } = colors;
-    const accent = pinkAccent;
+    const { bgDark, bgPanel, mutedText } = colors;
+    const E = editorialPalette(colors);
+    const accent = E.activeRule;
 
     const hasVisibleSocial = cover.socials.some(
       (s) => s.visible && s.value.trim().length > 0,
@@ -29,7 +31,7 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
           width: 470,
           height: 760,
           background: `${bgPanel}F0`,
-          border: `1px solid ${borderColor}45`,
+          border: `1px solid ${E.lineStrong}`,
           borderRadius: 0,
           display: "flex",
           flexDirection: "column",
@@ -41,8 +43,8 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
         {/* Header accent — single quiet mark */}
         <div
           style={{
-            height: 2,
-            width: 56,
+            height: 3,
+            width: 72,
             background: accent,
             flexShrink: 0,
           }}
@@ -56,13 +58,13 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
         {hasSocial && (
           <div
             style={{
-              borderTop: `1px solid ${borderColor}25`,
+              borderTop: `1px solid ${E.line}`,
               padding: "14px 24px 16px",
               display: "flex",
               flexDirection: "column",
               gap: 10,
               flexShrink: 0,
-              background: `${bgDark}60`,
+              background: `${bgDark}78`,
             }}
           >
             <div
@@ -79,7 +81,7 @@ const SidebarPanel = forwardRef<HTMLDivElement, SidebarPanelProps>(
                 marginBottom: 2,
               }}
             >
-              <div style={{ width: 2, height: 11, background: accent, flexShrink: 0 }} />
+              <div style={{ width: 2, height: 12, background: accent, flexShrink: 0 }} />
               {t("canvas.followMe")}
             </div>
             <SocialList state={state} size="small" />

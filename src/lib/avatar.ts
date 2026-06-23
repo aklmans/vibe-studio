@@ -4,8 +4,8 @@ export function avatarPlaceholder(
   fontSize: number,
 ): string {
   const isLarge = fontSize >= 68;
-  const startColor = isLarge ? "#3B4FD8" : "#1E2438";
-  const endColor = isLarge ? "#7C3AED" : "#2A3350";
+  const startColor = isLarge ? "#8f5a45" : "#2a211b";
+  const endColor = isLarge ? "#c95f3d" : "#4a3830";
   const fontWeight = isLarge ? 700 : 500;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(`
@@ -22,4 +22,3 @@ export function avatarPlaceholder(
 </svg>
 `)}`;
 }
-

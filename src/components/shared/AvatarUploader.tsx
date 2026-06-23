@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { UI_BORDERS, UI_COLORS } from "../../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
 
 interface AvatarUploaderProps {
@@ -57,7 +57,7 @@ export default function AvatarUploader({
             borderRadius: 11,
             border: "none",
             cursor: "pointer",
-            background: visible ? UI_COLORS.focus : UI_COLORS.panelSurface,
+            background: visible ? UI_COLORS.accent : UI_COLORS.panelSurface,
             position: "relative",
             transition: "background 0.2s",
             flexShrink: 0,
@@ -94,10 +94,10 @@ export default function AvatarUploader({
           style={{
             flex: 1,
             padding: "7px 10px",
-            background: `${UI_COLORS.uploadBlue}18`,
-            border: `1px solid ${UI_COLORS.uploadBlue}40`,
+            background: cssAlpha(UI_COLORS.uploadAccent, 10),
+            border: `1px solid ${cssAlpha(UI_COLORS.uploadAccent, 28)}`,
             borderRadius: 7,
-            color: UI_COLORS.brandBlue,
+            color: UI_COLORS.accentText,
             fontSize: 12,
             fontWeight: 500,
             cursor: "pointer",
@@ -113,7 +113,7 @@ export default function AvatarUploader({
             onClick={() => onUrlChange("")}
             style={{
               padding: "7px 10px",
-              background: `${UI_COLORS.danger}12`,
+              background: cssAlpha(UI_COLORS.danger, 8),
               border: UI_BORDERS.danger,
               borderRadius: 7,
               color: UI_COLORS.danger,

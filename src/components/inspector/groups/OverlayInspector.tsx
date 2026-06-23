@@ -14,7 +14,11 @@ interface OverlayInspectorProps {
   onChange: (state: OverlayState) => void;
 }
 
-const SECTION_ACCENTS = [UI_COLORS.cyan, UI_COLORS.danger, UI_COLORS.warm] as const;
+const SECTION_ACCENTS = [
+  UI_COLORS.sectionAccent,
+  UI_COLORS.danger,
+  UI_COLORS.sectionAccentWarm,
+] as const;
 
 export default function OverlayInspector({
   state,

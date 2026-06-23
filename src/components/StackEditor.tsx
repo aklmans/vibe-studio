@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { OverlayState } from "../types";
-import { UI_COLORS } from "../lib/design-tokens";
+import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
 
@@ -57,7 +57,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
               fontFamily: "inherit",
               boxSizing: "border-box",
             }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
             onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
           />
           <button
@@ -81,7 +81,10 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.color = UI_COLORS.danger;
-              (e.currentTarget as HTMLElement).style.borderColor = `${UI_COLORS.danger}60`;
+              (e.currentTarget as HTMLElement).style.borderColor = cssAlpha(
+                UI_COLORS.danger,
+                38,
+              );
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color = UI_COLORS.textMuted;
@@ -117,7 +120,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
             fontFamily: "inherit",
             boxSizing: "border-box",
           }}
-          onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+          onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
           onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
         />
         <button
@@ -130,7 +133,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
             borderRadius: 6,
             border: `1px solid ${UI_COLORS.controlBorder}`,
             background: draft.trim() ? UI_COLORS.panelSurface : UI_COLORS.controlSurface,
-            color: draft.trim() ? UI_COLORS.cyan : UI_COLORS.textSubtle,
+            color: draft.trim() ? UI_COLORS.sectionAccent : UI_COLORS.textSubtle,
             cursor: draft.trim() ? "pointer" : "not-allowed",
             fontFamily: "inherit",
             fontSize: 16,

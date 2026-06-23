@@ -1,6 +1,6 @@
 import type { OverlayState } from "../types";
 import { formatStartLabel } from "../lib/bottomBar";
-import { UI_BORDERS, UI_COLORS } from "../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
 
@@ -68,9 +68,9 @@ export default function LiveSessionEditor({
           fontFamily: "inherit",
           width: "100%",
           boxSizing: "border-box",
-          colorScheme: "dark",
+          colorScheme: state.theme,
         }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
         onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
       />
 
@@ -81,10 +81,10 @@ export default function LiveSessionEditor({
           style={{
             flex: 1,
             padding: "7px 10px",
-            background: `${UI_COLORS.cyan}18`,
-            border: `1px solid ${UI_COLORS.cyan}40`,
+            background: cssAlpha(UI_COLORS.sectionAccent, 10),
+            border: `1px solid ${cssAlpha(UI_COLORS.sectionAccent, 28)}`,
             borderRadius: 7,
-            color: UI_COLORS.cyan,
+            color: UI_COLORS.sectionAccent,
             fontSize: 12,
             fontWeight: 500,
             cursor: "pointer",
@@ -101,7 +101,7 @@ export default function LiveSessionEditor({
             onClick={() => writeStart("")}
             style={{
               padding: "7px 10px",
-              background: `${UI_COLORS.danger}12`,
+              background: cssAlpha(UI_COLORS.danger, 8),
               border: UI_BORDERS.danger,
               borderRadius: 7,
               color: UI_COLORS.danger,

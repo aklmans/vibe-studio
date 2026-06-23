@@ -1,6 +1,6 @@
 import type { OverlayState } from "../../types";
 import type { TranslationKey } from "../../lib/i18n";
-import { socialStyle } from "../../lib/socials";
+import { compactSocialValue, socialStyle } from "../../lib/socials";
 import { fontFamilies } from "../../lib/typography";
 import { editorialPalette } from "../lib/editorial-palette";
 
@@ -64,6 +64,7 @@ export default function SocialCard({
       </div>
       {socials.map((social, idx) => {
         const style = socialStyle(social, colors);
+        const displayValue = compactSocialValue(social.value, 48);
         return (
           <div
             key={idx}
@@ -94,9 +95,10 @@ export default function SocialCard({
             </span>
             <span
               style={{
+                fontFamily: fontFamilies.mono,
                 fontSize: S(30),
-                color: E.muted,
-                fontWeight: 500,
+                color: E.text,
+                fontWeight: 650,
                 letterSpacing: "0.01em",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -104,8 +106,9 @@ export default function SocialCard({
                 minWidth: 0,
                 maxWidth: S(520),
               }}
+              title={social.value}
             >
-              {social.value}
+              {displayValue}
             </span>
           </div>
         );

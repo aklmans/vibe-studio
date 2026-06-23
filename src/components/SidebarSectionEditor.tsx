@@ -1,5 +1,5 @@
 import type { OverlayState } from "../types";
-import { UI_COLORS } from "../lib/design-tokens";
+import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
 
@@ -40,7 +40,7 @@ function SectionInput({ label, value, onChange, testId }: SectionInputProps) {
           width: "100%",
           boxSizing: "border-box",
         }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
         onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
       />
     </div>
@@ -122,8 +122,8 @@ export default function SidebarSectionEditor({
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                border: `1px solid ${done ? `${accentColor}60` : UI_COLORS.controlBorder}`,
-                background: done ? `${accentColor}20` : UI_COLORS.controlSurface,
+                border: `1px solid ${done ? cssAlpha(accentColor, 38) : UI_COLORS.controlBorder}`,
+                background: done ? cssAlpha(accentColor, 14) : UI_COLORS.controlSurface,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",

@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
 import BottomBarSegments from "./BottomBarSegments";
+import { editorialPalette } from "./lib/editorial-palette";
 
 interface BottomBarPanelProps {
   state: OverlayState;
@@ -8,7 +9,8 @@ interface BottomBarPanelProps {
 
 const BottomBarPanel = forwardRef<HTMLDivElement, BottomBarPanelProps>(
   ({ state }, ref) => {
-    const { bgPanel, borderColor } = state.colors;
+    const { bgPanel } = state.colors;
+    const E = editorialPalette(state.colors);
 
     return (
       <div
@@ -18,7 +20,7 @@ const BottomBarPanel = forwardRef<HTMLDivElement, BottomBarPanelProps>(
           width: 1856,
           height: 180,
           background: `${bgPanel}F0`,
-          border: `1px solid ${borderColor}45`,
+          border: `1px solid ${E.lineStrong}`,
           borderRadius: 0,
           display: "flex",
           overflow: "hidden",

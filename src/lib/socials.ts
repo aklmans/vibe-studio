@@ -34,6 +34,23 @@ export interface SocialStyle {
   border: string;
 }
 
+export function compactSocialValue(value: string, maxLength = 46): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const compact = trimmed
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/i, "");
+
+  if (compact.length <= maxLength) return compact;
+
+  const available = Math.max(8, maxLength - 1);
+  const headLength = Math.ceil(available * 0.58);
+  const tailLength = available - headLength;
+  return `${compact.slice(0, headLength)}…${compact.slice(-tailLength)}`;
+}
+
 export const SOCIAL_KIND_VALUES: SocialKind[] = [
   "bilibili",
   "blog",
@@ -100,13 +117,13 @@ export function socialStyle(
     return {
       color: badge.customColor,
       background: "transparent",
-      border: `1px solid ${badge.customColor}55`,
+      border: `1px solid ${badge.customColor}66`,
     };
   }
   return {
-    color: colors.mutedText,
+    color: colors.subtleText,
     background: "transparent",
-    border: `1px solid ${colors.borderColor}59`,
+    border: `1px solid ${colors.borderColor}66`,
   };
 }
 

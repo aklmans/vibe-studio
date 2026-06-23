@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { OverlayState } from "../../types";
-import { UI_BORDERS, UI_COLORS } from "../../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { patchSection } from "../../lib/state";
 import { useLocale } from "../../hooks/useLocale";
 import SidebarSectionEditor from "../SidebarSectionEditor";
@@ -29,7 +29,11 @@ interface LiveDataManagerProps {
   onEndSession: () => void;
 }
 
-const SECTION_ACCENTS = [UI_COLORS.cyan, UI_COLORS.danger, UI_COLORS.warm] as const;
+const SECTION_ACCENTS = [
+  UI_COLORS.sectionAccent,
+  UI_COLORS.danger,
+  UI_COLORS.sectionAccentWarm,
+] as const;
 
 const panelStyle: CSSProperties = {
   minWidth: 0,
@@ -137,7 +141,7 @@ export default function LiveDataManager({
                 <span
                   style={{
                     fontSize: 11,
-                    color: UI_COLORS.focus,
+                    color: UI_COLORS.accent,
                     background: UI_COLORS.previewBadgeSurface,
                     border: UI_BORDERS.control,
                     borderRadius: 6,
@@ -179,14 +183,14 @@ export default function LiveDataManager({
               <SessionButton
                 onClick={onStartSession}
                 disabled={!canWrite || persistence.saving}
-                accentColor={UI_COLORS.cyan}
+                accentColor={UI_COLORS.sectionAccent}
               >
                 {t("liveData.startSession")}
               </SessionButton>
               <SessionButton
                 onClick={onEndSession}
                 disabled={!canWrite || persistence.saving}
-                accentColor={UI_COLORS.warm}
+                accentColor={UI_COLORS.sectionAccentWarm}
               >
                 {t("liveData.endSession")}
               </SessionButton>
@@ -202,7 +206,7 @@ export default function LiveDataManager({
           <PanelHeader
             title={t("group.sections")}
             hint={t("group.sections.hint")}
-            accentColor={UI_COLORS.cyan}
+            accentColor={UI_COLORS.sectionAccent}
           />
           <div style={panelBodyStyle}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -275,14 +279,14 @@ export default function LiveDataManager({
           <PanelHeader
             title={t("group.liveBar")}
             hint={t("group.liveBar.hint")}
-            accentColor={UI_COLORS.warm}
+            accentColor={UI_COLORS.sectionAccentWarm}
           />
           <div style={panelBodyStyle}>
-            <EditorBlock label={t("label.liveSession")} accentColor={UI_COLORS.cyan}>
+            <EditorBlock label={t("label.liveSession")} accentColor={UI_COLORS.sectionAccent}>
               <LiveSessionEditor state={state} onChange={onChange} />
             </EditorBlock>
 
-            <EditorBlock label={t("label.stack")} accentColor={UI_COLORS.purple}>
+            <EditorBlock label={t("label.stack")} accentColor={UI_COLORS.sectionAccentAlt}>
               <StackEditor state={state} onChange={onChange} />
             </EditorBlock>
 
@@ -325,8 +329,8 @@ function SessionButton({
         minWidth: 82,
         height: 30,
         borderRadius: 7,
-        border: `1px solid ${disabled ? UI_COLORS.controlBorder : `${accentColor}66`}`,
-        background: disabled ? UI_COLORS.controlSurface : `${accentColor}18`,
+        border: `1px solid ${disabled ? UI_COLORS.controlBorder : cssAlpha(accentColor, 40)}`,
+        background: disabled ? UI_COLORS.controlSurface : cssAlpha(accentColor, 10),
         color: disabled ? UI_COLORS.textSubtle : accentColor,
         cursor: disabled ? "not-allowed" : "pointer",
         fontFamily: "inherit",

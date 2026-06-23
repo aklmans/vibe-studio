@@ -76,7 +76,7 @@ export default function WallpaperEditor({
                   display: "block",
                   fontSize: 9,
                   fontWeight: 400,
-                  color: active ? UI_COLORS.focus : UI_COLORS.textSubtle,
+                  color: active ? UI_COLORS.accent : UI_COLORS.textSubtle,
                   marginTop: 2,
                   letterSpacing: "0.02em",
                 }}
@@ -241,7 +241,7 @@ function PlainInput({ value, onChange, placeholder, testId }: PlainInputProps) {
         width: "100%",
         boxSizing: "border-box",
       }}
-      onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+      onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
       onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
     />
   );
@@ -264,7 +264,7 @@ function Toggle({ checked, onChange, testId }: ToggleProps) {
         borderRadius: 10,
         border: "none",
         cursor: "pointer",
-        background: checked ? UI_COLORS.focus : UI_COLORS.panelSurface,
+        background: checked ? UI_COLORS.accent : UI_COLORS.panelSurface,
         position: "relative",
         transition: "background 0.2s",
         flexShrink: 0,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { OverlayState } from "../types";
-import { UI_COLORS } from "../lib/design-tokens";
+import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { produceState } from "../lib/state";
 import { THEME_PRESETS, type ThemeMode } from "../lib/theme";
 import { useLocale } from "../hooks/useLocale";
@@ -70,7 +70,7 @@ export default function SettingsDrawer({
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.4)",
+          background: UI_COLORS.overlayScrim,
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
           transition: "opacity 0.18s",
@@ -281,7 +281,10 @@ export default function SettingsDrawer({
                   }}
                   onMouseEnter={(e) => {
                     (e.target as HTMLElement).style.color = UI_COLORS.danger;
-                    (e.target as HTMLElement).style.borderColor = `${UI_COLORS.danger}55`;
+                    (e.target as HTMLElement).style.borderColor = cssAlpha(
+                      UI_COLORS.danger,
+                      34,
+                    );
                   }}
                   onMouseLeave={(e) => {
                     (e.target as HTMLElement).style.color = UI_COLORS.textMuted;

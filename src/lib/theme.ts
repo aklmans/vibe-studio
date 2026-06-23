@@ -1,12 +1,15 @@
-// Theme presets and color/border token helpers shared across all canvases.
+// Asset palette presets and color/border token helpers shared across canvases.
 //
-// Two themes ship, both inside the same warm editorial design language:
+// Two app appearances ship, both inside the same warm editorial design language:
 //   - dark   — warm black surfaces, grey-white text, warm-orange accent marks
 //   - light  — warm paper surfaces, near-black ink, warm-orange accent marks
 //
-// Both presets share the same ColorTokens shape so any component can reference
-// state.colors without caring which preset is active. Users can override any
-// individual token from the editor; the theme switch just loads a preset.
+// The app shell reads appearance tokens from design-tokens.ts. state.colors is
+// the broadcast/export asset palette and may diverge when users override
+// individual asset colors from Settings. The theme switch loads the matching
+// app appearance and resets state.colors to the corresponding asset preset.
+// Do not use theme to model an independent export palette; split out an
+// assetPalette control if the app needs light UI with dark exported assets.
 //
 // Migration: the legacy "neon"/"editorial" modes were removed in Phase 1.5.
 // Stored states are mapped on load — neon → dark, editorial → light (see

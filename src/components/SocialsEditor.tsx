@@ -77,7 +77,7 @@ export default function SocialsEditor({
                 borderRadius: 10,
                 border: "none",
                 cursor: "pointer",
-                background: social.visible ? UI_COLORS.focus : UI_COLORS.panelSurface,
+                background: social.visible ? UI_COLORS.accent : UI_COLORS.panelSurface,
                 position: "relative",
                 transition: "background 0.2s",
                 flexShrink: 0,
@@ -166,7 +166,7 @@ export default function SocialsEditor({
               width: "100%",
               boxSizing: "border-box",
             }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
             onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
           />
 
@@ -188,7 +188,7 @@ export default function SocialsEditor({
               width: "100%",
               boxSizing: "border-box",
             }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
             onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
           />
 
@@ -203,7 +203,7 @@ export default function SocialsEditor({
               }}
             >
               <span
-                style={{ flex: 1, fontSize: 11, color: UI_COLORS.focus }}
+                style={{ flex: 1, fontSize: 11, color: UI_COLORS.accent }}
                 title="Drives chip text/border/fill colors"
               >
                 {t("label.customColor")}
@@ -211,7 +211,7 @@ export default function SocialsEditor({
               <input
                 data-testid={`${testIdPrefix}-${idx}-color`}
                 type="color"
-                value={social.customColor || UI_COLORS.focus}
+                value={social.customColor || state.colors.pinkAccent}
                 onChange={(e) =>
                   updateSocial(idx, { customColor: e.target.value })
                 }
@@ -225,7 +225,7 @@ export default function SocialsEditor({
                   cursor: "pointer",
                 }}
               />
-              <span style={{ fontSize: 11, color: UI_COLORS.focus, fontFamily: "monospace" }}>
+              <span style={{ fontSize: 11, color: UI_COLORS.accent, fontFamily: "monospace" }}>
                 {social.customColor || "—"}
               </span>
             </div>

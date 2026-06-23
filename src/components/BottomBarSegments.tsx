@@ -6,6 +6,7 @@ import { UI_COLORS } from "../lib/design-tokens";
 import { fontFamilies, wrapProse, clampLines, truncateLine } from "../lib/typography";
 import { useNow } from "../hooks/useNow";
 import { useLocale } from "../hooks/useLocale";
+import { editorialPalette } from "./lib/editorial-palette";
 
 type Size = "small" | "large";
 
@@ -25,7 +26,8 @@ export default function BottomBarSegments({
 }: BottomBarSegmentsProps) {
   const { t } = useLocale();
   const { bottomBar, colors } = state;
-  const { borderColor, textColor, mutedText, pinkAccent } = colors;
+  const { textColor, mutedText, pinkAccent } = colors;
+  const E = editorialPalette(colors);
   const accent = pinkAccent;
 
   const baseTitleSize = size === "large" ? 13 : 12;
@@ -56,7 +58,7 @@ export default function BottomBarSegments({
                   top: 18,
                   bottom: 18,
                   width: 1,
-                  background: `${borderColor}40`,
+                  background: E.line,
                 }}
               />
             )}
@@ -68,7 +70,9 @@ export default function BottomBarSegments({
               valueSize={baseValueSize}
               textColor={textColor}
               mutedText={mutedText}
-              borderColor={borderColor}
+              line={E.line}
+              lineSoft={E.lineSoft}
+              surface={E.bg3}
               t={t}
             />
           </div>
@@ -86,7 +90,9 @@ interface SegmentBodyProps {
   valueSize: number;
   textColor: string;
   mutedText: string;
-  borderColor: string;
+  line: string;
+  lineSoft: string;
+  surface: string;
   t: (key: import("../lib/i18n").TranslationKey) => string;
 }
 
@@ -98,7 +104,9 @@ function SegmentBody({
   valueSize,
   textColor,
   mutedText,
-  borderColor,
+  line,
+  lineSoft,
+  surface,
   t,
 }: SegmentBodyProps) {
   const titleStyle: CSSProperties = {
@@ -113,8 +121,8 @@ function SegmentBody({
     gap: 8,
   };
   const railStyle: CSSProperties = {
-    width: 2,
-    height: 12,
+    width: 3,
+    height: 14,
     background: accent,
     flexShrink: 0,
   };
@@ -122,8 +130,8 @@ function SegmentBody({
     ...wrapProse,
     fontSize: valueSize,
     color: textColor,
-    fontWeight: 500,
-    letterSpacing: "-0.01em",
+    fontWeight: 650,
+    letterSpacing: 0,
   };
   // Title labels are one-line metadata; long section names truncate rather than
   // wrapping the rail off its row.
@@ -151,10 +159,11 @@ function SegmentBody({
                 alignItems: "center",
                 gap: 5,
                 marginLeft: 4,
-                background: UI_COLORS.live,
-                borderRadius: 999,
-                padding: "1px 8px",
-                height: 16,
+                background: "transparent",
+                border: `1px solid ${line}`,
+                borderRadius: 4,
+                padding: "1px 7px",
+                height: 17,
               }}
             >
               <span
@@ -162,14 +171,14 @@ function SegmentBody({
                   width: 4,
                   height: 4,
                   borderRadius: "50%",
-                  background: "rgba(255,255,255,0.95)",
+                  background: UI_COLORS.live,
                 }}
               />
               <span
                 style={{
                   fontSize: 9,
                   fontWeight: 700,
-                  color: UI_COLORS.white,
+                  color: textColor,
                   letterSpacing: "0.12em",
                 }}
               >
@@ -228,8 +237,8 @@ function SegmentBody({
                 minWidth: 80,
                 height: 6,
                 borderRadius: 3,
-                background: `${borderColor}18`,
-                border: `1px solid ${borderColor}25`,
+                background: lineSoft,
+                border: `1px solid ${line}`,
                 overflow: "hidden",
               }}
             >
@@ -286,11 +295,12 @@ function SegmentBody({
                   fontSize: 13,
                   fontWeight: 500,
                   color: textColor,
-                  background: "transparent",
-                  border: `1px solid ${borderColor}45`,
+                  background: surface,
+                  border: `1px solid ${line}`,
                   borderRadius: 4,
                   padding: "4px 10px",
                   letterSpacing: "0.01em",
+                  boxShadow: `inset 0 -1px 0 ${lineSoft}`,
                   maxWidth: valueSize >= 32 ? 220 : 160,
                 }}
               >

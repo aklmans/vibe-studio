@@ -14,6 +14,10 @@ export interface EditorialPalette {
   subtle: string;
   accent: string; // warm accent — used only as a small mark
   accentSoft: string; // accent at low alpha for tints / fills
+  lineStrong: string; // outer frame / major panel boundary
+  line: string; // section rule / stable divider
+  lineSoft: string; // inner hairline / low-emphasis aid
+  activeRule: string; // current-state mark, never a large fill
   hairline: string; // thin warm divider
   rule: string; // slightly stronger rule / border
   glassBorder: string; // legacy alias === rule (kept for existing callers)
@@ -29,9 +33,13 @@ export function editorialPalette(colors: ColorTokens): EditorialPalette {
     subtle: colors.subtleText,
     accent: colors.pinkAccent,
     accentSoft: `${colors.pinkAccent}1f`,
+    lineStrong: `${colors.borderColor}8f`,
+    line: `${colors.borderColor}66`,
+    lineSoft: `${colors.borderColor}33`,
+    activeRule: colors.pinkAccent,
     hairline: `${colors.borderColor}33`,
-    rule: `${colors.borderColor}59`,
-    glassBorder: `${colors.borderColor}59`,
+    rule: `${colors.borderColor}66`,
+    glassBorder: `${colors.borderColor}66`,
   };
 }
 
@@ -44,7 +52,11 @@ export const EDITORIAL_PALETTE: EditorialPalette = {
   subtle: "#85827c",
   accent: "#e0815c",
   accentSoft: "#e0815c1f",
+  lineStrong: "#4a463d8f",
+  line: "#4a463d66",
+  lineSoft: "#4a463d33",
+  activeRule: "#e0815c",
   hairline: "#4a463d33",
-  rule: "#4a463d59",
-  glassBorder: "#4a463d59",
+  rule: "#4a463d66",
+  glassBorder: "#4a463d66",
 };

@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import type { OverlayState } from "../../types";
 import { useLocale } from "../../hooks/useLocale";
-import { UI_BORDERS, UI_COLORS } from "../../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import {
   applySessionRecipeToOverlayState,
   formatSessionRecipeMarkdown,
@@ -181,8 +181,8 @@ function RecipeButton({
         minWidth: 118,
         height: 32,
         borderRadius: 7,
-        border: `1px solid ${accentColor}66`,
-        background: `${accentColor}18`,
+        border: `1px solid ${cssAlpha(accentColor, 40)}`,
+        background: cssAlpha(accentColor, 10),
         color: accentColor,
         cursor: "pointer",
         fontFamily: "inherit",

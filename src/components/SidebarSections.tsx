@@ -1,5 +1,7 @@
 import { OverlayState } from "../types";
+import { useLocale } from "../hooks/useLocale";
 import { fontFamilies, wrapProse } from "../lib/typography";
+import { editorialPalette } from "./lib/editorial-palette";
 
 interface SidebarSectionsProps {
   state: OverlayState;
@@ -12,21 +14,28 @@ interface SidebarSectionsProps {
  * No per-section rainbow accents, no glows.
  */
 export default function SidebarSections({ state }: SidebarSectionsProps) {
+  const { t, locale } = useLocale();
   const { sidebar, colors } = state;
-  const { borderColor, textColor, mutedText, subtleText, pinkAccent } = colors;
-  const accent = pinkAccent;
+  const { textColor, mutedText, subtleText } = colors;
+  const E = editorialPalette(colors);
+  const accent = E.activeRule;
   const activeIdx = sidebar.activeSection;
+  const currentLabel = t("canvas.current");
 
   return (
     <>
       {sidebar.sections.map((section, idx) => {
         const isActive = idx === activeIdx;
         const headingColor = isActive ? textColor : mutedText;
-        const railColor = isActive ? accent : `${borderColor}80`;
+        const railColor = isActive ? accent : E.line;
 
         const doneBullets = sidebar.sectionsDone?.[idx] ?? [];
         const doneCount = doneBullets.filter(Boolean).length;
         const totalCount = section.bullets.length;
+        const currentIdx = section.bullets.findIndex(
+          (bullet, i) => !doneBullets[i] && bullet.trim().length > 0,
+        );
+        const firstCurrentIdx = currentIdx >= 0 ? currentIdx : 0;
 
         return (
           <div
@@ -38,19 +47,19 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
               padding: "16px 24px",
               borderBottom:
                 idx < sidebar.sections.length - 1
-                  ? `1px solid ${borderColor}33`
+                  ? `1px solid ${E.line}`
                   : "none",
               overflow: "hidden",
-              opacity: isActive ? 1 : 0.66,
-              background: isActive ? `${accent}0d` : "transparent",
+              opacity: isActive ? 1 : 0.82,
+              background: isActive ? E.accentSoft : "transparent",
             }}
           >
             {/* Title row + progress glyph */}
             <div
               style={{
                 fontFamily: fontFamilies.mono,
-                fontSize: 11,
-                fontWeight: 600,
+                fontSize: isActive ? 12 : 11,
+                fontWeight: isActive ? 700 : 600,
                 letterSpacing: "0.08em",
                 color: headingColor,
                 marginBottom: 12,
@@ -61,8 +70,8 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
             >
               <div
                 style={{
-                  width: 2,
-                  height: 13,
+                  width: isActive ? 3 : 2,
+                  height: isActive ? 18 : 13,
                   background: railColor,
                   flexShrink: 0,
                 }}
@@ -86,7 +95,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                   gap: 7,
                   fontSize: 10,
                   fontWeight: 500,
-                  color: subtleText,
+                  color: isActive ? mutedText : subtleText,
                   letterSpacing: "0.06em",
                 }}
               >
@@ -100,7 +109,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                         borderRadius: 2,
                         background: doneBullets[i] ? accent : "transparent",
                         border: `1px solid ${
-                          doneBullets[i] ? accent : `${borderColor}80`
+                          doneBullets[i] ? accent : E.line
                         }`,
                       }}
                     />
@@ -116,16 +125,22 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
             <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               {section.bullets.map((bullet, bIdx) => {
                 const done = doneBullets[bIdx] ?? false;
+                const current = isActive && !done && bIdx === firstCurrentIdx;
                 return (
                   <div
                     key={bIdx}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: done ? `${textColor}66` : textColor,
-                      lineHeight: 1.5,
+                      gap: current ? 11 : 10,
+                      fontSize: current ? 15 : 14,
+                      color: done
+                        ? `${textColor}78`
+                        : isActive
+                          ? textColor
+                          : mutedText,
+                      lineHeight: 1.48,
+                      fontWeight: current ? 650 : 450,
                     }}
                   >
                     {done ? (
@@ -135,7 +150,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                           height: 15,
                           borderRadius: "50%",
                           background: `${accent}26`,
-                          border: `1px solid ${accent}66`,
+                          border: `1px solid ${accent}`,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -156,11 +171,12 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                     ) : (
                       <div
                         style={{
-                          width: 5,
-                          height: 5,
+                          width: current ? 9 : 5,
+                          height: current ? 9 : 5,
                           borderRadius: "50%",
-                          background: `${mutedText}66`,
-                          marginTop: 7,
+                          background: current ? accent : `${mutedText}66`,
+                          border: current ? `2px solid ${E.lineStrong}` : "none",
+                          marginTop: current ? 6 : 7,
                           flexShrink: 0,
                         }}
                       />
@@ -173,6 +189,21 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                       }}
                     >
                       {bullet}
+                      {current && (
+                        <span
+                          style={{
+                            marginLeft: 8,
+                            fontFamily: fontFamilies.mono,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: locale === "en" ? "0.1em" : 0,
+                            color: accent,
+                            textTransform: locale === "en" ? "uppercase" : "none",
+                          }}
+                        >
+                          {currentLabel}
+                        </span>
+                      )}
                     </span>
                   </div>
                 );

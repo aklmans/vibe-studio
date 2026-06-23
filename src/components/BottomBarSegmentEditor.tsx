@@ -227,7 +227,7 @@ function PlainInput({ label, value, onChange, testId }: PlainInputProps) {
           width: "100%",
           boxSizing: "border-box",
         }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
         onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
       />
     </div>

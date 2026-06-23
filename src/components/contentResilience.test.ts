@@ -15,6 +15,7 @@ import SocialList from "./SocialList";
 import SocialCard from "./shared/SocialCard";
 import BadgeToolbar from "./shared/BadgeToolbar";
 import BottomBarSegments from "./BottomBarSegments";
+import { editorialPalette } from "./lib/editorial-palette";
 
 // ── Content pressure-test fixtures ──────────────────────────────────────────
 // Real livestream copy is not the friendly default. These cover the three
@@ -232,6 +233,23 @@ test("broadcast canvases keep no glow shadows", () => {
   }
 });
 
+test("Overlay uses explicit broadcast line hierarchy", () => {
+  const state: OverlayState = {
+    ...coverState({ socials: STRESS_SOCIALS, badges: STRESS_BADGES }),
+    sidebar: {
+      ...DEFAULT_STATE.sidebar,
+      socialVisible: true,
+    },
+  };
+  const html = renderWithLocale(React.createElement(OverlayCanvas, { state }));
+  const E = editorialPalette(state.colors);
+
+  assert.match(html, new RegExp(`border:1px solid ${E.lineStrong}`));
+  assert.match(html, new RegExp(`border-top:1px solid ${E.line}`));
+  assert.match(html, new RegExp(`border-bottom:1px solid ${E.lineSoft}`));
+  assert.match(html, new RegExp(`background:${E.activeRule}`));
+});
+
 test("social rows render as quiet metadata, not filled platform-color tags", () => {
   const socials: SocialConfig[] = [
     { visible: true, kind: "bilibili", label: "B站", value: "Aklman", customColor: "" },
@@ -256,4 +274,19 @@ test("social rows render as quiet metadata, not filled platform-color tags", () 
     assert.doesNotMatch(html, /#5865F2/i); // discord blurple fill
     assert.doesNotMatch(html, /#07C160/i); // wechat green fill
   }
+});
+
+test("long social URLs are compacted before visual truncation", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(SocialList, {
+      state: coverState({ socials: STRESS_SOCIALS }),
+      size: "large",
+    }),
+  );
+
+  assert.match(html, /youtube\.com\/@an-extremely/);
+  assert.match(html, /coding-live/);
+  assert.match(html, /…/);
+  assert.match(html, /max-width:460px/);
+  assert.match(html, /text-overflow:ellipsis/);
 });

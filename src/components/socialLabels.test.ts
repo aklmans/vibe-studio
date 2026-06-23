@@ -67,6 +67,24 @@ test("SocialList renders same-size label chips", () => {
   ]);
 });
 
+test("SocialList makes values visually stronger than platform labels", () => {
+  const state = {
+    ...DEFAULT_STATE,
+    cover: {
+      ...DEFAULT_STATE.cover,
+      socials: SOCIALS,
+    },
+  };
+  const firstRow = childrenOf(SocialList({ state, size: "small" }))[0];
+  const [label, value] = childrenOf(firstRow);
+  const labelStyle = asElement(label).props.style;
+  const valueStyle = asElement(value).props.style;
+
+  assert.notEqual(labelStyle?.color, DEFAULT_STATE.colors.textColor);
+  assert.equal(valueStyle?.color, DEFAULT_STATE.colors.textColor);
+  assert.ok(Number(valueStyle?.fontWeight) > Number(labelStyle?.fontWeight));
+});
+
 test("SocialList edits the original social item when hidden rows precede it", () => {
   const socials: SocialConfig[] = [
     { visible: false, kind: "youtube", label: "Hidden", value: "hidden", customColor: "" },
@@ -123,4 +141,22 @@ test("SocialCard renders same-size label chips", () => {
     { width: 132, height: 34 },
     { width: 132, height: 34 },
   ]);
+});
+
+test("SocialCard makes values visually stronger than platform labels", () => {
+  const card = SocialCard({
+    S: (n) => n,
+    socials: SOCIALS,
+    colors: DEFAULT_STATE.colors,
+    fullWidth: true,
+    t: (key) => key,
+  });
+  const firstRow = childrenOf(card)[1];
+  const [label, value] = childrenOf(firstRow);
+  const labelStyle = asElement(label).props.style;
+  const valueStyle = asElement(value).props.style;
+
+  assert.notEqual(labelStyle?.color, DEFAULT_STATE.colors.textColor);
+  assert.equal(valueStyle?.color, DEFAULT_STATE.colors.textColor);
+  assert.ok(Number(valueStyle?.fontWeight) > Number(labelStyle?.fontWeight));
 });

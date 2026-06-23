@@ -7,6 +7,7 @@ import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
 import { getObsCameraFrameColors, type ObsCameraMode } from "../lib/obs-camera";
+import { editorialPalette } from "./lib/editorial-palette";
 
 interface OverlayCanvasProps {
   state: OverlayState;
@@ -114,13 +115,11 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     const {
       bgDark,
       bgPanel,
-      borderColor,
       textColor,
       mutedText,
       subtleText,
-      pinkAccent,
     } = colors;
-    const accent = pinkAccent;
+    const E = editorialPalette(colors);
 
     const avatarSrc = cover.avatarUrl || AVATAR_PLACEHOLDER;
     const hasVisibleSocial = cover.socials.some(
@@ -162,7 +161,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           >
             <defs>
               <pattern id={dotPatternId} width="32" height="32" patternUnits="userSpaceOnUse">
-                <circle cx="0" cy="0" r="1" fill={`${borderColor}18`} />
+                <circle cx="0" cy="0" r="1" fill={E.lineSoft} />
               </pattern>
             </defs>
             <path d={cutoutPath} fill={bgDark} fillRule="evenodd" />
@@ -175,7 +174,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             style={{
               position: "absolute",
               inset: 0,
-              backgroundImage: `radial-gradient(circle, ${borderColor}18 1px, transparent 1px)`,
+              backgroundImage: `radial-gradient(circle, ${E.lineSoft} 1px, transparent 1px)`,
               backgroundSize: "32px 32px",
               pointerEvents: "none",
             }}
@@ -202,7 +201,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: MAIN_SCREEN_SLOT.width,
               height: MAIN_SCREEN_SLOT.height,
               background: bgDark,
-              border: `1px solid ${borderColor}40`,
+              border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
@@ -230,7 +229,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   fontSize: 120,
                   fontWeight: 600,
                   color: mutedText,
-                  opacity: 0.06,
+                  opacity: 0.075,
                   letterSpacing: "0.04em",
                   userSelect: "none",
                   whiteSpace: "nowrap",
@@ -252,12 +251,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: CAMERA_PANEL_SLOT.width,
               height: CAMERA_PANEL_SLOT.height,
               background: cameraFrameColors.shellBackground,
-              border: `1px solid ${borderColor}45`,
+              border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              boxShadow: `0 8px 28px rgba(0,0,0,0.45)`,
+              boxShadow: `0 10px 26px rgba(0,0,0,0.38)`,
             }}
           >
             {/* Camera titlebar */}
@@ -265,7 +264,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               style={{
                 height: 28,
                 background: `${bgPanel}EE`,
-                borderBottom: `1px solid ${borderColor}25`,
+                borderBottom: `1px solid ${E.lineSoft}`,
                 display: "flex",
                 alignItems: "center",
                 padding: "0 10px",
@@ -335,7 +334,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                       display: "flex",
                       alignItems: "center",
                       gap: 5,
-                      background: "rgba(0,0,0,0.55)",
+                      background: "rgba(0,0,0,0.52)",
+                      border: `1px solid ${E.line}`,
                       borderRadius: 4,
                       padding: "2px 7px",
                     }}
@@ -376,25 +376,25 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: CAMERA_PANEL_SLOT.width,
               height: CAMERA_PANEL_SLOT.height,
               background: `${bgPanel}F0`,
-              border: `1px solid ${borderColor}45`,
+              border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              boxShadow: `0 8px 28px rgba(0,0,0,0.4)`,
+              boxShadow: `0 10px 26px rgba(0,0,0,0.34)`,
             }}
           >
             <div
               style={{
-                height: 2,
-                width: 56,
-                background: accent,
+                height: 3,
+                width: 72,
+                background: E.activeRule,
                 flexShrink: 0,
               }}
             />
             <div
               style={{
-                padding: "24px 26px",
+                padding: "24px 26px 22px",
                 display: "flex",
                 flexDirection: "column",
                 minHeight: 0,
@@ -408,7 +408,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   fontWeight: 600,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: mutedText,
+                  color: subtleText,
                   display: "flex",
                   alignItems: "center",
                   gap: 9,
@@ -418,8 +418,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 <div
                   style={{
                     width: 2,
-                    height: 12,
-                    background: accent,
+                    height: 14,
+                    background: E.activeRule,
                     flexShrink: 0,
                   }}
                 />
@@ -430,11 +430,11 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 style={{
                   ...clampLines(2),
                   fontFamily: fontFamilies.serif,
-                  fontSize: 24,
-                  fontWeight: 600,
+                  fontSize: 27,
+                  fontWeight: 650,
                   color: textColor,
                   lineHeight: 1.2,
-                  marginBottom: 18,
+                  marginBottom: 16,
                 }}
               >
                 {currentFocus.title}
@@ -442,7 +442,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
 
               <div
                 style={{
-                  borderTop: `1px solid ${borderColor}24`,
+                  borderTop: `1px solid ${E.line}`,
                   paddingTop: 16,
                   display: "flex",
                   flexDirection: "column",
@@ -459,7 +459,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                       fontWeight: 600,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      color: accent,
+                      color: E.activeRule,
                       marginBottom: 7,
                     }}
                   >
@@ -468,8 +468,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                   <div
                     style={{
                       ...clampLines(3),
-                      fontSize: 18,
-                      fontWeight: 600,
+                      fontSize: 20,
+                      fontWeight: 700,
                       color: textColor,
                       lineHeight: 1.35,
                     }}
@@ -497,7 +497,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                       ...clampLines(2),
                       fontSize: 14,
                       fontWeight: 500,
-                      color: `${textColor}CC`,
+                      color: mutedText,
                       lineHeight: 1.4,
                     }}
                   >
@@ -521,7 +521,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: 400,
               height: 708,
               background: `${bgPanel}F0`,
-              border: `1px solid ${borderColor}45`,
+              border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
               display: "flex",
               flexDirection: "column",
@@ -531,9 +531,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             {/* Sidebar header accent — single quiet mark */}
             <div
               style={{
-                height: 2,
-                width: 56,
-                background: accent,
+                height: 3,
+                width: 72,
+                background: E.activeRule,
                 flexShrink: 0,
               }}
             />
@@ -547,13 +547,13 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             {hasSocial && (
               <div
                 style={{
-                  borderTop: `1px solid ${borderColor}25`,
+                  borderTop: `1px solid ${E.line}`,
                   padding: "14px 24px 16px",
                   display: "flex",
                   flexDirection: "column",
                   gap: 10,
                   flexShrink: 0,
-                  background: `${bgDark}60`,
+                  background: `${bgDark}78`,
                 }}
               >
                 {/* Social section title — quiet mono label */}
@@ -571,7 +571,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                     marginBottom: 2,
                   }}
                 >
-                  <div style={{ width: 2, height: 11, background: accent, flexShrink: 0 }} />
+                  <div style={{ width: 2, height: 12, background: E.activeRule, flexShrink: 0 }} />
                   {t("canvas.followMe")}
                 </div>
                 <SocialList state={state} size="small" editable={!!onChange} onChange={onChange} />
@@ -592,7 +592,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: BOTTOM_BAR_SLOT.width,
               height: BOTTOM_BAR_SLOT.height,
               background: `${bgPanel}F0`,
-              border: `1px solid ${borderColor}45`,
+              border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
               display: "flex",
               overflow: "hidden",

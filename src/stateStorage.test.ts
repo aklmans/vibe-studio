@@ -68,6 +68,23 @@ test("saveOverlayState writes normalized JSON", () => {
   assert.equal(JSON.parse(saved).activeTab, "cover");
 });
 
+test("saveOverlayState persists the current light appearance and asset palette", () => {
+  const storage = new MemoryStorage();
+  saveOverlayState(
+    {
+      ...DEFAULT_STATE,
+      theme: "light",
+      colors: { ...LIGHT_PRESET },
+    },
+    storage,
+  );
+
+  const loaded = loadOverlayState(storage);
+
+  assert.equal(loaded.theme, "light");
+  assert.deepEqual(loaded.colors, LIGHT_PRESET);
+});
+
 test("normalizeOverlayState preserves the live data tab", () => {
   const state = normalizeOverlayState({ activeTab: "live" });
 

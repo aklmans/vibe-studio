@@ -5,6 +5,7 @@ import {
   migrateThemeMode,
   type ThemeMode,
 } from "./lib/theme";
+import { OVERLAY_STATE_STORAGE_KEY } from "./lib/storage-keys";
 import { BADGE_PRESETS, type BadgeConfig, type BadgeKind } from "./lib/badges";
 import {
   isSocialKind,
@@ -18,8 +19,6 @@ import {
 } from "./lib/bottomBar";
 import { isWallpaperPresetId, type WallpaperPresetId } from "./lib/wallpaper";
 import { isAppTab } from "./lib/tabs";
-
-const STORAGE_KEY = "vibe-overlay-state";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 type OverlayColors = OverlayState["colors"];
@@ -528,7 +527,7 @@ export function loadOverlayState(
   if (!storage) return normalizeOverlayState(defaultValue);
 
   try {
-    const raw = storage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(OVERLAY_STATE_STORAGE_KEY);
     return raw
       ? normalizeOverlayState(JSON.parse(raw), defaultValue)
       : normalizeOverlayState(defaultValue);
@@ -544,7 +543,10 @@ export function saveOverlayState(
   if (!storage) return;
 
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(normalizeOverlayState(state, state)));
+    storage.setItem(
+      OVERLAY_STATE_STORAGE_KEY,
+      JSON.stringify(normalizeOverlayState(state, state)),
+    );
   } catch {
     // Ignore quota/private-mode failures; the editor can continue in memory.
   }

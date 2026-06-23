@@ -90,7 +90,7 @@ export default function WallpaperInspector({
                     display: "block",
                     fontSize: 9,
                     fontWeight: 400,
-                    color: active ? UI_COLORS.focus : UI_COLORS.textSubtle,
+                    color: active ? UI_COLORS.accent : UI_COLORS.textSubtle,
                     marginTop: 2,
                     letterSpacing: "0.02em",
                   }}

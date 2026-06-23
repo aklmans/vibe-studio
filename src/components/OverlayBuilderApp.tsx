@@ -22,7 +22,11 @@ import {
   exportWallpaper,
 } from "../utils/exportImage";
 import { loadOverlayState, saveOverlayState } from "../stateStorage";
-import { UI_BORDERS, UI_COLORS } from "../lib/design-tokens";
+import {
+  UI_BORDERS,
+  UI_COLORS,
+  applyAppAppearance,
+} from "../lib/design-tokens";
 import {
   COVER_CANVAS_DIMENSIONS,
   OVERLAY_CANVAS_DIMENSIONS,
@@ -60,6 +64,77 @@ const exportStageStyle: React.CSSProperties = {
   opacity: 1,
   zIndex: -1,
 };
+
+export const PREVIEW_HEADER_STYLES = {
+  header: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    flexShrink: 0,
+    gap: "8px 16px",
+    minHeight: 30,
+  },
+  leftGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    flex: "1 1 360px",
+    flexWrap: "wrap",
+    minWidth: 0,
+  },
+  badge: {
+    fontFamily: "var(--app-font-mono)",
+    fontSize: 10,
+    color: UI_COLORS.accentText,
+    background: UI_COLORS.previewBadgeSurface,
+    padding: "4px 9px",
+    borderRadius: 5,
+    border: UI_BORDERS.control,
+    letterSpacing: "0.06em",
+    flexShrink: 0,
+  },
+  hint: {
+    fontSize: 11,
+    color: UI_COLORS.textMuted,
+    lineHeight: 1.4,
+    minWidth: 0,
+    flex: "1 1 220px",
+    whiteSpace: "normal",
+    overflowWrap: "break-word",
+  },
+  rightGroup: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    minWidth: 0,
+    flex: "1 1 320px",
+    flexWrap: "wrap",
+    marginLeft: "auto",
+  },
+  metrics: {
+    fontSize: 10,
+    color: UI_COLORS.textSubtle,
+    fontFamily: "monospace",
+    lineHeight: 1.45,
+    pointerEvents: "none",
+    userSelect: "none",
+    whiteSpace: "normal",
+    overflowWrap: "break-word",
+    maxWidth: "min(100%, 520px)",
+    textAlign: "right",
+  },
+  exportError: {
+    fontSize: 12,
+    color: UI_COLORS.danger,
+    background: UI_COLORS.dangerSurface,
+    border: UI_BORDERS.danger,
+    borderRadius: 6,
+    padding: "4px 12px",
+    maxWidth: "100%",
+  },
+} satisfies Record<string, React.CSSProperties>;
 
 interface LiveDataPersistenceState {
   databaseConfigured: boolean;
@@ -160,6 +235,10 @@ export default function App() {
   const setState = useCallback((next: OverlayState) => {
     setStateRaw(next);
   }, []);
+
+  useLayoutEffect(() => {
+    applyAppAppearance(state.theme);
+  }, [state.theme]);
 
   useEffect(() => {
     saveOverlayState(state);
@@ -475,6 +554,7 @@ export default function App() {
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
           overflow: "hidden",
         }}
+        data-appearance={state.theme}
       >
         <TopBar
           state={state}
@@ -511,54 +591,26 @@ export default function App() {
             }}
           >
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexShrink: 0,
-              }}
+              style={PREVIEW_HEADER_STYLES.header}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={PREVIEW_HEADER_STYLES.leftGroup}>
                 <div
-                  style={{
-                    fontFamily: "var(--app-font-mono)",
-                    fontSize: 10,
-                    color: UI_COLORS.accentText,
-                    background: UI_COLORS.previewBadgeSurface,
-                    padding: "4px 9px",
-                    borderRadius: 5,
-                    border: UI_BORDERS.control,
-                    letterSpacing: "0.06em",
-                  }}
+                  style={PREVIEW_HEADER_STYLES.badge}
                 >
                   {tabBadge}
                 </div>
-                <div style={{ fontSize: 11, color: UI_COLORS.textMuted }}>
+                <div style={PREVIEW_HEADER_STYLES.hint}>
                   {isLiveDataTab ? t("app.liveDataHint") : t("app.previewHint")}
                 </div>
               </div>
 
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: 12,
-                  minWidth: 0,
-                }}
+                style={PREVIEW_HEADER_STYLES.rightGroup}
               >
                 {previewMetrics && !isLiveDataTab && (
                   <div
                     data-testid="preview-debug"
-                    style={{
-                      fontSize: 10,
-                      color: UI_COLORS.textSubtle,
-                      fontFamily: "monospace",
-                      lineHeight: 1.6,
-                      pointerEvents: "none",
-                      userSelect: "none",
-                      whiteSpace: "nowrap",
-                    }}
+                    style={PREVIEW_HEADER_STYLES.metrics}
                   >
                     {formatPreviewMetrics(previewMetrics)}
                   </div>
@@ -566,14 +618,7 @@ export default function App() {
 
                 {exportError && (
                   <div
-                    style={{
-                      fontSize: 12,
-                      color: UI_COLORS.danger,
-                      background: UI_COLORS.dangerSurface,
-                      border: UI_BORDERS.danger,
-                      borderRadius: 6,
-                      padding: "4px 12px",
-                    }}
+                    style={PREVIEW_HEADER_STYLES.exportError}
                   >
                     {exportError}
                   </div>
@@ -760,7 +805,7 @@ function PreviewFrame({
           position: "relative",
           flexShrink: 0,
           boxShadow:
-            "0 10px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(74,70,61,0.6)",
+            UI_COLORS.previewShadow,
           borderRadius: 8,
         }}
       >

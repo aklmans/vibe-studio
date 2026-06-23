@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getAppAppearanceBootScript } from "../lib/design-tokens";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: getAppAppearanceBootScript() }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

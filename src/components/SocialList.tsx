@@ -2,8 +2,9 @@ import type { CSSProperties } from "react";
 import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
 import type { SocialConfig } from "../lib/socials";
-import { socialStyle } from "../lib/socials";
+import { compactSocialValue, socialStyle } from "../lib/socials";
 import { fontFamilies } from "../lib/typography";
+import { editorialPalette } from "./lib/editorial-palette";
 import EditableText from "./edit/EditableText";
 
 type Size = "small" | "large";
@@ -22,6 +23,7 @@ interface SocialListProps {
 export default function SocialList({ state, size = "small", editable, onChange }: SocialListProps) {
   const { cover, colors } = state;
   const { textColor } = colors;
+  const E = editorialPalette(colors);
   const visibleSocials = cover.socials.filter(
     (s) => s.visible && s.value.trim().length > 0,
   );
@@ -44,7 +46,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
         textAlign: "center",
         boxSizing: "border-box",
         letterSpacing: "0.06em",
-        border: "1px solid transparent",
+        border: `1px solid ${E.line}`,
         overflow: "hidden",
         whiteSpace: "nowrap",
       }
@@ -63,7 +65,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
         textAlign: "center",
         boxSizing: "border-box",
         letterSpacing: "0.06em",
-        border: "1px solid transparent",
+        border: `1px solid ${E.line}`,
         overflow: "hidden",
         whiteSpace: "nowrap",
       };
@@ -72,8 +74,9 @@ export default function SocialList({ state, size = "small", editable, onChange }
     ? {
         fontSize: 20,
         color: textColor,
-        fontWeight: 500,
+        fontWeight: 650,
         letterSpacing: "0.01em",
+        fontFamily: fontFamilies.mono,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
@@ -83,6 +86,8 @@ export default function SocialList({ state, size = "small", editable, onChange }
     : {
         fontSize: 14,
         color: textColor,
+        fontWeight: 650,
+        fontFamily: fontFamilies.mono,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
@@ -117,6 +122,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
       {visibleSocials.map((social, idx) => {
         const style = socialStyle(social, colors);
         const srcIdx = findSocialIndex(idx);
+        const displayValue = compactSocialValue(social.value, isLarge ? 46 : 34);
         return (
           <div
             key={idx}
@@ -132,7 +138,9 @@ export default function SocialList({ state, size = "small", editable, onChange }
                 testId={`social-value-${srcIdx}`}
               />
             ) : (
-              <span style={valueStyle}>{social.value}</span>
+              <span style={valueStyle} title={social.value}>
+                {displayValue}
+              </span>
             )}
           </div>
         );

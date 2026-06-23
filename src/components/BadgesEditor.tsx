@@ -117,7 +117,7 @@ export default function BadgesEditor({
                   borderRadius: 10,
                   border: "none",
                   cursor: "pointer",
-                  background: badge.visible ? UI_COLORS.focus : UI_COLORS.panelSurface,
+                  background: badge.visible ? UI_COLORS.accent : UI_COLORS.panelSurface,
                   position: "relative",
                   transition: "background 0.2s",
                   flexShrink: 0,
@@ -201,7 +201,7 @@ export default function BadgesEditor({
                 width: "100%",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+              onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
               onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
             />
 
@@ -226,7 +226,7 @@ export default function BadgesEditor({
                   width: "100%",
                   boxSizing: "border-box",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = UI_COLORS.focus)}
+                onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
                 onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
               />
             )}

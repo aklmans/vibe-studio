@@ -250,7 +250,7 @@ export default function ExportMenu({
               borderRadius: 6,
               padding: "5px 0",
               zIndex: 50,
-              boxShadow: "0 14px 36px rgba(0,0,0,0.5)",
+              boxShadow: UI_COLORS.commandShadow,
             }}
           >
             {itemRow(t("export.fullOverlay"), onExportOverlay, "overlay")}
