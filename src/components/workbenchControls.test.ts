@@ -12,6 +12,7 @@ import { DEFAULT_STATE } from "../types";
 import CommandPalette from "./CommandPalette";
 import SettingsDrawer from "./SettingsDrawer";
 import TopBar from "./topbar/TopBar";
+import BadgesEditor from "./BadgesEditor";
 import { SectionInput, ToggleButton } from "./shared/Field";
 
 test("shared text inputs use the editorial inset control surface", () => {
@@ -263,10 +264,32 @@ test("badge rows use display-label wording, not social-label wording", () => {
 test("badge editor selects registry icons instead of asking for icon URLs", () => {
   const source = readFileSync(resolve("src/components/BadgesEditor.tsx"), "utf8");
 
-  assert.match(source, /icon-search/);
-  assert.match(source, /BadgeIconChooser/);
+  assert.match(source, /-add-search/);
+  assert.match(source, /BadgeAddResults/);
   assert.doesNotMatch(source, /icon-url/);
   assert.doesNotMatch(source, /label\.iconUrl/);
+});
+
+test("badge editor is an add-list workflow instead of fixed visibility slots", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(BadgesEditor, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+
+  assert.match(html, /data-testid="badge-add-search"/);
+  assert.match(html, /data-testid="badge-add-kimi"/);
+  assert.match(html, /data-testid="badge-0-remove"/);
+  assert.match(html, /data-testid="badge-0-mode-brand"/);
+  assert.doesNotMatch(html, /data-testid="badge-0-visible"/);
+  assert.doesNotMatch(html, /role="switch"/);
+  assert.doesNotMatch(html, /data-testid="badge-0-icon-search"/);
+  assert.doesNotMatch(html, /aria-label="Badge 1 label"/);
 });
 
 test("right inspector editors use the inspector line segmented control", () => {
