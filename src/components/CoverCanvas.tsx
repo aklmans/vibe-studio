@@ -69,10 +69,10 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             aria-hidden="true"
             style={{
               position: "absolute",
-              left: -82,
-              bottom: -112,
-              width: 1240,
-              height: 700,
+              left: -140,
+              bottom: -200,
+              width: 1560,
+              height: 880,
               overflow: "visible",
               pointerEvents: "none",
               zIndex: 0,

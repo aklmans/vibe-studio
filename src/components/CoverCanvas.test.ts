@@ -60,9 +60,13 @@ test("CoverCanvas uses the default studio subject image as a background subject 
   assert.match(html, /src="\/vibe-studio-bg\.png"/);
   assert.match(html, /object-fit:contain/);
   assert.match(html, /position:absolute/);
-  assert.match(html, /left:-82px/);
-  assert.match(html, /bottom:-112px/);
-  assert.match(html, /height:700px/);
+  // The subject is anchored low-left and oversized so it reads as a cropped
+  // studio scene (figure + desk bleeding off the bottom-left), not a centered,
+  // fully-contained illustration with an empty box above it.
+  assert.match(html, /left:-140px/);
+  assert.match(html, /bottom:-200px/);
+  assert.match(html, /width:1560px/);
+  assert.match(html, /height:880px/);
   assert.match(html, /pointer-events:none/);
   assert.doesNotMatch(html, /src="\/avatar\.jpg"/);
 });
