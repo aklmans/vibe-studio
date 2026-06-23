@@ -164,7 +164,7 @@ export default function CommandPalette({
         }}
       >
         <Command
-          label="Vibe Overlay command palette"
+          label={t("cmdk.label")}
           loop
           style={{
             display: "flex",
@@ -498,16 +498,18 @@ function Item({
       value={value}
       onSelect={onSelect}
       style={{
-        padding: "8px 12px",
-        margin: "0 6px",
-        borderRadius: 6,
-        cursor: "pointer",
+          padding: "8px 12px",
+          margin: "0 6px",
+          borderRadius: 6,
+          cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: 10,
         fontSize: 13,
         color: tone === "danger" ? UI_COLORS.danger : UI_COLORS.text,
+        border: "1px solid transparent",
+        transition: "background 0.12s, border-color 0.12s, color 0.12s",
       }}
     >
       <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -538,8 +540,8 @@ function Kbd({ children }: { children: React.ReactNode }) {
         fontSize: 10,
         padding: "2px 6px",
         borderRadius: 3,
-        border: `1px solid ${UI_COLORS.border}`,
-        background: UI_COLORS.controlSurface,
+        border: `1px solid ${UI_COLORS.controlBorder}`,
+        background: UI_COLORS.inputInset,
         color: UI_COLORS.accentText,
         letterSpacing: "0.04em",
       }}

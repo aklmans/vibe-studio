@@ -2,50 +2,7 @@ import type { OverlayState } from "../types";
 import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
-
-interface SectionInputProps {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  testId?: string;
-}
-
-function SectionInput({ label, value, onChange, testId }: SectionInputProps) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <label
-        style={{
-          fontSize: 11,
-          fontWeight: 500,
-          color: UI_COLORS.textSoft,
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </label>
-      <input
-        data-testid={testId}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          background: UI_COLORS.controlSurface,
-          border: `1px solid ${UI_COLORS.controlBorder}`,
-          borderRadius: 6,
-          padding: "6px 10px",
-          fontSize: 13,
-          color: UI_COLORS.text,
-          outline: "none",
-          fontFamily: "inherit",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-        onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
-      />
-    </div>
-  );
-}
+import { SectionInput } from "./shared/Field";
 
 interface SidebarSectionEditorProps {
   state: OverlayState;

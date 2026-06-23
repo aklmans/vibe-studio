@@ -7,6 +7,7 @@ import {
 } from "../lib/badges";
 import { UI_COLORS } from "../lib/design-tokens";
 import { useLocale } from "../hooks/useLocale";
+import { TextInput, ToggleButton, WorkbenchSegmented } from "./shared/Field";
 
 interface BadgesEditorProps {
   state: OverlayState;
@@ -51,9 +52,9 @@ export default function BadgesEditor({
           <div
             key={idx}
             style={{
-              background: UI_COLORS.controlSurface,
-              border: `1px solid ${UI_COLORS.panelSurface}`,
-              borderRadius: 8,
+              background: UI_COLORS.inputInset,
+              border: `1px solid ${UI_COLORS.controlBorder}`,
+              borderRadius: 6,
               padding: 10,
               display: "flex",
               flexDirection: "column",
@@ -73,8 +74,8 @@ export default function BadgesEditor({
                 style={{
                   width: 28,
                   height: 28,
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: UI_COLORS.inputInset,
+                  border: `1px solid ${UI_COLORS.controlBorder}`,
                   borderRadius: 6,
                   display: "flex",
                   alignItems: "center",
@@ -108,126 +109,50 @@ export default function BadgesEditor({
               >
                 {`${t("label.badge")} ${idx + 1}`}
               </span>
-              <button
-                data-testid={`${testIdPrefix}-${idx}-visible`}
-                onClick={() => updateBadge(idx, { visible: !badge.visible })}
-                style={{
-                  width: 38,
-                  height: 20,
-                  borderRadius: 10,
-                  border: "none",
-                  cursor: "pointer",
-                  background: badge.visible ? UI_COLORS.accent : UI_COLORS.panelSurface,
-                  position: "relative",
-                  transition: "background 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: "50%",
-                    background: UI_COLORS.text,
-                    position: "absolute",
-                    top: 3,
-                    left: badge.visible ? 21 : 3,
-                    transition: "left 0.2s",
-                  }}
+              <div style={{ width: 38, flexShrink: 0 }}>
+                <ToggleButton
+                  label=""
+                  checked={badge.visible}
+                  onChange={(visible) => updateBadge(idx, { visible })}
+                  testId={`${testIdPrefix}-${idx}-visible`}
                 />
-              </button>
+              </div>
             </div>
 
             {/* Row 2: kind picker */}
-            <div
-              style={{
-                display: "flex",
-                gap: 4,
-                background: UI_COLORS.inputInset,
-                padding: 3,
-                borderRadius: 6,
-                border: `1px solid ${UI_COLORS.panelSurface}`,
+            <WorkbenchSegmented
+              active={badge.kind}
+              onSelect={(value) => {
+                const kind = value as BadgeKind;
+                const patch: Partial<BadgeConfig> = { kind };
+                if (kind !== "custom") {
+                  patch.label = BADGE_PRESETS[kind].label;
+                }
+                updateBadge(idx, patch);
               }}
-            >
-              {KIND_OPTIONS.map((opt) => {
-                const active = badge.kind === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    data-testid={`${testIdPrefix}-${idx}-kind-${opt.value}`}
-                    onClick={() => {
-                      const patch: Partial<BadgeConfig> = { kind: opt.value };
-                      if (opt.value !== "custom") {
-                        patch.label = BADGE_PRESETS[opt.value].label;
-                      }
-                      updateBadge(idx, patch);
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: "4px 0",
-                      background: active ? UI_COLORS.panelSurface : "transparent",
-                      border: "none",
-                      borderRadius: 4,
-                      fontSize: 10,
-                      fontWeight: 500,
-                      color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      letterSpacing: "0.04em",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
+              options={KIND_OPTIONS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+                testId: `${testIdPrefix}-${idx}-kind-${opt.value}`,
+              }))}
+            />
 
             {/* Row 3: label input */}
-            <input
-              data-testid={`${testIdPrefix}-${idx}-label`}
+            <TextInput
+              testId={`${testIdPrefix}-${idx}-label`}
               value={badge.label}
-              onChange={(e) => updateBadge(idx, { label: e.target.value })}
+              onChange={(label) => updateBadge(idx, { label })}
               placeholder={t("label.displayLabel")}
-              style={{
-                background: UI_COLORS.inputInset,
-                border: `1px solid ${UI_COLORS.controlBorder}`,
-                borderRadius: 6,
-                padding: "6px 10px",
-                fontSize: 13,
-                color: UI_COLORS.text,
-                outline: "none",
-                fontFamily: "inherit",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-              onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
             />
 
             {/* Row 4: custom icon URL (only when kind === custom) */}
             {badge.kind === "custom" && (
-              <input
-                data-testid={`${testIdPrefix}-${idx}-icon-url`}
+              <TextInput
+                testId={`${testIdPrefix}-${idx}-icon-url`}
                 value={badge.customIconUrl}
-                onChange={(e) =>
-                  updateBadge(idx, { customIconUrl: e.target.value })
-                }
+                onChange={(customIconUrl) => updateBadge(idx, { customIconUrl })}
                 placeholder={t("label.iconUrl")}
-                style={{
-                  background: UI_COLORS.inputInset,
-                  border: `1px solid ${UI_COLORS.controlBorder}`,
-                  borderRadius: 6,
-                  padding: "6px 10px",
-                  fontSize: 12,
-                  color: UI_COLORS.text,
-                  outline: "none",
-                  fontFamily: "monospace",
-                  width: "100%",
-                  boxSizing: "border-box",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-                onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+                mono
               />
             )}
           </div>

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { OverlayState } from "../../types";
-import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS } from "../../lib/design-tokens";
 import { patchSection } from "../../lib/state";
 import { useLocale } from "../../hooks/useLocale";
 import SidebarSectionEditor from "../SidebarSectionEditor";
@@ -8,6 +8,12 @@ import LiveSessionEditor from "../LiveSessionEditor";
 import StackEditor from "../StackEditor";
 import BottomBarSegmentEditor from "../BottomBarSegmentEditor";
 import SessionRecipePanel from "./SessionRecipePanel";
+import {
+  WorkbenchButton,
+  WorkbenchLabel,
+  WorkbenchSegmented,
+  workbenchPanelStyle,
+} from "../shared/Field";
 
 interface LiveDataManagerProps {
   state: OverlayState;
@@ -36,11 +42,7 @@ const SECTION_ACCENTS = [
 ] as const;
 
 const panelStyle: CSSProperties = {
-  minWidth: 0,
-  background: UI_COLORS.appSurface,
-  border: `1px solid ${UI_COLORS.panelSurface}`,
-  borderRadius: 8,
-  overflow: "hidden",
+  ...workbenchPanelStyle,
 };
 
 const panelBodyStyle: CSSProperties = {
@@ -210,52 +212,22 @@ export default function LiveDataManager({
           />
           <div style={panelBodyStyle}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={labelStyle}>{t("label.activeSection")}</span>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 4,
-                  background: UI_COLORS.controlSurface,
-                  padding: 3,
-                  borderRadius: 8,
-                  border: `1px solid ${UI_COLORS.panelSurface}`,
-                }}
-              >
-                {state.sidebar.sections.map((section, idx) => (
-                  <button
-                    key={idx}
-                    data-testid={`live-data-active-section-${idx}`}
-                    onClick={() =>
-                      onChange(patchSection(state, "sidebar", { activeSection: idx }))
-                    }
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      padding: "6px 10px",
-                      background:
-                        state.sidebar.activeSection === idx
-                          ? UI_COLORS.panelSurface
-                          : "transparent",
-                      border: "none",
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color:
-                        state.sidebar.activeSection === idx
-                          ? UI_COLORS.text
-                          : UI_COLORS.textMuted,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      letterSpacing: "0.02em",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {section.title || `${t("label.section")} ${idx + 1}`}
-                  </button>
-                ))}
-              </div>
+              <WorkbenchLabel style={labelStyle}>{t("label.activeSection")}</WorkbenchLabel>
+              <WorkbenchSegmented
+                active={String(state.sidebar.activeSection)}
+                onSelect={(value) =>
+                  onChange(
+                    patchSection(state, "sidebar", {
+                      activeSection: Number(value),
+                    }),
+                  )
+                }
+                options={state.sidebar.sections.map((section, idx) => ({
+                  value: String(idx),
+                  label: section.title || `${t("label.section")} ${idx + 1}`,
+                  testId: `live-data-active-section-${idx}`,
+                }))}
+              />
             </div>
 
             {state.sidebar.sections.map((_, idx) => (
@@ -322,25 +294,19 @@ function SessionButton({
   accentColor?: string;
 }) {
   return (
-    <button
+    <WorkbenchButton
       onClick={onClick}
       disabled={disabled}
+      tone={accentColor === UI_COLORS.textSoft ? "neutral" : "accent"}
+      accentColor={accentColor}
       style={{
         minWidth: 82,
         height: 30,
-        borderRadius: 7,
-        border: `1px solid ${disabled ? UI_COLORS.controlBorder : cssAlpha(accentColor, 40)}`,
-        background: disabled ? UI_COLORS.controlSurface : cssAlpha(accentColor, 10),
-        color: disabled ? UI_COLORS.textSubtle : accentColor,
-        cursor: disabled ? "not-allowed" : "pointer",
-        fontFamily: "inherit",
-        fontSize: 12,
-        fontWeight: 600,
-        letterSpacing: "0.02em",
+        padding: "0 12px",
       }}
     >
       {children}
-    </button>
+    </WorkbenchButton>
   );
 }
 
@@ -361,7 +327,7 @@ function PanelHeader({
         justifyContent: "space-between",
         gap: 16,
         padding: "14px 16px",
-        borderBottom: `1px solid ${UI_COLORS.panelSurface}`,
+        borderBottom: `1px solid ${UI_COLORS.border}`,
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>

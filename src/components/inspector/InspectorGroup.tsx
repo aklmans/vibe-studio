@@ -44,6 +44,13 @@ export default function InspectorGroup({
           cursor: "pointer",
           fontFamily: "inherit",
           color: UI_COLORS.text,
+          transition: "background 0.12s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = UI_COLORS.inputInset;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "transparent";
         }}
         data-testid={testId ? `${testId}-toggle` : undefined}
       >

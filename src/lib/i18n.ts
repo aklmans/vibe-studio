@@ -144,6 +144,7 @@ export const dict = {
     "reset.confirm": "全部恢复",
 
     // ─── Command palette ─────────────────────────────────────────────
+    "cmdk.label": "Vibe Coding Live 命令面板",
     "cmdk.placeholder": "输入命令或搜索…",
     "cmdk.empty": "没有匹配的命令。",
     "cmdk.navigate": "导航",
@@ -439,6 +440,7 @@ export const dict = {
     "reset.confirm": "Reset everything",
 
     // ─── Command palette ─────────────────────────────────────────────
+    "cmdk.label": "Vibe Coding Live command palette",
     "cmdk.placeholder": "Type a command or search…",
     "cmdk.empty": "No matching command.",
     "cmdk.navigate": "navigate",

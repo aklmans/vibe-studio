@@ -1,9 +1,8 @@
 import type { OverlayState } from "../../../types";
-import { UI_COLORS } from "../../../lib/design-tokens";
 import { patchSection } from "../../../lib/state";
 import InspectorGroup from "../InspectorGroup";
 import BrandIdentityEditor from "../BrandIdentityEditor";
-import { SectionInput, ToggleButton } from "../../shared/Field";
+import { SectionInput, ToggleButton, WorkbenchSegmented } from "../../shared/Field";
 import { WALLPAPER_PRESETS, getPresetLabels, type WallpaperPresetId } from "../../../lib/wallpaper";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -51,56 +50,20 @@ export default function WallpaperInspector({
         hint={t("group.previewSize.hint")}
         testId="group-wallpaper-size"
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 4,
-            background: UI_COLORS.controlSurface,
-            padding: 3,
-            borderRadius: 6,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-          }}
-        >
-          {WALLPAPER_PRESETS.map((preset) => {
+        <WorkbenchSegmented
+          active={wallpaper.previewPresetId}
+          columns={3}
+          onSelect={(value) => setPreset(value as WallpaperPresetId)}
+          options={WALLPAPER_PRESETS.map((preset) => {
             const labels = getPresetLabels(locale);
-            const active = wallpaper.previewPresetId === preset.id;
-            return (
-              <button
-                key={preset.id}
-                  data-testid={`wallpaper-preset-${preset.id}`}
-                  onClick={() => setPreset(preset.id)}
-                  style={{
-                    padding: "6px 0",
-                    background: active ? UI_COLORS.panelSurface : "transparent",
-                  border: "none",
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 500,
-                    color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  letterSpacing: "0.04em",
-                  transition: "all 0.15s",
-                }}
-              >
-                {labels[preset.id].shortLabel}
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: 9,
-                    fontWeight: 400,
-                    color: active ? UI_COLORS.accent : UI_COLORS.textSubtle,
-                    marginTop: 2,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {preset.width}×{preset.height}
-                </span>
-              </button>
-            );
+            return {
+              value: preset.id,
+              label: labels[preset.id].shortLabel,
+              meta: `${preset.width}×${preset.height}`,
+              testId: `wallpaper-preset-${preset.id}`,
+            };
           })}
-        </div>
+        />
       </InspectorGroup>
 
       <InspectorGroup

@@ -1,8 +1,9 @@
 import type { OverlayState } from "../types";
 import { formatStartLabel } from "../lib/bottomBar";
-import { UI_BORDERS, UI_COLORS, cssAlpha } from "../lib/design-tokens";
+import { UI_COLORS } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
+import { TextInput, WorkbenchButton } from "./shared/Field";
 
 interface LiveSessionEditorProps {
   state: OverlayState;
@@ -38,8 +39,7 @@ export default function LiveSessionEditor({
     onChange(patchSection(state, "liveSession", { startedAt: value }));
   };
 
-  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
+  const handleLocalChange = (v: string) => {
     if (!v) {
       writeStart("");
       return;
@@ -52,67 +52,33 @@ export default function LiveSessionEditor({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <input
-        data-testid="live-started-at"
+      <TextInput
+        testId="live-started-at"
         type="datetime-local"
         value={isoToLocalInput(startedAt)}
         onChange={handleLocalChange}
-        style={{
-          background: UI_COLORS.controlSurface,
-          border: `1px solid ${UI_COLORS.controlBorder}`,
-          borderRadius: 6,
-          padding: "6px 10px",
-          fontSize: 13,
-          color: UI_COLORS.text,
-          outline: "none",
-          fontFamily: "inherit",
-          width: "100%",
-          boxSizing: "border-box",
-          colorScheme: state.theme,
-        }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-        onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+        style={{ colorScheme: state.theme }}
       />
 
       <div style={{ display: "flex", gap: 6 }}>
-        <button
-          data-testid="live-start-now"
+        <WorkbenchButton
+          testId="live-start-now"
           onClick={() => writeStart(new Date().toISOString())}
-          style={{
-            flex: 1,
-            padding: "7px 10px",
-            background: cssAlpha(UI_COLORS.sectionAccent, 10),
-            border: `1px solid ${cssAlpha(UI_COLORS.sectionAccent, 28)}`,
-            borderRadius: 7,
-            color: UI_COLORS.sectionAccent,
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            textAlign: "center",
-            letterSpacing: "0.04em",
-          }}
+          accentColor={UI_COLORS.sectionAccent}
+          tone="accent"
+          style={{ flex: 1, padding: "0 10px" }}
         >
           {t("btn.startNow")}
-        </button>
+        </WorkbenchButton>
         {ready && (
-          <button
-            data-testid="live-clear"
+          <WorkbenchButton
+            testId="live-clear"
             onClick={() => writeStart("")}
-            style={{
-              padding: "7px 10px",
-              background: cssAlpha(UI_COLORS.danger, 8),
-              border: UI_BORDERS.danger,
-              borderRadius: 7,
-              color: UI_COLORS.danger,
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
+            tone="danger"
+            style={{ padding: "0 10px" }}
           >
-{t("btn.clear")}
-          </button>
+            {t("btn.clear")}
+          </WorkbenchButton>
         )}
       </div>
 

@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
+import { TextInput, WorkbenchButton } from "./shared/Field";
 
 interface StackEditorProps {
   state: OverlayState;
@@ -41,24 +42,11 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {state.stack.items.map((item, idx) => (
         <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input
-            data-testid={`stack-item-${idx}`}
+          <TextInput
+            testId={`stack-item-${idx}`}
             value={item}
-            onChange={(e) => updateItem(idx, e.target.value)}
-            style={{
-              flex: 1,
-              background: UI_COLORS.controlSurface,
-              border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 6,
-              padding: "6px 10px",
-              fontSize: 13,
-              color: UI_COLORS.text,
-              outline: "none",
-              fontFamily: "inherit",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-            onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+            onChange={(value) => updateItem(idx, value)}
+            style={{ flex: 1 }}
           />
           <button
             data-testid={`stack-remove-${idx}`}
@@ -97,10 +85,10 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
       ))}
 
       <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-        <input
-          data-testid="stack-add-input"
+        <TextInput
+          testId="stack-add-input"
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -108,34 +96,17 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
             }
           }}
           placeholder={t("stackEditor.placeholder")}
-          style={{
-            flex: 1,
-            background: UI_COLORS.controlSurface,
-            border: `1px dashed ${UI_COLORS.controlBorder}`,
-            borderRadius: 6,
-            padding: "6px 10px",
-            fontSize: 13,
-            color: UI_COLORS.text,
-            outline: "none",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-          onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+          style={{ flex: 1, borderStyle: "dashed" }}
         />
-        <button
-          data-testid="stack-add"
+        <WorkbenchButton
+          testId="stack-add"
           onClick={addItem}
           disabled={!draft.trim()}
+          accentColor={UI_COLORS.sectionAccent}
+          tone="accent"
           style={{
             width: 28,
             height: 28,
-            borderRadius: 6,
-            border: `1px solid ${UI_COLORS.controlBorder}`,
-            background: draft.trim() ? UI_COLORS.panelSurface : UI_COLORS.controlSurface,
-            color: draft.trim() ? UI_COLORS.sectionAccent : UI_COLORS.textSubtle,
-            cursor: draft.trim() ? "pointer" : "not-allowed",
-            fontFamily: "inherit",
             fontSize: 16,
             flexShrink: 0,
             display: "flex",
@@ -144,7 +115,7 @@ export default function StackEditor({ state, onChange }: StackEditorProps) {
           }}
         >
           +
-        </button>
+        </WorkbenchButton>
       </div>
     </div>
   );

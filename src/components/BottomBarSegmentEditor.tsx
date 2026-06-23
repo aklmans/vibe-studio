@@ -1,5 +1,4 @@
 import type { OverlayState } from "../types";
-import { UI_COLORS } from "../lib/design-tokens";
 import { patchSection } from "../lib/state";
 import {
   getBottomBarKindOptions,
@@ -8,6 +7,12 @@ import {
   type BottomBarSlot,
 } from "../lib/bottomBar";
 import { useLocale } from "../hooks/useLocale";
+import {
+  TextInput,
+  WorkbenchLabel,
+  WorkbenchSegmented,
+  workbenchNoteStyle,
+} from "./shared/Field";
 
 interface BottomBarSegmentEditorProps {
   state: OverlayState;
@@ -43,129 +48,43 @@ export default function BottomBarSegmentEditor({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Kind picker */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          gap: 4,
-          background: UI_COLORS.controlSurface,
-          padding: 3,
-          borderRadius: 6,
-          border: `1px solid ${UI_COLORS.panelSurface}`,
-        }}
-      >
-        {getBottomBarKindOptions(locale).map((opt) => {
-          const active = slot.kind === opt.value;
-          return (
-            <button
-              key={opt.value}
-              data-testid={`bottom-seg${index + 1}-kind-${opt.value}`}
-              onClick={() => setKind(opt.value)}
-              style={{
-                padding: "5px 0",
-                background: active ? UI_COLORS.panelSurface : "transparent",
-                border: "none",
-                borderRadius: 4,
-                fontSize: 10,
-                fontWeight: 500,
-                color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                letterSpacing: "0.04em",
-                transition: "all 0.15s",
-              }}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+      <WorkbenchSegmented
+        active={slot.kind}
+        onSelect={(value) => setKind(value as BottomBarKind)}
+        options={getBottomBarKindOptions(locale).map((opt) => ({
+          value: opt.value,
+          label: opt.label,
+          testId: `bottom-seg${index + 1}-kind-${opt.value}`,
+        }))}
+      />
 
       {/* Kind-specific fields */}
       {slot.kind === "live" && (
-        <div
-          style={{
-            fontSize: 11,
-            color: UI_COLORS.textMuted,
-            lineHeight: 1.5,
-            padding: "6px 10px",
-            background: UI_COLORS.controlSurface,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-            borderRadius: 6,
-          }}
-        >
+        <div style={workbenchNoteStyle}>
           {t("segmentEditor.liveDesc")}
         </div>
       )}
 
       {slot.kind === "progress" && (
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            background: UI_COLORS.controlSurface,
-            padding: 3,
-            borderRadius: 6,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-          }}
-        >
-          {state.sidebar.sections.map((section, sIdx) => {
-            const active = slot.sectionIndex === sIdx;
-            return (
-              <button
-                key={sIdx}
-                data-testid={`bottom-seg${index + 1}-progress-${sIdx}`}
-                onClick={() => writeSlot({ ...slot, sectionIndex: sIdx })}
-                style={{
-                  flex: 1,
-                  padding: "5px 0",
-                  background: active ? UI_COLORS.panelSurface : "transparent",
-                  border: "none",
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  letterSpacing: "0.04em",
-                  transition: "all 0.15s",
-                }}
-              >
-                {section.title || `${t("label.section")} ${sIdx + 1}`}
-              </button>
-            );
-          })}
-        </div>
+        <WorkbenchSegmented
+          active={String(slot.sectionIndex)}
+          onSelect={(value) => writeSlot({ ...slot, sectionIndex: Number(value) })}
+          options={state.sidebar.sections.map((section, sIdx) => ({
+            value: String(sIdx),
+            label: section.title || `${t("label.section")} ${sIdx + 1}`,
+            testId: `bottom-seg${index + 1}-progress-${sIdx}`,
+          }))}
+        />
       )}
 
       {slot.kind === "stack" && (
-        <div
-          style={{
-            fontSize: 11,
-            color: UI_COLORS.textMuted,
-            lineHeight: 1.5,
-            padding: "6px 10px",
-            background: UI_COLORS.controlSurface,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-            borderRadius: 6,
-          }}
-        >
+        <div style={workbenchNoteStyle}>
           {t("segmentEditor.stackDesc")}
         </div>
       )}
 
       {slot.kind === "topic" && (
-        <div
-          style={{
-            fontSize: 11,
-            color: UI_COLORS.textMuted,
-            lineHeight: 1.5,
-            padding: "6px 10px",
-            background: UI_COLORS.controlSurface,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-            borderRadius: 6,
-          }}
-        >
+        <div style={workbenchNoteStyle}>
           {t("segmentEditor.mirrorDesc")}
         </div>
       )}
@@ -200,35 +119,11 @@ interface PlainInputProps {
 function PlainInput({ label, value, onChange, testId }: PlainInputProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <label
-        style={{
-          fontSize: 11,
-          fontWeight: 500,
-          color: UI_COLORS.textSoft,
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </label>
-      <input
-        data-testid={testId}
+      <WorkbenchLabel>{label}</WorkbenchLabel>
+      <TextInput
+        testId={testId}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          background: UI_COLORS.controlSurface,
-          border: `1px solid ${UI_COLORS.controlBorder}`,
-          borderRadius: 6,
-          padding: "6px 10px",
-          fontSize: 13,
-          color: UI_COLORS.text,
-          outline: "none",
-          fontFamily: "inherit",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-        onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+        onChange={onChange}
       />
     </div>
   );

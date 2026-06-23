@@ -2,7 +2,11 @@ import type { OverlayState } from "../../../types";
 import { UI_COLORS } from "../../../lib/design-tokens";
 import { patchSection } from "../../../lib/state";
 import InspectorGroup from "../InspectorGroup";
-import { SectionInput, ToggleButton } from "../../shared/Field";
+import {
+  ToggleButton,
+  WorkbenchLabel,
+  WorkbenchSegmented,
+} from "../../shared/Field";
 import SidebarSectionEditor from "../../SidebarSectionEditor";
 import LiveSessionEditor from "../../LiveSessionEditor";
 import StackEditor from "../../StackEditor";
@@ -80,56 +84,20 @@ export default function OverlayInspector({
         testId="group-overlay-sections"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: UI_COLORS.textSoft,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-            }}
-          >
-            {t("label.activeSection")}
-          </span>
-          <div
-            style={{
-              display: "flex",
-              gap: 4,
-              background: UI_COLORS.controlSurface,
-              padding: 3,
-              borderRadius: 8,
-              border: `1px solid ${UI_COLORS.panelSurface}`,
-            }}
-          >
-            {state.sidebar.sections.map((s, idx) => (
-              <button
-                key={idx}
-                data-testid={`active-section-${idx}`}
-                onClick={() =>
-                  onChange(patchSection(state, "sidebar", { activeSection: idx }))
-                }
-                style={{
-                  flex: 1,
-                  padding: "5px 0",
-                  background:
-                    state.sidebar.activeSection === idx
-                      ? UI_COLORS.panelSurface
-                      : "transparent",
-                  border: "none",
-                  borderRadius: 6,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: UI_COLORS.text,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  letterSpacing: "0.04em",
-                  transition: "all 0.15s",
-                }}
-              >
-                {s.title || `${t("label.section")} ${idx + 1}`}
-              </button>
-            ))}
-          </div>
+          <WorkbenchLabel>{t("label.activeSection")}</WorkbenchLabel>
+          <WorkbenchSegmented
+            active={String(state.sidebar.activeSection)}
+            onSelect={(value) =>
+              onChange(
+                patchSection(state, "sidebar", { activeSection: Number(value) }),
+              )
+            }
+            options={state.sidebar.sections.map((s, idx) => ({
+              value: String(idx),
+              label: s.title || `${t("label.section")} ${idx + 1}`,
+              testId: `active-section-${idx}`,
+            }))}
+          />
         </div>
 
         {state.sidebar.sections.map((_, idx) => (
@@ -162,48 +130,18 @@ export default function OverlayInspector({
         testId="group-overlay-live-bar"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: UI_COLORS.textSoft,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-            }}
-          >
-            {t("label.liveSession")}
-          </span>
+          <WorkbenchLabel>{t("label.liveSession")}</WorkbenchLabel>
           <LiveSessionEditor state={state} onChange={onChange} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: UI_COLORS.textSoft,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-            }}
-          >
-{t("label.stack")}
-          </span>
+          <WorkbenchLabel>{t("label.stack")}</WorkbenchLabel>
           <StackEditor state={state} onChange={onChange} />
         </div>
 
         {[0, 1, 2].map((idx) => (
           <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: UI_COLORS.textSoft,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
-            >
-              {`${t("label.segment")} ${idx + 1}`}
-            </span>
+            <WorkbenchLabel>{`${t("label.segment")} ${idx + 1}`}</WorkbenchLabel>
             <BottomBarSegmentEditor
               state={state}
               onChange={onChange}

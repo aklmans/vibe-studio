@@ -5,20 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
-    " hover-elevate active-elevate-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border [font-family:var(--app-font-mono)] text-[11px] font-semibold tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--live-focus-ring)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground border border-primary-border",
+        default:
+          "border-[color:color-mix(in_srgb,var(--live-accent-text)_36%,transparent)] bg-transparent text-[var(--live-accent-text)] hover:bg-[color-mix(in_srgb,var(--live-accent-text)_8%,transparent)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm border-destructive-border",
+          "border-[color:color-mix(in_srgb,var(--live-danger)_42%,transparent)] bg-transparent text-[var(--live-danger)] hover:bg-[color-mix(in_srgb,var(--live-danger)_8%,transparent)]",
         outline:
-          " border [border-color:var(--button-outline)] shadow-xs active:shadow-none ",
+          "border-[color:var(--live-control-border)] bg-transparent text-[var(--live-text-soft)] hover:bg-[var(--live-hover-surface)]",
         secondary:
-          "border bg-secondary text-secondary-foreground border border-secondary-border ",
+          "border-[color:var(--live-control-border)] bg-[var(--live-input-inset)] text-[var(--live-text)] hover:bg-[var(--live-hover-surface)]",
         ghost: "border border-transparent",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "border-transparent text-[var(--live-accent-text)] underline-offset-4 hover:underline",
       },
       size: {
         default: "min-h-9 px-4 py-2",

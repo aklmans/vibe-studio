@@ -2,7 +2,7 @@ import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { patchSection } from "../../lib/state";
 import AvatarUploader from "../shared/AvatarUploader";
-import { SectionInput } from "../shared/Field";
+import { SectionInput, WorkbenchLabel, workbenchNoteStyle } from "../shared/Field";
 import BadgesEditor from "../BadgesEditor";
 import { useLocale } from "../../hooks/useLocale";
 
@@ -57,17 +57,9 @@ export default function BrandIdentityEditor({
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: UI_COLORS.textSoft,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-          }}
-        >
+        <WorkbenchLabel>
           {t("label.badge")}s
-        </span>
+        </WorkbenchLabel>
         <BadgesEditor
           state={state}
           onChange={onChange}
@@ -77,13 +69,7 @@ export default function BrandIdentityEditor({
 
       <div
         style={{
-          fontSize: 10,
-          color: UI_COLORS.textMuted,
-          lineHeight: 1.5,
-          padding: "8px 10px",
-          background: UI_COLORS.controlSurface,
-          border: `1px dashed ${UI_COLORS.panelSurface}`,
-          borderRadius: 6,
+          ...workbenchNoteStyle,
         }}
       >
         {t("brandIdentity.note")}

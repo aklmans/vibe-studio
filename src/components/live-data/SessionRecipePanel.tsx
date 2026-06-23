@@ -1,13 +1,20 @@
 import { useState, type CSSProperties } from "react";
 import type { OverlayState } from "../../types";
 import { useLocale } from "../../hooks/useLocale";
-import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
+import { UI_BORDERS, UI_COLORS } from "../../lib/design-tokens";
 import {
   applySessionRecipeToOverlayState,
   formatSessionRecipeMarkdown,
   parseSessionRecipe,
   stateToSessionRecipe,
 } from "../../lib/session-recipe";
+import {
+  WorkbenchButton,
+  applyWorkbenchFocus,
+  clearWorkbenchFocus,
+  monoInputStyle,
+  workbenchPanelStyle,
+} from "../shared/Field";
 
 interface SessionRecipePanelProps {
   state: OverlayState;
@@ -15,26 +22,18 @@ interface SessionRecipePanelProps {
 }
 
 const panelStyle: CSSProperties = {
-  minWidth: 0,
-  background: UI_COLORS.appSurface,
-  border: `1px solid ${UI_COLORS.panelSurface}`,
-  borderRadius: 8,
-  overflow: "hidden",
+  ...workbenchPanelStyle,
 };
 
 const textareaStyle: CSSProperties = {
+  ...monoInputStyle,
   width: "100%",
   minHeight: 172,
   resize: "vertical",
   border: UI_BORDERS.control,
   borderRadius: 8,
-  background: UI_COLORS.controlSurface,
-  color: UI_COLORS.text,
-  outline: "none",
+  background: UI_COLORS.inputInset,
   padding: "12px 14px",
-  fontFamily:
-    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
-  fontSize: 12,
   lineHeight: 1.55,
 };
 
@@ -150,6 +149,8 @@ export default function SessionRecipePanel({
           placeholder={t("recipe.placeholder")}
           spellCheck={false}
           style={textareaStyle}
+          onFocus={(e) => applyWorkbenchFocus(e.currentTarget)}
+          onBlur={(e) => clearWorkbenchFocus(e.currentTarget)}
         />
 
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -175,23 +176,17 @@ function RecipeButton({
   accentColor?: string;
 }) {
   return (
-    <button
+    <WorkbenchButton
       onClick={onClick}
+      tone={accentColor === UI_COLORS.textSoft ? "neutral" : "accent"}
+      accentColor={accentColor}
       style={{
         minWidth: 118,
         height: 32,
-        borderRadius: 7,
-        border: `1px solid ${cssAlpha(accentColor, 40)}`,
-        background: cssAlpha(accentColor, 10),
-        color: accentColor,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        fontSize: 12,
-        fontWeight: 650,
-        letterSpacing: "0.02em",
+        padding: "0 12px",
       }}
     >
       {children}
-    </button>
+    </WorkbenchButton>
   );
 }

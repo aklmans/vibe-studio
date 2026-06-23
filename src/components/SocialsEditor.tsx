@@ -8,6 +8,7 @@ import {
 } from "../lib/socials";
 import { UI_COLORS } from "../lib/design-tokens";
 import { useLocale } from "../hooks/useLocale";
+import { TextInput, ToggleButton, WorkbenchSegmented } from "./shared/Field";
 
 interface SocialsEditorProps {
   state: OverlayState;
@@ -39,9 +40,9 @@ export default function SocialsEditor({
         <div
           key={idx}
           style={{
-            background: UI_COLORS.controlSurface,
-            border: `1px solid ${UI_COLORS.panelSurface}`,
-            borderRadius: 8,
+            background: UI_COLORS.inputInset,
+            border: `1px solid ${UI_COLORS.controlBorder}`,
+            borderRadius: 6,
             padding: 10,
             display: "flex",
             flexDirection: "column",
@@ -68,128 +69,55 @@ export default function SocialsEditor({
             >
               {social.label || `${t("label.social")} ${idx + 1}`}
             </span>
-            <button
-              data-testid={`${testIdPrefix}-${idx}-visible`}
-              onClick={() => updateSocial(idx, { visible: !social.visible })}
-              style={{
-                width: 38,
-                height: 20,
-                borderRadius: 10,
-                border: "none",
-                cursor: "pointer",
-                background: social.visible ? UI_COLORS.accent : UI_COLORS.panelSurface,
-                position: "relative",
-                transition: "background 0.2s",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: "50%",
-                  background: UI_COLORS.text,
-                  position: "absolute",
-                  top: 3,
-                  left: social.visible ? 21 : 3,
-                  transition: "left 0.2s",
-                }}
+            <div style={{ width: 38, flexShrink: 0 }}>
+              <ToggleButton
+                label=""
+                checked={social.visible}
+                onChange={(visible) => updateSocial(idx, { visible })}
+                testId={`${testIdPrefix}-${idx}-visible`}
               />
-            </button>
+            </div>
           </div>
 
           {/* Row 2: kind picker (wraps onto two rows when narrow) */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 4,
-              background: UI_COLORS.inputInset,
-              padding: 3,
-              borderRadius: 6,
-              border: `1px solid ${UI_COLORS.panelSurface}`,
+          <WorkbenchSegmented
+            active={social.kind}
+            columns={4}
+            onSelect={(value) => {
+              const kind = value as SocialKind;
+              const patch: Partial<SocialConfig> = { kind };
+              // Only refresh the label when the user is rotating between
+              // presets. Keep custom labels intact when they switch *to*
+              // custom from a preset.
+              if (kind !== "custom") {
+                patch.label = defaultSocialLabel(kind, locale);
+              } else if (!social.label.trim()) {
+                patch.label = t("label.custom");
+              }
+              updateSocial(idx, patch);
             }}
-          >
-            {getSocialKindOptions(locale).map((opt) => {
-              const active = social.kind === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  data-testid={`${testIdPrefix}-${idx}-kind-${opt.value}`}
-                  onClick={() => {
-                    const patch: Partial<SocialConfig> = { kind: opt.value };
-                    // Only refresh the label when the user is rotating between
-                    // presets. Keep custom labels intact when they switch *to*
-                    // custom from a preset.
-                    if (opt.value !== "custom") {
-                      patch.label = defaultSocialLabel(opt.value as SocialKind, locale);
-                    } else if (!social.label.trim()) {
-                      patch.label = t("label.custom");
-                    }
-                    updateSocial(idx, patch);
-                  }}
-                  style={{
-                    padding: "5px 0",
-                    background: active ? UI_COLORS.panelSurface : "transparent",
-                    border: "none",
-                    borderRadius: 4,
-                    fontSize: 10,
-                    fontWeight: 500,
-                    color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    letterSpacing: "0.04em",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+            options={getSocialKindOptions(locale).map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+              testId: `${testIdPrefix}-${idx}-kind-${opt.value}`,
+            }))}
+          />
 
           {/* Row 3: label */}
-          <input
-            data-testid={`${testIdPrefix}-${idx}-label`}
+          <TextInput
+            testId={`${testIdPrefix}-${idx}-label`}
             value={social.label}
-            onChange={(e) => updateSocial(idx, { label: e.target.value })}
+            onChange={(label) => updateSocial(idx, { label })}
             placeholder={t("label.socialLabel")}
-            style={{
-              background: UI_COLORS.inputInset,
-              border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 6,
-              padding: "6px 10px",
-              fontSize: 13,
-              color: UI_COLORS.text,
-              outline: "none",
-              fontFamily: "inherit",
-              width: "100%",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-            onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
           />
 
           {/* Row 4: value (URL / handle / id) */}
-          <input
-            data-testid={`${testIdPrefix}-${idx}-value`}
+          <TextInput
+            testId={`${testIdPrefix}-${idx}-value`}
             value={social.value}
-            onChange={(e) => updateSocial(idx, { value: e.target.value })}
+            onChange={(value) => updateSocial(idx, { value })}
             placeholder={t("label.socialValue")}
-            style={{
-              background: UI_COLORS.inputInset,
-              border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 6,
-              padding: "6px 10px",
-              fontSize: 12,
-              color: UI_COLORS.text,
-              outline: "none",
-              fontFamily: "monospace",
-              width: "100%",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = UI_COLORS.accent)}
-            onBlur={(e) => (e.target.style.borderColor = UI_COLORS.controlBorder)}
+            mono
           />
 
           {/* Row 5: custom color (only when kind === custom) */}
@@ -221,7 +149,7 @@ export default function SocialsEditor({
                   border: `1px solid ${UI_COLORS.controlBorder}`,
                   borderRadius: 4,
                   padding: 1,
-                  background: "transparent",
+                  background: UI_COLORS.inputInset,
                   cursor: "pointer",
                 }}
               />

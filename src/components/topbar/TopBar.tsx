@@ -157,7 +157,7 @@ export default function TopBar({
           height: 32,
           padding: "0 9px 0 11px",
           borderRadius: 6,
-          border: `1px solid ${UI_COLORS.border}`,
+          border: `1px solid ${UI_COLORS.controlBorder}`,
           background: "transparent",
           color: UI_COLORS.textMuted,
           cursor: "pointer",
@@ -175,7 +175,8 @@ export default function TopBar({
           (e.currentTarget as HTMLElement).style.color = UI_COLORS.textSoft;
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = UI_COLORS.border;
+          (e.currentTarget as HTMLElement).style.borderColor =
+            UI_COLORS.controlBorder;
           (e.currentTarget as HTMLElement).style.color = UI_COLORS.textMuted;
         }}
       >
@@ -189,8 +190,8 @@ export default function TopBar({
             fontSize: 10,
             padding: "1px 5px",
             borderRadius: 3,
-            border: `1px solid ${UI_COLORS.border}`,
-            background: UI_COLORS.controlSurface,
+            border: `1px solid ${UI_COLORS.controlBorder}`,
+            background: UI_COLORS.inputInset,
             color: UI_COLORS.accentText,
             letterSpacing: "0.04em",
           }}
@@ -209,7 +210,7 @@ export default function TopBar({
           width: 32,
           height: 32,
           borderRadius: 6,
-          border: `1px solid ${UI_COLORS.border}`,
+          border: `1px solid ${UI_COLORS.controlBorder}`,
           background: "transparent",
           color: UI_COLORS.textMuted,
           cursor: "pointer",
@@ -226,7 +227,8 @@ export default function TopBar({
           (e.currentTarget as HTMLElement).style.color = UI_COLORS.textSoft;
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = UI_COLORS.border;
+          (e.currentTarget as HTMLElement).style.borderColor =
+            UI_COLORS.controlBorder;
           (e.currentTarget as HTMLElement).style.color = UI_COLORS.textMuted;
         }}
       >

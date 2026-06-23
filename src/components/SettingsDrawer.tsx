@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { OverlayState } from "../types";
-import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
+import { UI_COLORS } from "../lib/design-tokens";
 import { produceState } from "../lib/state";
 import { THEME_PRESETS, type ThemeMode } from "../lib/theme";
 import { useLocale } from "../hooks/useLocale";
 import type { Locale } from "../lib/i18n";
-import { ColorInput } from "./shared/Field";
+import { ColorInput, WorkbenchButton, WorkbenchSegmented } from "./shared/Field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,14 +36,25 @@ export default function SettingsDrawer({
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const { t, locale, setLocale } = useLocale();
 
+  const closeDrawer = useCallback(() => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      drawerRef.current?.contains(active)
+    ) {
+      active.blur();
+    }
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") closeDrawer();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, closeDrawer]);
 
   const updateColor = (key: keyof typeof state.colors, value: string) => {
     onChange(
@@ -66,7 +77,7 @@ export default function SettingsDrawer({
     <>
       <div
         data-testid="settings-scrim"
-        onClick={onClose}
+        onClick={closeDrawer}
         style={{
           position: "fixed",
           inset: 0,
@@ -131,7 +142,7 @@ export default function SettingsDrawer({
           </div>
           <button
             data-testid="settings-close"
-            onClick={onClose}
+            onClick={closeDrawer}
             style={{
               width: 28,
               height: 28,
@@ -169,7 +180,7 @@ export default function SettingsDrawer({
           }}
         >
           <Section title={t("language.zh") === "中文" ? "语言 / Language" : "Language / 语言"}>
-            <Segmented
+            <WorkbenchSegmented
               options={[
                 { value: "zh", label: "中文", testId: "locale-zh" },
                 { value: "en", label: "English", testId: "locale-en" },
@@ -180,7 +191,7 @@ export default function SettingsDrawer({
           </Section>
 
           <Section title={t("settings.theme")} hint={t("settings.themeHint")}>
-            <Segmented
+            <WorkbenchSegmented
               options={[
                 { value: "light", label: t("theme.light"), testId: "theme-light" },
                 { value: "dark", label: t("theme.dark"), testId: "theme-dark" },
@@ -265,34 +276,16 @@ export default function SettingsDrawer({
           <Section title={t("group.dangerZone")}>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <button
-                  data-testid="btn-reset"
+                <WorkbenchButton
+                  testId="btn-reset"
                   style={{
                     width: "100%",
-                    padding: "8px 12px",
-                    background: "transparent",
-                    border: `1px solid ${UI_COLORS.border}`,
-                    borderRadius: 6,
-                    color: UI_COLORS.textMuted,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    transition: "color 0.12s, border-color 0.12s",
+                    padding: "0 12px",
                   }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLElement).style.color = UI_COLORS.danger;
-                    (e.target as HTMLElement).style.borderColor = cssAlpha(
-                      UI_COLORS.danger,
-                      34,
-                    );
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLElement).style.color = UI_COLORS.textMuted;
-                    (e.target as HTMLElement).style.borderColor = UI_COLORS.border;
-                  }}
+                  tone="danger"
                 >
                   {t("reset.button")}
-                </button>
+                </WorkbenchButton>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -309,7 +302,7 @@ export default function SettingsDrawer({
                     data-testid="btn-reset-confirm"
                     onClick={() => {
                       onReset();
-                      onClose();
+                      closeDrawer();
                     }}
                   >
                     {t("reset.confirm")}
@@ -332,7 +325,15 @@ interface SectionProps {
 
 function Section({ title, hint, children }: SectionProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        paddingTop: 14,
+        borderTop: `1px solid ${UI_COLORS.border}`,
+      }}
+    >
       <div>
         <div
           style={{
@@ -355,76 +356,6 @@ function Section({ title, hint, children }: SectionProps) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {children}
       </div>
-    </div>
-  );
-}
-
-interface SegmentedOption {
-  value: string;
-  label: string;
-  testId?: string;
-}
-
-/**
- * Quiet editorial segmented control — a hairline-bordered row where the active
- * option carries a subtle warm fill instead of a filled pill. Shared by the
- * language and theme switches so they read as the same calm control.
- */
-function Segmented({
-  options,
-  active,
-  onSelect,
-}: {
-  options: SegmentedOption[];
-  active: string;
-  onSelect: (value: string) => void;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        border: `1px solid ${UI_COLORS.border}`,
-        borderRadius: 6,
-        overflow: "hidden",
-        background: UI_COLORS.controlSurface,
-      }}
-    >
-      {options.map((opt, i) => {
-        const isActive = opt.value === active;
-        return (
-          <button
-            key={opt.value}
-            data-testid={opt.testId}
-            onClick={() => onSelect(opt.value)}
-            style={{
-              flex: 1,
-              padding: "7px 0",
-              background: isActive ? UI_COLORS.hoverSurface : "transparent",
-              border: "none",
-              borderLeft: i > 0 ? `1px solid ${UI_COLORS.border}` : "none",
-              fontFamily: "var(--app-font-mono)",
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: "0.04em",
-              color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
-              cursor: "pointer",
-              transition: "color 0.12s, background 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive)
-                (e.currentTarget as HTMLElement).style.color =
-                  UI_COLORS.accentText;
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive)
-                (e.currentTarget as HTMLElement).style.color =
-                  UI_COLORS.textMuted;
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
     </div>
   );
 }

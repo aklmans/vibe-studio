@@ -178,7 +178,7 @@ export default function ExportMenu({
         display: "flex",
         alignItems: "stretch",
         background: UI_COLORS.controlSurface,
-        border: `1px solid ${UI_COLORS.border}`,
+        border: `1px solid ${UI_COLORS.controlBorder}`,
         borderRadius: 6,
         overflow: "hidden",
       }}
@@ -246,7 +246,7 @@ export default function ExportMenu({
               right: menuPos.right,
               minWidth: 224,
               background: UI_COLORS.appSurface,
-              border: `1px solid ${UI_COLORS.border}`,
+              border: `1px solid ${UI_COLORS.controlBorder}`,
               borderRadius: 6,
               padding: "5px 0",
               zIndex: 50,
