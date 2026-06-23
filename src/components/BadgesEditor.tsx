@@ -3,12 +3,16 @@ import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
 import {
   BADGE_ICON_REGISTRY,
-  badgeLabelForIconKey,
   searchBadgeIcons,
   type BadgeConfig,
   type BadgeIconKey,
   type BadgeIconMode,
 } from "../lib/badges";
+import {
+  BADGE_PRESETS,
+  addBadgePreset,
+  moveVisibleBadge,
+} from "../lib/badge-editor";
 import { UI_COLORS } from "../lib/design-tokens";
 import type { TranslationKey } from "../lib/i18n";
 import { useLocale } from "../hooks/useLocale";
@@ -54,8 +58,13 @@ export default function BadgesEditor({
   );
 
   const usedIconKeys = useMemo(
-    () => new Set(visibleBadges.map(({ badge }) => badge.iconKey)),
-    [visibleBadges],
+    () =>
+      new Set(
+        state.cover.badges
+          .filter((badge) => badge.visible)
+          .map((badge) => badge.iconKey),
+      ),
+    [state.cover.badges],
   );
 
   const writeBadges = (badges: BadgeConfig[]) => {
@@ -72,18 +81,18 @@ export default function BadgesEditor({
     writeBadges(state.cover.badges.filter((_, i) => i !== idx));
   };
 
+  const moveBadge = (visibleIndex: number, direction: -1 | 1) => {
+    writeBadges(moveVisibleBadge(state.cover.badges, visibleIndex, direction));
+  };
+
   const addBadge = (iconKey: BadgeIconKey) => {
     if (usedIconKeys.has(iconKey)) return;
-    writeBadges([
-      ...state.cover.badges,
-      {
-        visible: true,
-        iconKey,
-        iconMode: "brand",
-        label: badgeLabelForIconKey(iconKey),
-        customIconUrl: "",
-      },
-    ]);
+    writeBadges(addBadgePreset(state.cover.badges, [iconKey]));
+    setAddQuery("");
+  };
+
+  const addPreset = (keys: readonly BadgeIconKey[]) => {
+    writeBadges(addBadgePreset(state.cover.badges, keys));
     setAddQuery("");
   };
 
@@ -147,11 +156,36 @@ export default function BadgesEditor({
               </>
             }
             action={
-              <RemoveBadgeButton
-                testId={`${testIdPrefix}-${visibleIndex}-remove`}
-                label={t("btn.remove")}
-                onClick={() => removeBadge(originalIndex)}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  flexShrink: 0,
+                }}
+              >
+                <BadgeToolButton
+                  testId={`${testIdPrefix}-${visibleIndex}-move-up`}
+                  label={t("btn.moveUp")}
+                  glyph="↑"
+                  disabled={visibleIndex === 0}
+                  onClick={() => moveBadge(visibleIndex, -1)}
+                />
+                <BadgeToolButton
+                  testId={`${testIdPrefix}-${visibleIndex}-move-down`}
+                  label={t("btn.moveDown")}
+                  glyph="↓"
+                  disabled={visibleIndex === visibleBadges.length - 1}
+                  onClick={() => moveBadge(visibleIndex, 1)}
+                />
+                <BadgeToolButton
+                  testId={`${testIdPrefix}-${visibleIndex}-remove`}
+                  label={t("btn.remove")}
+                  glyph="×"
+                  danger
+                  onClick={() => removeBadge(originalIndex)}
+                />
+              </div>
             }
           >
             <LineSegmented
@@ -177,6 +211,31 @@ export default function BadgesEditor({
           </EditorRow>
         );
       })}
+
+      {visibleBadges.length === 0 && (
+        <div
+          data-testid={`${testIdPrefix}-empty-hint`}
+          style={{
+            padding: "12px 0",
+            borderTop: `1px solid ${UI_COLORS.border}`,
+            fontFamily: "var(--app-font-mono)",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            lineHeight: 1.6,
+            color: UI_COLORS.textMuted,
+          }}
+        >
+          {t("badge.empty")}
+        </div>
+      )}
+
+      <BadgePresetRail
+        presets={BADGE_PRESETS}
+        usedIconKeys={usedIconKeys}
+        testIdPrefix={testIdPrefix}
+        onAdd={addPreset}
+      />
 
       <div
         style={{
@@ -213,13 +272,19 @@ export default function BadgesEditor({
   );
 }
 
-function RemoveBadgeButton({
+function BadgeToolButton({
   testId,
   label,
+  glyph,
+  disabled = false,
+  danger = false,
   onClick,
 }: {
   testId: string;
   label: string;
+  glyph: string;
+  disabled?: boolean;
+  danger?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -228,33 +293,122 @@ function RemoveBadgeButton({
       onClick={onClick}
       title={label}
       aria-label={label}
+      disabled={disabled}
       style={{
-        width: 30,
-        minWidth: 30,
+        width: 26,
+        minWidth: 26,
         height: 30,
         minHeight: 30,
         border: "none",
         background: "transparent",
-        color: UI_COLORS.textSubtle,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        fontSize: 16,
+        color: disabled ? UI_COLORS.textSubtle : UI_COLORS.textMuted,
+        opacity: disabled ? 0.38 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
+        fontFamily: "var(--app-font-mono)",
+        fontSize: 14,
+        fontWeight: 650,
         lineHeight: 1,
         flexShrink: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        transition: "color 0.12s",
+        transition: "color 0.12s, opacity 0.12s",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.color = UI_COLORS.danger;
+        if (disabled) return;
+        (e.currentTarget as HTMLElement).style.color = danger
+          ? UI_COLORS.danger
+          : UI_COLORS.accentText;
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.color = UI_COLORS.textSubtle;
+        (e.currentTarget as HTMLElement).style.color = disabled
+          ? UI_COLORS.textSubtle
+          : UI_COLORS.textMuted;
       }}
     >
-      ×
+      {glyph}
     </button>
+  );
+}
+
+function BadgePresetRail({
+  presets,
+  usedIconKeys,
+  testIdPrefix,
+  onAdd,
+}: {
+  presets: typeof BADGE_PRESETS;
+  usedIconKeys: Set<BadgeIconKey>;
+  testIdPrefix: string;
+  onAdd: (keys: readonly BadgeIconKey[]) => void;
+}) {
+  const { t } = useLocale();
+
+  return (
+    <div
+      style={{
+        paddingTop: 12,
+        borderTop: `1px solid ${UI_COLORS.border}`,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--app-font-mono)",
+          fontSize: 10,
+          fontWeight: 650,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: UI_COLORS.textMuted,
+        }}
+      >
+        {t("badge.presets")}
+      </span>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          borderTop: `1px solid ${UI_COLORS.border}`,
+          borderBottom: `1px solid ${UI_COLORS.border}`,
+        }}
+      >
+        {presets.map((preset, i) => {
+          const disabled = preset.keys.every((key) => usedIconKeys.has(key));
+          return (
+            <button
+              key={preset.id}
+              data-testid={`${testIdPrefix}-preset-${preset.id}`}
+              disabled={disabled}
+              onClick={() => onAdd(preset.keys)}
+              style={{
+                minWidth: 0,
+                padding: "8px 8px 7px",
+                border: "none",
+                borderRight: i % 2 === 0 ? `1px solid ${UI_COLORS.border}` : "none",
+                borderBottom:
+                  i < presets.length - 2 ? `1px solid ${UI_COLORS.border}` : "none",
+                background: "transparent",
+                color: disabled ? UI_COLORS.textSubtle : UI_COLORS.textSoft,
+                opacity: disabled ? 0.48 : 1,
+                cursor: disabled ? "not-allowed" : "pointer",
+                textAlign: "left",
+                fontFamily: "var(--app-font-mono)",
+                fontSize: 10,
+                fontWeight: 650,
+                letterSpacing: "0.035em",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

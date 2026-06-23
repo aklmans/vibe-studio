@@ -233,6 +233,40 @@ test("BadgeToolbar keeps long badge labels as bounded metadata", () => {
   assert.match(html, /white-space:nowrap/);
 });
 
+test("BadgeToolbar tolerates zero through many visible registry badges without remote icons", () => {
+  const keys: BadgeConfig["iconKey"][] = [
+    "claude",
+    "codex",
+    "kimi",
+    "chatgpt",
+    "opencode",
+    "z-ai",
+    "cursor",
+    "claude-code",
+  ];
+
+  for (const count of [0, 1, 5, 8]) {
+    const badges: BadgeConfig[] = keys.slice(0, count).map((iconKey) => ({
+      visible: true,
+      iconKey,
+      iconMode: "brand",
+      label: iconKey,
+      customIconUrl: "",
+    }));
+    const html = renderToStaticMarkup(
+      React.createElement(BadgeToolbar, {
+        badges,
+        readonly: true,
+        labelColor: "#1a1a1a",
+      }),
+    );
+    assert.doesNotMatch(html, /<img/);
+    assert.doesNotMatch(html, /https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
+    if (count === 0) assert.equal(html, "");
+    if (count > 0) assert.match(html, /display:flex/);
+  }
+});
+
 // ── 5. No Phase-1/2 regressions leak back into the assets ────────────────────
 
 test("broadcast canvases keep no glow shadows", () => {

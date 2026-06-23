@@ -292,6 +292,42 @@ test("badge editor is an add-list workflow instead of fixed visibility slots", (
   assert.doesNotMatch(html, /aria-label="Badge 1 label"/);
 });
 
+test("badge editor exposes reorder controls, presets, and an empty hint", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(BadgesEditor, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+
+  assert.match(html, /data-testid="badge-0-move-up"[^>]*disabled=""/);
+  assert.match(html, /data-testid="badge-0-move-down"/);
+  assert.match(html, /data-testid="badge-1-move-down"[^>]*disabled=""/);
+  assert.match(html, /data-testid="badge-preset-claude-codex"/);
+  assert.match(html, /data-testid="badge-preset-chatgpt-kimi"/);
+  assert.match(html, /data-testid="badge-preset-opencode-z-ai"/);
+  assert.match(html, /data-testid="badge-preset-claude-code-cursor"/);
+
+  const empty = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(BadgesEditor, {
+        state: {
+          ...DEFAULT_STATE,
+          cover: { ...DEFAULT_STATE.cover, badges: [] },
+        },
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(empty, /data-testid="badge-empty-hint"/);
+});
+
 test("right inspector editors use the inspector line segmented control", () => {
   const files = [
     "src/components/BadgesEditor.tsx",

@@ -109,6 +109,8 @@ export const dict = {
     "btn.markUndone": "标记未完成",
     "btn.remove": "移除",
     "btn.add": "添加",
+    "btn.moveUp": "上移",
+    "btn.moveDown": "下移",
 
     // ─── Settings ────────────────────────────────────────────────────
     "settings.title": "设置",
@@ -271,6 +273,8 @@ export const dict = {
     "badge.grok": "Grok",
     "badge.custom": "自定义…",
     "badge.searchPlaceholder": "搜索模型 / 工具…",
+    "badge.presets": "常用组合",
+    "badge.empty": "暂无徽标。搜索模型或工具并添加到当前列表。",
     "badge.mode.mono": "跟随主题",
     "badge.mode.brand": "品牌色",
     "badge.category.recommended": "推荐",
@@ -416,6 +420,8 @@ export const dict = {
     "btn.markUndone": "Mark undone",
     "btn.remove": "Remove",
     "btn.add": "Add",
+    "btn.moveUp": "Move up",
+    "btn.moveDown": "Move down",
 
     // ─── Settings ────────────────────────────────────────────────────
     "settings.title": "Settings",
@@ -578,6 +584,8 @@ export const dict = {
     "badge.grok": "Grok",
     "badge.custom": "Custom…",
     "badge.searchPlaceholder": "Search models / tools…",
+    "badge.presets": "Presets",
+    "badge.empty": "No badges yet. Search a model or tool to add it to this list.",
     "badge.mode.mono": "Theme",
     "badge.mode.brand": "Brand",
     "badge.category.recommended": "Recommended",
