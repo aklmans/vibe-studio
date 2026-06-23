@@ -8,6 +8,7 @@ import {
 } from "../lib/socials";
 import { UI_COLORS } from "../lib/design-tokens";
 import { useLocale } from "../hooks/useLocale";
+import { editorialPalette } from "./lib/editorial-palette";
 import { TextInput, ToggleButton, WorkbenchSegmented } from "./shared/Field";
 
 interface SocialsEditorProps {
@@ -27,6 +28,7 @@ export default function SocialsEditor({
   testIdPrefix = "social",
 }: SocialsEditorProps) {
   const { locale, t } = useLocale();
+  const palette = editorialPalette(state.colors);
   const updateSocial = (idx: number, patch: Partial<SocialConfig>) => {
     const socials = state.cover.socials.map((s, i) =>
       i === idx ? { ...s, ...patch } : s,
@@ -139,7 +141,7 @@ export default function SocialsEditor({
               <input
                 data-testid={`${testIdPrefix}-${idx}-color`}
                 type="color"
-                value={social.customColor || state.colors.pinkAccent}
+                value={social.customColor || palette.primaryMark}
                 onChange={(e) =>
                   updateSocial(idx, { customColor: e.target.value })
                 }

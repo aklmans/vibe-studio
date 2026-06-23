@@ -26,9 +26,9 @@ export default function BottomBarSegments({
 }: BottomBarSegmentsProps) {
   const { t } = useLocale();
   const { bottomBar, colors } = state;
-  const { textColor, mutedText, pinkAccent } = colors;
+  const { textColor, mutedText } = colors;
   const E = editorialPalette(colors);
-  const accent = pinkAccent;
+  const accent = E.primaryMark;
 
   const baseTitleSize = size === "large" ? 13 : 12;
   const baseValueSize = size === "large" ? 32 : 28;

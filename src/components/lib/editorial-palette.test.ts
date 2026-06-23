@@ -22,3 +22,19 @@ test("editorial palette exposes clear line hierarchy in dark and light", () => {
     assert.ok(alphaFromHex(palette.line) > alphaFromHex(palette.lineSoft));
   }
 });
+
+test("editorial palette wraps the legacy accent fields as semantic marks", () => {
+  for (const colors of [DARK_PRESET, LIGHT_PRESET]) {
+    const palette = editorialPalette(colors);
+
+    // The persisted (legacy neon-era) fields are exposed under intent-revealing
+    // names so render code never reads cyan/pink/warm directly.
+    assert.equal(palette.primaryMark, colors.pinkAccent);
+    assert.equal(palette.supportMark, colors.cyanAccent);
+    assert.equal(palette.amberMark, colors.warmAccent);
+
+    // accent / activeRule stay aliases of the primary mark.
+    assert.equal(palette.accent, palette.primaryMark);
+    assert.equal(palette.activeRule, palette.primaryMark);
+  }
+});
