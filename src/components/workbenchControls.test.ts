@@ -20,7 +20,7 @@ test("shared text inputs use the editorial inset control surface", () => {
   const html = renderToStaticMarkup(
     React.createElement(SectionInput, {
       label: "Title",
-      value: "Vibe Coding",
+      value: "Vibe Studio",
       onChange: () => {},
     }),
   );
@@ -84,13 +84,13 @@ test("operation UI source paths avoid legacy SaaS visual residue", () => {
   assert.deepEqual(offenders, []);
 });
 
-test("command palette uses the localized Vibe Coding Live label", () => {
+test("command palette uses the localized Vibe Studio label", () => {
   const source = readFileSync(resolve("src/components/CommandPalette.tsx"), "utf8");
   const zh = dict.zh as Record<string, string>;
   const en = dict.en as Record<string, string>;
 
-  assert.equal(zh["cmdk.label"], "Vibe Coding Live 命令面板");
-  assert.equal(en["cmdk.label"], "Vibe Coding Live command palette");
+  assert.equal(zh["cmdk.label"], "Vibe Studio 命令面板");
+  assert.equal(en["cmdk.label"], "Vibe Studio command palette");
   assert.match(source, /label=\{t\("cmdk\.label"\)\}/);
   assert.doesNotMatch(source, /Vibe Overlay command palette/);
 });
@@ -383,6 +383,6 @@ test("cover visual editor writes cover-only image URLs and reset defaults", () =
   assert.match(source, /writeCover\(\{ portraitUrl: v \}\)/);
   assert.match(source, /writeCover\(\{ sceneUrl: v \}\)/);
   assert.doesNotMatch(source, /writeCover\(\{ avatarUrl:/);
-  assert.match(source, /clearValue="\/avatar\.jpg"/);
+  assert.match(source, /clearValue="\/avatar\.png"/);
   assert.match(source, /clearValue="\/vibe-studio-bg\.png"/);
 });

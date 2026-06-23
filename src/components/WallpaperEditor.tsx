@@ -69,7 +69,7 @@ export default function WallpaperEditor({
           value={wallpaper.brandLabel}
           onChange={(v) => writeWallpaper({ brandLabel: v })}
           testId="wallpaper-brand-label"
-          placeholder="VIBE CODING"
+          placeholder="VIBE STUDIO"
         />
       </Field>
 

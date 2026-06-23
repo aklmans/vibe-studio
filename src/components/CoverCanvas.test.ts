@@ -61,11 +61,21 @@ const coverWithVisual = (visual: "avatar" | "scene" | "title", patch = {}) =>
     }),
   );
 
-test("CoverCanvas defaults to the scene type and renders it as a background subject layer", () => {
-  // DEFAULT_STATE.cover.visual === "scene".
+test("CoverCanvas defaults to the avatar type and renders avatar.png", () => {
+  // DEFAULT_STATE.cover.visual === "avatar".
   const html = renderToStaticMarkup(
     React.createElement(CoverCanvas, { state: DEFAULT_STATE }),
   );
+
+  assert.match(html, /data-testid="cover-portrait-image"/);
+  assert.match(html, /src="\/avatar\.png"/);
+  assert.match(html, /object-fit:cover/);
+  assert.doesNotMatch(html, /data-testid="cover-scene-image"/);
+  assert.doesNotMatch(html, /vibe-studio-bg\.png/);
+});
+
+test("CoverCanvas (scene type) renders the studio subject as a background layer", () => {
+  const html = coverWithVisual("scene");
 
   assert.match(html, /data-testid="cover-scene-image"/);
   assert.match(html, /src="\/vibe-studio-bg\.png"/);
@@ -77,16 +87,16 @@ test("CoverCanvas defaults to the scene type and renders it as a background subj
   assert.match(html, /width:1560px/);
   assert.match(html, /height:880px/);
   assert.match(html, /pointer-events:none/);
-  // Not the avatar/title layers; never the old built-in headshot url.
+  // Not the avatar/title layers.
   assert.doesNotMatch(html, /data-testid="cover-portrait-image"/);
-  assert.doesNotMatch(html, /src="\/avatar\.jpg"/);
 });
 
 test("CoverCanvas (avatar type) renders a portrait panel from portraitUrl, not the scene", () => {
-  const html = coverWithVisual("avatar", { portraitUrl: "/avatar.jpg" });
+  const html = coverWithVisual("avatar", { portraitUrl: "/avatar.png" });
 
+  assert.match(html, /data-testid="cover-identity-lockup"[^>]*max-width:996px/);
   assert.match(html, /data-testid="cover-portrait-image"/);
-  assert.match(html, /src="\/avatar\.jpg"/);
+  assert.match(html, /src="\/avatar\.png"/);
   assert.match(html, /alt=""/);
   // A full-bleed photo panel: object-fit cover, no circular avatar card.
   assert.match(html, /object-fit:cover/);
@@ -101,12 +111,12 @@ test("CoverCanvas (avatar type) keeps a replaced portrait image working", () => 
     portraitUrl: "data:image/png;base64,AAAA",
   });
   assert.match(html, /src="data:image\/png;base64,AAAA"/);
-  assert.doesNotMatch(html, /src="\/avatar\.jpg"/);
+  assert.doesNotMatch(html, /src="\/avatar\.png"/);
 });
 
 test("CoverCanvas falls back to visual defaults when cover image URLs are cleared", () => {
   const avatar = coverWithVisual("avatar", { portraitUrl: "" });
-  assert.match(avatar, /src="\/avatar\.jpg"/);
+  assert.match(avatar, /src="\/avatar\.png"/);
 
   const scene = coverWithVisual("scene", { sceneUrl: "" });
   assert.match(scene, /src="\/vibe-studio-bg\.png"/);

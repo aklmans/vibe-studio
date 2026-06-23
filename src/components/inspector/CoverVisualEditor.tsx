@@ -5,7 +5,7 @@ import AvatarUploader from "../shared/AvatarUploader";
 import { WorkbenchLabel } from "../shared/Field";
 import { LineSegmented, RuleNote } from "./EditorRow";
 
-const DEFAULT_COVER_PORTRAIT_URL = "/avatar.jpg";
+const DEFAULT_COVER_PORTRAIT_URL = "/avatar.png";
 const DEFAULT_COVER_SCENE_URL = "/vibe-studio-bg.png";
 
 interface CoverVisualEditorProps {
@@ -56,7 +56,7 @@ export default function CoverVisualEditor({
           url={cover.portraitUrl || DEFAULT_COVER_PORTRAIT_URL}
           onUrlChange={(v) => writeCover({ portraitUrl: v })}
           showToggle={false}
-          clearValue="/avatar.jpg"
+          clearValue="/avatar.png"
           testIdPrefix="cover-portrait"
         />
       )}

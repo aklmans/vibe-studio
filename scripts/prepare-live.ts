@@ -16,8 +16,8 @@ import {
 } from "../src/lib/live-prepare.ts";
 
 const PORT = 3000;
-const OBS_PROFILE = "Vibe Coding Live Overlay";
-const OBS_SCENE_COLLECTION = "Vibe Coding Live Overlay";
+const OBS_PROFILE = "Vibe Studio Overlay";
+const OBS_SCENE_COLLECTION = "Vibe Studio Overlay";
 const OBS_SCENE = "Vibe Live Overlay";
 const OBS_PROCESS_PATTERN = "/Applications/OBS.app/Contents/MacOS/OBS";
 const OBS_PROCESS_NAME = "OBS";
@@ -46,7 +46,7 @@ type LiveCommand = "prepare" | "status" | "stop" | "restart";
 
 async function main(): Promise<void> {
   const command = parseCommand(process.argv[2]);
-  console.log(`Vibe Coding Live ${command}`);
+  console.log(`Vibe Studio ${command}`);
   console.log(`Repo: ${repoRoot}`);
 
   switch (command) {

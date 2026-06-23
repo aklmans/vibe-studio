@@ -33,6 +33,7 @@ type OverlayColors = OverlayState["colors"];
 type SidebarSection = OverlayState["sidebar"]["sections"][number];
 
 const LEGACY_DEFAULT_COVER_AVATAR_URL = "/avatar.jpg";
+const DEFAULT_BROADCAST_AVATAR_URL = "/avatar.png";
 
 const LEGACY_THEME_PRESETS: Record<"neon" | "editorial", OverlayColors> = {
   neon: {
@@ -75,7 +76,7 @@ function stringOrDefault(value: unknown, fallback: string): string {
 
 function normalizeCoverAvatarUrl(value: unknown, fallback: string): string {
   const url = stringOrDefault(value, fallback);
-  return url === LEGACY_DEFAULT_COVER_AVATAR_URL ? fallback : url;
+  return url === LEGACY_DEFAULT_COVER_AVATAR_URL ? DEFAULT_BROADCAST_AVATAR_URL : url;
 }
 
 /**
@@ -83,7 +84,8 @@ function normalizeCoverAvatarUrl(value: unknown, fallback: string): string {
  * are interpreted from the legacy "Show Avatar" toggle and the legacy built-in
  * avatar URL so nothing breaks:
  *  - avatarVisible === false  → "title" (pure typographic cover)
- *  - legacy /avatar.jpg       → "avatar" (the old headshot keeps working)
+ *  - missing legacy URL      → "avatar" (the current default cover style)
+ *  - legacy /avatar.jpg       → "avatar" (migrates to /avatar.png)
  *  - otherwise                → "scene"
  */
 function normalizeCoverVisual(
@@ -94,6 +96,7 @@ function normalizeCoverVisual(
     return value;
   }
   if (!legacy.avatarVisible) return "title";
+  if (legacy.rawAvatarUrl == null) return "avatar";
   if (legacy.rawAvatarUrl === LEGACY_DEFAULT_COVER_AVATAR_URL) return "avatar";
   return "scene";
 }
@@ -449,9 +452,9 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         ),
         rawAvatarUrl: cover?.avatarUrl,
       }),
-      // Cover scene image: inherit the old shared avatar so a previously
-      // customized cover subject keeps showing; legacy /avatar.jpg normalizes
-      // to the studio scene (that user lands on the avatar type instead).
+      // Cover scene image: inherit an old custom shared subject so a
+      // previously customized scene keeps showing; legacy /avatar.jpg users
+      // land on the avatar type instead.
       sceneUrl: stringOrDefault(
         cover?.sceneUrl,
         normalizeCoverAvatarUrl(cover?.avatarUrl, defaultValue.cover.sceneUrl),

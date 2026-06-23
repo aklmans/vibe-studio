@@ -4,14 +4,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aklman.com"),
-  title: "Vibe Coding Overlay Builder",
-  description: "Build and export broadcast-ready Vibe Coding livestream graphics.",
+  title: "Vibe Studio",
+  description: "Build and export broadcast-ready Vibe Studio livestream graphics.",
   icons: {
     icon: "/favicon.svg",
   },
   openGraph: {
-    title: "Vibe Coding Overlay Builder",
-    description: "Build and export broadcast-ready Vibe Coding livestream graphics.",
+    title: "Vibe Studio",
+    description: "Build and export broadcast-ready Vibe Studio livestream graphics.",
     images: ["/opengraph.jpg"],
   },
 };

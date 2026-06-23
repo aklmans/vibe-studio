@@ -8,7 +8,7 @@ import type { AppTab } from "./lib/tabs";
 
 /**
  * Cover visual type — the single, explicit choice for the cover's subject:
- *  - "avatar"  → a personal headshot (cover.portraitUrl, default /avatar.jpg)
+ *  - "avatar"  → a personal headshot (cover.portraitUrl, default /avatar.png)
  *  - "scene"   → the studio figure scene (cover.sceneUrl, default /vibe-studio-bg.png)
  *  - "title"   → no image, pure editorial typography
  *
@@ -47,13 +47,13 @@ export interface OverlayState {
   cover: {
     title: string;
     badges: BadgeConfig[];
-    // Legacy shared brand subject — still rendered by Poster / Wallpaper /
+    // Shared broadcast avatar — still rendered by Poster / Wallpaper /
     // Overlay. The cover no longer reads these; it uses `visual` + the cover
     // image fields below.
     avatarUrl: string;
     avatarVisible: boolean;
     // Cover visual type + its per-type images (cover-scoped, decoupled from the
-    // shared avatar above).
+    // shared broadcast avatar above).
     visual: CoverVisual;
     sceneUrl: string;
     portraitUrl: string;
@@ -140,11 +140,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
       { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
     ],
-    avatarUrl: "/vibe-studio-bg.png",
+    avatarUrl: "/avatar.png",
     avatarVisible: true,
-    visual: "scene",
+    visual: "avatar",
     sceneUrl: "/vibe-studio-bg.png",
-    portraitUrl: "/avatar.jpg",
+    portraitUrl: "/avatar.png",
     todayLabel: "今日构建",
     todayTopic: "多 Agent Coding 实战",
     manifestoVisible: false,
@@ -169,7 +169,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
   },
   wallpaper: {
     previewPresetId: "desktop-4k",
-    brandLabel: "VIBE CODING",
+    brandLabel: "VIBE STUDIO",
     brandLabelVisible: true,
     slogan: "Build clearly. Ship loudly.",
     sloganVisible: true,
@@ -234,11 +234,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
         { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
         { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
       ],
-      avatarUrl: "/vibe-studio-bg.png",
+      avatarUrl: "/avatar.png",
       avatarVisible: true,
-      visual: "scene",
+      visual: "avatar",
       sceneUrl: "/vibe-studio-bg.png",
-      portraitUrl: "/avatar.jpg",
+      portraitUrl: "/avatar.png",
       todayLabel: "TODAY'S BUILD",
       todayTopic: "Multi-Agent Coding Live",
       manifestoVisible: false,
@@ -263,7 +263,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     },
     wallpaper: {
       previewPresetId: "desktop-4k",
-      brandLabel: "VIBE CODING",
+      brandLabel: "VIBE STUDIO",
       brandLabelVisible: true,
       slogan: "Build clearly. Ship loudly.",
       sloganVisible: true,

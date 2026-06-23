@@ -7,6 +7,8 @@ import { SectionInput, WorkbenchLabel } from "../shared/Field";
 import BadgesEditor from "../BadgesEditor";
 import { useLocale } from "../../hooks/useLocale";
 
+const DEFAULT_BROADCAST_AVATAR_URL = "/avatar.png";
+
 interface BrandIdentityEditorProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
@@ -51,6 +53,7 @@ export default function BrandIdentityEditor({
           onUrlChange={(v) => writeCover({ avatarUrl: v })}
           onVisibleChange={(v) => writeCover({ avatarVisible: v })}
           showToggle={showAvatarToggle}
+          clearValue={DEFAULT_BROADCAST_AVATAR_URL}
           testIdPrefix={`${testIdPrefix}-avatar`}
         />
       )}

@@ -15,7 +15,7 @@ test("parseSessionRecipe reads a markdown recipe", () => {
 # AI Agent 长任务实践
 
 ## Goal
-理解 long-running agents，并应用到 Vibe Coding Live。
+理解 long-running agents，并应用到 Vibe Studio。
 
 ## Tasks
 - 阅读 Addy Osmani 的文章
@@ -34,7 +34,7 @@ QQ Group: 205359827
   );
 
   assert.equal(recipe.title, "AI Agent 长任务实践");
-  assert.equal(recipe.goal, "理解 long-running agents，并应用到 Vibe Coding Live。");
+  assert.equal(recipe.goal, "理解 long-running agents，并应用到 Vibe Studio。");
   assert.deepEqual(recipe.tasks, [
     "阅读 Addy Osmani 的文章",
     "提炼 Agent 工作流原则",
@@ -73,7 +73,7 @@ test("parseSessionRecipe preserves punctuation inside markdown task bullets", ()
 
 test("parseSessionRecipe extracts useful fields from a Chinese one-line brief", () => {
   const recipe = parseSessionRecipe(
-    "今天直播学习 Addy Osmani 的 long-running agents 文章。任务是：阅读文章、总结关键观点、设计到 Vibe Coding Live、最后做复盘。技术栈显示 Next.js、OBS、GPT-5.5 Pro、Codex。",
+    "今天直播学习 Addy Osmani 的 long-running agents 文章。任务是：阅读文章、总结关键观点、设计到 Vibe Studio、最后做复盘。技术栈显示 Next.js、OBS、GPT-5.5 Pro、Codex。",
     "zh",
   );
 
@@ -81,7 +81,7 @@ test("parseSessionRecipe extracts useful fields from a Chinese one-line brief", 
   assert.deepEqual(recipe.tasks, [
     "阅读文章",
     "总结关键观点",
-    "设计到 Vibe Coding Live",
+    "设计到 Vibe Studio",
     "最后做复盘",
   ]);
   assert.deepEqual(recipe.stackItems, [

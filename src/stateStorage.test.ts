@@ -196,14 +196,14 @@ test("normalizeOverlayState handles empty arrays and invalid types conservativel
 });
 
 
-test("normalizeOverlayState migrates the old built-in cover avatar to the studio subject", () => {
+test("normalizeOverlayState migrates the old built-in cover avatar to the current broadcast avatar", () => {
   const migrated = normalizeOverlayState({
     cover: {
       avatarUrl: "/avatar.jpg",
     },
   });
 
-  assert.equal(migrated.cover.avatarUrl, "/vibe-studio-bg.png");
+  assert.equal(migrated.cover.avatarUrl, "/avatar.png");
 
   const custom = normalizeOverlayState({
     cover: {
@@ -215,8 +215,8 @@ test("normalizeOverlayState migrates the old built-in cover avatar to the studio
 });
 
 test("normalizeOverlayState derives the cover visual type from legacy state", () => {
-  // New default → scene.
-  assert.equal(normalizeOverlayState({}).cover.visual, "scene");
+  // New default → avatar cover.
+  assert.equal(normalizeOverlayState({}).cover.visual, "avatar");
 
   // Legacy avatarVisible=false → pure title cover.
   assert.equal(
@@ -224,14 +224,14 @@ test("normalizeOverlayState derives the cover visual type from legacy state", ()
     "title",
   );
 
-  // Legacy built-in /avatar.jpg headshot → avatar type; it stays usable as the
-  // portrait, while the shared avatarUrl still normalizes to the studio scene.
+  // Legacy built-in /avatar.jpg headshot → avatar type; it migrates to the
+  // current /avatar.png asset for both the cover portrait and shared avatar.
   const legacy = normalizeOverlayState({
     cover: { avatarUrl: "/avatar.jpg", avatarVisible: true },
   });
   assert.equal(legacy.cover.visual, "avatar");
-  assert.equal(legacy.cover.portraitUrl, "/avatar.jpg");
-  assert.equal(legacy.cover.avatarUrl, "/vibe-studio-bg.png");
+  assert.equal(legacy.cover.portraitUrl, "/avatar.png");
+  assert.equal(legacy.cover.avatarUrl, "/avatar.png");
 
   // Legacy studio scene url → scene type.
   assert.equal(
@@ -248,11 +248,20 @@ test("normalizeOverlayState derives the cover visual type from legacy state", ()
   );
 });
 
+test("normalizeOverlayState keeps cover portraits and scene subjects separate by default", () => {
+  const def = normalizeOverlayState({});
+
+  assert.equal(def.cover.visual, "avatar");
+  assert.equal(def.cover.portraitUrl, "/avatar.png");
+  assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
+  assert.equal(def.cover.avatarUrl, "/avatar.png");
+});
+
 test("normalizeOverlayState keeps cover images compatible and replaceable", () => {
   // Both built-in assets resolve to sensible defaults.
   const def = normalizeOverlayState({});
   assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.equal(def.cover.portraitUrl, "/avatar.jpg");
+  assert.equal(def.cover.portraitUrl, "/avatar.png");
 
   // An old custom subject keeps showing on the cover (sceneUrl inherits it).
   const custom = normalizeOverlayState({

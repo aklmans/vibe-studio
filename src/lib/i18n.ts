@@ -154,7 +154,7 @@ export const dict = {
     "reset.confirm": "全部恢复",
 
     // ─── Command palette ─────────────────────────────────────────────
-    "cmdk.label": "Vibe Coding Live 命令面板",
+    "cmdk.label": "Vibe Studio 命令面板",
     "cmdk.placeholder": "输入命令或搜索…",
     "cmdk.empty": "没有匹配的命令。",
     "cmdk.navigate": "导航",
@@ -205,7 +205,7 @@ export const dict = {
     // ─── App ─────────────────────────────────────────────────────────
     "app.previewHint": "缩放预览 — 导出为原始分辨率",
     "app.liveDataHint": "管理侧栏和底栏 — 自动同步到 OBS",
-    "app.brand": "Vibe Coding Live",
+    "app.brand": "Vibe Studio",
 
     // ─── Live bar / canvas ────────────────────────────────────────────
     "live.onAir": "开播",
@@ -233,7 +233,7 @@ export const dict = {
     // ─── Session recipe ──────────────────────────────────────────────
     "recipe.title": "直播 Recipe",
     "recipe.hint": "粘贴一句话、直播大纲或 Markdown Recipe，自动更新标题、今日目标、任务、工具栈和社交信息。",
-    "recipe.placeholder": "示例：今天直播学习 Addy Osmani 的 long-running agents 文章。任务是：阅读文章、总结关键观点、设计到 Vibe Coding Live、最后做复盘。技术栈显示 Next.js、OBS、GPT-5.5 Pro、Codex。\n\n也可以粘贴 Markdown：\n# AI Agent 长任务实践\n\n## Goal\n理解 long-running agents，并应用到 Vibe Coding Live。\n\n## Tasks\n- 阅读文章\n- 提炼 Agent 工作流原则\n- 更新直播工具设计\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
+    "recipe.placeholder": "示例：今天直播学习 Addy Osmani 的 long-running agents 文章。任务是：阅读文章、总结关键观点、设计到 Vibe Studio、最后做复盘。技术栈显示 Next.js、OBS、GPT-5.5 Pro、Codex。\n\n也可以粘贴 Markdown：\n# AI Agent 长任务实践\n\n## Goal\n理解 long-running agents，并应用到 Vibe Studio。\n\n## Tasks\n- 阅读文章\n- 提炼 Agent 工作流原则\n- 更新直播工具设计\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
     "recipe.apply": "应用到直播",
     "recipe.exportCurrent": "导出当前 Recipe",
     "recipe.empty": "先粘贴一句话或 Recipe。",
@@ -258,7 +258,7 @@ export const dict = {
     "canvas.currentFocus": "当前焦点",
     "canvas.currentFocusNext": "下一步",
     "canvas.liveBadge": "LIVE",
-    "canvas.idleBrand": "VIBE CODING",
+    "canvas.idleBrand": "VIBE STUDIO",
 
     // ─── Social kind labels (editor) ─────────────────────────────────
     "social.bilibili": "B站",
@@ -470,7 +470,7 @@ export const dict = {
     "reset.confirm": "Reset everything",
 
     // ─── Command palette ─────────────────────────────────────────────
-    "cmdk.label": "Vibe Coding Live command palette",
+    "cmdk.label": "Vibe Studio command palette",
     "cmdk.placeholder": "Type a command or search…",
     "cmdk.empty": "No matching command.",
     "cmdk.navigate": "navigate",
@@ -521,7 +521,7 @@ export const dict = {
     // ─── App ─────────────────────────────────────────────────────────
     "app.previewHint": "Scaled preview — export at full resolution",
     "app.liveDataHint": "Manage sidebar and live bar data — syncs to OBS automatically",
-    "app.brand": "Vibe Coding Live",
+    "app.brand": "Vibe Studio",
 
     // ─── Live bar / canvas ────────────────────────────────────────────
     "live.onAir": "On Air",
@@ -549,7 +549,7 @@ export const dict = {
     // ─── Session recipe ──────────────────────────────────────────────
     "recipe.title": "Stream Recipe",
     "recipe.hint": "Paste a one-line brief, stream outline, or Markdown Recipe to update the title, goal, tasks, stack, and social links.",
-    "recipe.placeholder": "Example: Today I am streaming a reading session on Addy Osmani's long-running agents article. Tasks: read the article, summarize key ideas, apply them to Vibe Coding Live, wrap up. Stack: Next.js, OBS, GPT-5.5 Pro, Codex.\n\nMarkdown works too:\n# Long-running Agents\n\n## Goal\nTurn agent reading notes into stream tasks.\n\n## Tasks\n- Read the article\n- Extract workflow patterns\n- Update Vibe Coding Live design\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
+    "recipe.placeholder": "Example: Today I am streaming a reading session on Addy Osmani's long-running agents article. Tasks: read the article, summarize key ideas, apply them to Vibe Studio, wrap up. Stack: Next.js, OBS, GPT-5.5 Pro, Codex.\n\nMarkdown works too:\n# Long-running Agents\n\n## Goal\nTurn agent reading notes into stream tasks.\n\n## Tasks\n- Read the article\n- Extract workflow patterns\n- Update Vibe Studio design\n\n## Stack\nNext.js, OBS, GPT-5.5 Pro, Codex",
     "recipe.apply": "Apply to stream",
     "recipe.exportCurrent": "Export current Recipe",
     "recipe.empty": "Paste a brief or Recipe first.",
@@ -574,7 +574,7 @@ export const dict = {
     "canvas.currentFocus": "CURRENT FOCUS",
     "canvas.currentFocusNext": "NEXT",
     "canvas.liveBadge": "LIVE",
-    "canvas.idleBrand": "VIBE CODING",
+    "canvas.idleBrand": "VIBE STUDIO",
 
     // ─── Social kind labels (editor) ─────────────────────────────────
     "social.bilibili": "Bilibili",

@@ -14,7 +14,7 @@ import BadgeToolbar from "./shared/BadgeToolbar";
 // /public/cover-bg.png and could return later as an opt-in background preset,
 // but it is no longer the default export surface.
 
-const DEFAULT_COVER_PORTRAIT_URL = "/avatar.jpg";
+const DEFAULT_COVER_PORTRAIT_URL = "/avatar.png";
 const DEFAULT_COVER_SCENE_URL = "/vibe-studio-bg.png";
 
 interface CoverCanvasProps {
@@ -33,6 +33,8 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
     // headshot), scene (the studio figure), or title (none). It is decoupled
     // from the shared broadcast avatar used by Poster / Wallpaper / Overlay.
     const hasSubject = cover.visual !== "title";
+    const identityMaxWidth =
+      cover.visual === "avatar" ? 996 : hasSubject ? 1056 : 1000;
     const sceneSrc = cover.sceneUrl || DEFAULT_COVER_SCENE_URL;
     const portraitSrc = cover.portraitUrl || DEFAULT_COVER_PORTRAIT_URL;
 
@@ -142,7 +144,7 @@ const CoverCanvas = forwardRef<HTMLDivElement, CoverCanvasProps>(
             display: "flex",
             justifyContent: hasSubject ? "flex-end" : "center",
             width: "100%",
-            maxWidth: hasSubject ? 1056 : 1000,
+            maxWidth: identityMaxWidth,
           }}
         >
           {/* Editorial title stack — eyebrow → serif title → rule → subtitle. */}

@@ -1,6 +1,6 @@
 # Editorial Live Design Language
 
-Design language for the `editorial-live` branch of Vibe Coding Live.
+Design language for the `editorial-live` branch of Vibe Studio.
 
 This project is not a content website. It is a live-graphics workbench for
 creating broadcast overlays, cover screens, posters, wallpapers, sidebars, and
@@ -140,7 +140,7 @@ The builder is an editorial tool surface, not a marketing page.
 ### Top Bar
 
 - Use text brand, not a logo mark.
-- Prefer `Vibe Coding Live` or `Vibe Studio`.
+- Use `Vibe Studio` as the text brand.
 - Tabs should be hairline / underline states, not filled segmented pills.
 - Search, settings, and export controls should share one quiet button language.
 - The export action may be prominent through placement, not a loud fill.

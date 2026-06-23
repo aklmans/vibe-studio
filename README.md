@@ -1,6 +1,6 @@
-# Vibe Coding Live
+# Vibe Studio
 
-A Next.js app for building and exporting livestream graphics for Vibe Coding sessions. It edits cover screens, posters, full overlays, sidebar panels, bottom status bars, and brand wallpapers, then exports broadcast-ready PNG assets.
+A Next.js app for building and exporting livestream graphics for live coding sessions. It edits cover screens, posters, full overlays, sidebar panels, bottom status bars, and brand wallpapers, then exports broadcast-ready PNG assets.
 
 ## Editorial Live Redesign
 
@@ -17,19 +17,19 @@ The preview images below are checked-in exports from the overlay builder, stored
 ### Cover screen
 
 <p align="center">
-  <img src="docs/assets/vibe-coding-cover.png" alt="Vibe Coding cover screen" width="820">
+  <img src="docs/assets/vibe-coding-cover.png" alt="Vibe Studio cover screen" width="820">
 </p>
 
 ### Poster
 
 <p align="center">
-  <img src="docs/assets/vibe-coding-poster.png" alt="Vibe Coding poster" width="820">
+  <img src="docs/assets/vibe-coding-poster.png" alt="Vibe Studio poster" width="820">
 </p>
 
 ### Full live overlay
 
 <p align="center">
-  <img src="docs/assets/vibe-coding-overlay.png" alt="Vibe Coding full live overlay" width="820">
+  <img src="docs/assets/vibe-coding-overlay.png" alt="Vibe Studio full live overlay" width="820">
 </p>
 
 ### Export slices
@@ -41,10 +41,10 @@ The preview images below are checked-in exports from the overlay builder, stored
   </tr>
   <tr>
     <td width="34%">
-      <img src="docs/assets/vibe-coding-sidebar.png" alt="Vibe Coding sidebar export">
+      <img src="docs/assets/vibe-coding-sidebar.png" alt="Vibe Studio sidebar export">
     </td>
     <td width="66%">
-      <img src="docs/assets/vibe-coding-bottom-bar.png" alt="Vibe Coding bottom bar export">
+      <img src="docs/assets/vibe-coding-bottom-bar.png" alt="Vibe Studio bottom bar export">
     </td>
   </tr>
 </table>
@@ -54,7 +54,7 @@ The preview images below are checked-in exports from the overlay builder, stored
 A single wallpaper export action emits three sizes that share the Cover/Poster brand language but drop livestream-specific elements, so they read as quiet brand wallpapers when shown on a screen-share.
 
 <p align="center">
-  <img src="docs/assets/vibe-coding-wallpaper-desktop-4k.png" alt="Vibe Coding wallpaper - Desktop 4K" width="820">
+  <img src="docs/assets/vibe-coding-wallpaper-desktop-4k.png" alt="Vibe Studio wallpaper - Desktop 4K" width="820">
 </p>
 
 <table>
@@ -64,10 +64,10 @@ A single wallpaper export action emits three sizes that share the Cover/Poster b
   </tr>
   <tr>
     <td width="70%">
-      <img src="docs/assets/vibe-coding-wallpaper-desktop-qhd.png" alt="Vibe Coding wallpaper - Desktop QHD">
+      <img src="docs/assets/vibe-coding-wallpaper-desktop-qhd.png" alt="Vibe Studio wallpaper - Desktop QHD">
     </td>
     <td width="30%">
-      <img src="docs/assets/vibe-coding-wallpaper-mobile.png" alt="Vibe Coding wallpaper - Mobile">
+      <img src="docs/assets/vibe-coding-wallpaper-mobile.png" alt="Vibe Studio wallpaper - Mobile">
     </td>
   </tr>
 </table>
@@ -129,12 +129,12 @@ pnpm live:restart   # Stop local live tooling, then run live:prepare again.
 The script:
 
 1. Ensures the Next.js app is available on `http://localhost:3000`.
-2. Updates the OBS scene collection `Vibe Coding Live Overlay`.
+2. Updates the OBS scene collection `Vibe Studio Overlay`.
 3. Points the overlay Browser Sources at:
    - `http://localhost:3000/obs/overlay?camera=empty`
    - `http://localhost:3000/obs/overlay?camera=avatar`
 4. Resets the expected OBS source order and visibility.
-5. Opens OBS with the `Vibe Coding Live Overlay` profile, collection, and `Vibe Live Overlay` scene.
+5. Opens OBS with the `Vibe Studio Overlay` profile, collection, and `Vibe Live Overlay` scene.
 6. Starts OBS Virtual Camera after OBS has finished launching.
 7. Opens the web app and Bilibili Livehime.
 
