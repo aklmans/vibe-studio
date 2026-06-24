@@ -14,9 +14,11 @@ import SettingsDrawer from "./SettingsDrawer";
 import TopBar from "./topbar/TopBar";
 import BadgesEditor from "./BadgesEditor";
 import SocialsEditor from "./SocialsEditor";
+import OverlayInspector from "./inspector/groups/OverlayInspector";
 import CoverInspector from "./inspector/groups/CoverInspector";
 import PosterInspector from "./inspector/groups/PosterInspector";
 import WallpaperInspector from "./inspector/groups/WallpaperInspector";
+import LiveDataManager from "./live-data/LiveDataManager";
 import { SectionInput, ToggleButton } from "./shared/Field";
 
 test("shared text inputs use the editorial inset control surface", () => {
@@ -157,8 +159,13 @@ test("surface inspectors default to a focused first-screen workflow", () => {
       }),
     }),
   );
+  assert.match(cover, /data-testid="group-cover-copy"/);
   assert.match(cover, /data-testid="cover-visual"/);
+  assert.match(cover, /data-testid="cover-title"/);
+  assert.match(cover, /data-testid="cover-subtitle"/);
+  assert.match(cover, /data-testid="cover-today-label"/);
   assert.match(cover, /data-testid="cover-today-topic"/);
+  assert.doesNotMatch(cover, /data-testid="group-cover-today"/);
   assert.doesNotMatch(cover, /data-testid="cover-social-visible"/);
 
   const poster = renderToStaticMarkup(
@@ -171,8 +178,11 @@ test("surface inspectors default to a focused first-screen workflow", () => {
       }),
     }),
   );
+  assert.match(poster, /data-testid="group-poster-copy"/);
   assert.match(poster, /data-testid="poster-title"/);
+  assert.match(poster, /data-testid="poster-today-label"/);
   assert.match(poster, /data-testid="poster-today-topic"/);
+  assert.doesNotMatch(poster, /data-testid="group-poster-today"/);
   assert.doesNotMatch(poster, /data-testid="poster-manifesto-visible"/);
   assert.doesNotMatch(poster, /data-testid="poster-hook-visible"/);
   assert.doesNotMatch(poster, /data-testid="poster-closing-visible"/);
@@ -209,6 +219,60 @@ test("live data prioritizes live editing before recipe import/export", () => {
   assert.ok(stack > liveSession);
   assert.ok(bottomBar > stack);
   assert.ok(recipe > bottomBar);
+});
+
+
+test("overlay inspector section tabs show one progress section at a time", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayInspector, {
+        state: {
+          ...DEFAULT_STATE,
+          sidebar: { ...DEFAULT_STATE.sidebar, activeSection: 1 },
+        },
+        onChange: () => {},
+      }),
+    }),
+  );
+
+  assert.match(html, /data-testid="active-section-1"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-testid="overlay-section-panel-1"/);
+  assert.doesNotMatch(html, /data-testid="overlay-section-panel-0"/);
+  assert.doesNotMatch(html, /data-testid="overlay-section-panel-2"/);
+});
+
+test("live data section editor shows one progress section at a time", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(LiveDataManager, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+        dateKey: "2026-06-23",
+        persistence: {
+          databaseConfigured: false,
+          loading: false,
+          saving: false,
+          error: null,
+          savedAt: null,
+          session: null,
+        },
+        onReload: () => {},
+        onStartSession: () => {},
+        onEndSession: () => {},
+      }),
+    }),
+  );
+
+  assert.match(html, /data-testid="live-data-section-tabs"/);
+  assert.match(html, /data-testid="live-data-section-panel-0"/);
+  assert.match(html, /data-testid="live-data-section-tab-0"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-testid="live-data-section-tab-1"[^>]*aria-pressed="false"/);
+  assert.doesNotMatch(html, /data-testid="live-data-section-panel-1"/);
+  assert.doesNotMatch(html, /data-testid="live-data-section-panel-2"/);
 });
 
 test("social editor uses the same add-list workflow as badges", () => {

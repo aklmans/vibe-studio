@@ -24,22 +24,16 @@ export default function PosterInspector({
   return (
     <>
       <InspectorGroup
-        title={t("group.brand")}
-        hint={t("group.brand.hintAlt")}
-        testId="group-poster-brand"
+        title={t("group.posterCopy")}
+        hint={t("group.posterCopy.hint")}
+        testId="group-poster-copy"
       >
-        <BrandIdentityEditor
-          state={state}
-          onChange={onChange}
-          testIdPrefix="poster"
+        <SectionInput
+          label={t("label.title")}
+          value={state.cover.title}
+          onChange={(v) => writeCover({ title: v })}
+          testId="poster-title"
         />
-      </InspectorGroup>
-
-      <InspectorGroup
-        title={t("group.todaysBuild")}
-        hint={t("group.todaysBuild.hint")}
-        testId="group-poster-today"
-      >
         <SectionInput
           label={t("label.cardLabel")}
           value={state.cover.todayLabel}
@@ -53,6 +47,19 @@ export default function PosterInspector({
           testId="poster-today-topic"
         />
         <RuleNote>{t("mapping.todayTopic")}</RuleNote>
+      </InspectorGroup>
+
+      <InspectorGroup
+        title={t("group.posterVisual")}
+        hint={t("group.posterVisual.hint")}
+        testId="group-poster-visual"
+      >
+        <BrandIdentityEditor
+          state={state}
+          onChange={onChange}
+          testIdPrefix="poster"
+          showCopy={false}
+        />
       </InspectorGroup>
 
       <InspectorGroup

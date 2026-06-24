@@ -180,6 +180,7 @@ export function LineSegmented({
           <button
             key={opt.value}
             data-testid={opt.testId}
+            aria-pressed={isActive}
             onClick={() => onSelect(opt.value)}
             style={{
               minWidth: 0,

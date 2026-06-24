@@ -62,6 +62,11 @@ export default function LiveDataManager({
       : persistence.session?.status === "ended"
         ? UI_COLORS.textMuted
         : UI_COLORS.textSubtle;
+  const activeSectionIndex = Math.min(
+    Math.max(state.sidebar.activeSection, 0),
+    Math.max(state.sidebar.sections.length - 1, 0),
+  );
+  const activeSection = state.sidebar.sections[activeSectionIndex];
 
   return (
     <div
@@ -218,7 +223,8 @@ export default function LiveDataManager({
               {t("label.activeSection")}
             </WorkbenchLabel>
             <LineSegmented
-              active={String(state.sidebar.activeSection)}
+              testId="live-data-section-tabs"
+              active={String(activeSectionIndex)}
               onSelect={(value) =>
                 onChange(
                   patchSection(state, "sidebar", {
@@ -229,21 +235,25 @@ export default function LiveDataManager({
               options={state.sidebar.sections.map((section, idx) => ({
                 value: String(idx),
                 label: section.title || `${t("label.section")} ${idx + 1}`,
-                testId: `live-data-active-section-${idx}`,
+                meta: `${(state.sidebar.sectionsDone?.[idx] ?? []).filter(Boolean).length}/${section.bullets.length}`,
+                testId: `live-data-section-tab-${idx}`,
               }))}
             />
           </div>
 
-          {state.sidebar.sections.map((_, idx) => (
-            <EditorBlock key={idx} label={`${t("label.section")} ${idx + 1}`}>
+          {activeSection && (
+            <EditorBlock
+              label={activeSection.title || `${t("label.section")} ${activeSectionIndex + 1}`}
+              testId={`live-data-section-panel-${activeSectionIndex}`}
+            >
               <SidebarSectionEditor
                 state={state}
                 onChange={onChange}
-                index={idx}
+                index={activeSectionIndex}
                 accentColor={UI_COLORS.accent}
               />
             </EditorBlock>
-          ))}
+          )}
         </RuledSection>
 
         <RuledSection
@@ -371,12 +381,15 @@ function RuledSection({
 function EditorBlock({
   label,
   children,
+  testId,
 }: {
   label: string;
   children: ReactNode;
+  testId?: string;
 }) {
   return (
     <div
+      data-testid={testId}
       style={{
         display: "flex",
         flexDirection: "column",

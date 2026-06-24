@@ -23,6 +23,13 @@ export default function OverlayInspector({
   onChange,
 }: OverlayInspectorProps) {
   const { t } = useLocale();
+  const lastSectionIndex = Math.max(state.sidebar.sections.length - 1, 0);
+  const activeSectionIndex = Math.min(
+    Math.max(state.sidebar.activeSection, 0),
+    lastSectionIndex,
+  );
+  const activeSection = state.sidebar.sections[activeSectionIndex];
+
   return (
     <>
       <InspectorGroup
@@ -80,7 +87,7 @@ export default function OverlayInspector({
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <WorkbenchLabel>{t("label.activeSection")}</WorkbenchLabel>
           <LineSegmented
-            active={String(state.sidebar.activeSection)}
+            active={String(activeSectionIndex)}
             onSelect={(value) =>
               onChange(
                 patchSection(state, "sidebar", { activeSection: Number(value) }),
@@ -94,50 +101,48 @@ export default function OverlayInspector({
           />
         </div>
 
-        {state.sidebar.sections.map((_, idx) => {
-          // One primary accent across all sections; only the active section is
-          // marked — no per-section rainbow.
-          const isActive = idx === state.sidebar.activeSection;
-          return (
-            <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {activeSection ? (
+          <div
+            data-testid={`overlay-section-panel-${activeSectionIndex}`}
+            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 2,
+              }}
+            >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginTop: idx === 0 ? 2 : 6,
+                  width: 2,
+                  height: 11,
+                  background: UI_COLORS.accent,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--app-font-mono)",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: UI_COLORS.text,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
                 }}
               >
-                <div
-                  style={{
-                    width: 2,
-                    height: 11,
-                    background: isActive ? UI_COLORS.accent : UI_COLORS.rule,
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "var(--app-font-mono)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {`${t("label.section")} ${idx + 1}`}
-                </span>
-              </div>
-              <SidebarSectionEditor
-                state={state}
-                onChange={onChange}
-                index={idx}
-                accentColor={UI_COLORS.accent}
-              />
+                {`${t("label.section")} ${activeSectionIndex + 1}`}
+              </span>
             </div>
-          );
-        })}
+            <SidebarSectionEditor
+              state={state}
+              onChange={onChange}
+              index={activeSectionIndex}
+              accentColor={UI_COLORS.accent}
+            />
+          </div>
+        ) : null}
       </InspectorGroup>
 
       <InspectorGroup

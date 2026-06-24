@@ -22,6 +22,9 @@ interface BrandIdentityEditorProps {
    */
   coverVisual?: boolean;
   showAvatarToggle?: boolean;
+  showCopy?: boolean;
+  showBadges?: boolean;
+  showNote?: boolean;
 }
 
 /**
@@ -36,6 +39,9 @@ export default function BrandIdentityEditor({
   showSubtitle = false,
   coverVisual = false,
   showAvatarToggle = true,
+  showCopy = true,
+  showBadges = true,
+  showNote = true,
 }: BrandIdentityEditorProps) {
   const { t } = useLocale();
   const writeCover = (patch: Partial<OverlayState["cover"]>) => {
@@ -58,45 +64,53 @@ export default function BrandIdentityEditor({
         />
       )}
 
-      <SectionInput
-        label={t("label.title")}
-        value={state.cover.title}
-        onChange={(v) => writeCover({ title: v })}
-        testId={`${testIdPrefix}-title`}
-      />
+      {showCopy && (
+        <>
+          <SectionInput
+            label={t("label.title")}
+            value={state.cover.title}
+            onChange={(v) => writeCover({ title: v })}
+            testId={`${testIdPrefix}-title`}
+          />
 
-      {showSubtitle && (
-        <SectionInput
-          label={t("label.subtitle")}
-          value={state.cover.hookText}
-          onChange={(v) => writeCover({ hookText: v })}
-          testId={`${testIdPrefix}-subtitle`}
-        />
+          {showSubtitle && (
+            <SectionInput
+              label={t("label.subtitle")}
+              value={state.cover.hookText}
+              onChange={(v) => writeCover({ hookText: v })}
+              testId={`${testIdPrefix}-subtitle`}
+            />
+          )}
+        </>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <WorkbenchLabel>
-          {t("label.badge")}s
-        </WorkbenchLabel>
-        <BadgesEditor
-          state={state}
-          onChange={onChange}
-          testIdPrefix={`${testIdPrefix}-badge`}
-        />
-      </div>
+      {showBadges && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <WorkbenchLabel>
+            {t("label.badge")}s
+          </WorkbenchLabel>
+          <BadgesEditor
+            state={state}
+            onChange={onChange}
+            testIdPrefix={`${testIdPrefix}-badge`}
+          />
+        </div>
+      )}
 
-      <div
-        style={{
-          // A left-ruled editorial aside instead of a filled note box.
-          fontSize: 11,
-          color: UI_COLORS.textMuted,
-          lineHeight: 1.5,
-          paddingLeft: 10,
-          borderLeft: `2px solid ${UI_COLORS.rule}`,
-        }}
-      >
-        {t("brandIdentity.note")}
-      </div>
+      {showNote && (
+        <div
+          style={{
+            // A left-ruled editorial aside instead of a filled note box.
+            fontSize: 11,
+            color: UI_COLORS.textMuted,
+            lineHeight: 1.5,
+            paddingLeft: 10,
+            borderLeft: `2px solid ${UI_COLORS.rule}`,
+          }}
+        >
+          {t("brandIdentity.note")}
+        </div>
+      )}
     </div>
   );
 }

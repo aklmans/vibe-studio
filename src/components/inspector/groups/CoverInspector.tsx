@@ -24,24 +24,22 @@ export default function CoverInspector({
   return (
     <>
       <InspectorGroup
-        title={t("group.brand")}
-        hint={t("group.brand.hint")}
-        testId="group-cover-brand"
+        title={t("group.coverCopy")}
+        hint={t("group.coverCopy.hint")}
+        testId="group-cover-copy"
       >
-        <BrandIdentityEditor
-          state={state}
-          onChange={onChange}
-          testIdPrefix="cover"
-          showSubtitle
-          coverVisual
+        <SectionInput
+          label={t("label.title")}
+          value={state.cover.title}
+          onChange={(v) => writeCover({ title: v })}
+          testId="cover-title"
         />
-      </InspectorGroup>
-
-      <InspectorGroup
-        title={t("group.todaysBuild")}
-        hint={t("group.todaysBuild.hint")}
-        testId="group-cover-today"
-      >
+        <SectionInput
+          label={t("label.subtitle")}
+          value={state.cover.hookText}
+          onChange={(v) => writeCover({ hookText: v })}
+          testId="cover-subtitle"
+        />
         <SectionInput
           label={t("label.cardLabel")}
           value={state.cover.todayLabel}
@@ -55,6 +53,20 @@ export default function CoverInspector({
           testId="cover-today-topic"
         />
         <RuleNote>{t("mapping.todayTopic")}</RuleNote>
+      </InspectorGroup>
+
+      <InspectorGroup
+        title={t("group.coverVisual")}
+        hint={t("group.coverVisual.hint")}
+        testId="group-cover-visual"
+      >
+        <BrandIdentityEditor
+          state={state}
+          onChange={onChange}
+          testIdPrefix="cover"
+          coverVisual
+          showCopy={false}
+        />
       </InspectorGroup>
 
       <InspectorGroup
