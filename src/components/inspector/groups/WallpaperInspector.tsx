@@ -72,6 +72,7 @@ export default function WallpaperInspector({
         title={t("group.brandLabel")}
         hint={t("group.brandLabel.hint")}
         testId="group-wallpaper-copy"
+        defaultOpen={false}
       >
         <ToggleButton
           label={t("toggle.showBrandLabel")}
@@ -110,6 +111,7 @@ export default function WallpaperInspector({
         title={t("group.visibility")}
         hint={t("group.visibility.hint")}
         testId="group-wallpaper-visibility"
+        defaultOpen={false}
       >
         <ToggleButton
           label={t("toggle.showAvatar")}

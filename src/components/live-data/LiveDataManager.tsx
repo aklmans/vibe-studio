@@ -208,11 +208,6 @@ export default function LiveDataManager({
           </div>
         </section>
 
-        {/* Session recipe — kept as a single bordered textarea-like exception. */}
-        <div style={{ marginTop: 24 }}>
-          <SessionRecipePanel state={state} onChange={onChange} />
-        </div>
-
         <RuledSection
           testId="live-data-sections"
           title={t("group.sections")}
@@ -282,6 +277,11 @@ export default function LiveDataManager({
             </EditorBlock>
           ))}
         </RuledSection>
+
+        {/* Session recipe — kept as a single bordered textarea-like exception. */}
+        <div style={{ marginTop: 32 }}>
+          <SessionRecipePanel state={state} onChange={onChange} />
+        </div>
       </div>
     </div>
   );

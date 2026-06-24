@@ -298,7 +298,9 @@ function normalizeBadges(
   legacy: { badge1?: unknown; badge2?: unknown },
 ): BadgeConfig[] {
   if (Array.isArray(value)) {
-    return defaults.map((fallback, i) => normalizeBadge(value[i], fallback));
+    return value.map((item, i) =>
+      normalizeBadge(item, defaults[i] ?? defaults[defaults.length - 1]),
+    );
   }
 
   // Legacy v0 -> v1 migration: { badge1: "Claude", badge2: "Codex" } strings
@@ -344,7 +346,9 @@ function normalizeSocials(
   },
 ): SocialConfig[] {
   if (Array.isArray(value)) {
-    return defaults.map((fallback, i) => normalizeSocial(value[i], fallback));
+    return value.map((item, i) =>
+      normalizeSocial(item, defaults[i] ?? defaults[defaults.length - 1]),
+    );
   }
 
   // Legacy v0 -> v1 migration: four flat strings become the first four

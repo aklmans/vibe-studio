@@ -185,8 +185,8 @@ test("normalizeOverlayState handles empty arrays and invalid types conservativel
   assert.deepEqual(state.bottomBar.segments, defaultValue.bottomBar.segments);
   assert.deepEqual(state.stack.items, ["Keep"]);
   assert.equal(state.cover.avatarVisible, defaultValue.cover.avatarVisible);
-  assert.deepEqual(state.cover.badges, defaultValue.cover.badges);
-  assert.deepEqual(state.cover.socials, defaultValue.cover.socials);
+  assert.deepEqual(state.cover.badges, []);
+  assert.deepEqual(state.cover.socials, []);
   assert.equal(state.wallpaper.previewPresetId, defaultValue.wallpaper.previewPresetId);
   assert.equal(state.wallpaper.avatarVisible, defaultValue.wallpaper.avatarVisible);
   assert.equal(state.colors.bgDark, defaultValue.colors.bgDark);

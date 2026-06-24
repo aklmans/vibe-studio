@@ -13,6 +13,9 @@ import CommandPalette from "./CommandPalette";
 import SettingsDrawer from "./SettingsDrawer";
 import TopBar from "./topbar/TopBar";
 import BadgesEditor from "./BadgesEditor";
+import SocialsEditor from "./SocialsEditor";
+import CoverInspector from "./inspector/groups/CoverInspector";
+import PosterInspector from "./inspector/groups/PosterInspector";
 import WallpaperInspector from "./inspector/groups/WallpaperInspector";
 import { SectionInput, ToggleButton } from "./shared/Field";
 
@@ -141,6 +144,92 @@ test("editor hints explain which surfaces consume shared fields", () => {
 
 test("unused wallpaper editor module is removed from the workbench", () => {
   assert.equal(existsSync(resolve("src/components/WallpaperEditor.tsx")), false);
+});
+
+test("surface inspectors default to a focused first-screen workflow", () => {
+  const cover = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(CoverInspector, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(cover, /data-testid="cover-visual"/);
+  assert.match(cover, /data-testid="cover-today-topic"/);
+  assert.doesNotMatch(cover, /data-testid="cover-social-visible"/);
+
+  const poster = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(PosterInspector, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(poster, /data-testid="poster-title"/);
+  assert.match(poster, /data-testid="poster-today-topic"/);
+  assert.doesNotMatch(poster, /data-testid="poster-manifesto-visible"/);
+  assert.doesNotMatch(poster, /data-testid="poster-hook-visible"/);
+  assert.doesNotMatch(poster, /data-testid="poster-closing-visible"/);
+  assert.doesNotMatch(poster, /data-testid="poster-social-visible"/);
+
+  const wallpaper = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(WallpaperInspector, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(wallpaper, /data-testid="wallpaper-title"/);
+  assert.match(wallpaper, /data-testid="wallpaper-preset-desktop-4k"/);
+  assert.doesNotMatch(wallpaper, /data-testid="wallpaper-brand-visible"/);
+  assert.doesNotMatch(wallpaper, /data-testid="wallpaper-avatar-visible"/);
+});
+
+test("live data prioritizes live editing before recipe import/export", () => {
+  const source = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
+  const sessionBar = source.indexOf('data-testid="live-data-session-bar"');
+  const sections = source.indexOf('testId="live-data-sections"');
+  const liveSession = source.indexOf('testId="live-data-live-session"');
+  const stack = source.indexOf('testId="live-data-stack"');
+  const bottomBar = source.indexOf('testId="live-data-bottom-bar"');
+  const recipe = source.indexOf("<SessionRecipePanel");
+
+  assert.ok(sessionBar >= 0);
+  assert.ok(sections > sessionBar);
+  assert.ok(liveSession > sections);
+  assert.ok(stack > liveSession);
+  assert.ok(bottomBar > stack);
+  assert.ok(recipe > bottomBar);
+});
+
+test("social editor uses the same add-list workflow as badges", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(SocialsEditor, {
+        state: DEFAULT_STATE,
+        onChange: () => {},
+      }),
+    }),
+  );
+
+  assert.match(html, /data-testid="social-add-search"/);
+  assert.match(html, /data-testid="social-add-custom"/);
+  assert.match(html, /data-testid="social-0-remove"/);
+  assert.match(html, /data-testid="social-0-move-up"[^>]*disabled=""/);
+  assert.match(html, /data-testid="social-0-move-down"/);
+  assert.doesNotMatch(html, /data-testid="social-0-visible"/);
+  assert.doesNotMatch(html, /role="switch"/);
 });
 
 test("settings drawer uses ruled selectors and color rows instead of shared pills", () => {
@@ -411,19 +500,14 @@ test("stack bare tool glyphs keep a generous hit target", () => {
 
 
 test("wallpaper inspector exposes only one effective avatar visibility toggle", () => {
-  const html = renderToStaticMarkup(
-    React.createElement(LocaleProvider, {
-      initialLocale: "en",
-      persist: false,
-      children: React.createElement(WallpaperInspector, {
-        state: DEFAULT_STATE,
-        onChange: () => {},
-      }),
-    }),
+  const source = readFileSync(
+    resolve("src/components/inspector/groups/WallpaperInspector.tsx"),
+    "utf8",
   );
 
-  const matches = [...html.matchAll(/data-testid="wallpaper-avatar-visible"/g)];
+  const matches = [...source.matchAll(/testId="wallpaper-avatar-visible"/g)];
   assert.equal(matches.length, 1);
+  assert.match(source, /showAvatarToggle=\{false\}/);
 });
 
 test("cover visual editor writes cover-only image URLs and reset defaults", () => {

@@ -276,6 +276,8 @@ export const dict = {
     "social.discord": "Discord",
     "social.wechat": "微信",
     "social.custom": "自定义…",
+    "social.empty": "暂无社交链接。搜索平台或添加自定义链接。",
+    "social.searchPlaceholder": "搜索平台或添加自定义…",
 
     // ─── Badge kind labels ────────────────────────────────────────────
     "badge.claude": "Claude",
@@ -602,6 +604,8 @@ export const dict = {
     "social.discord": "Discord",
     "social.wechat": "WeChat",
     "social.custom": "Custom…",
+    "social.empty": "No social links yet. Search a platform or add a custom link.",
+    "social.searchPlaceholder": "Search platform or add custom…",
 
     // ─── Badge kind labels ────────────────────────────────────────────
     "badge.claude": "Claude",
