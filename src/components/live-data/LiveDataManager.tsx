@@ -11,8 +11,8 @@ import SessionRecipePanel from "./SessionRecipePanel";
 import {
   WorkbenchButton,
   WorkbenchLabel,
-  WorkbenchSegmented,
 } from "../shared/Field";
+import { LineSegmented } from "../inspector/EditorRow";
 
 interface LiveDataManagerProps {
   state: OverlayState;
@@ -222,7 +222,7 @@ export default function LiveDataManager({
             <WorkbenchLabel style={labelStyle}>
               {t("label.activeSection")}
             </WorkbenchLabel>
-            <WorkbenchSegmented
+            <LineSegmented
               active={String(state.sidebar.activeSection)}
               onSelect={(value) =>
                 onChange(
@@ -252,18 +252,26 @@ export default function LiveDataManager({
         </RuledSection>
 
         <RuledSection
-          testId="live-data-live-bar"
-          title={t("group.liveBar")}
-          hint={t("group.liveBar.hint")}
+          testId="live-data-live-session"
+          title={t("group.liveSession")}
+          hint={t("group.liveSession.hint")}
         >
-          <EditorBlock label={t("label.liveSession")}>
-            <LiveSessionEditor state={state} onChange={onChange} />
-          </EditorBlock>
+          <LiveSessionEditor state={state} onChange={onChange} />
+        </RuledSection>
 
-          <EditorBlock label={t("label.stack")}>
-            <StackEditor state={state} onChange={onChange} />
-          </EditorBlock>
+        <RuledSection
+          testId="live-data-stack"
+          title={t("group.stack")}
+          hint={t("group.stack.hint")}
+        >
+          <StackEditor state={state} onChange={onChange} />
+        </RuledSection>
 
+        <RuledSection
+          testId="live-data-bottom-bar"
+          title={t("group.bottomBarSegments")}
+          hint={t("group.bottomBarSegments.hint")}
+        >
           {[0, 1, 2].map((idx) => (
             <EditorBlock key={idx} label={`${t("label.segment")} ${idx + 1}`}>
               <BottomBarSegmentEditor

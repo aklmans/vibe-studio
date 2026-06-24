@@ -78,13 +78,13 @@ export default function BottomBarSegmentEditor({
 
       {slot.kind === "stack" && (
         <RuleNote>
-          {t("segmentEditor.stackDesc")}
+          {t("mapping.bottomStack")}
         </RuleNote>
       )}
 
       {slot.kind === "topic" && (
         <RuleNote>
-          {t("segmentEditor.mirrorDesc")}
+          {t("mapping.bottomTopic")}
         </RuleNote>
       )}
 

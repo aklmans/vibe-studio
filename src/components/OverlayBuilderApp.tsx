@@ -46,7 +46,7 @@ import {
   startCurrentLiveSession as startRemoteLiveSession,
   type LiveDataApiResult,
 } from "../lib/live-data-client";
-import { CANVAS_TABS } from "../lib/tabs";
+import { APP_TABS } from "../lib/tabs";
 import {
   WALLPAPER_PRESETS,
   getWallpaperPreset,
@@ -460,7 +460,7 @@ export default function App() {
     handleExportWallpaper,
   ]);
 
-  const TAB_ORDER = CANVAS_TABS;
+  const TAB_ORDER = APP_TABS;
 
   useKeyboardShortcuts({
     onCommandPalette: () => setCmdkOpen((v) => !v),
@@ -706,7 +706,6 @@ export default function App() {
         onExportSidebar={handleExportSidebar}
         onExportBottomBar={handleExportBottomBar}
         onOpenSettings={() => setSettingsOpen(true)}
-        onReset={handleReset}
       />
     </>
   );

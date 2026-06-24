@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import React from "react";
@@ -64,7 +64,6 @@ test("operation UI source paths avoid legacy SaaS visual residue", () => {
     "src/components/live-data/SessionRecipePanel.tsx",
     "src/components/inspector/BrandIdentityEditor.tsx",
     "src/components/inspector/InspectorGroup.tsx",
-    "src/components/WallpaperEditor.tsx",
     "src/components/ui/alert-dialog.tsx",
     "src/components/ui/button.tsx",
   ];
@@ -93,6 +92,55 @@ test("command palette uses the localized Vibe Studio label", () => {
   assert.equal(en["cmdk.label"], "Vibe Studio command palette");
   assert.match(source, /label=\{t\("cmdk\.label"\)\}/);
   assert.doesNotMatch(source, /Vibe Overlay command palette/);
+});
+
+
+test("command palette reset opens settings instead of resetting immediately", () => {
+  const source = readFileSync(resolve("src/components/CommandPalette.tsx"), "utf8");
+
+  assert.doesNotMatch(source, /onSelect=\{run\(onReset\)\}/);
+  assert.match(source, /onSelect=\{run\(\(\) => \{\s*onOpenSettings\(\);\s*\}\)\}/);
+});
+
+test("overlay live editing is split into focused inspector groups", () => {
+  const source = readFileSync(resolve("src/components/inspector/groups/OverlayInspector.tsx"), "utf8");
+
+  assert.match(source, /testId="group-overlay-live-session"/);
+  assert.match(source, /testId="group-overlay-stack"/);
+  assert.match(source, /testId="group-overlay-bottom-bar"/);
+  assert.doesNotMatch(source, /testId="group-overlay-live-bar"/);
+  assert.match(source, /title=\{t\("group\.liveSession"\)\}/);
+  assert.match(source, /title=\{t\("group\.stack"\)\}/);
+  assert.match(source, /title=\{t\("group\.bottomBarSegments"\)\}/);
+});
+
+test("tab shortcuts include Live Data in the visible tab order", () => {
+  const source = readFileSync(resolve("src/components/OverlayBuilderApp.tsx"), "utf8");
+
+  assert.match(source, /import \{ APP_TABS/);
+  assert.match(source, /const TAB_ORDER = APP_TABS;/);
+  assert.doesNotMatch(source, /const TAB_ORDER = CANVAS_TABS;/);
+});
+
+test("editor hints explain which surfaces consume shared fields", () => {
+  const coverSource = readFileSync(resolve("src/components/inspector/groups/CoverInspector.tsx"), "utf8");
+  const posterSource = readFileSync(resolve("src/components/inspector/groups/PosterInspector.tsx"), "utf8");
+  const socialSource = readFileSync(resolve("src/components/SocialsEditor.tsx"), "utf8");
+  const bottomSource = readFileSync(resolve("src/components/BottomBarSegmentEditor.tsx"), "utf8");
+  const zh = dict.zh as Record<string, string>;
+  const en = dict.en as Record<string, string>;
+
+  assert.match(coverSource, /t\("mapping\.todayTopic"\)/);
+  assert.match(posterSource, /t\("mapping\.todayTopic"\)/);
+  assert.match(socialSource, /t\("mapping\.socials"\)/);
+  assert.match(bottomSource, /t\("mapping\.bottomTopic"\)/);
+  assert.match(bottomSource, /t\("mapping\.bottomStack"\)/);
+  assert.match(zh["mapping.todayTopic"], /封面/);
+  assert.match(en["mapping.socials"], /Sidebar/);
+});
+
+test("unused wallpaper editor module is removed from the workbench", () => {
+  assert.equal(existsSync(resolve("src/components/WallpaperEditor.tsx")), false);
 });
 
 test("settings drawer uses ruled selectors and color rows instead of shared pills", () => {
@@ -336,6 +384,7 @@ test("right inspector editors use the inspector line segmented control", () => {
     "src/components/BottomBarSegmentEditor.tsx",
     "src/components/inspector/groups/OverlayInspector.tsx",
     "src/components/inspector/groups/WallpaperInspector.tsx",
+    "src/components/live-data/LiveDataManager.tsx",
   ];
 
   for (const file of files) {

@@ -15,6 +15,7 @@ import {
   FieldLine,
   FIELD_CONTENT_INSET,
   LineSegmented,
+  RuleNote,
 } from "./inspector/EditorRow";
 
 interface SocialsEditorProps {
@@ -44,7 +45,9 @@ export default function SocialsEditor({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <RuleNote>{t("mapping.socials")}</RuleNote>
+      <div style={{ display: "flex", flexDirection: "column" }}>
       {state.cover.socials.map((social, idx) => (
         <EditorRow
           key={idx}
@@ -155,6 +158,7 @@ export default function SocialsEditor({
           )}
         </EditorRow>
       ))}
+      </div>
     </div>
   );
 }

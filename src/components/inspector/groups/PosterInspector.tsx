@@ -4,6 +4,7 @@ import InspectorGroup from "../InspectorGroup";
 import BrandIdentityEditor from "../BrandIdentityEditor";
 import { SectionInput, ToggleButton } from "../../shared/Field";
 import SocialsEditor from "../../SocialsEditor";
+import { RuleNote } from "../EditorRow";
 import { useLocale } from "../../../hooks/useLocale";
 
 interface PosterInspectorProps {
@@ -51,6 +52,7 @@ export default function PosterInspector({
           onChange={(v) => writeCover({ todayTopic: v })}
           testId="poster-today-topic"
         />
+        <RuleNote>{t("mapping.todayTopic")}</RuleNote>
       </InspectorGroup>
 
       <InspectorGroup
@@ -157,6 +159,7 @@ export default function PosterInspector({
         title={t("group.socials")}
         hint={t("group.socials.hint")}
         testId="group-poster-socials"
+        defaultOpen={false}
       >
         <ToggleButton
           label={t("toggle.showSocialInfo")}

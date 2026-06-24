@@ -4,6 +4,7 @@ import InspectorGroup from "../InspectorGroup";
 import BrandIdentityEditor from "../BrandIdentityEditor";
 import { SectionInput, ToggleButton } from "../../shared/Field";
 import SocialsEditor from "../../SocialsEditor";
+import { RuleNote } from "../EditorRow";
 import { useLocale } from "../../../hooks/useLocale";
 
 interface CoverInspectorProps {
@@ -53,6 +54,7 @@ export default function CoverInspector({
           onChange={(v) => writeCover({ todayTopic: v })}
           testId="cover-today-topic"
         />
+        <RuleNote>{t("mapping.todayTopic")}</RuleNote>
       </InspectorGroup>
 
       <InspectorGroup

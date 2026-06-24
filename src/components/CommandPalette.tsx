@@ -19,7 +19,7 @@ interface CommandPaletteProps {
   onExportSidebar: () => void;
   onExportBottomBar: () => void;
   onOpenSettings: () => void;
-  onReset: () => void;
+  onReset?: () => void;
 }
 
 const isMac =
@@ -38,7 +38,6 @@ export default function CommandPalette({
   onExportSidebar,
   onExportBottomBar,
   onOpenSettings,
-  onReset,
 }: CommandPaletteProps) {
   const { t, locale, setLocale } = useLocale();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -423,7 +422,9 @@ export default function CommandPalette({
               </Item>
               <Item
                 value="reset defaults 重置 reset"
-                onSelect={run(onReset)}
+                onSelect={run(() => {
+                  onOpenSettings();
+                })}
                 testId="cmdk-reset"
                 tone="danger"
               >

@@ -141,20 +141,28 @@ export default function OverlayInspector({
       </InspectorGroup>
 
       <InspectorGroup
-        title={t("group.liveBar")}
-        hint={t("group.liveBar.hint")}
-        testId="group-overlay-live-bar"
+        title={t("group.liveSession")}
+        hint={t("group.liveSession.hint")}
+        testId="group-overlay-live-session"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <WorkbenchLabel>{t("label.liveSession")}</WorkbenchLabel>
-          <LiveSessionEditor state={state} onChange={onChange} />
-        </div>
+        <LiveSessionEditor state={state} onChange={onChange} />
+      </InspectorGroup>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <WorkbenchLabel>{t("label.stack")}</WorkbenchLabel>
-          <StackEditor state={state} onChange={onChange} />
-        </div>
+      <InspectorGroup
+        title={t("group.stack")}
+        hint={t("group.stack.hint")}
+        testId="group-overlay-stack"
+        defaultOpen={false}
+      >
+        <StackEditor state={state} onChange={onChange} />
+      </InspectorGroup>
 
+      <InspectorGroup
+        title={t("group.bottomBarSegments")}
+        hint={t("group.bottomBarSegments.hint")}
+        testId="group-overlay-bottom-bar"
+        defaultOpen={false}
+      >
         {[0, 1, 2].map((idx) => (
           <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <WorkbenchLabel>{`${t("label.segment")} ${idx + 1}`}</WorkbenchLabel>
