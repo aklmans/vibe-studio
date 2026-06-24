@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
 import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
+import type { BrandIconKey, BrandIconMode } from "../lib/brand-icons";
 import {
-  getSocialKindOptions,
-  defaultSocialLabel,
+  searchSocialIconOptions,
+  socialIconLabel,
   type SocialConfig,
-  type SocialKind,
+  type SocialIconOption,
 } from "../lib/socials";
 import { UI_COLORS } from "../lib/design-tokens";
 import { useLocale } from "../hooks/useLocale";
 import { editorialPalette } from "./lib/editorial-palette";
 import { TextInput } from "./shared/Field";
+import { BrandIcon } from "./shared/BrandIcon";
 import {
   EditorRow,
   FieldLine,
@@ -30,11 +32,16 @@ type VisibleSocial = {
   originalIndex: number;
 };
 
+interface SocialAddOption {
+  iconKey?: BrandIconKey;
+  label: string;
+}
+
 /**
  * Editor for the social-link list shown in Sidebar / Overlay sidebar / Poster
- * footer. Socials now follow the same add-list pattern as badges: visible rows
- * are the active list; remove what is not needed; search once at the bottom to
- * append a platform or a custom link. No fixed slots, no visibility switches.
+ * footer. It follows the same add-list pattern as badges and the tool stack:
+ * visible rows are the active list; add a platform by search, or add a custom
+ * link when the registry does not have the icon the user needs.
  */
 export default function SocialsEditor({
   state,
@@ -44,7 +51,6 @@ export default function SocialsEditor({
   const { locale, t } = useLocale();
   const palette = editorialPalette(state.colors);
   const [addQuery, setAddQuery] = useState("");
-  const kindOptions = getSocialKindOptions(locale);
 
   const visibleSocials = state.cover.socials.reduce<VisibleSocial[]>(
     (items, social, originalIndex) => {
@@ -54,27 +60,17 @@ export default function SocialsEditor({
     [],
   );
 
-  const usedKinds = useMemo(
-    () =>
-      new Set(
-        visibleSocials
-          .map(({ social }) => social.kind)
-          .filter((kind): kind is Exclude<SocialKind, "custom"> => kind !== "custom"),
-      ),
+  const usedIconKeys = useMemo(
+    () => new Set(visibleSocials.map(({ social }) => social.iconKey).filter(Boolean)),
     [visibleSocials],
   );
 
-  const addOptions = useMemo(() => {
-    const query = addQuery.trim().toLowerCase();
-    return kindOptions.filter((opt) => {
-      if (opt.value !== "custom" && usedKinds.has(opt.value)) return false;
-      if (!query) return true;
-      return (
-        opt.value.toLowerCase().includes(query) ||
-        opt.label.toLowerCase().includes(query)
-      );
-    });
-  }, [addQuery, kindOptions, usedKinds]);
+  const addOptions = useMemo<SocialAddOption[]>(() => {
+    const platformOptions = searchSocialIconOptions(addQuery, locale)
+      .filter((option) => !usedIconKeys.has(option.iconKey))
+      .slice(0, 8);
+    return [...platformOptions, { label: t("label.custom") }];
+  }, [addQuery, locale, t, usedIconKeys]);
 
   const writeSocials = (socials: SocialConfig[]) => {
     onChange(patchSection(state, "cover", { socials }));
@@ -102,17 +98,21 @@ export default function SocialsEditor({
     writeSocials(socials);
   };
 
-  const addSocial = (kind: SocialKind) => {
-    if (kind !== "custom" && usedKinds.has(kind)) return;
-    const label = kind === "custom" ? t("label.custom") : defaultSocialLabel(kind, locale);
+  const addSocial = (option: SocialAddOption) => {
+    if (option.iconKey && usedIconKeys.has(option.iconKey)) return;
+    const label = option.iconKey
+      ? socialIconLabel(option.iconKey, locale)
+      : t("label.custom");
+
     writeSocials([
       ...state.cover.socials,
       {
         visible: true,
-        kind,
+        iconKey: option.iconKey,
+        iconMode: "mono",
         label,
         value: "",
-        customColor: kind === "custom" ? palette.primaryMark : "",
+        customColor: option.iconKey ? "" : palette.primaryMark,
       },
     ]);
     setAddQuery("");
@@ -124,9 +124,37 @@ export default function SocialsEditor({
       <div style={{ display: "flex", flexDirection: "column" }}>
         {visibleSocials.map(({ social, originalIndex }, visibleIndex) => (
           <EditorRow
-            key={`${social.kind}-${originalIndex}`}
+            key={`${social.iconKey ?? "custom"}-${originalIndex}`}
             index={visibleIndex + 1}
-            title={social.label || `${t("label.social")} ${visibleIndex + 1}`}
+            title={
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <span
+                  data-testid={`${testIdPrefix}-${visibleIndex}-icon`}
+                  style={{ display: "inline-flex", alignItems: "center", width: 16, flexShrink: 0 }}
+                >
+                  <BrandIcon
+                    iconKey={social.iconKey}
+                    mode={social.iconMode}
+                    color={UI_COLORS.textMuted}
+                    size={14}
+                    label={social.label}
+                  />
+                  {!social.iconKey && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderLeft: `2px solid ${social.customColor || palette.primaryMark}`,
+                      }}
+                    />
+                  )}
+                </span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {social.label || `${t("label.social")} ${visibleIndex + 1}`}
+                </span>
+              </span>
+            }
             action={
               <div
                 style={{
@@ -160,27 +188,27 @@ export default function SocialsEditor({
               </div>
             }
           >
-            <LineSegmented
-              active={social.kind}
-              columns={4}
-              onSelect={(value) => {
-                const kind = value as SocialKind;
-                const patch: Partial<SocialConfig> = { kind };
-                if (kind !== "custom") {
-                  patch.label = defaultSocialLabel(kind, locale);
-                  patch.customColor = "";
-                } else if (!social.label.trim()) {
-                  patch.label = t("label.custom");
-                  patch.customColor = social.customColor || palette.primaryMark;
+            {social.iconKey && (
+              <LineSegmented
+                active={social.iconMode}
+                columns={2}
+                onSelect={(value) =>
+                  updateSocial(originalIndex, { iconMode: value as BrandIconMode })
                 }
-                updateSocial(originalIndex, patch);
-              }}
-              options={kindOptions.map((opt) => ({
-                value: opt.value,
-                label: opt.label,
-                testId: `${testIdPrefix}-${visibleIndex}-kind-${opt.value}`,
-              }))}
-            />
+                options={[
+                  {
+                    value: "mono",
+                    label: "Mono",
+                    testId: `${testIdPrefix}-${visibleIndex}-mode-mono`,
+                  },
+                  {
+                    value: "brand",
+                    label: "Brand",
+                    testId: `${testIdPrefix}-${visibleIndex}-mode-brand`,
+                  },
+                ]}
+              />
+            )}
 
             <FieldLine label={t("label.socialLabel")}>
               <TextInput
@@ -201,7 +229,7 @@ export default function SocialsEditor({
               />
             </FieldLine>
 
-            {social.kind === "custom" && (
+            {!social.iconKey && (
               <div
                 style={{
                   display: "flex",
@@ -290,7 +318,7 @@ export default function SocialsEditor({
             onKeyDown={(e) => {
               if (e.key === "Enter" && addOptions[0]) {
                 e.preventDefault();
-                addSocial(addOptions[0].value);
+                addSocial(addOptions[0]);
               }
             }}
             placeholder={t("social.searchPlaceholder")}
@@ -371,9 +399,9 @@ function SocialAddResults({
   testIdPrefix,
   onAdd,
 }: {
-  options: { value: SocialKind; label: string }[];
+  options: SocialAddOption[];
   testIdPrefix: string;
-  onAdd: (kind: SocialKind) => void;
+  onAdd: (option: SocialAddOption) => void;
 }) {
   const { t } = useLocale();
 
@@ -387,18 +415,19 @@ function SocialAddResults({
       }}
     >
       {options.map((opt, i) => {
+        const testId = opt.iconKey ?? "custom";
         const addLabel = `${t("btn.add")} ${opt.label}`;
         return (
           <button
-            key={opt.value}
-            data-testid={`${testIdPrefix}-add-${opt.value}`}
-            onClick={() => onAdd(opt.value)}
+            key={testId}
+            data-testid={`${testIdPrefix}-add-${testId}`}
+            onClick={() => onAdd(opt)}
             title={addLabel}
             aria-label={addLabel}
             style={{
               minWidth: 0,
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 18px",
+              gridTemplateColumns: "16px minmax(0, 1fr) 18px",
               alignItems: "center",
               gap: 8,
               padding: "8px 8px 7px",
@@ -412,6 +441,25 @@ function SocialAddResults({
               textAlign: "left",
             }}
           >
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <BrandIcon
+                iconKey={opt.iconKey}
+                mode="mono"
+                color={UI_COLORS.textMuted}
+                size={13}
+                label={opt.label}
+              />
+              {!opt.iconKey && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderLeft: `2px solid ${UI_COLORS.accent}`,
+                  }}
+                />
+              )}
+            </span>
             <span
               style={{
                 minWidth: 0,

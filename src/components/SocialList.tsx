@@ -3,6 +3,7 @@ import type { OverlayState } from "../types";
 import { patchSection } from "../lib/state";
 import type { SocialConfig } from "../lib/socials";
 import { compactSocialValue } from "../lib/socials";
+import { BrandIcon } from "./shared/BrandIcon";
 import { fontFamilies } from "../lib/typography";
 import { editorialPalette } from "./lib/editorial-palette";
 import EditableText from "./edit/EditableText";
@@ -100,7 +101,7 @@ export default function SocialList({ state, size = "small", editable, onChange }
         const srcIdx = findSocialIndex(idx);
         const displayValue = compactSocialValue(social.value, isLarge ? 46 : 34);
         const labelColor =
-          social.kind === "custom" && social.customColor
+          !social.iconKey && social.customColor
             ? social.customColor
             : E.subtle;
         return (
@@ -108,7 +109,26 @@ export default function SocialList({ state, size = "small", editable, onChange }
             key={idx}
             style={{ display: "flex", alignItems: "baseline", gap: rowGap }}
           >
-            <span style={{ ...labelBase, color: labelColor }}>{social.label}</span>
+            <span
+              style={{
+                ...labelBase,
+                color: labelColor,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: isLarge ? 8 : 6,
+              }}
+            >
+              <BrandIcon
+                iconKey={social.iconKey}
+                mode={social.iconMode}
+                color={labelColor}
+                size={isLarge ? 16 : 13}
+                label={social.label}
+              />
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {social.label}
+              </span>
+            </span>
             {editable && onChange && srcIdx >= 0 ? (
               <EditableText
                 value={social.value}

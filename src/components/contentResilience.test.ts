@@ -30,10 +30,10 @@ const LONG_STACK_ITEM =
   "@workspace/super-long-package-name-without-breakpoints-for-live-bottom-bar";
 
 const STRESS_SOCIALS: SocialConfig[] = [
-  { visible: true, kind: "youtube", label: "YouTube", value: LONG_URL, customColor: "" },
-  { visible: true, kind: "discord", label: "Discord", value: "https://discord.gg/UJjzvHck", customColor: "" },
-  { visible: true, kind: "custom", label: "VERYLONGCUSTOMLABELNAME", value: LONG_TOKEN, customColor: "#e0815c" },
-  { visible: true, kind: "github", label: "GitHub", value: "https://github.com/aklmans/vibe-coding-live-overlay-builder", customColor: "" },
+  { visible: true, iconKey: "youtube", iconMode: "mono", label: "YouTube", value: LONG_URL, customColor: "" },
+  { visible: true, iconKey: "discord", iconMode: "mono", label: "Discord", value: "https://discord.gg/UJjzvHck", customColor: "" },
+  { visible: true, iconMode: "mono", label: "VERYLONGCUSTOMLABELNAME", value: LONG_TOKEN, customColor: "#e0815c" },
+  { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "https://github.com/aklmans/vibe-coding-live-overlay-builder", customColor: "" },
 ];
 
 const STRESS_BADGES: BadgeConfig[] = [
@@ -307,10 +307,10 @@ test("Overlay uses explicit broadcast line hierarchy", () => {
 
 test("social rows render as quiet metadata, not filled platform-color tags", () => {
   const socials: SocialConfig[] = [
-    { visible: true, kind: "bilibili", label: "B站", value: "Aklman", customColor: "" },
-    { visible: true, kind: "youtube", label: "YouTube", value: "@aklman", customColor: "" },
-    { visible: true, kind: "discord", label: "Discord", value: "aklman", customColor: "" },
-    { visible: true, kind: "wechat", label: "微信", value: "aklman1", customColor: "" },
+    { visible: true, iconKey: "bilibili", iconMode: "mono", label: "B站", value: "Aklman", customColor: "" },
+    { visible: true, iconKey: "youtube", iconMode: "mono", label: "YouTube", value: "@aklman", customColor: "" },
+    { visible: true, iconKey: "discord", iconMode: "mono", label: "Discord", value: "aklman", customColor: "" },
+    { visible: true, iconKey: "wechat", iconMode: "mono", label: "微信", value: "aklman1", customColor: "" },
   ];
   const list = renderToStaticMarkup(
     React.createElement(SocialList, { state: coverState({ socials }), size: "large" }),

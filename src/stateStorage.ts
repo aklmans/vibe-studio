@@ -16,10 +16,16 @@ import {
   type BadgeIconKey,
 } from "./lib/badges";
 import {
+  LEGACY_SOCIAL_KIND_TO_ICON_KEY,
   isSocialKind,
   type SocialConfig,
   type SocialKind,
 } from "./lib/socials";
+import {
+  isBrandIconKey,
+  isBrandIconMode,
+  type BrandIconKey,
+} from "./lib/brand-icons";
 import {
   isBottomBarKind,
   type BottomBarKind,
@@ -311,16 +317,40 @@ function normalizeSocialKind(value: unknown): SocialKind {
   return isSocialKind(value) ? value : "custom";
 }
 
+function iconKeyFromLegacySocialKind(kind: SocialKind): BrandIconKey | undefined {
+  return kind === "custom" ? undefined : LEGACY_SOCIAL_KIND_TO_ICON_KEY[kind];
+}
+
+function normalizeSocialIconKey(
+  source: Record<string, unknown>,
+  fallback: SocialConfig,
+): BrandIconKey | undefined {
+  if ("iconKey" in source) {
+    return isBrandIconKey(source.iconKey) ? source.iconKey : undefined;
+  }
+
+  if (isSocialKind(source.kind)) {
+    return iconKeyFromLegacySocialKind(source.kind);
+  }
+
+  return fallback.iconKey;
+}
+
 function normalizeSocial(
   value: unknown,
   fallback: SocialConfig,
 ): SocialConfig {
   const source = record(value);
   if (!source) return { ...fallback };
-  const kind = normalizeSocialKind(source.kind);
+  const iconKey = normalizeSocialIconKey(source, fallback);
+  const iconMode = isBrandIconMode(source.iconMode)
+    ? source.iconMode
+    : fallback.iconMode;
+
   return {
     visible: boolOrDefault(source.visible, fallback.visible),
-    kind,
+    iconKey,
+    iconMode,
     label: stringOrDefault(source.label, fallback.label),
     value: stringOrDefault(source.value, fallback.value),
     customColor: stringOrDefault(source.customColor, fallback.customColor),
@@ -357,10 +387,15 @@ function normalizeSocials(
     custom: "",
   };
 
-  return defaults.map((fallback) => ({
-    ...fallback,
-    value: legacyValues[fallback.kind] || fallback.value,
-  }));
+  return defaults.map((fallback) => {
+    const legacyKind = (Object.keys(LEGACY_SOCIAL_KIND_TO_ICON_KEY) as Array<Exclude<SocialKind, "custom">>).find(
+      (kind) => LEGACY_SOCIAL_KIND_TO_ICON_KEY[kind] === fallback.iconKey,
+    );
+    return {
+      ...fallback,
+      value: legacyKind ? legacyValues[legacyKind] || fallback.value : fallback.value,
+    };
+  });
 }
 
 function normalizeWallpaperPresetId(value: unknown, fallback: WallpaperPresetId = DEFAULT_STATE.wallpaper.previewPresetId): WallpaperPresetId {

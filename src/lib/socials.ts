@@ -1,10 +1,15 @@
-// Social link presets shown in Sidebar / Overlay sidebar / Poster footer.
-// Each preset hard-codes the visual treatment (background + border + text)
-// so styling stays consistent regardless of which canvas renders it.
-//
-// "kind: 'custom'" lets the user invent their own label and color when none
-// of the presets match the platform they want to show.
+// Social link model shown in Sidebar / Overlay sidebar / Poster footer.
+// Current model is icon-backed: each row owns an optional registry icon plus
+// the user's label/value. Legacy `kind` values are accepted only as migration
+// input so older localStorage/session recipes keep working.
 
+import {
+  BRAND_ICON_REGISTRY,
+  searchBrandIcons,
+  type BrandIconKey,
+  type BrandIconMeta,
+  type BrandIconMode,
+} from "./brand-icons";
 import type { Locale } from "./i18n";
 import { dict } from "./i18n";
 import type { ColorTokens } from "./theme";
@@ -22,7 +27,8 @@ export type SocialKind =
 
 export interface SocialConfig {
   visible: boolean;
-  kind: SocialKind;
+  iconKey?: BrandIconKey;
+  iconMode: BrandIconMode;
   label: string;
   value: string;
   customColor: string;
@@ -32,6 +38,11 @@ export interface SocialStyle {
   color: string;
   background: string;
   border: string;
+}
+
+export interface SocialIconOption {
+  iconKey: BrandIconKey;
+  label: string;
 }
 
 export function compactSocialValue(value: string, maxLength = 46): string {
@@ -63,61 +74,120 @@ export const SOCIAL_KIND_VALUES: SocialKind[] = [
   "custom",
 ];
 
-export function getSocialKindOptions(locale: Locale): { value: SocialKind; label: string }[] {
-  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
-  return [
-    { value: "bilibili", label: t("social.bilibili") },
-    { value: "blog", label: t("social.blog") },
-    { value: "github", label: t("social.github") },
-    { value: "qq", label: t("social.qq") },
-    { value: "x", label: t("social.x") },
-    { value: "youtube", label: t("social.youtube") },
-    { value: "discord", label: t("social.discord") },
-    { value: "wechat", label: t("social.wechat") },
-    { value: "custom", label: t("social.custom") },
-  ];
+export const LEGACY_SOCIAL_KIND_TO_ICON_KEY: Record<Exclude<SocialKind, "custom">, BrandIconKey> = {
+  bilibili: "bilibili",
+  blog: "website",
+  github: "github",
+  qq: "qq",
+  x: "x",
+  youtube: "youtube",
+  discord: "discord",
+  wechat: "wechat",
+};
+
+const SOCIAL_ICON_KEYS: BrandIconKey[] = [
+  "youtube",
+  "bilibili",
+  "website",
+  "github",
+  "qq",
+  "wechat",
+  "x",
+  "discord",
+  "telegram",
+];
+
+function t(locale: Locale, key: string): string {
+  return dict[locale][key as keyof typeof dict.zh] ?? key;
 }
 
-export function defaultSocialLabel(kind: SocialKind, locale: Locale = "zh"): string {
-  const t = (key: string) => dict[locale][key as keyof typeof dict.zh] ?? key;
-  switch (kind) {
+export function socialIconLabel(iconKey: BrandIconKey, locale: Locale = "zh"): string {
+  switch (iconKey) {
     case "bilibili":
-      return t("social.bilibili");
-    case "blog":
-      return t("social.blog");
+      return t(locale, "social.bilibili");
+    case "website":
+      return t(locale, "social.blog");
     case "github":
-      return t("social.github");
+      return t(locale, "social.github");
     case "qq":
-      return t("social.qq");
+      return t(locale, "social.qq");
     case "x":
-      return t("social.x");
+      return t(locale, "social.x");
     case "youtube":
-      return t("social.youtube");
+      return t(locale, "social.youtube");
     case "discord":
-      return t("social.discord");
+      return t(locale, "social.discord");
     case "wechat":
-      return t("social.wechat");
-    case "custom":
-      return "";
+      return t(locale, "social.wechat");
+    default:
+      return BRAND_ICON_REGISTRY[iconKey].label;
   }
 }
 
+export function socialIconKeyFromKind(kind: SocialKind): BrandIconKey | undefined {
+  return kind === "custom" ? undefined : LEGACY_SOCIAL_KIND_TO_ICON_KEY[kind];
+}
+
+export function getSocialIconOptions(locale: Locale): SocialIconOption[] {
+  return SOCIAL_ICON_KEYS.map((iconKey) => ({
+    iconKey,
+    label: socialIconLabel(iconKey, locale),
+  }));
+}
+
+function optionFromMeta(meta: BrandIconMeta, locale: Locale): SocialIconOption {
+  return {
+    iconKey: meta.iconKey,
+    label: socialIconLabel(meta.iconKey, locale),
+  };
+}
+
+export function searchSocialIconOptions(
+  query: string,
+  locale: Locale,
+): SocialIconOption[] {
+  const normalized = query.trim().toLowerCase();
+  const common = getSocialIconOptions(locale);
+  const source = normalized
+    ? searchBrandIcons(query).filter((meta) =>
+        meta.category === "social" || meta.category === "streaming" || meta.iconKey === "github",
+      ).map((meta) => optionFromMeta(meta, locale))
+    : common;
+
+  const merged = [...common, ...source];
+  const seen = new Set<BrandIconKey>();
+  return merged.filter((option) => {
+    const haystack = `${option.iconKey} ${option.label}`.toLowerCase();
+    if (normalized && !haystack.includes(normalized)) {
+      const meta = BRAND_ICON_REGISTRY[option.iconKey];
+      const aliasText = meta.aliases.join(" ").toLowerCase();
+      if (!aliasText.includes(normalized)) return false;
+    }
+    if (seen.has(option.iconKey)) return false;
+    seen.add(option.iconKey);
+    return true;
+  });
+}
+
+export function defaultSocialLabel(kind: SocialKind, locale: Locale = "zh"): string {
+  const iconKey = socialIconKeyFromKind(kind);
+  return iconKey ? socialIconLabel(iconKey, locale) : "";
+}
+
 /**
- * Resolve the visual style for a social label. Editorial direction (Phase 2):
- * social links read as quiet metadata, not colored platform tags. Every preset
- * uses the same theme-derived hairline chip — the label text carries the brand
- * — so the footer stays calm and repaints correctly between Light and Dark. A
- * custom link may keep a restrained outline in the user's chosen color.
+ * Resolve the quiet label style for a social row. Editorial direction: social
+ * links read as metadata, not filled platform tags. A custom link may keep a
+ * restrained outline in the user's chosen color.
  */
 export function socialStyle(
-  badge: SocialConfig,
+  social: SocialConfig,
   colors: ColorTokens,
 ): SocialStyle {
-  if (badge.kind === "custom" && badge.customColor) {
+  if (!social.iconKey && social.customColor) {
     return {
-      color: badge.customColor,
+      color: social.customColor,
       background: "transparent",
-      border: `1px solid ${badge.customColor}66`,
+      border: `1px solid ${social.customColor}66`,
     };
   }
   return {

@@ -275,7 +275,7 @@ test("live data section editor shows one progress section at a time", () => {
   assert.doesNotMatch(html, /data-testid="live-data-section-panel-2"/);
 });
 
-test("social editor uses the same add-list workflow as badges", () => {
+test("social editor uses brand-icon search instead of fixed kind slots", () => {
   const html = renderToStaticMarkup(
     React.createElement(LocaleProvider, {
       initialLocale: "en",
@@ -288,12 +288,29 @@ test("social editor uses the same add-list workflow as badges", () => {
   );
 
   assert.match(html, /data-testid="social-add-search"/);
+  assert.match(html, /data-testid="social-add-youtube"/);
   assert.match(html, /data-testid="social-add-custom"/);
+  assert.match(html, /data-testid="social-0-icon"/);
+  assert.match(html, /data-brand-icon="bilibili"/);
+  assert.match(html, /data-testid="social-0-mode-brand"/);
   assert.match(html, /data-testid="social-0-remove"/);
   assert.match(html, /data-testid="social-0-move-up"[^>]*disabled=""/);
   assert.match(html, /data-testid="social-0-move-down"/);
+  assert.doesNotMatch(html, /data-testid="social-0-kind-/);
   assert.doesNotMatch(html, /data-testid="social-0-visible"/);
   assert.doesNotMatch(html, /role="switch"/);
+});
+
+test("social display components render registry icons next to social values", () => {
+  const listSource = readFileSync(resolve("src/components/SocialList.tsx"), "utf8");
+  const cardSource = readFileSync(resolve("src/components/shared/SocialCard.tsx"), "utf8");
+
+  assert.match(listSource, /BrandIcon/);
+  assert.match(cardSource, /BrandIcon/);
+  assert.match(listSource, /social\.iconKey/);
+  assert.match(cardSource, /social\.iconKey/);
+  assert.doesNotMatch(listSource, /social\.kind === "custom"/);
+  assert.doesNotMatch(cardSource, /social\.kind === "custom"/);
 });
 
 test("settings drawer uses ruled selectors and color rows instead of shared pills", () => {

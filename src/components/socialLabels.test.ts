@@ -18,11 +18,11 @@ import SocialCard from "./shared/SocialCard";
 ).React = React;
 
 const SOCIALS: SocialConfig[] = [
-  { visible: true, kind: "youtube", label: "YouTube", value: "https://www.youtube.com/@aklman2018", customColor: "" },
-  { visible: true, kind: "blog", label: "Website", value: "https://aklman.com", customColor: "" },
-  { visible: true, kind: "discord", label: "Discord", value: "https://discord.gg/UJjzvHck", customColor: "" },
-  { visible: true, kind: "x", label: "X", value: "https://x.com/Aklman2018", customColor: "" },
-  { visible: true, kind: "github", label: "GitHub", value: "https://github.com/aklmans", customColor: "" },
+  { visible: true, iconKey: "youtube", iconMode: "mono", label: "YouTube", value: "https://www.youtube.com/@aklman2018", customColor: "" },
+  { visible: true, iconKey: "website", iconMode: "mono", label: "Website", value: "https://aklman.com", customColor: "" },
+  { visible: true, iconKey: "discord", iconMode: "mono", label: "Discord", value: "https://discord.gg/UJjzvHck", customColor: "" },
+  { visible: true, iconKey: "x", iconMode: "mono", label: "X", value: "https://x.com/Aklman2018", customColor: "" },
+  { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "https://github.com/aklmans", customColor: "" },
 ];
 
 function asElement(node: ReactNode): ReactElement<{ children?: ReactNode; style?: CSSProperties }> {
@@ -85,9 +85,9 @@ test("SocialList makes values visually stronger than platform labels", () => {
 
 test("SocialList edits the original social item when hidden rows precede it", () => {
   const socials: SocialConfig[] = [
-    { visible: false, kind: "youtube", label: "Hidden", value: "hidden", customColor: "" },
-    { visible: true, kind: "blog", label: "Website", value: "https://example.com", customColor: "" },
-    { visible: true, kind: "github", label: "GitHub", value: "https://github.com/example", customColor: "" },
+    { visible: false, iconKey: "youtube", iconMode: "mono", label: "Hidden", value: "hidden", customColor: "" },
+    { visible: true, iconKey: "website", iconMode: "mono", label: "Website", value: "https://example.com", customColor: "" },
+    { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "https://github.com/example", customColor: "" },
   ];
   let nextState = {
     ...DEFAULT_STATE,

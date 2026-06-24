@@ -125,14 +125,16 @@ test("applySessionRecipeToOverlayState updates live data and shared cover copy",
   assert.deepEqual(next.cover.socials.slice(0, 2), [
     {
       visible: true,
-      kind: "bilibili",
+      iconKey: "bilibili",
+      iconMode: "mono",
       label: "B站",
       value: "Aklman",
       customColor: "",
     },
     {
       visible: true,
-      kind: "blog",
+      iconKey: "website",
+      iconMode: "mono",
       label: "个人网站",
       value: "aklman.com",
       customColor: "",

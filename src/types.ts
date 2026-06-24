@@ -165,11 +165,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     closingSuffix: "拥有美好人生。",
     socialVisible: true,
     socials: [
-      { visible: true, kind: "bilibili", label: "B站", value: "Aklman", customColor: "" },
-      { visible: true, kind: "blog", label: "个人网站", value: "aklman.com", customColor: "" },
-      { visible: true, kind: "qq", label: "QQ群", value: "205359827", customColor: "" },
-      { visible: true, kind: "wechat", label: "微信", value: "aklman1", customColor: "" },
-      { visible: true, kind: "github", label: "GitHub", value: "aklmans", customColor: "" },
+      { visible: true, iconKey: "bilibili", iconMode: "mono", label: "B站", value: "Aklman", customColor: "" },
+      { visible: true, iconKey: "website", iconMode: "mono", label: "个人网站", value: "aklman.com", customColor: "" },
+      { visible: true, iconKey: "qq", iconMode: "mono", label: "QQ群", value: "205359827", customColor: "" },
+      { visible: true, iconKey: "wechat", iconMode: "mono", label: "微信", value: "aklman1", customColor: "" },
+      { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "aklmans", customColor: "" },
     ],
   },
   wallpaper: {
@@ -263,11 +263,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       closingSuffix: "Have a great life.",
       socialVisible: true,
       socials: [
-        { visible: true, kind: "youtube", label: "YouTube", value: "@aklman2018", customColor: "" },
-        { visible: true, kind: "blog", label: "Website", value: "aklman.com", customColor: "" },
-        { visible: true, kind: "discord", label: "Discord", value: "aklman", customColor: "" },
-        { visible: true, kind: "x", label: "X", value: "@Aklman2018", customColor: "" },
-        { visible: true, kind: "github", label: "GitHub", value: "aklmans", customColor: "" },
+        { visible: true, iconKey: "youtube", iconMode: "mono", label: "YouTube", value: "@aklman2018", customColor: "" },
+        { visible: true, iconKey: "website", iconMode: "mono", label: "Website", value: "aklman.com", customColor: "" },
+        { visible: true, iconKey: "discord", iconMode: "mono", label: "Discord", value: "aklman", customColor: "" },
+        { visible: true, iconKey: "x", iconMode: "mono", label: "X", value: "@Aklman2018", customColor: "" },
+        { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "aklmans", customColor: "" },
       ],
     },
     wallpaper: {

@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { OverlayState } from "../../types";
 import type { TranslationKey } from "../../lib/i18n";
 import { compactSocialValue } from "../../lib/socials";
+import { BrandIcon } from "./BrandIcon";
 import { fontFamilies } from "../../lib/typography";
 import { editorialPalette } from "../lib/editorial-palette";
 
@@ -41,7 +42,7 @@ export default function SocialCard({
     letterSpacing: "0.14em",
     textTransform: "uppercase",
     color:
-      social.kind === "custom" && social.customColor
+      !social.iconKey && social.customColor
         ? social.customColor
         : E.subtle,
     whiteSpace: "nowrap",
@@ -111,7 +112,25 @@ export default function SocialCard({
               minWidth: 0,
             }}
           >
-            <span style={labelStyleFor(social)}>{social.label}</span>
+            <span
+              style={{
+                ...labelStyleFor(social),
+                display: "inline-flex",
+                alignItems: "center",
+                gap: S(8),
+              }}
+            >
+              <BrandIcon
+                iconKey={social.iconKey}
+                mode={social.iconMode}
+                color={!social.iconKey && social.customColor ? social.customColor : E.subtle}
+                size={S(horizontal ? 17 : 18)}
+                label={social.label}
+              />
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {social.label}
+              </span>
+            </span>
             <span style={valueStyle} title={social.value}>
               {compactSocialValue(social.value, 40)}
             </span>
@@ -148,8 +167,25 @@ export default function SocialCard({
         }}
       >
         {socials.flatMap((social, idx) => [
-          <span key={`label-${idx}`} style={labelStyleFor(social)}>
-            {social.label}
+          <span
+            key={`label-${idx}`}
+            style={{
+              ...labelStyleFor(social),
+              display: "inline-flex",
+              alignItems: "center",
+              gap: S(8),
+            }}
+          >
+            <BrandIcon
+              iconKey={social.iconKey}
+              mode={social.iconMode}
+              color={!social.iconKey && social.customColor ? social.customColor : E.subtle}
+              size={S(18)}
+              label={social.label}
+            />
+            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+              {social.label}
+            </span>
           </span>,
           <span key={`value-${idx}`} style={valueStyle} title={social.value}>
             {compactSocialValue(social.value, 44)}

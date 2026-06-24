@@ -4,6 +4,7 @@ import type { Locale } from "./i18n";
 import {
   defaultSocialLabel,
   isSocialKind,
+  socialIconKeyFromKind,
   type SocialConfig,
   type SocialKind,
 } from "./socials";
@@ -134,7 +135,7 @@ export function stateToSessionRecipe(state: OverlayState): SessionRecipe {
     socials: state.cover.socials
       .filter((social) => social.visible)
       .map((social) => ({
-        kind: social.kind,
+        kind: socialKindFromIconKey(social.iconKey),
         label: social.label,
         value: social.value,
       })),
@@ -312,13 +313,38 @@ function recipeSocialToConfig(
   social: SessionRecipeSocial,
   locale: Locale,
 ): SocialConfig {
+  const iconKey = socialIconKeyFromKind(social.kind);
   return {
     visible: true,
-    kind: social.kind,
+    iconKey,
+    iconMode: "mono",
     label: social.label || defaultSocialLabel(social.kind, locale),
     value: social.value,
-    customColor: "",
+    customColor: iconKey ? "" : "#e0815c",
   };
+}
+
+function socialKindFromIconKey(iconKey: SocialConfig["iconKey"]): SocialKind {
+  switch (iconKey) {
+    case "bilibili":
+      return "bilibili";
+    case "website":
+      return "blog";
+    case "github":
+      return "github";
+    case "qq":
+      return "qq";
+    case "x":
+      return "x";
+    case "youtube":
+      return "youtube";
+    case "discord":
+      return "discord";
+    case "wechat":
+      return "wechat";
+    default:
+      return "custom";
+  }
 }
 
 function socialKindFromLabel(label: string): SocialKind {

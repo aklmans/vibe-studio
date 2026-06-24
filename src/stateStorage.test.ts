@@ -127,10 +127,10 @@ test("normalizeOverlayState migrates v0 flat badges and social strings", () => {
   assert.equal(state.cover.badges[0].label, "Agent A");
   assert.equal(state.cover.badges[1].label, "Agent B");
   assert.equal(state.cover.badges[2].label, DEFAULT_STATE.cover.badges[2].label);
-  const socialValue = (kind: string) =>
-    state.cover.socials.find((social) => social.kind === kind)?.value;
+  const socialValue = (iconKey: string) =>
+    state.cover.socials.find((social) => social.iconKey === iconKey)?.value;
   assert.equal(socialValue("bilibili"), "@video");
-  assert.equal(socialValue("blog"), "blog.example.com");
+  assert.equal(socialValue("website"), "blog.example.com");
   assert.equal(socialValue("github"), "github.com/example");
   assert.equal(socialValue("qq"), "987654321");
 });
@@ -306,6 +306,43 @@ test("normalizeOverlayState migrates legacy theme names without dropping custom 
   assert.equal(state.colors.textColor, DARK_PRESET.textColor);
 });
 
+
+
+
+test("normalizeOverlayState migrates legacy social kinds into icon-backed socials", () => {
+  const state = normalizeOverlayState({
+    cover: {
+      socials: [
+        { visible: true, kind: "youtube", label: "YouTube", value: "@aklman", customColor: "" },
+        { visible: true, kind: "blog", label: "Website", value: "aklman.com", customColor: "" },
+        { visible: true, kind: "custom", label: "Newsletter", value: "letter.example", customColor: "#d86f4b" },
+      ],
+    },
+  });
+
+  assert.equal(state.cover.socials[0].iconKey, "youtube");
+  assert.equal(state.cover.socials[0].iconMode, "mono");
+  assert.equal(state.cover.socials[0].value, "@aklman");
+  assert.equal(state.cover.socials[1].iconKey, "website");
+  assert.equal(state.cover.socials[2].iconKey, undefined);
+  assert.equal(state.cover.socials[2].customColor, "#d86f4b");
+});
+
+test("normalizeOverlayState preserves icon-backed social objects and sanitizes invalid icon settings", () => {
+  const state = normalizeOverlayState({
+    cover: {
+      socials: [
+        { visible: true, iconKey: "github", iconMode: "brand", label: "GitHub", value: "aklmans", customColor: "" },
+        { visible: true, iconKey: "not-real", iconMode: "glow", label: "Mystery", value: "mystery", customColor: "" },
+      ],
+    },
+  });
+
+  assert.equal(state.cover.socials[0].iconKey, "github");
+  assert.equal(state.cover.socials[0].iconMode, "brand");
+  assert.equal(state.cover.socials[1].iconKey, undefined);
+  assert.equal(state.cover.socials[1].iconMode, "mono");
+});
 
 test("normalizeOverlayState migrates legacy string stack items into icon-backed stack items", () => {
   const state = normalizeOverlayState({
