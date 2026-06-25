@@ -191,13 +191,27 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: MAIN_SCREEN_SLOT.width,
               height: MAIN_SCREEN_SLOT.height,
               background: bgDark,
-              border: `1px solid ${E.lineStrong}`,
+              border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
+              boxShadow: `inset 0 0 0 1px ${E.lineSoft}`,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
             }}
           >
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: 72,
+                height: 3,
+                background: E.activeRule,
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
             {/* Main screen capture titlebar intentionally hidden.
                 The captured app already has its own chrome, so the preview area
                 gets the full frame height here. */}
@@ -241,12 +255,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: CAMERA_PANEL_SLOT.width,
               height: CAMERA_PANEL_SLOT.height,
               background: cameraFrameColors.shellBackground,
-              border: `1px solid ${E.lineStrong}`,
+              border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
+              boxShadow: `inset 0 0 0 1px ${E.lineSoft}, 0 10px 26px rgba(0,0,0,0.38)`,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              boxShadow: `0 10px 26px rgba(0,0,0,0.38)`,
             }}
           >
             {/* Camera titlebar */}
@@ -511,8 +525,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: 400,
               height: 708,
               background: `${bgPanel}F0`,
-              border: `1px solid ${E.lineStrong}`,
+              border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
+              boxShadow: `inset 0 0 0 1px ${E.lineSoft}`,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
@@ -536,8 +551,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             {/* Social footer */}
             {hasSocial && (
               <div
+                data-testid="overlay-social-info"
                 style={{
-                  borderTop: `1px solid ${E.line}`,
+                  borderTop: `2px solid ${E.lineStrong}`,
+                  boxShadow: `inset 0 1px 0 ${E.lineSoft}`,
                   padding: "14px 24px 16px",
                   display: "flex",
                   flexDirection: "column",
@@ -582,7 +599,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
               width: BOTTOM_BAR_SLOT.width,
               height: BOTTOM_BAR_SLOT.height,
               background: `${bgPanel}F0`,
-              border: `1px solid ${E.lineStrong}`,
+              border: `1px solid ${E.line}`,
+              borderTop: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
               display: "flex",
               overflow: "hidden",

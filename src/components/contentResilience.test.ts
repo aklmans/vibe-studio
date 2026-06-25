@@ -283,7 +283,7 @@ test("broadcast canvases keep no glow shadows", () => {
   for (const html of markups) {
     // Outer glows = box-shadow with a 0 0 (no offset) blur. Decommissioned in
     // Phase 2 (cover badge 0 0 30px, focus rail 0 0 8px, camera live 0 0 4px).
-    assert.doesNotMatch(html, /box-shadow:[^;"]*\b0 0 \d/);
+    assert.doesNotMatch(html, /box-shadow:(?!inset)[^;"]*\b0 0 \d/);
     assert.doesNotMatch(html, /0 0 30px/);
   }
 });
@@ -299,10 +299,70 @@ test("Overlay uses explicit broadcast line hierarchy", () => {
   const html = renderWithLocale(React.createElement(OverlayCanvas, { state }));
   const E = editorialPalette(state.colors);
 
-  assert.match(html, new RegExp(`border:1px solid ${E.lineStrong}`));
-  assert.match(html, new RegExp(`border-top:1px solid ${E.line}`));
+  assert.match(html, new RegExp(`border:2px solid ${E.lineStrong}`));
+  assert.match(html, new RegExp(`border-top:2px solid ${E.lineStrong}`));
   assert.match(html, new RegExp(`border-bottom:1px solid ${E.lineSoft}`));
   assert.match(html, new RegExp(`background:${E.activeRule}`));
+});
+
+test("Overlay main screen frame is stronger than supporting panels", () => {
+  const state: OverlayState = {
+    ...coverState({ socials: STRESS_SOCIALS, badges: STRESS_BADGES }),
+    sidebar: {
+      ...DEFAULT_STATE.sidebar,
+      socialVisible: true,
+    },
+  };
+  const html = renderWithLocale(React.createElement(OverlayCanvas, { state }));
+  const E = editorialPalette(state.colors);
+
+  assert.match(
+    html,
+    new RegExp(
+      `width:1440px;height:810px;[^"]*border:2px solid ${E.lineStrong}[^"]*box-shadow:inset 0 0 0 1px ${E.lineSoft}`,
+    ),
+  );
+  assert.match(
+    html,
+    new RegExp(`width:72px;height:3px;background:${E.activeRule}`),
+  );
+  assert.match(
+    html,
+    new RegExp(
+      `data-testid="overlay-bottom-bar"[^>]*border:1px solid ${E.line};border-top:2px solid ${E.lineStrong}`,
+    ),
+  );
+});
+
+test("Overlay supporting frames keep clear secondary rules", () => {
+  const state: OverlayState = {
+    ...coverState({ socials: STRESS_SOCIALS, badges: STRESS_BADGES }),
+    sidebar: {
+      ...DEFAULT_STATE.sidebar,
+      socialVisible: true,
+    },
+  };
+  const html = renderWithLocale(React.createElement(OverlayCanvas, { state }));
+  const E = editorialPalette(state.colors);
+
+  assert.match(
+    html,
+    new RegExp(
+      `data-testid="overlay-sidebar"[^>]*width:400px;height:708px;[^"]*border:2px solid ${E.lineStrong}[^"]*box-shadow:inset 0 0 0 1px ${E.lineSoft}`,
+    ),
+  );
+  assert.match(
+    html,
+    new RegExp(
+      `data-testid="overlay-social-info"[^>]*border-top:2px solid ${E.lineStrong}[^"]*box-shadow:inset 0 1px 0 ${E.lineSoft}`,
+    ),
+  );
+  assert.match(
+    html,
+    new RegExp(
+      `left:1496px;top:756px;width:400px;height:300px;[^"]*border:2px solid ${E.lineStrong}[^"]*box-shadow:inset 0 0 0 1px ${E.lineSoft}`,
+    ),
+  );
 });
 
 test("social rows render as quiet metadata, not filled platform-color tags", () => {
