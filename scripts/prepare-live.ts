@@ -21,10 +21,9 @@ const OBS_SCENE_COLLECTION = "Vibe Studio Overlay";
 const OBS_SCENE = "Vibe Live Overlay";
 const OBS_PROCESS_PATTERN = "/Applications/OBS.app/Contents/MacOS/OBS";
 const OBS_PROCESS_NAME = "OBS";
-const OBS_SCENE_FILE = path.join(
+const OBS_SCENE_DIR = path.join(
   homedir(),
   "Library/Application Support/obs-studio/basic/scenes",
-  `${OBS_SCENE_COLLECTION}.json`,
 );
 const OBS_WEBSOCKET_CONFIG_FILE = path.join(
   homedir(),
@@ -43,6 +42,11 @@ const livePrepareDir = path.join(repoRoot, "tmp/live-prepare");
 const nextPidFile = path.join(livePrepareDir, "next-dev.pid");
 const overlayUrl = buildObsOverlayUrl(PORT, "empty");
 type LiveCommand = "prepare" | "status" | "stop" | "restart";
+type ObsTarget = {
+  profile: string;
+  sceneCollection: string;
+  sceneFile: string;
+};
 
 async function main(): Promise<void> {
   const command = parseCommand(process.argv[2]);
@@ -67,11 +71,12 @@ async function main(): Promise<void> {
 }
 
 async function prepareLive(): Promise<void> {
+  const obsTarget = await resolveObsTarget();
   await ensureNextDevServer();
   await quitObsIfRunning();
-  await updateObsSceneFile();
+  await updateObsSceneFile(obsTarget);
   const obsWebSocketConfig = await updateObsWebSocketConfig();
-  await openObs();
+  await openObs(obsTarget);
   await startObsVirtualCamera(obsWebSocketConfig);
   await openWebApp();
   await openBilibiliLivehime();
@@ -189,19 +194,36 @@ async function stopNextDevServer(): Promise<void> {
   await removeNextPidFile();
 }
 
-async function updateObsSceneFile(): Promise<void> {
-  const raw = await readFile(OBS_SCENE_FILE, "utf8");
+async function resolveObsTarget(): Promise<ObsTarget> {
+  const sceneFile = path.join(OBS_SCENE_DIR, `${OBS_SCENE_COLLECTION}.json`);
+  try {
+    await readFile(sceneFile, "utf8");
+    return {
+      profile: OBS_PROFILE,
+      sceneCollection: OBS_SCENE_COLLECTION,
+      sceneFile,
+    };
+  } catch (error) {
+    if (getErrorCode(error) === "ENOENT") {
+      throw new Error(`OBS scene collection was not found: ${sceneFile}`);
+    }
+    throw error;
+  }
+}
+
+async function updateObsSceneFile(target: ObsTarget): Promise<void> {
+  const raw = await readFile(target.sceneFile, "utf8");
   const parsed = JSON.parse(raw) as ObsSceneConfig;
   const { config, changes } = prepareObsSceneConfig(parsed, {
     port: PORT,
     sceneName: OBS_SCENE,
   });
-  const backupPath = `${OBS_SCENE_FILE}.live-prepare-${timestamp()}.bak`;
+  const backupPath = `${target.sceneFile}.live-prepare-${timestamp()}.bak`;
 
   await writeFile(backupPath, raw);
-  await writeFile(OBS_SCENE_FILE, `${JSON.stringify(config, null, 2)}\n`);
+  await writeFile(target.sceneFile, `${JSON.stringify(config, null, 2)}\n`);
 
-  console.log(`Updated OBS scene file: ${OBS_SCENE_FILE}`);
+  console.log(`Updated OBS scene file: ${target.sceneFile}`);
   console.log(`Backup: ${backupPath}`);
   for (const change of changes) {
     console.log(`- ${change}`);
@@ -289,16 +311,16 @@ async function quitObsIfRunning(): Promise<void> {
   );
 }
 
-async function openObs(): Promise<void> {
+async function openObs(target: ObsTarget): Promise<void> {
   console.log("Opening OBS...");
   await run("open", [
     "-a",
     "OBS",
     "--args",
     "--profile",
-    OBS_PROFILE,
+    target.profile,
     "--collection",
-    OBS_SCENE_COLLECTION,
+    target.sceneCollection,
     "--scene",
     OBS_SCENE,
   ]);

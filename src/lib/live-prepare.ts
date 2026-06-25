@@ -64,6 +64,15 @@ const DEFAULT_SCENE_ORDER = [
   AVATAR_FRAME_SOURCE,
   EMPTY_FRAME_SOURCE,
 ] as const;
+const MAIN_SCREEN_FRAME = {
+  left: 24,
+  top: 24,
+  width: 1440,
+  height: 810,
+} as const;
+const OBS_BOUNDS_SCALE_INNER = 2;
+const OBS_ALIGN_CENTER = 5;
+const OBS_BOUNDS_ALIGN_CENTER = 0;
 
 export function buildObsOverlayUrl(
   port: number,
@@ -98,6 +107,8 @@ export function prepareObsSceneConfig(
   scene.settings.items = orderSceneItems(items, DEFAULT_SCENE_ORDER);
   changes.push(`Reset ${sceneName} source order`);
 
+  setMainScreenFrame(scene.settings.items, MAIN_DISPLAY_SOURCE, changes);
+  setMainScreenFrame(scene.settings.items, MAIN_APP_SOURCE, changes);
   setSceneItemVisibility(scene.settings.items, EMPTY_FRAME_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, AVATAR_FRAME_SOURCE, false, changes);
   setSceneItemVisibility(scene.settings.items, CAMERA_SOURCE, true, changes);
@@ -164,4 +175,29 @@ function setSceneItemVisibility(
 
   item.visible = visible;
   changes.push(`Set ${sourceName} ${visible ? "visible" : "hidden"}`);
+}
+
+function setMainScreenFrame(
+  items: ObsSceneItem[],
+  sourceName: string,
+  changes: string[],
+): void {
+  const item = items.find((candidate) => candidate.name === sourceName);
+  if (!item) {
+    throw new Error(`OBS scene item "${sourceName}" was not found.`);
+  }
+
+  item.pos = { x: MAIN_SCREEN_FRAME.left, y: MAIN_SCREEN_FRAME.top };
+  item.bounds = { x: MAIN_SCREEN_FRAME.width, y: MAIN_SCREEN_FRAME.height };
+  item.bounds_type = OBS_BOUNDS_SCALE_INNER;
+  item.bounds_crop = false;
+  item.bounds_align = OBS_BOUNDS_ALIGN_CENTER;
+  item.align = OBS_ALIGN_CENTER;
+  item.rot = 0;
+  item.scale = { x: 1, y: 1 };
+  item.crop_left = 0;
+  item.crop_top = 0;
+  item.crop_right = 0;
+  item.crop_bottom = 0;
+  changes.push(`Set ${sourceName} to main screen frame`);
 }

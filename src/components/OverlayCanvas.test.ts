@@ -53,3 +53,18 @@ test("OverlayCanvas shows current focus card when camera frame is hidden", () =>
   assert.match(html, /下一步做什么？/);
   assert.doesNotMatch(html, /aria-label="[^"]*Camera/);
 });
+
+test("OverlayCanvas main screen frame matches a 3840x2160 capture ratio", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayCanvas, { state: DEFAULT_STATE }),
+    }),
+  );
+
+  assert.match(
+    html,
+    /left:24px;top:24px;width:1440px;height:810px/,
+  );
+});

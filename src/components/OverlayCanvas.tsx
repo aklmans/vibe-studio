@@ -34,8 +34,8 @@ const OVERLAY_EDGE = 24;
 const MAIN_SCREEN_SLOT = {
   left: OVERLAY_EDGE,
   top: OVERLAY_EDGE,
-  width: 1448,
-  height: Math.round(1448 / (3760 / 2078)),
+  width: 1440,
+  height: 810,
 } as const;
 const BOTTOM_BAR_SLOT = {
   left: OVERLAY_EDGE,

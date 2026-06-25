@@ -6,6 +6,7 @@ import {
   buildObsOverlayUrl,
   prepareObsSceneConfig,
   prepareObsWebSocketConfig,
+  type ObsSceneItem,
 } from "./live-prepare";
 
 function makeObsSceneConfig() {
@@ -69,7 +70,7 @@ test("prepareObsSceneConfig updates overlay URLs and resets the live scene layer
     (source) => source.name === "Vibe Live Overlay",
   );
 
-  const sceneItems = scene?.settings.items;
+  const sceneItems = scene?.settings.items as ObsSceneItem[] | undefined;
   assert(sceneItems);
 
   equal(
@@ -95,12 +96,41 @@ test("prepareObsSceneConfig updates overlay URLs and resets the live scene layer
     "Set Vibe Overlay Empty Frame URL",
     "Set Vibe Overlay Avatar Frame URL",
     "Reset Vibe Live Overlay source order",
+    "Set Vibe Main Display Capture to main screen frame",
+    "Set Vibe Main App Capture to main screen frame",
     "Set Vibe Overlay Empty Frame visible",
     "Set Vibe Overlay Avatar Frame hidden",
     "Set Vibe Camera Capture visible",
     "Set Vibe Main Display Capture visible",
     "Set Vibe Main App Capture visible",
   ]);
+});
+
+test("prepareObsSceneConfig aligns main captures to a 16:9 screen frame", () => {
+  const { config } = prepareObsSceneConfig(makeObsSceneConfig(), {
+    port: 3000,
+  });
+  const scene = config.sources.find(
+    (source) => source.name === "Vibe Live Overlay",
+  );
+  const sceneItems = scene?.settings.items as ObsSceneItem[] | undefined;
+  assert(sceneItems);
+
+  for (const sourceName of [
+    "Vibe Main Display Capture",
+    "Vibe Main App Capture",
+  ]) {
+    const item: ObsSceneItem | undefined = sceneItems.find(
+      (candidate) => candidate.name === sourceName,
+    );
+    assert(item, sourceName);
+    deepStrictEqual(item.pos, { x: 24, y: 24 });
+    deepStrictEqual(item.bounds, { x: 1440, y: 810 });
+    equal(item.bounds_type, 2);
+    equal(item.bounds_crop, false);
+    equal(item.align, 5);
+    equal(item.bounds_align, 0);
+  }
 });
 
 test("prepareObsWebSocketConfig enables automation without changing authentication", () => {
