@@ -85,7 +85,7 @@ test("saveOverlayState persists the current light appearance and asset palette",
   assert.deepEqual(loaded.colors, LIGHT_PRESET);
 });
 
-test("normalizeOverlayState preserves the live data tab", () => {
+test("normalizeOverlayState preserves the live (session config) tab", () => {
   const state = normalizeOverlayState({ activeTab: "live" });
 
   assert.equal(state.activeTab, "live");

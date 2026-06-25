@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { APP_TABS, CANVAS_TABS, isCanvasTab } from "./tabs";
 
-test("app tabs include live data while canvas tabs stay exportable previews", () => {
+test("app tabs include session config while canvas tabs stay exportable previews", () => {
   assert.deepEqual(APP_TABS, [
     "overlay",
     "live",

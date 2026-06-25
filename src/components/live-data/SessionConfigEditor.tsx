@@ -185,7 +185,9 @@ export default function SessionConfigEditor({
   };
 
   const exportCurrentConfig = () => {
-    // Always export the current *live* config (the state projection).
+    // Export rule: always the current *state* projection (the portable core v1
+    // config) — never the unsaved editing draft. So an in-progress, unvalidated
+    // buffer can never be exported by accident.
     const json = projected;
 
     if (typeof document !== "undefined") {
@@ -198,6 +200,8 @@ export default function SessionConfigEditor({
       URL.revokeObjectURL(url);
     }
 
+    // The file download is the success main path. A clipboard copy is a bonus;
+    // its failure message still affirms the download succeeded.
     setMessage(t("config.downloaded"));
     if (navigator.clipboard) {
       void navigator.clipboard.writeText(json).catch(() => {
@@ -210,12 +214,26 @@ export default function SessionConfigEditor({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    const isJson = /\.json$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = () => {
-      // Load into the editing buffer — never auto-apply. The user reviews and
-      // presses Apply.
-      enterEditing(String(reader.result ?? ""));
-      setMessage(t("config.imported"));
+      const text = String(reader.result ?? "");
+      // Import always lands in the editing buffer — it never auto-applies. The
+      // user reviews and presses Apply. We pre-validate so a bad file / bad
+      // content surfaces immediately, but nothing is written to state.
+      setDrift(beginEditing(drift, projected, text));
+      const { validation: next, config } = parseToValidation(
+        parseConfigText(text),
+      );
+      setValidation(next);
+      setPreviewConfig(config);
+      setMessage(
+        !isJson
+          ? t("config.importNotJson")
+          : next.valid
+            ? t("config.imported")
+            : t("config.importInvalid"),
+      );
     };
     reader.readAsText(file);
   };

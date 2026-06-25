@@ -121,7 +121,7 @@ test("overlay live editing is split into focused inspector groups", () => {
   assert.match(source, /title=\{t\("group\.bottomBarSegments"\)\}/);
 });
 
-test("tab shortcuts include Live Data in the visible tab order", () => {
+test("tab shortcuts include Session Config in the visible tab order", () => {
   const source = readFileSync(resolve("src/components/OverlayBuilderApp.tsx"), "utf8");
 
   assert.match(source, /import \{ APP_TABS/);
@@ -206,7 +206,7 @@ test("surface inspectors default to a focused first-screen workflow", () => {
   assert.doesNotMatch(wallpaper, /data-testid="wallpaper-avatar-visible"/);
 });
 
-test("live data keeps Session Config after direct live editing controls", () => {
+test("session config keeps the JSON editor after direct live editing controls", () => {
   const source = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
   const sessionBar = source.indexOf('data-testid="live-data-session-bar"');
   const sections = source.indexOf('testId="live-data-sections"');
@@ -223,7 +223,7 @@ test("live data keeps Session Config after direct live editing controls", () => 
   assert.ok(configStudio > bottomBar);
 });
 
-test("live data exposes Session Config instead of the brief or recipe main path", () => {
+test("session config exposes the JSON editor instead of the brief or recipe main path", () => {
   const panelSource = readFileSync(resolve("src/components/live-data/SessionConfigEditor.tsx"), "utf8");
   const html = renderToStaticMarkup(
     React.createElement(LocaleProvider, {
@@ -263,7 +263,7 @@ test("live data exposes Session Config instead of the brief or recipe main path"
 });
 
 test("live studio example config is checked in for agent handoff", () => {
-  const raw = readFileSync(resolve("docs/live-studio-config.example.json"), "utf8");
+  const raw = readFileSync(resolve("docs/live-session.config.example.json"), "utf8");
   const parsed = parseLiveStudioConfigJson(raw);
 
   assert.equal(parsed?.title, "Building With Agents");
@@ -292,7 +292,7 @@ test("overlay inspector section tabs show one progress section at a time", () =>
   assert.doesNotMatch(html, /data-testid="overlay-section-panel-2"/);
 });
 
-test("live data section editor shows one progress section at a time", () => {
+test("session config section editor shows one progress section at a time", () => {
   const html = renderToStaticMarkup(
     React.createElement(LocaleProvider, {
       initialLocale: "en",

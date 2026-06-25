@@ -259,7 +259,7 @@ export default function CommandPalette({
                 {t("cmdk.tab.overlay")}
               </Item>
               <Item
-                value="tab-live 直播数据 live data sections live bar"
+                value="tab-live 直播配置 session config sections live bar"
                 onSelect={run(() => switchTab("live"))}
                 active={state.activeTab === "live"}
                 testId="cmdk-tab-live"

@@ -169,7 +169,7 @@ test("overlayStateToConfig exports a reusable config", () => {
 });
 
 test("example live studio config is parseable and valid", () => {
-  const raw = readFileSync(resolve("docs/live-studio-config.example.json"), "utf8");
+  const raw = readFileSync(resolve("docs/live-session.config.example.json"), "utf8");
   const parsed = parseLiveStudioConfigJson(raw);
   const validation = validateLiveStudioConfig(JSON.parse(raw));
 
