@@ -206,16 +206,16 @@ test("surface inspectors default to a focused first-screen workflow", () => {
   assert.doesNotMatch(wallpaper, /data-testid="wallpaper-avatar-visible"/);
 });
 
-test("session config center wires the source bar, outline and the form + JSON views", () => {
+test("session config center wires the source bar, outline, the two views and the JSON drawer", () => {
   const source = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
-  // The shell composes the source-of-truth bar, the outline, and the three
-  // view panes — the form editors now live inside ConfigFormView.
+  // Shell = source-of-truth bar + outline + the two view panes (Prepare /
+  // Settings) + the global JSON drawer. The editors live inside SettingsView.
   assert.match(source, /<SourceOfTruthBar/);
   assert.match(source, /<SessionConfigOutline/);
-  assert.match(source, /<ConfigFormView/);
+  assert.match(source, /<SettingsView/);
   assert.match(source, /<AgentPrepareView/);
-  assert.match(source, /<SessionConfigEditor/);
-  const formSource = readFileSync(resolve("src/components/live-data/ConfigFormView.tsx"), "utf8");
+  assert.match(source, /<ConfigJsonDrawer/);
+  const formSource = readFileSync(resolve("src/components/live-data/SettingsView.tsx"), "utf8");
   for (const id of [
     "live-data-sections",
     "live-data-stack",
@@ -247,6 +247,7 @@ test("session config exposes the JSON editor instead of the brief or recipe main
         onReload: () => {},
         onStartSession: () => {},
         onEndSession: () => {},
+        onOpenSettings: () => {},
       }),
     }),
   );
@@ -315,6 +316,7 @@ test("session config section editor shows one progress section at a time", () =>
         onReload: () => {},
         onStartSession: () => {},
         onEndSession: () => {},
+        onOpenSettings: () => {},
       }),
     }),
   );
@@ -607,7 +609,7 @@ test("right inspector editors use the inspector line segmented control", () => {
     "src/components/BottomBarSegmentEditor.tsx",
     "src/components/inspector/groups/OverlayInspector.tsx",
     "src/components/inspector/groups/WallpaperInspector.tsx",
-    "src/components/live-data/ConfigFormView.tsx",
+    "src/components/live-data/SettingsView.tsx",
   ];
 
   for (const file of files) {

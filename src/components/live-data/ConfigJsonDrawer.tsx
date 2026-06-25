@@ -1,0 +1,221 @@
+import { useEffect, useRef, type CSSProperties } from "react";
+import type { OverlayState } from "../../types";
+import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
+import { useLocale } from "../../hooks/useLocale";
+import SessionConfigEditor from "./SessionConfigEditor";
+
+interface ConfigJsonDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  state: OverlayState;
+  onChange: (state: OverlayState) => void;
+}
+
+/** JSON keys the user can jump to — the shape of the v1 portable core. */
+const MODULE_KEYS = [
+  "title",
+  "subtitle",
+  "profile",
+  "cover",
+  "badges",
+  "stack",
+  "socials",
+  "sections",
+] as const;
+
+const monoLabel: CSSProperties = {
+  fontFamily: "var(--app-font-mono)",
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: UI_COLORS.textSubtle,
+};
+
+/**
+ * Global JSON drawer. The live-session.config.json source document is a
+ * first-class capability but not a daily nav page — it slides in over the
+ * current context (AI Prepare / Settings) and slides away. It reuses the
+ * existing SessionConfigEditor untouched (Synced / Editing / Apply / Discard /
+ * Import / Export / drift warning) and adds lightweight module jumps so the
+ * JSON's structure is discoverable.
+ *
+ * Always mounted (visibility toggled) so the editor keeps its synced projection
+ * and any in-progress editing buffer across opens.
+ */
+export default function ConfigJsonDrawer({
+  open,
+  onClose,
+  state,
+  onChange,
+}: ConfigJsonDrawerProps) {
+  const { t } = useLocale();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  // Lightweight locate: select the key inside the JSON textarea and scroll it
+  // into view. Works on whatever the editor currently shows (synced or draft).
+  const jumpToKey = (key: string) => {
+    const ta = panelRef.current?.querySelector(
+      '[data-testid="config-input"]',
+    ) as HTMLTextAreaElement | null;
+    if (!ta) return;
+    const idx = ta.value.indexOf(`"${key}"`);
+    if (idx < 0) return;
+    ta.focus();
+    ta.setSelectionRange(idx, idx + key.length + 2);
+    const line = ta.value.slice(0, idx).split("\n").length - 1;
+    ta.scrollTop = Math.max(0, line * 20 - 48);
+  };
+
+  return (
+    <div aria-hidden={!open} data-testid="config-json-drawer-root">
+      {/* Scrim */}
+      <div
+        data-testid="config-json-drawer-scrim"
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: UI_COLORS.overlayScrim,
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.18s",
+          zIndex: 60,
+        }}
+      />
+
+      {/* Panel */}
+      <aside
+        ref={panelRef}
+        data-testid="config-json-drawer"
+        role="dialog"
+        aria-modal={open ? "true" : undefined}
+        aria-label={t("config.title")}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 560,
+          maxWidth: "92vw",
+          background: UI_COLORS.appSurface,
+          borderLeft: `1px solid ${UI_COLORS.border}`,
+          boxShadow: open ? UI_COLORS.commandShadow : "none",
+          transform: open ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.2s ease",
+          zIndex: 61,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "14px 16px",
+            borderBottom: `1px solid ${UI_COLORS.border}`,
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              aria-hidden
+              style={{ width: 3, height: 14, borderRadius: 2, background: UI_COLORS.accent }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--app-font-mono)",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: UI_COLORS.text,
+              }}
+            >
+              {t("config.title")}
+            </span>
+          </div>
+          <button
+            data-testid="config-json-drawer-close"
+            onClick={onClose}
+            aria-label={t("drawer.close")}
+            title={t("drawer.close")}
+            style={{
+              appearance: "none",
+              border: "none",
+              background: "transparent",
+              color: UI_COLORS.textMuted,
+              cursor: "pointer",
+              fontSize: 18,
+              lineHeight: 1,
+              padding: 4,
+            }}
+          >
+            ×
+          </button>
+        </header>
+
+        {/* Module jump row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            padding: "10px 16px",
+            borderBottom: `1px solid ${UI_COLORS.border}`,
+            flexShrink: 0,
+          }}
+        >
+          <span style={monoLabel}>{t("drawer.jumpTo")}</span>
+          {MODULE_KEYS.map((key) => (
+            <button
+              key={key}
+              data-testid={`config-json-module-${key}`}
+              onClick={() => jumpToKey(key)}
+              style={{
+                appearance: "none",
+                border: `1px solid ${UI_COLORS.controlBorder}`,
+                borderRadius: 3,
+                background: "transparent",
+                color: UI_COLORS.textMuted,
+                cursor: "pointer",
+                fontFamily: "var(--app-font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.02em",
+                padding: "3px 7px",
+                transition: "color 0.12s, border-color 0.12s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = UI_COLORS.text;
+                e.currentTarget.style.borderColor = cssAlpha(UI_COLORS.accent, 44);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = UI_COLORS.textMuted;
+                e.currentTarget.style.borderColor = UI_COLORS.controlBorder;
+              }}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 28px" }}>
+          <SessionConfigEditor state={state} onChange={onChange} />
+        </div>
+      </aside>
+    </div>
+  );
+}

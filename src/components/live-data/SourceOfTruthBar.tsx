@@ -18,6 +18,7 @@ interface SourceOfTruthBarProps {
   onReload: () => void;
   onStartSession: () => void;
   onEndSession: () => void;
+  onOpenJson: () => void;
 }
 
 const monoLabel: CSSProperties = {
@@ -41,6 +42,7 @@ export default function SourceOfTruthBar({
   onReload,
   onStartSession,
   onEndSession,
+  onOpenJson,
 }: SourceOfTruthBarProps) {
   const { t } = useLocale();
   const canWrite = persistence.databaseConfigured && !persistence.loading;
@@ -154,6 +156,33 @@ export default function SourceOfTruthBar({
           title={t("sourceBar.obsHint")}
           dot
         />
+
+        <button
+          data-testid="open-json-bar"
+          onClick={onOpenJson}
+          style={{
+            marginLeft: "auto",
+            appearance: "none",
+            cursor: "pointer",
+            borderRadius: 4,
+            border: `1px solid ${UI_COLORS.controlBorder}`,
+            background: "transparent",
+            color: UI_COLORS.textSoft,
+            fontFamily: "var(--app-font-mono)",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            padding: "4px 10px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            flexShrink: 0,
+          }}
+        >
+          {t("drawer.openJson")}
+          <span aria-hidden>↗</span>
+        </button>
       </div>
     </section>
   );

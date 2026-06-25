@@ -3,26 +3,29 @@ import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
 import type { TranslationKey } from "../../lib/i18n";
 
-export type ConfigView = "prepare" | "form" | "json";
+export type ConfigView = "prepare" | "settings";
 
 interface SessionConfigOutlineProps {
   view: ConfigView;
   onSelectView: (view: ConfigView) => void;
-  /** Switch to the form view and scroll a form group into view. */
-  onSelectFormAnchor: (anchorId: string) => void;
+  /** Switch to Settings and scroll a group into view. */
+  onSelectSettingsAnchor: (anchorId: string) => void;
+  /** Open the global JSON drawer. */
+  onOpenJson: () => void;
 }
 
-interface FormAnchor {
+interface SettingsAnchor {
   id: string;
   testId: string;
   labelKey: TranslationKey;
 }
 
-const FORM_ANCHORS: FormAnchor[] = [
-  { id: "config-form-sections", testId: "config-nav-sections", labelKey: "group.sections" },
-  { id: "config-form-stack", testId: "config-nav-stack", labelKey: "group.stack" },
-  { id: "config-form-live-session", testId: "config-nav-live-session", labelKey: "group.liveSession" },
-  { id: "config-form-bottom-bar", testId: "config-nav-bottom-bar", labelKey: "group.bottomBarSegments" },
+const SETTINGS_ANCHORS: SettingsAnchor[] = [
+  { id: "config-settings-core", testId: "config-nav-core", labelKey: "settingsGroup.core" },
+  { id: "config-settings-runtime", testId: "config-nav-runtime", labelKey: "settingsGroup.runtime" },
+  { id: "config-settings-display", testId: "config-nav-display", labelKey: "settingsGroup.display" },
+  { id: "config-settings-appearance", testId: "config-nav-appearance", labelKey: "settingsGroup.appearance" },
+  { id: "config-settings-persistence", testId: "config-nav-persistence", labelKey: "settingsGroup.persistence" },
 ];
 
 const groupLabel: CSSProperties = {
@@ -36,15 +39,16 @@ const groupLabel: CSSProperties = {
 };
 
 /**
- * Left config outline — the spine of the Session Config Center. Top group
- * switches the workspace view (Prepare / Form / JSON); the Form group jumps to
- * a section within the form view. Editorial: hairline rail, mono labels, a
- * single accent mark on the active row.
+ * Left config outline — two primary modes only. AI Prepare ("let an agent
+ * prepare my config") and Settings ("manually adjust config + runtime"). The
+ * Settings group jumps to a section. JSON is NOT a third page — it is a global
+ * drawer reachable from the Open JSON action here, the source bar, and both views.
  */
 export default function SessionConfigOutline({
   view,
   onSelectView,
-  onSelectFormAnchor,
+  onSelectSettingsAnchor,
+  onOpenJson,
 }: SessionConfigOutlineProps) {
   const { t } = useLocale();
 
@@ -71,29 +75,62 @@ export default function SessionConfigOutline({
         onClick={() => onSelectView("prepare")}
       />
       <NavRow
-        testId="config-nav-form"
-        label={t("configView.form")}
-        active={view === "form"}
-        onClick={() => onSelectView("form")}
-      />
-      <NavRow
-        testId="config-nav-json"
-        label={t("configView.json")}
-        active={view === "json"}
-        onClick={() => onSelectView("json")}
+        testId="config-nav-settings"
+        label={t("configView.settings")}
+        active={view === "settings"}
+        onClick={() => onSelectView("settings")}
       />
 
-      <div style={{ ...groupLabel, marginTop: 12 }}>{t("configOutline.formGroups")}</div>
-      {FORM_ANCHORS.map((anchor) => (
+      <div style={{ ...groupLabel, marginTop: 12 }}>{t("configView.settings")}</div>
+      {SETTINGS_ANCHORS.map((anchor) => (
         <NavRow
           key={anchor.id}
           testId={anchor.testId}
           label={t(anchor.labelKey)}
           active={false}
           sub
-          onClick={() => onSelectFormAnchor(anchor.id)}
+          onClick={() => onSelectSettingsAnchor(anchor.id)}
         />
       ))}
+
+      <div style={{ marginTop: "auto", paddingTop: 14 }}>
+        <button
+          data-testid="open-json-outline"
+          onClick={onOpenJson}
+          style={{
+            appearance: "none",
+            width: "calc(100% - 24px)",
+            margin: "0 12px",
+            cursor: "pointer",
+            borderRadius: 4,
+            border: `1px solid ${UI_COLORS.controlBorder}`,
+            background: "transparent",
+            color: UI_COLORS.textSoft,
+            fontFamily: "var(--app-font-mono)",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            padding: "7px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            transition: "color 0.12s, border-color 0.12s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = UI_COLORS.text;
+            e.currentTarget.style.borderColor = cssAlpha(UI_COLORS.accent, 44);
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = UI_COLORS.textSoft;
+            e.currentTarget.style.borderColor = UI_COLORS.controlBorder;
+          }}
+        >
+          {t("drawer.openJson")}
+          <span aria-hidden>↗</span>
+        </button>
+      </div>
     </aside>
   );
 }
@@ -126,7 +163,7 @@ function NavRow({
         padding: sub ? "5px 12px 5px 22px" : "6px 12px",
         cursor: "pointer",
         fontFamily: "var(--app-font-mono)",
-        fontSize: sub ? 11 : 11,
+        fontSize: 11,
         fontWeight: active ? 700 : sub ? 500 : 600,
         letterSpacing: "0.04em",
         color: active ? UI_COLORS.text : sub ? UI_COLORS.textMuted : UI_COLORS.textSoft,

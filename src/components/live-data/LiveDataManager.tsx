@@ -2,9 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { OverlayState } from "../../types";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import SessionConfigOutline, { type ConfigView } from "./SessionConfigOutline";
-import ConfigFormView from "./ConfigFormView";
+import SettingsView from "./SettingsView";
 import AgentPrepareView from "./AgentPrepareView";
-import SessionConfigEditor from "./SessionConfigEditor";
+import ConfigJsonDrawer from "./ConfigJsonDrawer";
 
 interface LiveDataManagerProps {
   state: OverlayState;
@@ -14,20 +14,19 @@ interface LiveDataManagerProps {
   onReload: () => void;
   onStartSession: () => void;
   onEndSession: () => void;
+  /** Opens the existing studio SettingsDrawer (theme / colors / reset). */
+  onOpenSettings: () => void;
 }
 
 /**
  * Session Config Center shell.
  *
  * Top: the source-of-truth bar (DB / local / OBS truth + session lifecycle).
- * Left: the config outline. Right: one workspace that switches between three
- * views of the *same* OverlayState —
- *   - Prepare : compose an AI handoff prompt → import the result.
- *   - Form    : the runtime editors, grouped core vs runtime.
- *   - JSON    : the live-session.config.json portable core (drift-safe editor).
- *
- * All three views stay mounted (visibility toggled) so the JSON view keeps its
- * synced projection across switches and the IA is statically inspectable.
+ * Left: two primary modes —
+ *   - AI Prepare : compose an agent handoff prompt → import the result.
+ *   - Settings   : the manual config workbench, grouped core vs runtime.
+ * The live-session.config.json source document is a global JSON drawer (not a
+ * third nav page), reachable from the source bar, the outline, and both views.
  */
 export default function LiveDataManager({
   state,
@@ -37,14 +36,15 @@ export default function LiveDataManager({
   onReload,
   onStartSession,
   onEndSession,
+  onOpenSettings,
 }: LiveDataManagerProps) {
-  const [view, setView] = useState<ConfigView>("form");
+  const [view, setView] = useState<ConfigView>("settings");
+  const [jsonOpen, setJsonOpen] = useState(false);
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
 
-  // Outline form items jump to a group: switch to the form view first, then
-  // scroll once it is visible.
+  // Outline Settings items jump to a group: switch to Settings, then scroll.
   useEffect(() => {
-    if (view === "form" && pendingAnchor) {
+    if (view === "settings" && pendingAnchor) {
       document
         .getElementById(pendingAnchor)
         ?.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -52,10 +52,11 @@ export default function LiveDataManager({
     }
   }, [view, pendingAnchor]);
 
-  const selectFormAnchor = (anchorId: string) => {
-    setView("form");
+  const selectSettingsAnchor = (anchorId: string) => {
+    setView("settings");
     setPendingAnchor(anchorId);
   };
+  const openJson = () => setJsonOpen(true);
 
   return (
     <div
@@ -75,13 +76,15 @@ export default function LiveDataManager({
         onReload={onReload}
         onStartSession={onStartSession}
         onEndSession={onEndSession}
+        onOpenJson={openJson}
       />
 
       <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
         <SessionConfigOutline
           view={view}
           onSelectView={setView}
-          onSelectFormAnchor={selectFormAnchor}
+          onSelectSettingsAnchor={selectSettingsAnchor}
+          onOpenJson={openJson}
         />
 
         <div
@@ -95,16 +98,26 @@ export default function LiveDataManager({
           }}
         >
           <ViewPane testId="config-view-prepare" active={view === "prepare"}>
-            <AgentPrepareView state={state} onOpenJson={() => setView("json")} />
+            <AgentPrepareView state={state} onOpenJson={openJson} />
           </ViewPane>
-          <ViewPane testId="config-view-form" active={view === "form"}>
-            <ConfigFormView state={state} onChange={onChange} />
-          </ViewPane>
-          <ViewPane testId="config-view-json" active={view === "json"}>
-            <SessionConfigEditor state={state} onChange={onChange} />
+          <ViewPane testId="config-view-settings" active={view === "settings"}>
+            <SettingsView
+              state={state}
+              onChange={onChange}
+              persistence={persistence}
+              onOpenJson={openJson}
+              onOpenStudioSettings={onOpenSettings}
+            />
           </ViewPane>
         </div>
       </div>
+
+      <ConfigJsonDrawer
+        open={jsonOpen}
+        onClose={() => setJsonOpen(false)}
+        state={state}
+        onChange={onChange}
+      />
     </div>
   );
 }
