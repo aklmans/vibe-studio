@@ -18,6 +18,20 @@ import {
   type ConfigParse,
 } from "../../lib/session-config-drift";
 import {
+  boundTo,
+  browserFileAccessAdapter,
+  initialFileBinding,
+  markPermissionLost,
+  markRead,
+  markReadError,
+  markWrite,
+  markWriteError,
+  readBoundFile,
+  writeBoundFile,
+  type ConfigFileHandle,
+  type FileAccessAdapter,
+} from "../../lib/config-file-access";
+import {
   WorkbenchButton,
   applyWorkbenchFocus,
   clearWorkbenchFocus,
@@ -58,6 +72,20 @@ export const SESSION_CONFIG_FILE_NAME = "live-session.config.json";
 interface SessionConfigEditorProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
+  /** Injectable for tests; defaults to the real File System Access adapter. */
+  fileAccess?: FileAccessAdapter;
+}
+
+function formatClock(iso: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 const sectionStyle: CSSProperties = {
@@ -109,11 +137,18 @@ const hintStyle: CSSProperties = {
 export default function SessionConfigEditor({
   state,
   onChange,
+  fileAccess,
 }: SessionConfigEditorProps) {
   const { t } = useLocale();
   // Live projection of the current config — recomputed whenever the form/state
   // changes so the synced view never drifts.
   const projected = useMemo(() => projectConfigText(state), [state]);
+
+  const adapter = useMemo(
+    () => fileAccess ?? browserFileAccessAdapter(),
+    [fileAccess],
+  );
+  const supportsBinding = adapter.supported();
 
   const [drift, setDrift] = useState(initialDriftState);
   const [validation, setValidation] =
@@ -122,11 +157,83 @@ export default function SessionConfigEditor({
     null,
   );
   const [message, setMessage] = useState("");
+  const [binding, setBinding] = useState(() => initialFileBinding(supportsBinding));
+  const [lastImportName, setLastImportName] = useState<string | null>(null);
+  const [lastExportAt, setLastExportAt] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleRef = useRef<ConfigFileHandle | null>(null);
 
   const editing = drift.mode === "editing";
   const displayedText = displayedConfigText(drift, projected);
   const changedUnderneath = isChangedUnderneath(drift, projected);
+
+  // A read (bound file or import) always lands in the editing buffer + a fresh
+  // validation — it never auto-applies. Mirrors importConfigFile exactly.
+  const loadTextIntoBuffer = (text: string) => {
+    setDrift(beginEditing(drift, projected, text));
+    const { validation: next, config } = parseToValidation(parseConfigText(text));
+    setValidation(next);
+    setPreviewConfig(config);
+    return next.valid;
+  };
+
+  const readBoundIntoBuffer = async (handle: ConfigFileHandle | null) => {
+    if (!handle) return;
+    const result = await readBoundFile(adapter, handle);
+    if (!result.ok) {
+      if (result.reason === "permission") {
+        setBinding((prev) => markPermissionLost(prev));
+        setMessage(t("config.file.permissionLost"));
+      } else {
+        setBinding((prev) => markReadError(prev, result.error));
+        setMessage(t("config.file.readError"));
+      }
+      return;
+    }
+    const valid = loadTextIntoBuffer(result.text);
+    setBinding((prev) => markRead(prev, new Date().toISOString()));
+    setMessage(valid ? t("config.file.read") : t("config.importInvalid"));
+  };
+
+  const bindFile = async () => {
+    try {
+      const { handle, name } = await adapter.pick();
+      handleRef.current = handle;
+      setBinding(boundTo(name));
+      // Picking a file loads it for review (still no auto-apply).
+      await readBoundIntoBuffer(handle);
+    } catch (error) {
+      if (isAbortError(error)) return; // user cancelled the picker
+      setBinding((prev) => markReadError(prev, error instanceof Error ? error.message : String(error)));
+      setMessage(t("config.file.readError"));
+    }
+  };
+
+  const saveBoundFile = async () => {
+    const handle = handleRef.current;
+    if (!handle) return;
+    // Save rule (same as Export): always the current *state* projection, never
+    // the editing draft. A failed write leaves the draft untouched.
+    const result = await writeBoundFile(adapter, handle, projected);
+    if (!result.ok) {
+      if (result.reason === "permission") {
+        setBinding((prev) => markPermissionLost(prev));
+        setMessage(t("config.file.permissionLost"));
+      } else {
+        setBinding((prev) => markWriteError(prev, result.error));
+        setMessage(t("config.file.writeError"));
+      }
+      return;
+    }
+    setBinding((prev) => markWrite(prev, new Date().toISOString()));
+    setMessage(t("config.file.saved"));
+  };
+
+  const unbindFile = () => {
+    handleRef.current = null;
+    setBinding(initialFileBinding(supportsBinding));
+    setMessage(t("config.file.unbound"));
+  };
 
   // Map the i18n-free parse result into the UI's validation shape + messages.
   const parseToValidation = (
@@ -202,6 +309,7 @@ export default function SessionConfigEditor({
 
     // The file download is the success main path. A clipboard copy is a bonus;
     // its failure message still affirms the download succeeded.
+    setLastExportAt(new Date().toISOString());
     setMessage(t("config.downloaded"));
     if (navigator.clipboard) {
       void navigator.clipboard.writeText(json).catch(() => {
@@ -221,22 +329,35 @@ export default function SessionConfigEditor({
       // Import always lands in the editing buffer — it never auto-applies. The
       // user reviews and presses Apply. We pre-validate so a bad file / bad
       // content surfaces immediately, but nothing is written to state.
-      setDrift(beginEditing(drift, projected, text));
-      const { validation: next, config } = parseToValidation(
-        parseConfigText(text),
-      );
-      setValidation(next);
-      setPreviewConfig(config);
+      const valid = loadTextIntoBuffer(text);
+      setLastImportName(file.name);
       setMessage(
         !isJson
           ? t("config.importNotJson")
-          : next.valid
+          : valid
             ? t("config.imported")
             : t("config.importInvalid"),
       );
     };
     reader.readAsText(file);
   };
+
+  const fileStatus =
+    binding.status === "permission-lost"
+      ? { label: t("config.file.permissionLostShort"), color: UI_COLORS.danger }
+      : binding.status === "read-error"
+        ? { label: t("config.file.readErrorShort"), color: UI_COLORS.danger }
+        : binding.status === "write-error"
+          ? { label: t("config.file.writeErrorShort"), color: UI_COLORS.danger }
+          : binding.status === "bound"
+            ? { label: `${t("config.file.bound")}: ${binding.fileName ?? ""}`, color: UI_COLORS.accentText }
+            : binding.status === "unsupported"
+              ? { label: t("config.file.unsupported"), color: UI_COLORS.textMuted }
+              : { label: t("config.file.manual"), color: UI_COLORS.textMuted };
+  const boundActive =
+    binding.status === "bound" ||
+    binding.status === "read-error" ||
+    binding.status === "write-error";
 
   return (
     <section data-testid="session-config-panel" style={sectionStyle}>
@@ -278,6 +399,84 @@ export default function SessionConfigEditor({
             }}
           >
             {message}
+          </div>
+        )}
+      </div>
+
+      {/* File workflow — manual import / export plus an optional bound file.
+          A bound file is never watched; reads + saves are explicit user actions
+          and a read still goes through review + Apply. */}
+      <div
+        data-testid="config-file-workflow"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "10px 12px",
+          border: UI_BORDERS.control,
+          borderRadius: 4,
+          background: UI_COLORS.inputInset,
+        }}
+      >
+        <div
+          data-testid="config-file-status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            fontFamily: "var(--app-font-mono)",
+            fontSize: 11,
+          }}
+        >
+          <span aria-hidden style={{ width: 5, height: 5, borderRadius: "50%", background: fileStatus.color, flexShrink: 0 }} />
+          <span style={{ fontWeight: 600, color: fileStatus.color }}>{fileStatus.label}</span>
+          {binding.lastReadAt && (
+            <span style={{ color: UI_COLORS.textSubtle }}>· {t("config.file.lastRead")} {formatClock(binding.lastReadAt)}</span>
+          )}
+          {binding.lastWriteAt && (
+            <span style={{ color: UI_COLORS.textSubtle }}>· {t("config.file.lastSaved")} {formatClock(binding.lastWriteAt)}</span>
+          )}
+          {lastImportName && (
+            <span style={{ color: UI_COLORS.textSubtle }}>· {t("config.file.lastImport")} {lastImportName}</span>
+          )}
+          {lastExportAt && (
+            <span style={{ color: UI_COLORS.textSubtle }}>· {t("config.file.lastExport")} {formatClock(lastExportAt)}</span>
+          )}
+        </div>
+        <div data-testid="config-file-note" style={{ fontSize: 10.5, color: UI_COLORS.textMuted, lineHeight: 1.45 }}>
+          {supportsBinding ? t("config.file.note") : t("config.file.unsupportedNote")}
+        </div>
+        {supportsBinding && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {binding.status === "unbound" && (
+              <ConfigButton data-testid="config-bind-file" onClick={bindFile}>
+                {t("config.file.bindFile")}
+              </ConfigButton>
+            )}
+            {boundActive && (
+              <>
+                <ConfigButton data-testid="config-read-file" onClick={() => readBoundIntoBuffer(handleRef.current)}>
+                  {t("config.file.readFile")}
+                </ConfigButton>
+                <ConfigButton data-testid="config-save-file" onClick={saveBoundFile}>
+                  {t("config.file.saveFile")}
+                </ConfigButton>
+                <ConfigButton data-testid="config-unbind" onClick={unbindFile}>
+                  {t("config.file.unbind")}
+                </ConfigButton>
+              </>
+            )}
+            {binding.status === "permission-lost" && (
+              <>
+                <ConfigButton data-testid="config-relink" onClick={bindFile} accentColor={UI_COLORS.accent}>
+                  {t("config.file.relink")}
+                </ConfigButton>
+                <ConfigButton data-testid="config-unbind" onClick={unbindFile}>
+                  {t("config.file.unbind")}
+                </ConfigButton>
+              </>
+            )}
           </div>
         )}
       </div>

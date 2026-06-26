@@ -70,26 +70,35 @@ defines `LIVE_SESSION_CONFIG_V1_KEYS`, `RUNTIME_STATE_EXCLUSIONS`,
 `STUDIO_CONFIG_FIELDS`, and a `StudioConfigV1Draft` type + parser. The future
 studio config is specified (as a draft) in [`studio.config.md`](./studio.config.md).
 
-## File handling — manual import / export (not a watched file)
+## File handling — manual import / export + optional bound file (never watched)
 
-This config is moved by **explicit import / export inside Session Config → the
-JSON drawer**, not by reading a file off disk. The app does **not** auto-read,
-auto-write, or watch any `live-session.config.json` on your filesystem. "Export"
-downloads the current projection; "Import" reads a file you pick and then waits
-for a human **Apply**.
+The config moves through the **JSON drawer**, and nothing is ever read off disk
+automatically. There are two ways to move it, both explicit:
 
-This is a deliberate, minimal choice for a browser-first app:
+**Manual import / export (always available).** "Export" downloads the current
+state projection; "Import" reads a file you pick into the editing buffer and
+waits for a human **Apply**.
 
-- A Next.js API that writes a fixed file would target the **server** filesystem
-  (not your local file) and break on read-only / ephemeral serverless deploys.
-- The File System Access API could bind a local file, but needs handle
-  persistence + re-permission, has no real change-watch, and is unsupported in
-  some browsers — so it would still need this manual path as a fallback and
-  risks implying a "live file" that does not exist.
+**Optional bound file (File System Access API, supported browsers only).** You
+may **explicitly pick** a `live-session.config.json` to bind. Then:
 
-If a true bound-file / `settings.json`-style experience is wanted later, add it
-as an **optional** File System Access binding with this manual import / export
-kept as the fallback — and only then describe the app as reading a file.
+- **Read file** loads the bound file's contents into the editing buffer — it
+  still goes through review + **Apply**, and never auto-overwrites state.
+- **Save to file** writes the current **state projection** (the v1 portable
+  core), exactly like Export — never the unsaved editing draft.
+
+The bound file is **not watched** and **not auto-read**: reading and saving are
+manual user actions. The file is chosen by the user (no disk scanning, no
+default project file). The handle is **not persisted** — after a page refresh
+the workflow returns to manual import / export until you bind again. Browsers
+without the File System Access API never see the bind actions and keep manual
+import / export.
+
+Why not a server-written file or a watched file: a Next.js API writing a fixed
+file targets the **server** filesystem (not your local file) and breaks on
+read-only / ephemeral serverless deploys; a real change-watch would imply a
+"live file" that does not exist. So binding stays an opt-in convenience over the
+manual path, never a requirement. (Code: `src/lib/config-file-access.ts`.)
 
 ## Boundaries (do not change)
 

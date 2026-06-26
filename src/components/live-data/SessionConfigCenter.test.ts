@@ -184,11 +184,12 @@ test("the JSON drawer states it is manual import/export, not a watched file", ()
   assert.match(html, /never auto-reads or watches a file/i);
 });
 
-test("docs and UI never claim a watched / bound config file", () => {
+test("docs and UI never claim an auto-watched / auto-synced config file", () => {
   const doc = readFileSync(resolve("docs/live-session.config.md"), "utf8");
-  // The doc is explicit that the file is manual, not watched/bound.
-  assert.match(doc, /does \*\*not\*\* auto-read|not a watched file/i);
-  // No copy implies a live binding / auto-sync to a file on disk.
+  // The optional bound file is allowed, but the doc is explicit it is never
+  // watched / auto-read — read + save stay manual user actions.
+  assert.match(doc, /not watched|never watched|not auto-read/i);
+  // No copy implies a live binding / auto-sync / file watch.
   assert.doesNotMatch(doc, /synced to (a )?file|auto-?sync(ed)? to disk|watches the file/i);
   const html = renderCenter();
   assert.doesNotMatch(html, /synced to (a )?file/i);
