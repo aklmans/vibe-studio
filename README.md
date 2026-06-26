@@ -219,6 +219,7 @@ drizzle/            SQL migrations for live data persistence
 - Canvas output is rendered as DOM/CSS and exported with `html-to-image`.
 - Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
+- Config boundary: [`live-session.config.json`](docs/live-session.config.md) is the per-session content portable core (v1); a future [`studio.config.json`](docs/studio.config.md) is for studio-level settings (draft only); runtime state stays in `OverlayState`/`localStorage`. The split is pinned in `src/lib/session-config-boundary.ts`. Configs move by manual import/export, not a watched file.
 - `state.theme` is the app-wide light/dark appearance. App shell UI reads `APP_THEME_TOKENS` and CSS vars, while `state.colors` is the broadcast/export asset palette users can override. Switching Light/Dark currently loads the matching asset preset as a product default; if the app ever needs light UI with dark exports, add a separate `assetPalette` control instead of overloading `theme`.
 - The live-data persistence layer (behind the Session Config tab) persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.

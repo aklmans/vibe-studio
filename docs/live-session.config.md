@@ -65,6 +65,11 @@ back-compatible**: existing v1 files keep importing, and Export keeps emitting a
 valid projection. This batch does **not** change the schema — it only records
 the boundary so the split can happen safely later.
 
+The boundary is also pinned in code: `src/lib/session-config-boundary.ts`
+defines `LIVE_SESSION_CONFIG_V1_KEYS`, `RUNTIME_STATE_EXCLUSIONS`,
+`STUDIO_CONFIG_FIELDS`, and a `StudioConfigV1Draft` type + parser. The future
+studio config is specified (as a draft) in [`studio.config.md`](./studio.config.md).
+
 ## File handling — manual import / export (not a watched file)
 
 This config is moved by **explicit import / export inside Session Config → the
