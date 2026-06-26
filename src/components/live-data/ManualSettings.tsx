@@ -32,7 +32,7 @@ interface CategoryDef {
   render: () => ReactNode;
 }
 
-const SETTINGS_CONTENT_MAX_WIDTH = 920;
+const SETTINGS_CONTENT_MAX_WIDTH = 940;
 
 export default function ManualSettings({
   state,
@@ -300,7 +300,16 @@ export default function ManualSettings({
         ref={scrollRef}
         style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "18px 28px 56px" }}
       >
-        <div style={{ maxWidth: SETTINGS_CONTENT_MAX_WIDTH, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: SETTINGS_CONTENT_MAX_WIDTH,
+            marginInline: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
           <input
             data-testid="settings-search"
             value={query}
