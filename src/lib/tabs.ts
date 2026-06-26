@@ -1,9 +1,9 @@
 export const APP_TABS = [
   "overlay",
-  "live",
   "cover",
   "poster",
   "wallpaper",
+  "live",
 ] as const;
 
 export type AppTab = (typeof APP_TABS)[number];

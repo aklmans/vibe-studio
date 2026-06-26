@@ -5,10 +5,10 @@ import { APP_TABS, CANVAS_TABS, isCanvasTab } from "./tabs";
 test("app tabs include session config while canvas tabs stay exportable previews", () => {
   assert.deepEqual(APP_TABS, [
     "overlay",
-    "live",
     "cover",
     "poster",
     "wallpaper",
+    "live",
   ]);
   assert.deepEqual(CANVAS_TABS, ["overlay", "cover", "poster", "wallpaper"]);
   assert.equal(isCanvasTab("overlay"), true);
