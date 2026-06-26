@@ -270,8 +270,11 @@ For the first redesign phase, change only the builder shell and shared UI tokens
 - `src/components/shared/Field.tsx`
 - `src/components/SettingsDrawer.tsx`
 - `src/components/CommandPalette.tsx`
-- light-touch fixes to `LiveDataManager` / `SessionRecipePanel` only if token
-  changes make them visually inconsistent.
+- light-touch fixes to the Session Config shell (`LiveDataManager` and the
+  `live-data/` Manual / Agent / JSON-drawer components) only if token changes
+  make them visually inconsistent. (There is no longer a `SessionRecipePanel`
+  or a Recipe / Brief flow — those were retired when Live Data became the
+  Session Config center.)
 
 Do not redesign:
 
@@ -298,7 +301,7 @@ pnpm build
 Manual smoke:
 
 - `/` loads;
-- Overlay / Live Data / Cover / Poster / Wallpaper tabs work;
+- Overlay / Session Config / Cover / Poster / Wallpaper tabs work;
 - command palette opens and closes;
 - settings drawer opens and closes;
 - export primary and export menu still work;

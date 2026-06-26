@@ -169,22 +169,30 @@ export default function ConfigJsonDrawer({
             flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                aria-hidden
+                style={{ width: 3, height: 14, borderRadius: 2, background: UI_COLORS.accent }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--app-font-mono)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: UI_COLORS.text,
+                }}
+              >
+                {t("config.title")}
+              </span>
+            </div>
             <span
-              aria-hidden
-              style={{ width: 3, height: 14, borderRadius: 2, background: UI_COLORS.accent }}
-            />
-            <span
-              style={{
-                fontFamily: "var(--app-font-mono)",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: UI_COLORS.text,
-              }}
+              data-testid="config-json-file-note"
+              style={{ fontSize: 10, color: UI_COLORS.textMuted, paddingLeft: 11, lineHeight: 1.4 }}
             >
-              {t("config.title")}
+              {t("config.fileNote")}
             </span>
           </div>
           <button

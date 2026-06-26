@@ -39,6 +39,27 @@ These are edited via the Session Config **form**, not this file. **Apply** also
 rebuilds active section, done states, and bottom-bar segments to v1 defaults — so
 the form and the JSON are two views of the *same config*, not of the whole page.
 
+## File handling — manual import / export (not a watched file)
+
+This config is moved by **explicit import / export inside Session Config → the
+JSON drawer**, not by reading a file off disk. The app does **not** auto-read,
+auto-write, or watch any `live-session.config.json` on your filesystem. "Export"
+downloads the current projection; "Import" reads a file you pick and then waits
+for a human **Apply**.
+
+This is a deliberate, minimal choice for a browser-first app:
+
+- A Next.js API that writes a fixed file would target the **server** filesystem
+  (not your local file) and break on read-only / ephemeral serverless deploys.
+- The File System Access API could bind a local file, but needs handle
+  persistence + re-permission, has no real change-watch, and is unsupported in
+  some browsers — so it would still need this manual path as a fallback and
+  risks implying a "live file" that does not exist.
+
+If a true bound-file / `settings.json`-style experience is wanted later, add it
+as an **optional** File System Access binding with this manual import / export
+kept as the fallback — and only then describe the app as reading a file.
+
 ## Boundaries (do not change)
 
 - `OverlayState` is the runtime source of truth; this file is a projection +

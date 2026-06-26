@@ -159,9 +159,9 @@ systemextensionsctl list
 
 The expected entry is `OBS Virtual Camera` with `[activated enabled]`.
 
-## Live Data Database
+## Session Persistence (Live Data Database)
 
-The Live Data tab can persist sidebar sections, tasks, bottom-bar segments, stack items, and live session start/end timestamps to PostgreSQL. If `DATABASE_URL` is not configured, the app stays in local draft mode and continues to use `localStorage` plus the in-memory OBS live-state endpoint.
+The **Session Config** tab — backed by the live-data persistence layer — can persist sidebar sections, tasks, bottom-bar segments, stack items, and live session start/end timestamps to PostgreSQL. ("Live Data" is the name of this persistence/API layer, not a page: the user-facing tab is **Session Config**.) If `DATABASE_URL` is not configured, the app stays in local draft mode and continues to use `localStorage` plus the in-memory OBS live-state endpoint.
 
 Configure a database:
 
@@ -176,8 +176,8 @@ The schema lives in `src/db/schema.ts`, with a checked-in SQL migration at `driz
 ## Export Workflow
 
 1. Open the overlay builder.
-2. Switch between the Overlay, Live Data, Cover, Poster, and Wallpaper tabs.
-3. Adjust copy, sections, badges, social links, live session start time, tool stack, and wallpaper-only fields.
+2. Switch between the Overlay, Session Config, Cover, Poster, and Wallpaper tabs.
+3. Adjust copy, sections, badges, social links, live session start time, tool stack, and wallpaper-only fields. The Session Config tab edits the v1 portable-core fields directly (title, subtitle, author, profile/cover, badges, stack, socials, sections) and exposes the same config as JSON.
 4. Use the export controls to generate PNGs for the cover, poster, full overlay, sidebar, bottom bar, or wallpaper set.
 5. Keep polished example exports in `docs/assets/` when they should be shown in this README.
 
@@ -220,7 +220,7 @@ drizzle/            SQL migrations for live data persistence
 - Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
 - `state.theme` is the app-wide light/dark appearance. App shell UI reads `APP_THEME_TOKENS` and CSS vars, while `state.colors` is the broadcast/export asset palette users can override. Switching Light/Dark currently loads the matching asset preset as a product default; if the app ever needs light UI with dark exports, add a separate `assetPalette` control instead of overloading `theme`.
-- Live Data persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
+- The live-data persistence layer (behind the Session Config tab) persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
 - `pnpm live:prepare` edits local OBS config files under `~/Library/Application Support/obs-studio/` and writes timestamped backups before changing them.
 - Package management is pnpm only.

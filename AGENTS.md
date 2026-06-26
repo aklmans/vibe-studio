@@ -30,6 +30,14 @@ For OBS/live-data behavior, also read:
 - `src/lib/live-data.ts`
 - `scripts/prepare-live.ts`
 
+Naming note: **"Live Data" is the persistence / API layer** (DB repo, `live-data*`
+libs, `/api/sessions`, the OBS `live-state` bridge), not a page. The user-facing
+tab is **Session Config** (`src/components/live-data/` — `LiveDataManager` shell
+with Manual Settings, an Agent prep mode, and a global drift-safe JSON drawer).
+There is no Recipe / Brief flow and no `SessionRecipePanel`; those earlier stages
+were retired. The Agent mode is a **local** handoff prep — it does not call a
+model or hit the network.
+
 ## Current Branch Goal: `editorial-live`
 
 The `editorial-live` branch is for a deliberate visual redesign. The goal is to move the app from a cool neon livestream-control look toward the warm, editorial, calm, premium live-studio language described in `DESIGN_LANGUAGE.md`.
@@ -172,7 +180,7 @@ pnpm build
 Also manually smoke-check:
 
 - the main builder at `/`;
-- all tabs: Overlay, Live Data, Cover, Poster, Wallpaper;
+- all tabs: Overlay, Session Config, Cover, Poster, Wallpaper;
 - exports for overlay, cover, poster, wallpaper set, sidebar, and bottom bar;
 - OBS routes: `/obs/overlay?camera=empty`, `/obs/overlay?camera=avatar`, `/obs/sidebar`, `/obs/bottom-bar`;
 - language switching and command palette shortcuts.

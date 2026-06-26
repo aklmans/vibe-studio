@@ -8,6 +8,7 @@ import { LocaleProvider } from "../../hooks/useLocale";
 import { DEFAULT_STATE } from "../../types";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
 import { focusTargetTestId, needsFocusRetry } from "./drawer-focus";
+import { resolveCopyResult, turnMessageKey } from "./agent-copy";
 import LiveDataManager from "./LiveDataManager";
 
 type Persistence = Parameters<typeof LiveDataManager>[0]["persistence"];
@@ -96,28 +97,88 @@ test("Manual Settings uses a wide workbench content column", () => {
   assert.doesNotMatch(MANUAL_SRC, /maxWidth:\s*720/);
 });
 
-test("Manual Settings has a search box that really filters categories", () => {
+test("Manual Settings search is field-level and shows which fields hit", () => {
   const html = renderCenter();
   assert.match(html, /data-testid="settings-search"/);
-  // The filter is keyword/title based — not a fake box.
-  assert.match(MANUAL_SRC, /matchesQuery/);
-  assert.match(MANUAL_SRC, /keywords/);
+  // Field-level: each category carries a static field index, and matched fields
+  // are surfaced — not just a category-title filter.
+  assert.match(MANUAL_SRC, /fields:\s*\[/);
+  assert.match(MANUAL_SRC, /matchedFields/);
+  assert.match(MANUAL_SRC, /fieldHits/);
   assert.match(MANUAL_SRC, /data-testid="settings-search-count"/);
+  assert.match(MANUAL_SRC, /data-testid="settings-matched-fields"/);
 });
 
-test("Manual Settings search copy says it filters categories, not fields", () => {
+test("Manual Settings search copy reflects field-level search, not category-only", () => {
   const html = renderCenter();
-  // A persistent helper line spells out the scope so the box isn't misleading.
   assert.match(html, /data-testid="settings-search-help"/);
-  assert.match(html, /Filters setting groups, not individual fields\./);
+  assert.match(html, /Searches setting groups and field names\./);
   const i18nSrc = readFileSync(resolve("src/lib/i18n.ts"), "utf8");
-  // Placeholder no longer implies field-level search.
-  assert.doesNotMatch(i18nSrc, /"manualSettings\.searchPlaceholder": "Search settings…"/);
-  assert.match(i18nSrc, /"manualSettings\.searchPlaceholder": "Search categories…"/);
-  assert.match(i18nSrc, /"manualSettings\.searchPlaceholder": "搜索分类…"/);
-  // Helper copy exists in both locales.
-  assert.match(i18nSrc, /"manualSettings\.searchHelp": "Filters setting groups, not individual fields\."/);
-  assert.match(i18nSrc, /"manualSettings\.searchHelp": "按设置分组过滤,不含单个字段。"/);
+  // No longer claims it only filters categories / not fields.
+  assert.doesNotMatch(i18nSrc, /Filters setting groups, not individual fields\./);
+  assert.match(i18nSrc, /"manualSettings\.searchPlaceholder": "Search settings & fields…"/);
+  assert.match(i18nSrc, /"manualSettings\.searchPlaceholder": "搜索设置与字段…"/);
+  assert.match(i18nSrc, /"manualSettings\.searchHelp": "Searches setting groups and field names\."/);
+  assert.match(i18nSrc, /"manualSettings\.searchHelp": "搜索设置分组与字段名。"/);
+});
+
+test("Manual Settings edits the v1 portable-core fields directly", () => {
+  const html = renderCenter();
+  // Identity copy fields are real inputs, not read-only summaries.
+  assert.match(html, /data-testid="field-title"/);
+  assert.match(html, /data-testid="field-subtitle"/);
+  assert.match(html, /data-testid="field-author"/);
+  // Profile / cover / badges / socials reuse the shared editors inline.
+  assert.match(html, /data-testid="field-profile-avatar-visible"/);
+  assert.match(html, /data-testid="cover-visual"/);
+  assert.match(html, /data-testid="field-badge-0-label"/);
+  assert.match(html, /data-testid="field-social-0-label"/);
+  // Each v1 field keeps an "Edit in JSON" jump to the same value (not a 2nd write path).
+  for (const key of ["title", "subtitle", "author", "profile", "cover", "badges", "socials"]) {
+    assert.match(html, new RegExp(`data-testid="settings-openjson-${key}"`));
+  }
+});
+
+test("Agent mode is a local chat-style prep with a transcript and honest framing", () => {
+  const html = renderCenter();
+  assert.match(html, /data-testid="agent-transcript"/);
+  assert.match(html, /data-testid="agent-msg-seed"/);
+  // Honest: a local, no-model badge — never claims a connected assistant.
+  assert.match(html, /data-testid="agent-local-badge"/);
+  assert.match(html, /no model connected/i);
+  // Copy handoff is still the single primary path into the drift-safe drawer.
+  assert.match(html, /data-testid="agent-copy-handoff"/);
+  assert.match(html, /data-testid="open-json-agent"/);
+});
+
+test("Agent copy is honest: a failed clipboard never renders a 'copied' turn", () => {
+  // Pure outcome mapping — a failed copy is the manual path, never "copied".
+  assert.deepEqual(resolveCopyResult(true), { messageKey: "agent.copied", turnStatus: "copied" });
+  assert.deepEqual(resolveCopyResult(false), { messageKey: "agent.copyFailed", turnStatus: "manual" });
+  assert.equal(turnMessageKey("copied"), "agent.turnReady");
+  assert.equal(turnMessageKey("manual"), "agent.turnManual");
+
+  // The assistant bubble keys off the recorded turn status and routes copy
+  // through the resolver — it does not hard-code the "copied" wording.
+  assert.match(AGENT_SRC, /turnMessageKey\(turn\.status\)/);
+  assert.match(AGENT_SRC, /resolveCopyResult/);
+  assert.doesNotMatch(AGENT_SRC, /agent\.turnReady/);
+
+  // Only the success wording says "copied"; the manual wording must not — in
+  // both locales.
+  const i18nSrc = readFileSync(resolve("src/lib/i18n.ts"), "utf8");
+  const ready = i18nSrc.match(/"agent\.turnReady": "[^"]*"/g) ?? [];
+  const manual = i18nSrc.match(/"agent\.turnManual": "[^"]*"/g) ?? [];
+  assert.equal(ready.length, 2);
+  assert.equal(manual.length, 2);
+  for (const line of ready) assert.match(line, /copied|已复制/);
+  for (const line of manual) assert.doesNotMatch(line, /copied|已复制/);
+});
+
+test("the JSON drawer states it is manual import/export, not a watched file", () => {
+  const html = renderCenter();
+  assert.match(html, /data-testid="config-json-file-note"/);
+  assert.match(html, /never auto-reads or watches a file/i);
 });
 
 test("Manual Settings language row uses a real i18n key, not translation comparison", () => {

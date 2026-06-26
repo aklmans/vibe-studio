@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type { OverlayState } from "../../types";
 import type { Locale, TranslationKey } from "../../lib/i18n";
 import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
@@ -8,7 +14,11 @@ import SidebarSectionEditor from "../SidebarSectionEditor";
 import LiveSessionEditor from "../LiveSessionEditor";
 import StackEditor from "../StackEditor";
 import BottomBarSegmentEditor from "../BottomBarSegmentEditor";
-import { WorkbenchButton } from "../shared/Field";
+import BadgesEditor from "../BadgesEditor";
+import SocialsEditor from "../SocialsEditor";
+import CoverVisualEditor from "../inspector/CoverVisualEditor";
+import AvatarUploader from "../shared/AvatarUploader";
+import { TextInput, WorkbenchButton } from "../shared/Field";
 import { LineSegmented, RuleNote } from "../inspector/EditorRow";
 import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceControls";
 import type { SessionPersistence } from "./SourceOfTruthBar";
@@ -24,11 +34,18 @@ interface ManualSettingsProps {
   onOpenStudioDrawer: () => void;
 }
 
+/** One searchable field within a category — the static field-level index. */
+interface SettingField {
+  label: string;
+  keywords?: string;
+}
+
 interface CategoryDef {
   id: string;
   titleKey: TranslationKey;
   hintKey: TranslationKey;
   keywords: string;
+  fields: SettingField[];
   render: () => ReactNode;
 }
 
@@ -44,6 +61,7 @@ export default function ManualSettings({
 }: ManualSettingsProps) {
   const { t, locale, setLocale } = useLocale();
   const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState("general");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const activeSectionIndex = Math.min(
@@ -51,15 +69,17 @@ export default function ManualSettings({
     Math.max(state.sidebar.sections.length - 1, 0),
   );
   const activeSection = state.sidebar.sections[activeSectionIndex];
-  const visibleBadges = state.cover.badges.filter((b) => b.visible).length;
-  const visibleSocials = state.cover.socials.filter((s) => s.visible).length;
+
+  const writeCover = (patch: Partial<OverlayState["cover"]>) =>
+    onChange(patchSection(state, "cover", patch));
 
   const categories: CategoryDef[] = [
     {
       id: "general",
       titleKey: "settingsGroup.general",
       hintKey: "settingsGroup.generalHint",
-      keywords: "general language locale app",
+      keywords: "general language locale app interface",
+      fields: [{ label: t("settingsRow.languageTitle"), keywords: "language locale 中文 english" }],
       render: () => (
         <SettingRow title={t("settingsRow.languageTitle")} description={t("settingsRow.languageDesc")}>
           <SettingsSelector
@@ -77,12 +97,24 @@ export default function ManualSettings({
       id: "session",
       titleKey: "settingsGroup.session",
       hintKey: "settingsGroup.sessionHint",
-      keywords: "session title subtitle topic author on-air start time",
+      keywords: "session title subtitle topic author byline on-air start time",
+      fields: [
+        { label: t("label.title"), keywords: "title heading" },
+        { label: t("label.subtitle"), keywords: "subtitle topic" },
+        { label: t("settingsRow.authorTitle"), keywords: "author byline with hook" },
+        { label: t("group.liveSession"), keywords: "on-air start time runtime" },
+      ],
       render: () => (
         <>
-          <SummaryRow label={t("label.title")} value={state.cover.title || "—"} jsonKey="title" onOpenJson={onOpenJson} />
-          <SummaryRow label={t("label.topic")} value={state.cover.todayTopic || "—"} jsonKey="subtitle" onOpenJson={onOpenJson} />
-          <RuleNote>{t("settingsRow.sessionInspectorNote")}</RuleNote>
+          <FieldRow title={t("label.title")} description={t("settingsRow.titleDesc")} jsonKey="title" onOpenJson={onOpenJson}>
+            <TextInput testId="field-title" value={state.cover.title} onChange={(v) => writeCover({ title: v })} placeholder={t("label.title")} />
+          </FieldRow>
+          <FieldRow title={t("label.subtitle")} description={t("settingsRow.subtitleDesc")} jsonKey="subtitle" onOpenJson={onOpenJson}>
+            <TextInput testId="field-subtitle" value={state.cover.todayTopic} onChange={(v) => writeCover({ todayTopic: v })} placeholder={t("label.topic")} />
+          </FieldRow>
+          <FieldRow title={t("settingsRow.authorTitle")} description={t("settingsRow.authorDesc")} jsonKey="author" onOpenJson={onOpenJson}>
+            <TextInput testId="field-author" value={state.cover.hookText} onChange={(v) => writeCover({ hookText: v })} placeholder={t("settingsRow.authorPlaceholder")} />
+          </FieldRow>
           <SettingRow title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
             <div data-testid="live-data-live-session">
               <LiveSessionEditor state={state} onChange={onChange} />
@@ -96,6 +128,10 @@ export default function ManualSettings({
       titleKey: "settingsGroup.content",
       hintKey: "configForm.sectionsNote",
       keywords: "content sections bullets tasks progress goal done",
+      fields: [
+        { label: t("label.activeSection"), keywords: "section active" },
+        { label: t("label.section"), keywords: "section title bullets" },
+      ],
       render: () => (
         <div data-testid="live-data-sections" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -131,7 +167,8 @@ export default function ManualSettings({
       id: "stack",
       titleKey: "settingsGroup.stack",
       hintKey: "group.stack.hint",
-      keywords: "stack tools services",
+      keywords: "stack tools services tech",
+      fields: [{ label: t("group.stack"), keywords: "stack tools tech" }],
       render: () => (
         <div data-testid="live-data-stack">
           <StackEditor state={state} onChange={onChange} />
@@ -142,14 +179,36 @@ export default function ManualSettings({
       id: "assets",
       titleKey: "settingsGroup.assets",
       hintKey: "settingsGroup.assetsHint",
-      keywords: "socials badges profile avatar links cover",
+      keywords: "assets profile avatar cover visual portrait scene badges socials links",
+      fields: [
+        { label: t("settingsRow.profileTitle"), keywords: "profile avatar headshot visible" },
+        { label: t("cover.visual.label"), keywords: "cover visual portrait scene image" },
+        { label: `${t("label.badge")}s`, keywords: "badges agent icons" },
+        { label: `${t("label.social")}s`, keywords: "socials links handles" },
+      ],
       render: () => (
-        <>
-          <SummaryRow label={t("label.social")} value={String(visibleSocials)} jsonKey="socials" onOpenJson={onOpenJson} />
-          <SummaryRow label={t("label.badge")} value={String(visibleBadges)} jsonKey="badges" onOpenJson={onOpenJson} />
-          <SummaryRow label={t("cover.visual.label")} value={t(`cover.visual.${state.cover.visual}` as TranslationKey)} jsonKey="cover" onOpenJson={onOpenJson} />
-          <RuleNote>{t("settingsRow.assetsInspectorNote")}</RuleNote>
-        </>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <AssetSubSection label={t("settingsRow.profileTitle")} description={t("settingsRow.profileDesc")} jsonKey="profile" onOpenJson={onOpenJson}>
+            <AvatarUploader
+              url={state.cover.avatarUrl}
+              visible={state.cover.avatarVisible}
+              onUrlChange={(v) => writeCover({ avatarUrl: v })}
+              onVisibleChange={(v) => writeCover({ avatarVisible: v })}
+              showToggle
+              clearValue="/avatar.png"
+              testIdPrefix="field-profile-avatar"
+            />
+          </AssetSubSection>
+          <AssetSubSection label={t("cover.visual.label")} description={t("settingsRow.coverDesc")} jsonKey="cover" onOpenJson={onOpenJson}>
+            <CoverVisualEditor state={state} onChange={onChange} />
+          </AssetSubSection>
+          <AssetSubSection label={`${t("label.badge")}s`} description={t("settingsRow.badgesDesc")} jsonKey="badges" onOpenJson={onOpenJson}>
+            <BadgesEditor state={state} onChange={onChange} testIdPrefix="field-badge" />
+          </AssetSubSection>
+          <AssetSubSection label={`${t("label.social")}s`} description={t("settingsRow.socialsDesc")} jsonKey="socials" onOpenJson={onOpenJson}>
+            <SocialsEditor state={state} onChange={onChange} testIdPrefix="field-social" />
+          </AssetSubSection>
+        </div>
       ),
     },
     {
@@ -157,6 +216,7 @@ export default function ManualSettings({
       titleKey: "settingsGroup.display",
       hintKey: "settingsGroup.displayHint",
       keywords: "broadcast display bottom bar segments sidebar surface",
+      fields: [{ label: t("group.bottomBarSegments"), keywords: "bottom bar segments display runtime" }],
       render: () => (
         <div data-testid="live-data-bottom-bar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[0, 1, 2].map((idx) => (
@@ -173,6 +233,10 @@ export default function ManualSettings({
       titleKey: "settingsGroup.appearance",
       hintKey: "settingsGroup.appearanceHint",
       keywords: "studio appearance theme colors palette light dark reset",
+      fields: [
+        { label: t("settings.theme"), keywords: "theme light dark appearance" },
+        { label: t("settings.colorsSurface"), keywords: "colors palette accent surface text" },
+      ],
       render: () => (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <StudioAppearanceControls
@@ -210,6 +274,10 @@ export default function ManualSettings({
       titleKey: "settingsGroup.persistence",
       hintKey: "settingsGroup.persistenceHint",
       keywords: "persistence db database sync obs live-state draft history",
+      fields: [
+        { label: t("sourceBar.db"), keywords: "database postgres sync" },
+        { label: t("sourceBar.obs"), keywords: "obs live-state runtime" },
+      ],
       render: () => (
         <>
           <SummaryRow
@@ -226,10 +294,12 @@ export default function ManualSettings({
       id: "advanced",
       titleKey: "settingsGroup.advanced",
       hintKey: "settingsGroup.advancedHint",
-      keywords: "advanced json config file import export source",
+      keywords: "advanced json config file import export source handoff",
+      fields: [{ label: t("config.title"), keywords: "json import export file handoff" }],
       render: () => (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>
+          <RuleNote>{t("settingsRow.fileStrategyNote")}</RuleNote>
           <WorkbenchButton
             data-testid="open-json-advanced"
             onClick={() => onOpenJson()}
@@ -243,17 +313,57 @@ export default function ManualSettings({
   ];
 
   const normalized = query.trim().toLowerCase();
-  const matchesQuery = (c: CategoryDef) =>
-    !normalized ||
+  const titleMatches = (c: CategoryDef) =>
     `${t(c.titleKey)} ${c.keywords}`.toLowerCase().includes(normalized);
-  const matched = categories.filter(matchesQuery);
+  const matchedFields = (c: CategoryDef): SettingField[] =>
+    normalized
+      ? c.fields.filter((f) =>
+          `${f.label} ${f.keywords ?? ""}`.toLowerCase().includes(normalized),
+        )
+      : [];
+  const categoryMatches = (c: CategoryDef) =>
+    !normalized || titleMatches(c) || matchedFields(c).length > 0;
+  const matched = categories.filter(categoryMatches);
+  // Flat list of the fields that hit — so the user sees *which* fields matched.
+  const fieldHits = normalized
+    ? categories.flatMap((c) => matchedFields(c).map((f) => ({ field: f, catId: c.id })))
+    : [];
 
   const jumpToCategory = (id: string) => {
+    setActiveCat(id);
     document.getElementById(`config-settings-${id}`)?.scrollIntoView({
       block: "start",
       behavior: "smooth",
     });
   };
+
+  // Lightweight scroll-spy: highlight the tree entry whose group is at the top
+  // of the scroll viewport. No observers — just a rAF-throttled scroll read.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const top = container.getBoundingClientRect().top + 40;
+      let current = matched[0]?.id ?? "general";
+      for (const c of matched) {
+        const el = document.getElementById(`config-settings-${c.id}`);
+        if (el && el.getBoundingClientRect().top <= top) current = c.id;
+      }
+      setActiveCat(current);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    update();
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalized, matched.length]);
 
   return (
     <div data-testid="manual-settings" style={{ display: "flex", minHeight: 0, flex: 1 }}>
@@ -273,34 +383,46 @@ export default function ManualSettings({
           {t("manualSettings.categories")}
         </div>
         {categories.map((c) => {
-          const dim = Boolean(normalized) && !matchesQuery(c);
+          const dim = Boolean(normalized) && !categoryMatches(c);
+          const isActive = !normalized && activeCat === c.id;
           return (
             <button
               key={c.id}
               data-testid={`settings-cat-${c.id}`}
+              data-active={isActive ? "true" : undefined}
+              aria-current={isActive ? "true" : undefined}
               onClick={() => jumpToCategory(c.id)}
               style={{
                 appearance: "none",
                 textAlign: "left",
                 width: "100%",
-                background: "transparent",
+                background: isActive ? cssAlpha(UI_COLORS.accent, 8) : "transparent",
                 border: "none",
+                borderLeft: `2px solid ${isActive ? UI_COLORS.accent : "transparent"}`,
                 padding: "6px 14px",
                 cursor: "pointer",
                 fontFamily: "var(--app-font-mono)",
                 fontSize: 11,
-                fontWeight: 600,
+                fontWeight: isActive ? 700 : 600,
                 letterSpacing: "0.03em",
-                color: dim ? UI_COLORS.textSubtle : UI_COLORS.textSoft,
+                color: dim
+                  ? UI_COLORS.textSubtle
+                  : isActive
+                    ? UI_COLORS.text
+                    : UI_COLORS.textSoft,
                 opacity: dim ? 0.55 : 1,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                transition: "color 0.12s",
+                transition: "color 0.12s, background 0.12s, border-color 0.12s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = UI_COLORS.text)}
               onMouseLeave={(e) =>
-                (e.currentTarget.style.color = dim ? UI_COLORS.textSubtle : UI_COLORS.textSoft)
+                (e.currentTarget.style.color = dim
+                  ? UI_COLORS.textSubtle
+                  : isActive
+                    ? UI_COLORS.text
+                    : UI_COLORS.textSoft)
               }
             >
               {t(c.titleKey)}
@@ -340,11 +462,38 @@ export default function ManualSettings({
             {t("manualSettings.searchHelp")}
           </div>
           {normalized && (
-            <div
-              data-testid="settings-search-count"
-              style={{ fontSize: 11, color: UI_COLORS.textMuted, padding: "2px 2px 0" }}
-            >
-              {`${matched.length} / ${categories.length} · ${t("manualSettings.matches")}`}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "4px 2px 0" }}>
+              <div
+                data-testid="settings-search-count"
+                style={{ fontSize: 11, color: UI_COLORS.textMuted }}
+              >
+                {`${fieldHits.length} ${t("manualSettings.fieldsLabel")} · ${matched.length} ${t("manualSettings.groupsLabel")}`}
+              </div>
+              {fieldHits.length > 0 && (
+                <div data-testid="settings-matched-fields" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {fieldHits.slice(0, 8).map(({ field, catId }, i) => (
+                    <button
+                      key={`${field.label}-${i}`}
+                      data-testid={`settings-matched-field-${i}`}
+                      onClick={() => jumpToCategory(catId)}
+                      style={{
+                        appearance: "none",
+                        border: `1px solid ${cssAlpha(UI_COLORS.accent, 32)}`,
+                        borderRadius: 3,
+                        background: cssAlpha(UI_COLORS.accent, 8),
+                        color: UI_COLORS.textSoft,
+                        cursor: "pointer",
+                        fontFamily: "var(--app-font-mono)",
+                        fontSize: 10,
+                        letterSpacing: "0.02em",
+                        padding: "2px 7px",
+                      }}
+                    >
+                      {field.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -459,19 +608,115 @@ function SettingRow({
   );
 }
 
-/** A read-only summary row with a value and an Open-JSON-at-key shortcut. */
-function SummaryRow({
+/**
+ * An editable v1-core field row: title + description + an "Edit in JSON" jump on
+ * the right, control stacked below. Directly edits OverlayState — the JSON link
+ * is a shortcut to the same value, not a second write path.
+ */
+function FieldRow({
+  title,
+  description,
+  jsonKey,
+  onOpenJson,
+  children,
+}: {
+  title: string;
+  description: string;
+  jsonKey: string;
+  onOpenJson: (key?: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        paddingTop: 14,
+        borderTop: `1px solid ${UI_COLORS.border}`,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: UI_COLORS.textSoft }}>{title}</span>
+          {description && (
+            <span style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4 }}>
+              {description}
+            </span>
+          )}
+        </div>
+        <EditInJson jsonKey={jsonKey} onOpenJson={onOpenJson} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** A labelled brand-asset sub-section inside the Assets group. */
+function AssetSubSection({
   label,
-  value,
+  description,
+  jsonKey,
+  onOpenJson,
+  children,
+}: {
+  label: string;
+  description: string;
+  jsonKey: string;
+  onOpenJson: (key?: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={fieldLabel}>{label}</span>
+          {description && (
+            <span style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4 }}>
+              {description}
+            </span>
+          )}
+        </div>
+        <EditInJson jsonKey={jsonKey} onOpenJson={onOpenJson} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function EditInJson({
   jsonKey,
   onOpenJson,
 }: {
-  label: string;
-  value: string;
-  jsonKey?: string;
-  onOpenJson?: (key?: string) => void;
+  jsonKey: string;
+  onOpenJson: (key?: string) => void;
 }) {
   const { t } = useLocale();
+  return (
+    <button
+      data-testid={`settings-openjson-${jsonKey}`}
+      onClick={() => onOpenJson(jsonKey)}
+      style={{
+        appearance: "none",
+        border: "none",
+        background: "transparent",
+        color: cssAlpha(UI_COLORS.accentText, 100),
+        cursor: "pointer",
+        fontFamily: "var(--app-font-mono)",
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+        flexShrink: 0,
+        padding: 0,
+      }}
+    >
+      {t("manualSettings.openJsonAt")}
+    </button>
+  );
+}
+
+/** A read-only summary row (persistence status). */
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
@@ -497,27 +742,6 @@ function SummaryRow({
       >
         {value}
       </span>
-      {jsonKey && onOpenJson && (
-        <button
-          data-testid={`settings-openjson-${jsonKey}`}
-          onClick={() => onOpenJson(jsonKey)}
-          style={{
-            appearance: "none",
-            border: "none",
-            background: "transparent",
-            color: cssAlpha(UI_COLORS.accentText, 100),
-            cursor: "pointer",
-            fontFamily: "var(--app-font-mono)",
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.04em",
-            flexShrink: 0,
-            padding: 0,
-          }}
-        >
-          {t("manualSettings.openJsonAt")}
-        </button>
-      )}
     </div>
   );
 }
