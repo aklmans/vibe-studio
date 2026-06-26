@@ -33,6 +33,7 @@ import {
 } from "../lib/canvas-dimensions";
 import { produceState } from "../lib/state";
 import { publishLiveState } from "../lib/live-state-client";
+import { IDLE_OBS_SYNC, type ObsSyncState } from "./live-data/obs-sync";
 import {
   applyLiveDataToOverlayState,
   overlayStateToLiveData,
@@ -168,6 +169,7 @@ export default function App() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [obsSync, setObsSync] = useState<ObsSyncState>(IDLE_OBS_SYNC);
   const [liveDataPersistence, setLiveDataPersistence] =
     useState<LiveDataPersistenceState>({
       databaseConfigured: false,
@@ -256,13 +258,37 @@ export default function App() {
     saveOverlayState(state);
   }, [state]);
 
+  // Push the current state to the live-state store (OBS sources mirror it) and
+  // surface the real push status in the source-of-truth bar. Debounced so rapid
+  // edits don't spam the API or flicker the chip; the in-flight push is aborted
+  // when a newer edit supersedes it.
   useEffect(() => {
     const controller = new AbortController();
-    void publishLiveState(state, locale, controller.signal).catch((err) => {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      console.warn("Failed to publish live OBS state", err);
-    });
-    return () => controller.abort();
+    const timer = window.setTimeout(() => {
+      setObsSync((prev) => ({ ...prev, status: "syncing", error: null }));
+      publishLiveState(state, locale, controller.signal)
+        .then((result) => {
+          setObsSync({
+            status: "synced",
+            revision: result.revision,
+            lastPushedAt: result.updatedAt || new Date().toISOString(),
+            error: null,
+          });
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setObsSync((prev) => ({
+            ...prev,
+            status: "error",
+            error: err instanceof Error ? err.message : String(err),
+          }));
+          console.warn("Failed to publish live OBS state", err);
+        });
+    }, 400);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [state, locale]);
 
   useEffect(() => {
@@ -644,6 +670,7 @@ export default function App() {
                 onChange={setState}
                 dateKey={liveDateKey}
                 persistence={liveDataPersistence}
+                obsSync={obsSync}
                 onReload={reloadLiveData}
                 onStartSession={handleStartLiveSession}
                 onEndSession={handleEndLiveSession}

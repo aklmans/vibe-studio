@@ -9,6 +9,9 @@ import { DEFAULT_STATE } from "../../types";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
 import { focusTargetTestId, needsFocusRetry } from "./drawer-focus";
 import { resolveCopyResult, turnMessageKey } from "./agent-copy";
+import { obsSyncDetail, IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
+import { publishLiveState } from "../../lib/live-state-client";
+import SourceOfTruthBar from "./SourceOfTruthBar";
 import LiveDataManager from "./LiveDataManager";
 
 type Persistence = Parameters<typeof LiveDataManager>[0]["persistence"];
@@ -181,6 +184,28 @@ test("the JSON drawer states it is manual import/export, not a watched file", ()
   assert.match(html, /never auto-reads or watches a file/i);
 });
 
+test("docs and UI never claim a watched / bound config file", () => {
+  const doc = readFileSync(resolve("docs/live-session.config.md"), "utf8");
+  // The doc is explicit that the file is manual, not watched/bound.
+  assert.match(doc, /does \*\*not\*\* auto-read|not a watched file/i);
+  // No copy implies a live binding / auto-sync to a file on disk.
+  assert.doesNotMatch(doc, /synced to (a )?file|auto-?sync(ed)? to disk|watches the file/i);
+  const html = renderCenter();
+  assert.doesNotMatch(html, /synced to (a )?file/i);
+});
+
+test("the v1 boundary doc records runtime exclusions and the studio.config.json split", () => {
+  const doc = readFileSync(resolve("docs/live-session.config.md"), "utf8");
+  // v1 still excludes runtime state + studio appearance (locked as boundary text).
+  for (const field of ["bottomBar", "liveSession\\.startedAt", "activeSection", "sectionsDone"]) {
+    assert.match(doc, new RegExp(field));
+  }
+  assert.match(doc, /theme|appearance/i);
+  // The future split is documented as a direction, not implemented now.
+  assert.match(doc, /studio\.config\.json/);
+  assert.match(doc, /schemaVersion/);
+});
+
 test("Manual Settings language row uses a real i18n key, not translation comparison", () => {
   const i18nSrc = readFileSync(resolve("src/lib/i18n.ts"), "utf8");
   assert.match(MANUAL_SRC, /settingsRow\.languageTitle/);
@@ -324,14 +349,111 @@ test("obsolete Session Config i18n namespaces are removed", () => {
   }
 });
 
-test("the source-of-truth bar shows DB / local status without a faked OBS revision", () => {
-  const local = renderCenter();
+function renderBar(obsSync: ObsSyncState) {
+  return renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(SourceOfTruthBar, {
+        dateKey: "2026-06-26",
+        persistence: BASE_PERSISTENCE,
+        obsSync,
+        onReload: () => {},
+        onStartSession: () => {},
+        onEndSession: () => {},
+        onOpenJson: () => {},
+      }),
+    }),
+  );
+}
+
+test("the source-of-truth bar shows a real (idle) OBS status, no faked revision", () => {
+  const local = renderCenter(); // default obsSync = idle (nothing pushed yet)
   assert.match(local, /data-testid="live-data-session-bar"/);
   assert.match(local, /Authority/);
   assert.match(local, /Local draft/);
-  assert.match(local, /current state/);
-  assert.doesNotMatch(local, /rev#?\s*\d+/i);
+  assert.match(local, /data-testid="obs-sync-chip"/);
+  assert.match(local, /idle/);
+  // Idle never invents a revision number.
+  assert.doesNotMatch(local, /rev\s*#?\s*\d+/i);
   assert.doesNotMatch(local, /revision\s*\d+/i);
+});
+
+test("OBS sync detail is honest: a real revision only when synced", () => {
+  assert.equal(obsSyncDetail(IDLE_OBS_SYNC), "");
+  assert.equal(obsSyncDetail({ status: "syncing", revision: null, lastPushedAt: null, error: null }), "");
+  assert.equal(obsSyncDetail({ status: "error", revision: null, lastPushedAt: null, error: "live-state 500" }), "");
+  assert.match(
+    obsSyncDetail({ status: "synced", revision: 7, lastPushedAt: "2026-06-26T10:00:00.000Z", error: null }),
+    /rev 7/,
+  );
+  // Synced without a server revision shows no fabricated number — no "rev 0",
+  // no "rev <n>", no "rev" word at all — just the last-pushed time.
+  const nullRev = obsSyncDetail({
+    status: "synced",
+    revision: null,
+    lastPushedAt: "2026-06-26T10:00:00.000Z",
+    error: null,
+  });
+  assert.doesNotMatch(nullRev, /rev/);
+  assert.notEqual(nullRev, "");
+});
+
+test("the OBS chip renders real synced / error status with last-pushed detail", () => {
+  const synced = renderBar({ status: "synced", revision: 12, lastPushedAt: "2026-06-26T10:00:00.000Z", error: null });
+  assert.match(synced, /data-testid="obs-sync-chip"/);
+  assert.match(synced, /rev 12/);
+
+  const error = renderBar({ status: "error", revision: null, lastPushedAt: null, error: "live-state 503" });
+  // The push error is surfaced (chip tooltip) and no revision is invented.
+  assert.match(error, /live-state 503/);
+  assert.doesNotMatch(error, /rev\s*\d/);
+
+  const syncing = renderBar({ status: "syncing", revision: null, lastPushedAt: null, error: null });
+  assert.match(syncing, /syncing/);
+  assert.doesNotMatch(syncing, /rev\s*\d/);
+
+  // Synced but the API reported no revision: still a synced chip, but never
+  // "rev 0" or any fabricated number.
+  const syncedNoRev = renderBar({
+    status: "synced",
+    revision: null,
+    lastPushedAt: "2026-06-26T10:00:00.000Z",
+    error: null,
+  });
+  assert.match(syncedNoRev, /data-testid="obs-sync-chip"/);
+  assert.doesNotMatch(syncedNoRev, /rev 0/);
+  assert.doesNotMatch(syncedNoRev, /rev\s*\d/);
+});
+
+test("publishLiveState returns the store's real revision + updatedAt, backward-compatibly", async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({ revision: 9, updatedAt: "2026-06-26T10:00:00.000Z", locale: "en", state: {} }),
+        { status: 200 },
+      )) as typeof fetch;
+    assert.deepEqual(await publishLiveState(DEFAULT_STATE, "en"), {
+      revision: 9,
+      updatedAt: "2026-06-26T10:00:00.000Z",
+    });
+
+    // Missing revision → null (never a faked 0); updatedAt still falls back to "".
+    globalThis.fetch = (async () => new Response(JSON.stringify({}), { status: 200 })) as typeof fetch;
+    assert.deepEqual(await publishLiveState(DEFAULT_STATE, "en"), { revision: null, updatedAt: "" });
+
+    // Non-numeric revision (e.g. an older API or wrong type) → null, not 0.
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ revision: "5", updatedAt: 123 }), { status: 200 })) as typeof fetch;
+    assert.deepEqual(await publishLiveState(DEFAULT_STATE, "en"), { revision: null, updatedAt: "" });
+
+    // A non-OK response throws so the caller can show an error status.
+    globalThis.fetch = (async () => new Response("nope", { status: 500 })) as typeof fetch;
+    await assert.rejects(() => publishLiveState(DEFAULT_STATE, "en"));
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
 test("Agent shows the active task intent and the handoff reflects the brief", () => {

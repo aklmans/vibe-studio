@@ -4,6 +4,7 @@ import { UI_COLORS } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "../inspector/EditorRow";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
+import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import ManualSettings from "./ManualSettings";
 import AgentView from "./AgentView";
 import ConfigJsonDrawer from "./ConfigJsonDrawer";
@@ -15,6 +16,8 @@ interface LiveDataManagerProps {
   onChange: (state: OverlayState) => void;
   dateKey: string;
   persistence: SessionPersistence;
+  /** Real OBS / live-state push status for the source-of-truth bar. */
+  obsSync?: ObsSyncState;
   onReload: () => void;
   onStartSession: () => void;
   onEndSession: () => void;
@@ -40,6 +43,7 @@ export default function LiveDataManager({
   onChange,
   dateKey,
   persistence,
+  obsSync = IDLE_OBS_SYNC,
   onReload,
   onStartSession,
   onEndSession,
@@ -71,6 +75,7 @@ export default function LiveDataManager({
       <SourceOfTruthBar
         dateKey={dateKey}
         persistence={persistence}
+        obsSync={obsSync}
         onReload={onReload}
         onStartSession={onStartSession}
         onEndSession={onEndSession}

@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
 import { WorkbenchButton } from "../shared/Field";
+import { obsSyncDetail, type ObsSyncState } from "./obs-sync";
 
 export interface SessionPersistence {
   databaseConfigured: boolean;
@@ -15,6 +16,8 @@ export interface SessionPersistence {
 interface SourceOfTruthBarProps {
   dateKey: string;
   persistence: SessionPersistence;
+  /** Real OBS / live-state push status (idle / syncing / synced / error). */
+  obsSync: ObsSyncState;
   onReload: () => void;
   onStartSession: () => void;
   onEndSession: () => void;
@@ -32,13 +35,15 @@ const monoLabel: CSSProperties = {
  * right now. Three honest signals:
  *  - Authority: the local working draft (OverlayState) drives everything.
  *  - DB: session persistence status (or local-draft mode when no DATABASE_URL).
- *  - OBS: live-state mirrors the current state one-way. We do NOT invent a
- *    revision number we cannot read — it is a current-state indicator only.
+ *  - OBS: live-state mirrors the current state one-way. The chip shows the real
+ *    push status (idle / syncing / synced / error) with the store's real
+ *    revision + last-pushed time when synced — never an invented number.
  * Reload / Start / End keep their existing session-lifecycle behavior.
  */
 export default function SourceOfTruthBar({
   dateKey,
   persistence,
+  obsSync,
   onReload,
   onStartSession,
   onEndSession,
@@ -46,6 +51,33 @@ export default function SourceOfTruthBar({
 }: SourceOfTruthBarProps) {
   const { t } = useLocale();
   const canWrite = persistence.databaseConfigured && !persistence.loading;
+
+  // OBS / live-state push chip — a real status, never a faked revision.
+  const obsDetail = obsSyncDetail(obsSync);
+  const obs =
+    obsSync.status === "error"
+      ? {
+          value: t("sourceBar.obsError"),
+          color: UI_COLORS.danger,
+          title: obsSync.error || t("sourceBar.obsErrorHint"),
+        }
+      : obsSync.status === "syncing"
+        ? {
+            value: t("sourceBar.obsSyncing"),
+            color: UI_COLORS.textMuted,
+            title: t("sourceBar.obsSyncingHint"),
+          }
+        : obsSync.status === "synced"
+          ? {
+              value: obsDetail || t("sourceBar.obsSynced"),
+              color: UI_COLORS.accent,
+              title: `${t("sourceBar.obsSyncedHint")}${obsSync.lastPushedAt ? ` · ${obsSync.lastPushedAt}` : ""}`,
+            }
+          : {
+              value: t("sourceBar.obsIdle"),
+              color: UI_COLORS.textMuted,
+              title: t("sourceBar.obsHint"),
+            };
 
   const statusLabel = persistence.session
     ? t(`liveData.status.${persistence.session.status}`)
@@ -150,11 +182,13 @@ export default function SourceOfTruthBar({
           title={db.title}
         />
         <Chip
+          testId="obs-sync-chip"
           label={t("sourceBar.obs")}
-          value={t("sourceBar.obsState")}
-          valueColor={UI_COLORS.textMuted}
-          title={t("sourceBar.obsHint")}
+          value={obs.value}
+          valueColor={obs.color}
+          title={obs.title}
           dot
+          dotColor={obs.color}
         />
 
         <button
@@ -194,22 +228,27 @@ function Chip({
   valueColor,
   title,
   dot,
+  dotColor,
+  testId,
 }: {
   label: string;
   value: string;
   valueColor: string;
   title?: string;
   dot?: boolean;
+  dotColor?: string;
+  testId?: string;
 }) {
   return (
     <span
+      data-testid={testId}
       title={title}
       style={{ display: "inline-flex", alignItems: "center", gap: 7, minWidth: 0 }}
     >
       <span style={{ ...monoLabel, fontSize: 9, fontWeight: 600, color: UI_COLORS.textSubtle }}>
         {label}
       </span>
-      {dot && <Dot color={UI_COLORS.textSubtle} />}
+      {dot && <Dot color={dotColor ?? UI_COLORS.textSubtle} />}
       <span
         style={{
           fontFamily: "var(--app-font-mono)",
