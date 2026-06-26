@@ -54,9 +54,18 @@ export default function LiveDataManager({
   const [mode, setMode] = useState<ConfigMode>("manual");
   const [jsonOpen, setJsonOpen] = useState(false);
   const [jsonKey, setJsonKey] = useState<string | null>(null);
+  const [reviewText, setReviewText] = useState<string | null>(null);
 
   const openJson = (key?: string) => {
     setJsonKey(key ?? null);
+    setJsonOpen(true);
+  };
+
+  // Open the drawer and seed the editing buffer with returned JSON for review.
+  // It is never auto-applied — the user still presses Apply.
+  const openJsonForReview = (text: string) => {
+    setJsonKey(null);
+    setReviewText(text);
     setJsonOpen(true);
   };
 
@@ -132,7 +141,11 @@ export default function LiveDataManager({
             padding: "22px 28px 56px",
           }}
         >
-          <AgentView state={state} onOpenJson={() => openJson()} />
+          <AgentView
+            state={state}
+            onOpenJson={() => openJson()}
+            onReviewJson={openJsonForReview}
+          />
         </div>
       </div>
 
@@ -142,6 +155,8 @@ export default function LiveDataManager({
         state={state}
         onChange={onChange}
         focusKey={jsonKey}
+        reviewText={reviewText}
+        onReviewConsumed={() => setReviewText(null)}
       />
     </div>
   );

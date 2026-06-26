@@ -8,10 +8,11 @@ import { LocaleProvider } from "../../hooks/useLocale";
 import { DEFAULT_STATE } from "../../types";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
 import { focusTargetTestId, needsFocusRetry } from "./drawer-focus";
-import { resolveCopyResult, turnMessageKey } from "./agent-copy";
+import { resolveCopyResult, shortConfigHash, turnMessageKey } from "./agent-copy";
 import { obsSyncDetail, IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import { publishLiveState } from "../../lib/live-state-client";
 import SourceOfTruthBar from "./SourceOfTruthBar";
+import AgentView from "./AgentView";
 import LiveDataManager from "./LiveDataManager";
 
 type Persistence = Parameters<typeof LiveDataManager>[0]["persistence"];
@@ -160,6 +161,12 @@ test("Agent copy is honest: a failed clipboard never renders a 'copied' turn", (
   assert.deepEqual(resolveCopyResult(false), { messageKey: "agent.copyFailed", turnStatus: "manual" });
   assert.equal(turnMessageKey("copied"), "agent.turnReady");
   assert.equal(turnMessageKey("manual"), "agent.turnManual");
+
+  // Snapshot hash for turn metadata is stable + 8-hex (client-side helper).
+  const h = shortConfigHash('{"version":1}');
+  assert.equal(h, shortConfigHash('{"version":1}'));
+  assert.match(h, /^[0-9a-f]{8}$/);
+  assert.notEqual(h, shortConfigHash('{"version":1,"title":"x"}'));
 
   // The assistant bubble keys off the recorded turn status and routes copy
   // through the resolver — it does not hard-code the "copied" wording.
@@ -332,15 +339,100 @@ test("the agent handoff includes the current config and changes with the task", 
   }
 });
 
-test("no Recipe/Brief, no LLM, no network in the agent view or prompt builder", () => {
+test("no Recipe/Brief reflow; the agent client never holds a key or hits a provider", () => {
   const html = renderCenter();
   assert.doesNotMatch(html, /Recipe/i);
   assert.doesNotMatch(html, /Brief Builder|Quick Start|Stream Recipe/);
-  const promptSrc = readFileSync(resolve("src/lib/agent-prompt.ts"), "utf8");
-  for (const src of [AGENT_SRC, promptSrc]) {
-    assert.doesNotMatch(src, /\bfetch\s*\(/);
-    assert.doesNotMatch(src, /EventSource|XMLHttpRequest|openai|anthropic/i);
+
+  // The client (AgentView + its fetch helper) only calls the same-origin route —
+  // never a provider, never a key, never an SDK. The key stays server-side.
+  const clientSrc = readFileSync(resolve("src/lib/session-agent-client.ts"), "utf8");
+  for (const src of [AGENT_SRC, clientSrc]) {
+    assert.doesNotMatch(src, /Authorization|Bearer |apiKey|SESSION_AGENT_API_KEY|process\.env/);
+    assert.doesNotMatch(src, /api\.deepseek\.com|api\.openai\.com|EventSource|XMLHttpRequest/i);
+    assert.doesNotMatch(src, /\bopenai\b|\banthropic\b/i);
   }
+  assert.match(clientSrc, /\/api\/session-config\/agent/);
+  // The client imports the server adapter type-only, so its provider-call code
+  // never enters the client bundle.
+  assert.match(AGENT_SRC, /import type \{[^}]*SessionAgentStatus[^}]*\} from "\.\.\/\.\.\/lib\/session-agent"/);
+  // The prompt builder stays pure (no network).
+  const promptSrc = readFileSync(resolve("src/lib/agent-prompt.ts"), "utf8");
+  assert.doesNotMatch(promptSrc, /\bfetch\s*\(/);
+});
+
+test("Agent shows a connected badge + Run with AI only when a provider is configured", () => {
+  // Default (no provider) → local prep badge, no Run with AI.
+  const local = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(AgentView, { state: DEFAULT_STATE, onOpenJson: () => {} }),
+    }),
+  );
+  assert.match(local, /data-testid="agent-local-badge"/);
+  assert.match(local, /no model connected/i);
+  assert.doesNotMatch(local, /data-testid="agent-run-ai"/);
+
+  // Configured → connected badge + Run with AI. Copy handoff stays as fallback.
+  const connected = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(AgentView, {
+        state: DEFAULT_STATE,
+        onOpenJson: () => {},
+        initialStatus: { configured: true, provider: "deepseek", model: "deepseek-chat" },
+      }),
+    }),
+  );
+  assert.match(connected, /data-testid="agent-connected-badge"/);
+  assert.match(connected, /Connected: deepseek · deepseek-chat/);
+  assert.match(connected, /data-testid="agent-run-ai"/);
+  assert.match(connected, /data-testid="agent-copy-handoff"/);
+});
+
+test("AI review path is wired to the drawer buffer and never auto-applies", () => {
+  // AgentView hands returned JSON up via onReviewJson (not a second apply path).
+  assert.match(AGENT_SRC, /onReviewJson\(turn\.configText as string\)/);
+  assert.doesNotMatch(AGENT_SRC, /onChange\(/); // the agent never writes state
+
+  // LiveDataManager opens the drawer for review and clears the one-shot after.
+  const managerSrc = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
+  assert.match(managerSrc, /openJsonForReview/);
+  assert.match(managerSrc, /onReviewJson=\{openJsonForReview\}/);
+  assert.match(managerSrc, /onReviewConsumed=\{\(\) => setReviewText\(null\)\}/);
+
+  // The editor loads reviewText into the editing buffer (review), never applies it.
+  const editorSrc = readFileSync(resolve("src/components/live-data/SessionConfigEditor.tsx"), "utf8");
+  const reviewEffect = editorSrc.slice(
+    editorSrc.indexOf("if (reviewText == null) return;"),
+    editorSrc.indexOf("}, [reviewText]);"),
+  );
+  assert.match(reviewEffect, /loadTextIntoBuffer\(reviewText\)/);
+  assert.match(reviewEffect, /onReviewConsumed/);
+  assert.doesNotMatch(reviewEffect, /onChange\(|applyConfigText/);
+});
+
+test("the OBS chip is honest: push confirmed, consumption not heartbeat-confirmed", () => {
+  const i18nSrc = readFileSync(resolve("src/lib/i18n.ts"), "utf8");
+  // Synced tooltip confirms the push but disclaims OBS consumption.
+  assert.match(i18nSrc, /"sourceBar\.obsSyncedHint": "live-state push confirmed; OBS source consumption is not heartbeat-confirmed\."/);
+  assert.match(i18nSrc, /not heartbeat-confirmed/);
+  // It never claims OBS is online / consuming.
+  assert.doesNotMatch(i18nSrc, /"sourceBar\.obs[A-Za-z]*": "[^"]*OBS is online/i);
+  assert.doesNotMatch(i18nSrc, /OBS confirmed receipt|OBS is receiving/i);
+});
+
+test("Manual Settings scroll-spy is jump-stable and only moves the highlight", () => {
+  const manualSrc = readFileSync(resolve("src/components/live-data/ManualSettings.tsx"), "utf8");
+  // A click-jump suppresses the spy so it doesn't fight the smooth scroll.
+  assert.match(manualSrc, /suppressSpyUntil/);
+  assert.match(manualSrc, /Date\.now\(\) < suppressSpyUntil\.current/);
+  // The spy never scrolls the container (no scroll-stealing) — it only setActiveCat.
+  const spy = manualSrc.slice(manualSrc.indexOf("const update = () =>"), manualSrc.indexOf("const onScroll"));
+  assert.doesNotMatch(spy, /scrollTo|scrollIntoView|scrollTop =/);
+  assert.match(spy, /setActiveCat/);
 });
 
 test("obsolete Session Config i18n namespaces are removed", () => {

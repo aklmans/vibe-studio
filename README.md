@@ -173,6 +173,23 @@ pnpm dev
 
 The schema lives in `src/db/schema.ts`, with a checked-in SQL migration at `drizzle/0001_live_sessions.sql`. Database APIs are mounted under `/api/sessions`, while `/api/live-state` remains the real-time OBS bridge.
 
+## Session Config Agent (optional AI)
+
+The **Session Config → Agent** tab can call a real model to draft a config, or stay fully local. It is configured by server-side env vars (see `.env.example`):
+
+```bash
+SESSION_AGENT_PROVIDER=deepseek
+SESSION_AGENT_BASE_URL=https://api.deepseek.com   # OpenAI-compatible base URL
+SESSION_AGENT_API_KEY=sk-...                       # server only — never commit
+SESSION_AGENT_MODEL=deepseek-chat                  # use the provider's current model
+SESSION_AGENT_USER_AGENT=Vibe-Coding-Live/SessionConfigAgent
+```
+
+- The adapter is **OpenAI-compatible Chat Completions**, so DeepSeek, OpenAI, Kimi and z.ai all work by setting `BASE_URL` + `MODEL`. Example provider: [DeepSeek](https://api-docs.deepseek.com/) (`https://api.deepseek.com`, endpoint `/chat/completions`).
+- The **API key stays on the server** (the route `/api/session-config/agent`); it is never in the client bundle, never in `localStorage`, and never logged. The client only learns the provider/model name.
+- **No key configured → fallback to local handoff** (Copy handoff). No provider request is made.
+- AI output is **never auto-applied**: a returned config opens in the JSON drawer for review + Apply, exactly like Import.
+
 ## Export Workflow
 
 1. Open the overlay builder.

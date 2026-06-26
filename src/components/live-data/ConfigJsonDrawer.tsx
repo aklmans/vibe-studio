@@ -12,6 +12,9 @@ interface ConfigJsonDrawerProps {
   onChange: (state: OverlayState) => void;
   /** When opened from a setting row, jump to this JSON key. */
   focusKey?: string | null;
+  /** Returned JSON to seed into the editing buffer for review (never applied). */
+  reviewText?: string | null;
+  onReviewConsumed?: () => void;
 }
 
 /** JSON keys the user can jump to — the shape of the v1 portable core. */
@@ -52,6 +55,8 @@ export default function ConfigJsonDrawer({
   state,
   onChange,
   focusKey,
+  reviewText,
+  onReviewConsumed,
 }: ConfigJsonDrawerProps) {
   const { t } = useLocale();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -260,7 +265,12 @@ export default function ConfigJsonDrawer({
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 28px" }}>
-          <SessionConfigEditor state={state} onChange={onChange} />
+          <SessionConfigEditor
+            state={state}
+            onChange={onChange}
+            reviewText={reviewText}
+            onReviewConsumed={onReviewConsumed}
+          />
         </div>
       </aside>
     </div>

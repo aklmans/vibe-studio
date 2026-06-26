@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { OverlayState } from "../../types";
 import { useLocale } from "../../hooks/useLocale";
 import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
@@ -74,6 +74,9 @@ interface SessionConfigEditorProps {
   onChange: (state: OverlayState) => void;
   /** Injectable for tests; defaults to the real File System Access adapter. */
   fileAccess?: FileAccessAdapter;
+  /** Returned JSON (e.g. from the AI agent) to load into the buffer for review. */
+  reviewText?: string | null;
+  onReviewConsumed?: () => void;
 }
 
 function formatClock(iso: string | null): string {
@@ -138,6 +141,8 @@ export default function SessionConfigEditor({
   state,
   onChange,
   fileAccess,
+  reviewText,
+  onReviewConsumed,
 }: SessionConfigEditorProps) {
   const { t } = useLocale();
   // Live projection of the current config — recomputed whenever the form/state
@@ -176,6 +181,17 @@ export default function SessionConfigEditor({
     setPreviewConfig(config);
     return next.valid;
   };
+
+  // Returned JSON (e.g. an AI reply) is loaded into the editing buffer for
+  // review — it pre-validates but is never auto-applied. One-shot: the parent
+  // clears reviewText after consumption.
+  useEffect(() => {
+    if (reviewText == null) return;
+    const valid = loadTextIntoBuffer(reviewText);
+    setMessage(valid ? t("config.reviewLoaded") : t("config.reviewInvalid"));
+    onReviewConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewText]);
 
   const readBoundIntoBuffer = async (handle: ConfigFileHandle | null) => {
     if (!handle) return;

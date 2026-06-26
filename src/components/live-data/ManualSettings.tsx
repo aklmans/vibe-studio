@@ -63,6 +63,7 @@ export default function ManualSettings({
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("general");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const suppressSpyUntil = useRef(0);
 
   const activeSectionIndex = Math.min(
     Math.max(state.sidebar.activeSection, 0),
@@ -329,7 +330,11 @@ export default function ManualSettings({
     ? categories.flatMap((c) => matchedFields(c).map((f) => ({ field: f, catId: c.id })))
     : [];
 
+  // A click-to-jump sets the highlight immediately and the scroll-spy stands
+  // down until the smooth scroll settles — so the highlight lands on the clicked
+  // group and doesn't flicker through intermediate groups along the way.
   const jumpToCategory = (id: string) => {
+    suppressSpyUntil.current = Date.now() + 700;
     setActiveCat(id);
     document.getElementById(`config-settings-${id}`)?.scrollIntoView({
       block: "start",
@@ -338,13 +343,16 @@ export default function ManualSettings({
   };
 
   // Lightweight scroll-spy: highlight the tree entry whose group is at the top
-  // of the scroll viewport. No observers — just a rAF-throttled scroll read.
+  // of the scroll viewport. No observers — just a rAF-throttled scroll read. It
+  // only updates the highlight (never scrolls), so it can't steal control, and
+  // it pauses during a click-jump so it won't fight the animation.
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
     let frame = 0;
     const update = () => {
       frame = 0;
+      if (Date.now() < suppressSpyUntil.current) return;
       const top = container.getBoundingClientRect().top + 40;
       let current = matched[0]?.id ?? "general";
       for (const c of matched) {

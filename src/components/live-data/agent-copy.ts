@@ -30,3 +30,12 @@ export function resolveCopyResult(copied: boolean): CopyResult {
 export function turnMessageKey(status: CopyStatus): TranslationKey {
   return status === "copied" ? "agent.turnReady" : "agent.turnManual";
 }
+
+/** Short, stable snapshot id for a config text — transcript turn metadata. */
+export function shortConfigHash(text: string): string {
+  let hash = 5381;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = ((hash << 5) + hash + text.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0").slice(0, 8);
+}
