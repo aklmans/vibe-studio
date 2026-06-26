@@ -1,10 +1,14 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { OverlayState } from "../../types";
+import { UI_COLORS } from "../../lib/design-tokens";
+import { useLocale } from "../../hooks/useLocale";
+import { LineSegmented } from "../inspector/EditorRow";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
-import SessionConfigOutline, { type ConfigView } from "./SessionConfigOutline";
-import SettingsView from "./SettingsView";
-import AgentPrepareView from "./AgentPrepareView";
+import ManualSettings from "./ManualSettings";
+import AgentView from "./AgentView";
 import ConfigJsonDrawer from "./ConfigJsonDrawer";
+
+type ConfigMode = "manual" | "agent";
 
 interface LiveDataManagerProps {
   state: OverlayState;
@@ -14,19 +18,22 @@ interface LiveDataManagerProps {
   onReload: () => void;
   onStartSession: () => void;
   onEndSession: () => void;
-  /** Opens the existing studio SettingsDrawer (theme / colors / reset). */
+  /** Opens the studio SettingsDrawer (fallback for Studio Appearance). */
   onOpenSettings: () => void;
+  /** Safe reset (reused by the inline Studio Appearance controls). */
+  onReset: () => void;
 }
 
 /**
- * Session Config Center shell.
+ * Session Config Center shell. A tab inside the app shell — same warm editorial
+ * rhythm as the other editor tabs, not a full-screen settings product.
  *
- * Top: the source-of-truth bar (DB / local / OBS truth + session lifecycle).
- * Left: two primary modes —
- *   - AI Prepare : compose an agent handoff prompt → import the result.
- *   - Settings   : the manual config workbench, grouped core vs runtime.
- * The live-session.config.json source document is a global JSON drawer (not a
- * third nav page), reachable from the source bar, the outline, and both views.
+ * Top: source-of-truth bar (status + lifecycle + Open JSON).
+ * Mode switch (segmented): Manual Settings / Agent.
+ *   - Manual Settings: category tree + settings rows + search (settings-page IA).
+ *   - Agent: a prepare panel that composes a handoff for an external AI tool.
+ * JSON lives in a global drawer (not a nav page), reachable from the bar, Manual
+ * (rows / Advanced) and Agent — with focus management.
  */
 export default function LiveDataManager({
   state,
@@ -37,26 +44,17 @@ export default function LiveDataManager({
   onStartSession,
   onEndSession,
   onOpenSettings,
+  onReset,
 }: LiveDataManagerProps) {
-  const [view, setView] = useState<ConfigView>("settings");
+  const { t } = useLocale();
+  const [mode, setMode] = useState<ConfigMode>("manual");
   const [jsonOpen, setJsonOpen] = useState(false);
-  const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
+  const [jsonKey, setJsonKey] = useState<string | null>(null);
 
-  // Outline Settings items jump to a group: switch to Settings, then scroll.
-  useEffect(() => {
-    if (view === "settings" && pendingAnchor) {
-      document
-        .getElementById(pendingAnchor)
-        ?.scrollIntoView({ block: "start", behavior: "smooth" });
-      setPendingAnchor(null);
-    }
-  }, [view, pendingAnchor]);
-
-  const selectSettingsAnchor = (anchorId: string) => {
-    setView("settings");
-    setPendingAnchor(anchorId);
+  const openJson = (key?: string) => {
+    setJsonKey(key ?? null);
+    setJsonOpen(true);
   };
-  const openJson = () => setJsonOpen(true);
 
   return (
     <div
@@ -76,39 +74,60 @@ export default function LiveDataManager({
         onReload={onReload}
         onStartSession={onStartSession}
         onEndSession={onEndSession}
-        onOpenJson={openJson}
+        onOpenJson={() => openJson()}
       />
 
-      <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
-        <SessionConfigOutline
-          view={view}
-          onSelectView={setView}
-          onSelectSettingsAnchor={selectSettingsAnchor}
-          onOpenJson={openJson}
-        />
+      {/* Mode switch — Manual Settings / Agent (segmented, not left nav). */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          padding: "10px 16px",
+          borderBottom: `1px solid ${UI_COLORS.border}`,
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ width: 280, maxWidth: "100%" }}>
+          <LineSegmented
+            testId="config-mode-switch"
+            active={mode}
+            onSelect={(value) => setMode(value as ConfigMode)}
+            options={[
+              { value: "manual", label: t("configMode.manual"), testId: "config-mode-manual" },
+              { value: "agent", label: t("configMode.agent"), testId: "config-mode-agent" },
+            ]}
+          />
+        </div>
+      </div>
 
+      {/* Both modes stay mounted (visibility toggled) so the JSON drift stays
+          synced and the IA is statically inspectable. */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
         <div
-          data-testid="config-workspace"
+          data-testid="config-view-manual"
+          style={{ display: mode === "manual" ? "flex" : "none", flex: 1, minWidth: 0, minHeight: 0 }}
+        >
+          <ManualSettings
+            state={state}
+            onChange={onChange}
+            persistence={persistence}
+            onReset={onReset}
+            onOpenJson={openJson}
+            onOpenStudioDrawer={onOpenSettings}
+          />
+        </div>
+        <div
+          data-testid="config-view-agent"
+          hidden={mode !== "agent"}
           style={{
+            display: mode === "agent" ? "block" : "none",
             flex: 1,
             minWidth: 0,
             overflowY: "auto",
             padding: "22px 28px 56px",
-            boxSizing: "border-box",
           }}
         >
-          <ViewPane testId="config-view-prepare" active={view === "prepare"}>
-            <AgentPrepareView state={state} onOpenJson={openJson} />
-          </ViewPane>
-          <ViewPane testId="config-view-settings" active={view === "settings"}>
-            <SettingsView
-              state={state}
-              onChange={onChange}
-              persistence={persistence}
-              onOpenJson={openJson}
-              onOpenStudioSettings={onOpenSettings}
-            />
-          </ViewPane>
+          <AgentView state={state} onOpenJson={() => openJson()} />
         </div>
       </div>
 
@@ -117,23 +136,8 @@ export default function LiveDataManager({
         onClose={() => setJsonOpen(false)}
         state={state}
         onChange={onChange}
+        focusKey={jsonKey}
       />
-    </div>
-  );
-}
-
-function ViewPane({
-  testId,
-  active,
-  children,
-}: {
-  testId: string;
-  active: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div data-testid={testId} hidden={!active} style={{ display: active ? "block" : "none" }}>
-      {children}
     </div>
   );
 }

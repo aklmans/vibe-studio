@@ -648,6 +648,7 @@ export default function App() {
                 onStartSession={handleStartLiveSession}
                 onEndSession={handleEndLiveSession}
                 onOpenSettings={() => setSettingsOpen(true)}
+                onReset={handleReset}
               />
             ) : (
               <PreviewFrame

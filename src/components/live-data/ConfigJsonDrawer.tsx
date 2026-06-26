@@ -9,6 +9,8 @@ interface ConfigJsonDrawerProps {
   onClose: () => void;
   state: OverlayState;
   onChange: (state: OverlayState) => void;
+  /** When opened from a setting row, jump to this JSON key. */
+  focusKey?: string | null;
 }
 
 /** JSON keys the user can jump to — the shape of the v1 portable core. */
@@ -33,37 +35,31 @@ const monoLabel: CSSProperties = {
 };
 
 /**
- * Global JSON drawer. The live-session.config.json source document is a
- * first-class capability but not a daily nav page — it slides in over the
- * current context (AI Prepare / Settings) and slides away. It reuses the
- * existing SessionConfigEditor untouched (Synced / Editing / Apply / Discard /
- * Import / Export / drift warning) and adds lightweight module jumps so the
- * JSON's structure is discoverable.
+ * Global JSON drawer. The live-session.config.json source is first-class but
+ * not a daily nav page — it slides in over the current context and away. It
+ * reuses SessionConfigEditor untouched (Synced / Editing / Apply / Discard /
+ * Import / Export / drift warning) and adds lightweight module jumps.
  *
- * Always mounted (visibility toggled) so the editor keeps its synced projection
- * and any in-progress editing buffer across opens.
+ * Focus management: on open it stores the trigger, focuses the close button
+ * (and jumps to a key if requested); on close it restores focus to the trigger.
+ * While closed the panel is `inert`, so its controls can't be tabbed into.
+ * Always mounted (so the editor keeps its synced projection / editing buffer).
  */
 export default function ConfigJsonDrawer({
   open,
   onClose,
   state,
   onChange,
+  focusKey,
 }: ConfigJsonDrawerProps) {
   const { t } = useLocale();
   const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   // Lightweight locate: select the key inside the JSON textarea and scroll it
   // into view. Works on whatever the editor currently shows (synced or draft).
-  const jumpToKey = (key: string) => {
+  const locateKey = (key: string) => {
     const ta = panelRef.current?.querySelector(
       '[data-testid="config-input"]',
     ) as HTMLTextAreaElement | null;
@@ -76,9 +72,37 @@ export default function ConfigJsonDrawer({
     ta.scrollTop = Math.max(0, line * 20 - 48);
   };
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (open && e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (open) {
+      restoreFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      if (panel) panel.inert = false;
+      const raf = requestAnimationFrame(() => {
+        if (focusKey) locateKey(focusKey);
+        else closeBtnRef.current?.focus();
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    if (panel) panel.inert = true;
+    restoreFocusRef.current?.focus?.();
+    restoreFocusRef.current = null;
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, focusKey]);
+
   return (
     <div aria-hidden={!open} data-testid="config-json-drawer-root">
-      {/* Scrim */}
       <div
         data-testid="config-json-drawer-scrim"
         onClick={onClose}
@@ -93,7 +117,6 @@ export default function ConfigJsonDrawer({
         }}
       />
 
-      {/* Panel */}
       <aside
         ref={panelRef}
         data-testid="config-json-drawer"
@@ -148,6 +171,7 @@ export default function ConfigJsonDrawer({
             </span>
           </div>
           <button
+            ref={closeBtnRef}
             data-testid="config-json-drawer-close"
             onClick={onClose}
             aria-label={t("drawer.close")}
@@ -167,7 +191,6 @@ export default function ConfigJsonDrawer({
           </button>
         </header>
 
-        {/* Module jump row */}
         <div
           style={{
             display: "flex",
@@ -184,7 +207,7 @@ export default function ConfigJsonDrawer({
             <button
               key={key}
               data-testid={`config-json-module-${key}`}
-              onClick={() => jumpToKey(key)}
+              onClick={() => locateKey(key)}
               style={{
                 appearance: "none",
                 border: `1px solid ${UI_COLORS.controlBorder}`,

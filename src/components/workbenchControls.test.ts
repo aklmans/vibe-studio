@@ -206,16 +206,16 @@ test("surface inspectors default to a focused first-screen workflow", () => {
   assert.doesNotMatch(wallpaper, /data-testid="wallpaper-avatar-visible"/);
 });
 
-test("session config center wires the source bar, outline, the two views and the JSON drawer", () => {
+test("session config center wires the source bar, mode switch, both modes and the JSON drawer", () => {
   const source = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
-  // Shell = source-of-truth bar + outline + the two view panes (Prepare /
-  // Settings) + the global JSON drawer. The editors live inside SettingsView.
+  // Shell = source-of-truth bar + a Manual/Agent mode segmented + the two modes
+  // + the global JSON drawer. The editors live inside ManualSettings.
   assert.match(source, /<SourceOfTruthBar/);
-  assert.match(source, /<SessionConfigOutline/);
-  assert.match(source, /<SettingsView/);
-  assert.match(source, /<AgentPrepareView/);
+  assert.match(source, /<LineSegmented/);
+  assert.match(source, /<ManualSettings/);
+  assert.match(source, /<AgentView/);
   assert.match(source, /<ConfigJsonDrawer/);
-  const formSource = readFileSync(resolve("src/components/live-data/SettingsView.tsx"), "utf8");
+  const formSource = readFileSync(resolve("src/components/live-data/ManualSettings.tsx"), "utf8");
   for (const id of [
     "live-data-sections",
     "live-data-stack",
@@ -248,6 +248,7 @@ test("session config exposes the JSON editor instead of the brief or recipe main
         onStartSession: () => {},
         onEndSession: () => {},
         onOpenSettings: () => {},
+        onReset: () => {},
       }),
     }),
   );
@@ -317,6 +318,7 @@ test("session config section editor shows one progress section at a time", () =>
         onStartSession: () => {},
         onEndSession: () => {},
         onOpenSettings: () => {},
+        onReset: () => {},
       }),
     }),
   );
@@ -367,9 +369,17 @@ test("social display components render registry icons next to social values", ()
   assert.doesNotMatch(cardSource, /social\.kind === "custom"/);
 });
 
-test("settings drawer uses ruled selectors and color rows instead of shared pills", () => {
-  const source = readFileSync(resolve("src/components/SettingsDrawer.tsx"), "utf8");
+test("studio appearance controls use ruled selectors and color rows instead of shared pills", () => {
+  const drawerSource = readFileSync(resolve("src/components/SettingsDrawer.tsx"), "utf8");
+  assert.doesNotMatch(drawerSource, /WorkbenchSegmented/);
+  assert.doesNotMatch(drawerSource, /ColorInput/);
 
+  // The selectors + color rows now live in the shared StudioAppearanceControls,
+  // reused by the drawer and the Session Config Studio Appearance group.
+  const source = readFileSync(
+    resolve("src/components/live-data/StudioAppearanceControls.tsx"),
+    "utf8",
+  );
   assert.doesNotMatch(source, /WorkbenchSegmented/);
   assert.doesNotMatch(source, /ColorInput/);
   assert.match(source, /function SettingsSelector/);
@@ -609,7 +619,7 @@ test("right inspector editors use the inspector line segmented control", () => {
     "src/components/BottomBarSegmentEditor.tsx",
     "src/components/inspector/groups/OverlayInspector.tsx",
     "src/components/inspector/groups/WallpaperInspector.tsx",
-    "src/components/live-data/SettingsView.tsx",
+    "src/components/live-data/ManualSettings.tsx",
   ];
 
   for (const file of files) {
