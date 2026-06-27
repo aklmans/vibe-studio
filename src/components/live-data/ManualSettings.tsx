@@ -253,18 +253,23 @@ export default function ManualSettings({
   };
 
   return (
-    <div data-testid="manual-settings" style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1, width: "100%" }}>
-      {/* Tab bar — flat, underline-active. */}
-      <div
+    <div data-testid="manual-settings" style={{ display: "flex", flexDirection: "row", minHeight: 0, flex: 1, width: "100%" }}>
+      {/* Left menu — a stable, scannable vertical nav (secondary to the mode). */}
+      <nav
         data-testid="settings-tab-bar"
         role="tablist"
+        aria-orientation="vertical"
+        aria-label={t("manualSettings.menuLabel")}
         style={{
-          display: "flex",
-          gap: 22,
-          flexWrap: "wrap",
-          padding: "0 28px",
-          borderBottom: `1px solid ${UI_COLORS.border}`,
+          width: 188,
+          minWidth: 188,
           flexShrink: 0,
+          borderRight: `1px solid ${UI_COLORS.border}`,
+          padding: "16px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          overflowY: "auto",
         }}
       >
         {tabs.map((tab, index) => {
@@ -282,17 +287,20 @@ export default function ManualSettings({
               onKeyDown={(event) => handleTabKeyDown(event, index)}
               style={{
                 appearance: "none",
-                background: "transparent",
+                textAlign: "left",
+                width: "100%",
+                background: active ? cssAlpha(UI_COLORS.accent, 8) : "transparent",
                 border: "none",
-                borderBottom: `2px solid ${active ? UI_COLORS.accent : "transparent"}`,
-                padding: "12px 1px",
+                borderLeft: `2px solid ${active ? UI_COLORS.accent : "transparent"}`,
+                borderRadius: 0,
+                padding: "8px 12px",
                 cursor: "pointer",
                 fontFamily: "var(--app-font-mono)",
                 fontSize: 12,
                 fontWeight: active ? 700 : 500,
-                letterSpacing: "0.03em",
-                color: active ? UI_COLORS.accentText : UI_COLORS.textMuted,
-                transition: "color 0.12s, border-color 0.12s",
+                letterSpacing: "0.02em",
+                color: active ? UI_COLORS.text : UI_COLORS.textMuted,
+                transition: "color 0.12s, background 0.12s, border-color 0.12s",
               }}
               onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = UI_COLORS.text; }}
               onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = UI_COLORS.textMuted; }}
@@ -301,10 +309,10 @@ export default function ManualSettings({
             </button>
           );
         })}
-      </div>
+      </nav>
 
-      {/* Panels — only the active one is visible; all stay mounted. */}
-      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "22px 28px 56px" }}>
+      {/* Content — the active panel; all panels stay mounted (visibility toggled). */}
+      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "22px 28px 40px" }}>
         <div style={{ maxWidth: SETTINGS_CONTENT_MAX_WIDTH }}>
           {tabs.map((tab) => (
             <section
@@ -313,6 +321,7 @@ export default function ManualSettings({
               data-testid={`settings-panel-${tab.id}`}
               role="tabpanel"
               aria-labelledby={`settings-tab-${tab.id}`}
+              tabIndex={0}
               hidden={tab.id !== activeTab}
               style={{ display: tab.id === activeTab ? "block" : "none" }}
             >

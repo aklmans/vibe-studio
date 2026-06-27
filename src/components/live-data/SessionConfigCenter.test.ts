@@ -58,6 +58,7 @@ const DRAWER_SRC = readFileSync(
   resolve("src/components/live-data/ConfigJsonDrawer.tsx"),
   "utf8",
 );
+const APP_SRC = readFileSync(resolve("src/components/OverlayBuilderApp.tsx"), "utf8");
 
 test("mode is a segmented switch (Manual / Agent), not a left-nav of pages", () => {
   const html = renderCenter();
@@ -71,10 +72,54 @@ test("mode is a segmented switch (Manual / Agent), not a left-nav of pages", () 
   assert.doesNotMatch(html, /data-testid="config-view-json"/);
 });
 
-test("Manual Settings is a tabbed panel — tab bar + panels, no tree / no search", () => {
+test("Session Config renders as a centered modal dialog, not a full-bleed page", () => {
+  const html = renderCenter();
+  // A dialog over a dimmed/blurred scrim, with a working close affordance.
+  assert.match(html, /data-testid="session-config-dialog-root"/);
+  assert.match(html, /data-testid="session-config-dialog-scrim"/);
+  assert.match(html, /data-testid="session-config-dialog"[^>]*role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /aria-labelledby="session-config-title"/);
+  assert.match(html, /id="session-config-title"/);
+  assert.match(html, /data-testid="session-config-close"/);
+  // The shell owns the a11y contract: Esc close, focus trap, focus restore.
+  const dialogSrc = readFileSync(resolve("src/components/live-data/SessionConfigDialog.tsx"), "utf8");
+  assert.match(dialogSrc, /role="dialog"/);
+  assert.match(dialogSrc, /aria-modal=\{modalActive \? "true" : undefined\}/);
+  assert.match(dialogSrc, /event\.key === "Escape"/);
+  assert.match(dialogSrc, /restoreRef\.current\?\.focus/); // focus restored to trigger
+  assert.match(dialogSrc, /event\.key !== "Tab"/); // focus trap
+});
+
+test("the JSON drawer layers above the dialog and yields its Esc / focus while open", () => {
+  // The drawer (z 61) sits above the dialog (z 41); the dialog disables Esc /
+  // focus-trap while the drawer owns the interaction — one modal at a time.
+  const managerSrc = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
+  assert.match(managerSrc, /closeOnEsc=\{!jsonOpen\}/);
+  assert.match(managerSrc, /trapFocus=\{!jsonOpen\}/);
+  assert.match(managerSrc, /modalActive=\{!jsonOpen\}/);
+  const dialogSrc = readFileSync(resolve("src/components/live-data/SessionConfigDialog.tsx"), "utf8");
+  assert.match(dialogSrc, /aria-modal=\{modalActive \? "true" : undefined\}/);
+  assert.match(dialogSrc, /aria-hidden=\{!modalActive \? "true" : undefined\}/);
+  assert.match(dialogSrc, /inert=\{!modalActive \? true : undefined\}/);
+  assert.match(dialogSrc, /zIndex: 40/); // scrim below the drawer's 60
+  assert.match(dialogSrc, /zIndex: 41/); // panel below the drawer's 61
+});
+
+test("Session Config opens over the previous workbench tab instead of replacing the preview", () => {
+  assert.match(APP_SRC, /type WorkbenchTab = Exclude<OverlayState\["activeTab"\], "live">/);
+  assert.match(APP_SRC, /const previewTab: WorkbenchTab =\s*state\.activeTab === "live" \? lastNonLiveTabRef\.current : state\.activeTab/);
+  assert.match(APP_SRC, /const previewState = isLiveDataTab \? \{ \.\.\.state, activeTab: previewTab \} : state/);
+  assert.match(APP_SRC, /\{isLiveDataTab && \(\s*<LiveDataManager/);
+  assert.doesNotMatch(APP_SRC, /\{isLiveDataTab \? \(\s*<LiveDataManager/);
+  assert.match(APP_SRC, /<Inspector state=\{previewState\} onChange=\{setState\} \/>/);
+});
+
+test("Manual Settings is a tabbed panel — left vertical menu + panels, no tree / no search", () => {
   const html = renderCenter();
   assert.match(html, /data-testid="manual-settings"/);
-  assert.match(html, /data-testid="settings-tab-bar"/);
+  assert.match(html, /data-testid="settings-tab-bar"[^>]*role="tablist"/);
+  assert.match(html, /aria-orientation="vertical"/); // a left rail, not wide top tabs
   for (const id of ["session", "cover", "branding", "display", "appearance", "data"]) {
     assert.match(html, new RegExp(`data-testid="settings-tab-${id}"`));
     assert.match(html, new RegExp(`data-testid="settings-panel-${id}"`));

@@ -158,6 +158,8 @@ interface LiveDataPersistenceState {
   session: LiveSessionSummary | null;
 }
 
+type WorkbenchTab = Exclude<OverlayState["activeTab"], "live">;
+
 export default function App() {
   const { t, locale } = useLocale();
   const [state, setStateRaw] = useState<OverlayState>(() => loadOverlayState(undefined, DEFAULT_STATE_BY_LOCALE[loadLocale()]));
@@ -170,6 +172,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [obsSync, setObsSync] = useState<ObsSyncState>(IDLE_OBS_SYNC);
+  // The tab to return to when the Session Config dialog closes.
+  const lastNonLiveTabRef = useRef<WorkbenchTab>("overlay");
   const [liveDataPersistence, setLiveDataPersistence] =
     useState<LiveDataPersistenceState>({
       databaseConfigured: false,
@@ -506,8 +510,20 @@ export default function App() {
 
   const wallpaperPreset = getWallpaperPreset(state.wallpaper.previewPresetId);
   const isLiveDataTab = state.activeTab === "live";
-  const isCoverTab = state.activeTab === "cover";
-  const isWallpaperTab = state.activeTab === "wallpaper";
+  if (state.activeTab !== "live") {
+    lastNonLiveTabRef.current = state.activeTab;
+  }
+  const previewTab: WorkbenchTab =
+    state.activeTab === "live" ? lastNonLiveTabRef.current : state.activeTab;
+  const previewState = isLiveDataTab ? { ...state, activeTab: previewTab } : state;
+  const closeSessionConfig = () =>
+    setState(
+      produceState(state, (draft) => {
+        draft.activeTab = lastNonLiveTabRef.current;
+      }),
+    );
+  const isCoverTab = previewTab === "cover";
+  const isWallpaperTab = previewTab === "wallpaper";
   const previewW = isWallpaperTab
     ? wallpaperPreset.width
     : isCoverTab
@@ -520,11 +536,9 @@ export default function App() {
       : OVERLAY_CANVAS_DIMENSIONS.height;
 
   const tabBadge = (() => {
-    switch (state.activeTab) {
+    switch (previewTab) {
       case "overlay":
         return t("tabBadge.overlay");
-      case "live":
-        return t("tabBadge.live");
       case "cover":
         return t("tabBadge.cover");
       case "poster":
@@ -645,7 +659,7 @@ export default function App() {
               <div
                 style={PREVIEW_HEADER_STYLES.rightGroup}
               >
-                {previewMetrics && !isLiveDataTab && (
+                {previewMetrics && (
                   <div
                     data-testid="preview-debug"
                     style={PREVIEW_HEADER_STYLES.metrics}
@@ -664,55 +678,56 @@ export default function App() {
               </div>
             </div>
 
-            {isLiveDataTab ? (
-              <LiveDataManager
-                state={state}
-                onChange={setState}
-                dateKey={liveDateKey}
-                persistence={liveDataPersistence}
-                obsSync={obsSync}
-                onReload={reloadLiveData}
-                onStartSession={handleStartLiveSession}
-                onEndSession={handleEndLiveSession}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onReset={handleReset}
-              />
-            ) : (
-              <PreviewFrame
-                nativeW={previewW}
-                nativeH={previewH}
-                onMetricsChange={setPreviewMetrics}
-              >
-                {state.activeTab === "overlay" ? (
-                  <OverlayCanvas ref={previewOverlayRef} state={state} onChange={setState} />
-                ) : state.activeTab === "cover" ? (
-                  <CoverCanvas
-                    ref={previewCoverRef}
-                    state={state}
-                    editable
-                    onChange={setState}
-                  />
-                ) : state.activeTab === "poster" ? (
-                  <PosterCanvas
-                    ref={previewPosterRef}
-                    state={state}
-                    editable
-                    onChange={setState}
-                  />
-                ) : (
-                  <WallpaperCanvas
-                    state={state}
-                    preset={wallpaperPreset}
-                    editable
-                    onChange={setState}
-                  />
-                )}
-              </PreviewFrame>
-            )}
+            <PreviewFrame
+              nativeW={previewW}
+              nativeH={previewH}
+              onMetricsChange={setPreviewMetrics}
+            >
+              {previewTab === "overlay" ? (
+                <OverlayCanvas ref={previewOverlayRef} state={previewState} onChange={setState} />
+              ) : previewTab === "cover" ? (
+                <CoverCanvas
+                  ref={previewCoverRef}
+                  state={previewState}
+                  editable
+                  onChange={setState}
+                />
+              ) : previewTab === "poster" ? (
+                <PosterCanvas
+                  ref={previewPosterRef}
+                  state={previewState}
+                  editable
+                  onChange={setState}
+                />
+              ) : (
+                <WallpaperCanvas
+                  state={previewState}
+                  preset={wallpaperPreset}
+                  editable
+                  onChange={setState}
+                />
+              )}
+            </PreviewFrame>
           </div>
 
-          {!isLiveDataTab && <Inspector state={state} onChange={setState} />}
+          <Inspector state={previewState} onChange={setState} />
         </div>
+
+        {isLiveDataTab && (
+          <LiveDataManager
+            state={state}
+            onChange={setState}
+            dateKey={liveDateKey}
+            persistence={liveDataPersistence}
+            obsSync={obsSync}
+            onReload={reloadLiveData}
+            onStartSession={handleStartLiveSession}
+            onEndSession={handleEndLiveSession}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onReset={handleReset}
+            onClose={closeSessionConfig}
+          />
+        )}
       </div>
 
       <SettingsDrawer

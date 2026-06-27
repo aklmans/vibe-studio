@@ -5,6 +5,7 @@ import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "../inspector/EditorRow";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
+import SessionConfigDialog from "./SessionConfigDialog";
 import ManualSettings from "./ManualSettings";
 import AgentView from "./AgentView";
 import ConfigJsonDrawer from "./ConfigJsonDrawer";
@@ -25,18 +26,21 @@ interface LiveDataManagerProps {
   onOpenSettings: () => void;
   /** Safe reset (reused by the inline Studio Appearance controls). */
   onReset: () => void;
+  /** Close the Session Config Center dialog (returns to the previous tab). */
+  onClose?: () => void;
 }
 
 /**
- * Session Config Center shell. A tab inside the app shell — same warm editorial
- * rhythm as the other editor tabs, not a full-screen settings product.
- *
- * Top: source-of-truth bar (status + lifecycle + Open JSON).
- * Mode switch (segmented): Manual Settings / Agent.
- *   - Manual Settings: category tree + settings rows + search (settings-page IA).
- *   - Agent: a prepare panel that composes a handoff for an external AI tool.
- * JSON lives in a global drawer (not a nav page), reachable from the bar, Manual
- * (rows / Advanced) and Agent — with focus management.
+ * Session Config Center — a centered modal dialog over the dimmed workbench, in
+ * the spirit of a desktop settings window. The dialog header carries the top
+ * mental model: Manual Settings vs Agent, plus close. A slim source-of-truth
+ * strip shows status + lifecycle + Open JSON. The body is the active mode:
+ *   - Manual Settings: a left menu (Session / Cover / Branding / Display /
+ *     Studio Appearance / Data) + the selected panel's content.
+ *   - Agent: a chat window (transcript + composer) with real-AI / local handoff.
+ * JSON stays a global power-tool drawer (top Open JSON, per-field Open in JSON,
+ * Agent Review in JSON) — drift-safe, never a second apply path. It renders as a
+ * sibling above the dialog and takes over Esc / focus while open.
  */
 export default function LiveDataManager({
   state,
@@ -49,6 +53,7 @@ export default function LiveDataManager({
   onEndSession,
   onOpenSettings,
   onReset,
+  onClose,
 }: LiveDataManagerProps) {
   const { t } = useLocale();
   const [mode, setMode] = useState<ConfigMode>("manual");
@@ -69,84 +74,112 @@ export default function LiveDataManager({
     setJsonOpen(true);
   };
 
+  const close = onClose ?? (() => {});
+
   return (
-    <div
-      data-testid="live-data-manager"
-      style={{
-        flex: 1,
-        minHeight: 0,
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      <SourceOfTruthBar
-        dateKey={dateKey}
-        persistence={persistence}
-        obsSync={obsSync}
-        onReload={onReload}
-        onStartSession={onStartSession}
-        onEndSession={onEndSession}
-        onOpenJson={() => openJson()}
-      />
-
-      {/* Mode switch — Manual Settings / Agent (segmented, not left nav). */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "10px 16px",
-          borderBottom: `1px solid ${UI_COLORS.border}`,
-          flexShrink: 0,
-        }}
+    <>
+      <SessionConfigDialog
+        onClose={close}
+        closeOnEsc={!jsonOpen}
+        trapFocus={!jsonOpen}
+        modalActive={!jsonOpen}
+        ariaLabelledBy="session-config-title"
       >
-        <div style={{ width: 280, maxWidth: "100%" }}>
-          <LineSegmented
-            testId="config-mode-switch"
-            active={mode}
-            onSelect={(value) => setMode(value as ConfigMode)}
-            options={[
-              { value: "manual", label: t("configMode.manual"), testId: "config-mode-manual" },
-              { value: "agent", label: t("configMode.agent"), testId: "config-mode-agent" },
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* Both modes stay mounted (visibility toggled) so the JSON drift stays
-          synced and the IA is statically inspectable. */}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
-        <div
-          data-testid="config-view-manual"
-          style={{ display: mode === "manual" ? "flex" : "none", flex: 1, minWidth: 0, minHeight: 0 }}
-        >
-          <ManualSettings
-            state={state}
-            onChange={onChange}
-            persistence={persistence}
-            onReset={onReset}
-            onOpenJson={openJson}
-            onOpenStudioDrawer={onOpenSettings}
-          />
-        </div>
-        <div
-          data-testid="config-view-agent"
-          hidden={mode !== "agent"}
+        {/* Header — title + the top mental model (Manual / Agent) + close. */}
+        <header
+          data-testid="live-data-manager"
           style={{
-            display: mode === "agent" ? "flex" : "none",
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            padding: "14px 20px",
+            borderBottom: `1px solid ${UI_COLORS.border}`,
+            flexShrink: 0,
           }}
         >
-          <AgentView
-            state={state}
-            onOpenJson={() => openJson()}
-            onReviewJson={openJsonForReview}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 18, minWidth: 0 }}>
+            <span
+              id="session-config-title"
+              style={{
+                fontFamily: "var(--app-font-serif)",
+                fontSize: 18,
+                fontWeight: 500,
+                color: UI_COLORS.text,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t("tab.live")}
+            </span>
+            <div style={{ width: 260, maxWidth: "100%" }}>
+              <LineSegmented
+                testId="config-mode-switch"
+                active={mode}
+                onSelect={(value) => setMode(value as ConfigMode)}
+                options={[
+                  { value: "manual", label: t("configMode.manual"), testId: "config-mode-manual" },
+                  { value: "agent", label: t("configMode.agent"), testId: "config-mode-agent" },
+                ]}
+              />
+            </div>
+          </div>
+          <button
+            data-testid="session-config-close"
+            onClick={close}
+            aria-label={t("drawer.close")}
+            title={t("drawer.close")}
+            style={{
+              appearance: "none",
+              border: "none",
+              background: "transparent",
+              color: UI_COLORS.textMuted,
+              cursor: "pointer",
+              fontSize: 20,
+              lineHeight: 1,
+              padding: 4,
+              flexShrink: 0,
+            }}
+          >
+            ×
+          </button>
+        </header>
+
+        {/* Source-of-truth strip — status + lifecycle + Open JSON. */}
+        <SourceOfTruthBar
+          dateKey={dateKey}
+          persistence={persistence}
+          obsSync={obsSync}
+          onReload={onReload}
+          onStartSession={onStartSession}
+          onEndSession={onEndSession}
+          onOpenJson={() => openJson()}
+        />
+
+        {/* Body — the active mode. Both stay mounted (visibility toggled) so the
+            JSON drift stays synced and the IA is statically inspectable. */}
+        <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
+          <div
+            data-testid="config-view-manual"
+            style={{ display: mode === "manual" ? "flex" : "none", flex: 1, minWidth: 0, minHeight: 0 }}
+          >
+            <ManualSettings
+              state={state}
+              onChange={onChange}
+              persistence={persistence}
+              onReset={onReset}
+              onOpenJson={openJson}
+              onOpenStudioDrawer={onOpenSettings}
+            />
+          </div>
+          <div
+            data-testid="config-view-agent"
+            hidden={mode !== "agent"}
+            style={{ display: mode === "agent" ? "flex" : "none", flex: 1, minWidth: 0, minHeight: 0 }}
+          >
+            <AgentView state={state} onOpenJson={() => openJson()} onReviewJson={openJsonForReview} />
+          </div>
         </div>
-      </div>
+      </SessionConfigDialog>
 
       <ConfigJsonDrawer
         open={jsonOpen}
@@ -157,6 +190,6 @@ export default function LiveDataManager({
         reviewText={reviewText}
         onReviewConsumed={() => setReviewText(null)}
       />
-    </div>
+    </>
   );
 }

@@ -230,12 +230,22 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
         </div>
       </header>
 
-      {/* Thread — the conversation; scrolls, composer stays pinned. */}
+      {/* Thread — the conversation; scrolls, composer stays pinned. The empty
+          state centers so the dialog doesn't leave a large blank gap. */}
       <div
         data-testid="agent-transcript"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 16 }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          padding: "20px 28px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          justifyContent: turns.length === 0 ? "center" : "flex-start",
+        }}
       >
-        <div style={{ maxWidth: 760, width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ maxWidth: 760, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
           <AssistantRow testId="agent-msg-seed">
             <span style={{ color: UI_COLORS.textSoft, lineHeight: 1.6 }}>
               {connected ? t("agent.seedConnected") : t("agent.seedMessage")}
