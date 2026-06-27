@@ -204,16 +204,16 @@ test("surface inspectors default to a focused first-screen workflow", () => {
   assert.doesNotMatch(wallpaper, /data-testid="wallpaper-avatar-visible"/);
 });
 
-test("session config center wires the source bar, mode switch, both modes and the JSON drawer", () => {
+test("session config center wires the mode switch, both modes and the JSON drawer", () => {
   const source = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
-  // Shell = source-of-truth bar + a Manual/Agent mode segmented + the two modes
-  // + the global JSON drawer. The editors live inside ManualSettings.
-  assert.match(source, /<SourceOfTruthBar/);
+  // Shell = an Agent / Settings mode segmented + the two modes + the global JSON
+  // drawer. The editors and the source-of-truth bar live inside Settings.
   assert.match(source, /<LineSegmented/);
   assert.match(source, /<ManualSettings/);
   assert.match(source, /<AgentView/);
   assert.match(source, /<ConfigJsonDrawer/);
   const formSource = readFileSync(resolve("src/components/live-data/ManualSettings.tsx"), "utf8");
+  assert.match(formSource, /<SourceOfTruthBar/); // source-of-truth now lives in Data & Sync
   for (const id of [
     "live-data-sections",
     "live-data-stack",

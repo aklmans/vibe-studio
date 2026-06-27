@@ -21,11 +21,24 @@ export interface SessionAgentConfig {
   userAgent: string;
 }
 
-/** Safe, key-free metadata the client may show. */
+/** Safe, key-free metadata the client may show. The base URL, model, provider
+ * and User-Agent are non-secret and are surfaced so the AI Provider settings
+ * panel can display the resolved connection; the API key is never included. */
 export interface SessionAgentStatus {
   configured: boolean;
   provider?: string;
   model?: string;
+  baseUrl?: string;
+  userAgent?: string;
+}
+
+/** Result of a user-triggered "test connection" — key-free, sanitized error. */
+export interface SessionAgentTestResponse {
+  ok: boolean;
+  configured: boolean;
+  provider?: string;
+  model?: string;
+  error?: string;
 }
 
 export interface SessionAgentRequest {
@@ -84,8 +97,51 @@ export function readSessionAgentConfig(
 /** Key-free status for the GET endpoint / client connection badge. */
 export function publicAgentStatus(config: SessionAgentConfig | null): SessionAgentStatus {
   return config
-    ? { configured: true, provider: config.provider, model: config.model }
+    ? {
+        configured: true,
+        provider: config.provider,
+        model: config.model,
+        baseUrl: config.baseUrl,
+        userAgent: config.userAgent,
+      }
     : { configured: false };
+}
+
+/**
+ * Verify the configured provider actually answers — a minimal one-shot chat.
+ * Server-side only, using the server's own env config (the client never
+ * supplies the key or the base URL, so this can't be pointed elsewhere). The
+ * key is redacted from any error before it returns.
+ */
+export async function testAgentConnection(
+  config: SessionAgentConfig,
+  fetchImpl: typeof fetch = fetch,
+  timeoutMs = 9000,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  // A short ceiling so a stalled provider can't keep the test spinning. The
+  // abort is ours, so a timeout reports as such (never the raw abort error).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    await callOpenAICompatibleChat(
+      config,
+      [
+        { role: "system", content: "Reply with the single word: ok." },
+        { role: "user", content: "ping" },
+      ],
+      fetchImpl,
+      controller.signal,
+    );
+    return { ok: true };
+  } catch (error) {
+    if (controller.signal.aborted) {
+      return { ok: false, error: "request timed out" };
+    }
+    const raw = error instanceof Error ? error.message : "request failed";
+    return { ok: false, error: redactKey(raw, config.apiKey) };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Compose the chat messages: a JSON-output system prompt + the user context. */

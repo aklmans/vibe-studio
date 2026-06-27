@@ -5,8 +5,10 @@ import {
   publicAgentStatus,
   readSessionAgentConfig,
   redactKey,
+  testAgentConnection,
   type SessionAgentRequest,
   type SessionAgentRunResponse,
+  type SessionAgentTestResponse,
 } from "../../../../lib/session-agent";
 
 export const runtime = "nodejs";
@@ -19,7 +21,24 @@ export function GET() {
 
 export async function POST(request: Request) {
   const config = readSessionAgentConfig(process.env);
-  const body = (await request.json().catch(() => null)) as Partial<SessionAgentRequest> | null;
+  const body = (await request.json().catch(() => null)) as
+    | (Partial<SessionAgentRequest> & { test?: boolean })
+    | null;
+
+  // Test connection — a user-triggered ping from the AI Provider settings.
+  // Uses the server's own env config only; the client supplies no key / URL.
+  if (body?.test) {
+    if (!config) {
+      const miss: SessionAgentTestResponse = { ok: false, configured: false };
+      return Response.json(miss);
+    }
+    const result = await testAgentConnection(config);
+    const payload: SessionAgentTestResponse = result.ok
+      ? { ok: true, configured: true, provider: config.provider, model: config.model }
+      : { ok: false, configured: true, provider: config.provider, model: config.model, error: result.error };
+    return Response.json(payload, result.ok ? undefined : { status: 502 });
+  }
+
   const agentRequest: SessionAgentRequest = {
     brief: typeof body?.brief === "string" ? body.brief : "",
     task: typeof body?.task === "string" ? body.task : "",

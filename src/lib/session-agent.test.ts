@@ -7,8 +7,10 @@ import {
   publicAgentStatus,
   readSessionAgentConfig,
   redactKey,
+  testAgentConnection,
   type SessionAgentConfig,
 } from "./session-agent";
+import { testAgentConnection as clientTestAgentConnection } from "./session-agent-client";
 
 const KEY = "sk-secret-key-123";
 const baseConfig: SessionAgentConfig = {
@@ -48,8 +50,44 @@ test("readSessionAgentConfig returns null without a key, else config with defaul
 test("publicAgentStatus never exposes the API key", () => {
   assert.deepEqual(publicAgentStatus(null), { configured: false });
   const status = publicAgentStatus(baseConfig);
-  assert.deepEqual(status, { configured: true, provider: "deepseek", model: "deepseek-chat" });
+  assert.deepEqual(status, {
+    configured: true,
+    provider: "deepseek",
+    model: "deepseek-chat",
+    baseUrl: "https://api.deepseek.com",
+    userAgent: "Vibe-Coding-Live/SessionConfigAgent",
+  });
   assert.equal(JSON.stringify(status).includes(KEY), false);
+});
+
+test("testAgentConnection times out, aborts, and reports a key-free failure", async () => {
+  // A fetch that hangs until aborted — the short timeout must abort it.
+  const hangingFetch: typeof fetch = (_url, init) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () =>
+        reject(new DOMException("aborted", "AbortError")),
+      );
+    });
+  const result = await testAgentConnection(baseConfig, hangingFetch, 10);
+  assert.equal(result.ok, false);
+  assert.match((result as { error: string }).error, /timed out/);
+  assert.equal((result as { error: string }).error.includes(KEY), false);
+});
+
+test("testAgentConnection redacts the API key from a provider error", async () => {
+  const leakyFetch: typeof fetch = async () =>
+    new Response(`unauthorized: ${KEY}`, { status: 401 });
+  const result = await testAgentConnection(baseConfig, leakyFetch, 9000);
+  assert.equal(result.ok, false);
+  assert.equal((result as { error: string }).error.includes(KEY), false);
+});
+
+test("client testAgentConnection maps a request failure to ok:false", async () => {
+  const failing: typeof fetch = async () => {
+    throw new Error("boom");
+  };
+  const result = await clientTestAgentConnection(failing);
+  assert.equal(result.ok, false);
 });
 
 test("buildChatMessages includes the current config projection + task + brief", () => {

@@ -519,7 +519,7 @@ export default function App() {
   // Gear / ⌘, / command-palette "Settings" now open the single config surface:
   // the Session Config dialog, deep-linked to its Studio Appearance group.
   const openSessionConfigAppearance = () => {
-    setSessionConfigFocus({ mode: "manual", group: "appearance", nonce: Date.now() });
+    setSessionConfigFocus({ mode: "settings", group: "appearance", nonce: Date.now() });
     setState(
       produceState(state, (draft) => {
         draft.activeTab = "live";

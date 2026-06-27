@@ -21,6 +21,8 @@ interface AgentViewProps {
   onOpenJson: () => void;
   /** Open the JSON drawer with text seeded into the editing buffer (review path). */
   onReviewJson?: (text: string) => void;
+  /** Navigate to a Settings group (e.g. AI Provider). Settings are never edited via chat. */
+  onOpenSettings?: (group?: string) => void;
   /** Seed the connection status (tests); the mount effect refreshes it from the route. */
   initialStatus?: SessionAgentStatus;
 }
@@ -45,6 +47,23 @@ const CONTEXT: { id: string; labelKey: TranslationKey }[] = [
   { id: "core", labelKey: "agentContext.core" },
   { id: "noRuntime", labelKey: "agentContext.noRuntime" },
   { id: "obs", labelKey: "agentContext.obs" },
+];
+
+/**
+ * Slash commands — a lightweight, natural-language command surface in the
+ * composer. Task commands set the active intent; nav commands jump to the JSON
+ * drawer or a Settings group (the Agent never edits settings itself).
+ */
+const SLASH_COMMANDS: { cmd: string; task?: string; group?: string; json?: boolean }[] = [
+  { cmd: "generate", task: "generate" },
+  { cmd: "sections", task: "sections" },
+  { cmd: "cover", task: "titleCover" },
+  { cmd: "socials", task: "assets" },
+  { cmd: "check", task: "check" },
+  { cmd: "json", json: true },
+  { cmd: "display", group: "display" },
+  { cmd: "provider", group: "provider" },
+  { cmd: "settings", group: "session" },
 ];
 
 interface TurnBase {
@@ -84,7 +103,7 @@ const subLabel: CSSProperties = {
  * provider, the pill reads "local · no model" and Copy handoff is the path. The
  * API key stays on the server; the client only knows provider / model names.
  */
-export default function AgentView({ state, onOpenJson, onReviewJson, initialStatus }: AgentViewProps) {
+export default function AgentView({ state, onOpenJson, onReviewJson, onOpenSettings, initialStatus }: AgentViewProps) {
   const { t, locale } = useLocale();
   const [brief, setBrief] = useState("");
   const [taskId, setTaskId] = useState("generate");
@@ -100,6 +119,54 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
   const handoff = useMemo(() => buildAgentPrompt(state, brief, task.line), [state, brief, task.line]);
   const connected = status.configured;
   const showChips = turns.length === 0 || intentsOpen;
+  const [slashActive, setSlashActive] = useState(0);
+  const [slashDismissed, setSlashDismissed] = useState(false);
+
+  // Slash commands: a leading "/" with no space yet opens a filtered menu with a
+  // full keyboard contract (↑/↓ move, Enter run, Esc dismiss without clearing).
+  const slashQuery = brief.startsWith("/") && !brief.includes(" ") ? brief.slice(1).toLowerCase() : null;
+  const slashMatches = slashQuery !== null ? SLASH_COMMANDS.filter((s) => s.cmd.startsWith(slashQuery)) : [];
+  const slashOpen = slashMatches.length > 0 && !slashDismissed;
+  const slashIndex = Math.min(slashActive, Math.max(slashMatches.length - 1, 0));
+
+  const runSlash = (s: (typeof SLASH_COMMANDS)[number]) => {
+    setBrief("");
+    setSlashDismissed(false);
+    setSlashActive(0);
+    if (s.task) setTaskId(s.task);
+    else if (s.json) onOpenJson();
+    else onOpenSettings?.(s.group);
+  };
+
+  // The slash keyboard owns ↑/↓/Enter/Esc while open. A document capture
+  // listener — registered before the dialog's (child effects run first) — lets
+  // Esc dismiss the menu without closing the dialog. The mount-only listener
+  // reads live state through a ref so it never goes stale.
+  const slashRef = useRef({ open: slashOpen, matches: slashMatches, index: slashIndex, run: runSlash });
+  slashRef.current = { open: slashOpen, matches: slashMatches, index: slashIndex, run: runSlash };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const st = slashRef.current;
+      if (!st.open || st.matches.length === 0) return;
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setSlashActive((i) => (i + 1) % st.matches.length);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setSlashActive((i) => (i - 1 + st.matches.length) % st.matches.length);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        st.run(st.matches[st.index]);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setSlashDismissed(true);
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -217,6 +284,11 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
               {t("agent.localBadge")}
             </span>
           )}
+          {!connected && onOpenSettings && (
+            <GhostButton testId="agent-setup-provider" onClick={() => onOpenSettings("provider")}>
+              {t("agent.setupProvider")}
+            </GhostButton>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {turns.length > 0 && (
@@ -319,6 +391,47 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
             </button>
           )}
 
+          {slashOpen && (
+            <ul
+              id="agent-slash-menu"
+              data-testid="agent-slash-menu"
+              role="listbox"
+              aria-label={t("agent.slashHint")}
+              style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", border: UI_BORDERS.control, borderRadius: 8, background: UI_COLORS.appSurface, overflow: "hidden" }}
+            >
+              {slashMatches.map((s, i) => {
+                const active = i === slashIndex;
+                return (
+                  <li key={s.cmd} role="option" aria-selected={active} id={`agent-slash-opt-${i}`}>
+                    <button
+                      data-testid={`agent-slash-${s.cmd}`}
+                      tabIndex={-1}
+                      onClick={() => runSlash(s)}
+                      onMouseEnter={() => setSlashActive(i)}
+                      style={{
+                        appearance: "none",
+                        textAlign: "left",
+                        width: "100%",
+                        border: "none",
+                        borderLeft: `2px solid ${active ? UI_COLORS.accent : "transparent"}`,
+                        background: active ? cssAlpha(UI_COLORS.accent, 12) : "transparent",
+                        color: UI_COLORS.accentText,
+                        cursor: "pointer",
+                        fontFamily: mono,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: "7px 12px",
+                        transition: "background 0.1s, border-color 0.1s",
+                      }}
+                    >
+                      /{s.cmd}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           <div
             style={{
               display: "flex",
@@ -333,8 +446,13 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
             <textarea
               data-testid="agent-brief-input"
               value={brief}
-              onChange={(e) => setBrief(e.target.value)}
+              onChange={(e) => { setBrief(e.target.value); setSlashActive(0); setSlashDismissed(false); }}
               placeholder={t("agent.briefPlaceholder")}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={slashOpen}
+              aria-controls="agent-slash-menu"
+              aria-activedescendant={slashOpen ? `agent-slash-opt-${slashIndex}` : undefined}
               spellCheck={false}
               style={{
                 ...monoInputStyle,
@@ -375,6 +493,10 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
             </div>
           </div>
 
+          <div data-testid="agent-slash-hint" style={{ fontSize: 10, color: UI_COLORS.textSubtle, fontFamily: mono, letterSpacing: "0.04em" }}>
+            {t("agent.slashHint")}
+          </div>
+
           {/* Meta — context (what the agent sees) + handoff preview + status. */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 10, color: UI_COLORS.textSubtle, fontFamily: mono }}>
@@ -398,6 +520,9 @@ export default function AgentView({ state, onOpenJson, onReviewJson, initialStat
 
           <div style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4, display: "flex", alignItems: "center", gap: 6 }}>
             {message || (connected ? t("agent.footerConnected") : t("agent.footerLocal"))}
+          </div>
+          <div data-testid="agent-provider-guide" style={{ fontSize: 10, color: UI_COLORS.textSubtle, lineHeight: 1.45 }}>
+            {t("agent.providerGuide")}
           </div>
         </div>
       </div>

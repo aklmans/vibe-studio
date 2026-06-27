@@ -2,6 +2,7 @@ import type {
   SessionAgentRequest,
   SessionAgentRunResponse,
   SessionAgentStatus,
+  SessionAgentTestResponse,
 } from "./session-agent";
 
 /*
@@ -24,6 +25,31 @@ export async function fetchAgentStatus(
     return data && typeof data.configured === "boolean" ? data : { configured: false };
   } catch {
     return { configured: false };
+  }
+}
+
+/** Ask the route to verify the configured provider answers (key-free result). */
+export async function testAgentConnection(
+  fetchImpl: typeof fetch = fetch,
+): Promise<SessionAgentTestResponse> {
+  // A client-side ceiling longer than the server's own test timeout, so the UI
+  // always recovers even if the route itself stalls. No key / URL is ever sent.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetchImpl(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ test: true }),
+      signal: controller.signal,
+    });
+    const data = (await response.json().catch(() => null)) as SessionAgentTestResponse | null;
+    if (data && typeof data.ok === "boolean") return data;
+    return { ok: false, configured: false, error: `request failed (${response.status})` };
+  } catch {
+    return { ok: false, configured: false, error: "network error" };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

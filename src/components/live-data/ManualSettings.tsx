@@ -15,15 +15,25 @@ import AvatarUploader from "../shared/AvatarUploader";
 import { TextInput, WorkbenchButton } from "../shared/Field";
 import { LineSegmented, RuleNote } from "../inspector/EditorRow";
 import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceControls";
+import AIProviderSettings from "./AIProviderSettings";
+import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
+import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 
 interface ManualSettingsProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
   onReset: () => void;
-  /** Open the JSON drawer (optionally jumping to a module key). */
+  /** Open the JSON drawer — an advanced power-tool, not a per-field requirement. */
   onOpenJson: (key?: string) => void;
   /** A one-shot deep-link request to reveal a settings group (e.g. appearance). */
   focus?: { group?: string } | null;
+  /** Source-of-truth + lifecycle, surfaced in the Data & Sync group. */
+  dateKey: string;
+  persistence: SessionPersistence;
+  obsSync?: ObsSyncState;
+  onReload: () => void;
+  onStartSession: () => void;
+  onEndSession: () => void;
 }
 
 interface TabDef {
@@ -36,12 +46,13 @@ interface TabDef {
 const SETTINGS_CONTENT_MAX_WIDTH = 920;
 
 /**
- * Manual Settings — a flat tabbed panel (one concern per tab), in the spirit of
- * a desktop Settings window: a tab bar across the top, calm labeled rows below.
- * The v1 portable-core fields are edited directly; each keeps an "Edit in JSON"
- * jump to the same value (the drift-safe drawer is the JSON power-tool). All
- * panels stay mounted (visibility toggled) so the IA is statically inspectable
- * and the JSON drift stays synced.
+ * Settings — a stable, low-noise settings surface in the spirit of Seeker: a
+ * scannable left menu + calm "title · description · control" rows. Groups are
+ * Session / Content / Broadcast Display / Studio Appearance / AI Provider /
+ * Data & Sync. The v1 portable-core fields are edited directly; JSON is an
+ * advanced power-tool reached from the dialog header or Data & Sync, not a
+ * per-field obligation. All panels stay mounted (visibility toggled) so the IA
+ * is statically inspectable and the JSON drift stays synced.
  */
 export default function ManualSettings({
   state,
@@ -49,6 +60,12 @@ export default function ManualSettings({
   onReset,
   onOpenJson,
   focus,
+  dateKey,
+  persistence,
+  obsSync = IDLE_OBS_SYNC,
+  onReload,
+  onStartSession,
+  onEndSession,
 }: ManualSettingsProps) {
   const { t, locale, setLocale } = useLocale();
   const [activeTab, setActiveTab] = useState("session");
@@ -83,30 +100,25 @@ export default function ManualSettings({
               onSelect={(loc) => setLocale(loc as Locale)}
             />
           </SettingRow>
-          <FieldRow title={t("label.title")} description={t("settingsRow.titleDesc")} jsonKey="title" onOpenJson={onOpenJson}>
+          <SettingRow title={t("label.title")} description={t("settingsRow.titleDesc")}>
             <TextInput testId="field-title" value={state.cover.title} onChange={(v) => writeCover({ title: v })} placeholder={t("label.title")} />
-          </FieldRow>
-          <FieldRow title={t("label.subtitle")} description={t("settingsRow.subtitleDesc")} jsonKey="subtitle" onOpenJson={onOpenJson}>
+          </SettingRow>
+          <SettingRow title={t("label.subtitle")} description={t("settingsRow.subtitleDesc")}>
             <TextInput testId="field-subtitle" value={state.cover.todayTopic} onChange={(v) => writeCover({ todayTopic: v })} placeholder={t("label.topic")} />
-          </FieldRow>
-          <FieldRow title={t("settingsRow.authorTitle")} description={t("settingsRow.authorDesc")} jsonKey="author" onOpenJson={onOpenJson}>
+          </SettingRow>
+          <SettingRow title={t("settingsRow.authorTitle")} description={t("settingsRow.authorDesc")}>
             <TextInput testId="field-author" value={state.cover.hookText} onChange={(v) => writeCover({ hookText: v })} placeholder={t("settingsRow.authorPlaceholder")} />
-          </FieldRow>
-          <SettingRow title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
-            <div data-testid="live-data-live-session">
-              <LiveSessionEditor state={state} onChange={onChange} />
-            </div>
           </SettingRow>
         </>
       ),
     },
     {
-      id: "cover",
-      titleKey: "settingsGroup.cover",
-      hintKey: "settingsGroup.coverHint",
+      id: "content",
+      titleKey: "settingsGroup.content",
+      hintKey: "settingsGroup.contentHint",
       render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <AssetSubSection label={t("settingsRow.profileTitle")} description={t("settingsRow.profileDesc")} jsonKey="profile" onOpenJson={onOpenJson}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <AssetRow label={t("settingsRow.profileTitle")} description={t("settingsRow.profileDesc")}>
             <AvatarUploader
               url={state.cover.avatarUrl}
               visible={state.cover.avatarVisible}
@@ -116,42 +128,12 @@ export default function ManualSettings({
               clearValue="/avatar.png"
               testIdPrefix="field-profile-avatar"
             />
-          </AssetSubSection>
-          <AssetSubSection label={t("cover.visual.label")} description={t("settingsRow.coverDesc")} jsonKey="cover" onOpenJson={onOpenJson}>
+          </AssetRow>
+          <AssetRow label={t("cover.visual.label")} description={t("settingsRow.coverDesc")}>
             <CoverVisualEditor state={state} onChange={onChange} />
-          </AssetSubSection>
-        </div>
-      ),
-    },
-    {
-      id: "branding",
-      titleKey: "settingsGroup.branding",
-      hintKey: "settingsGroup.brandingHint",
-      render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <AssetSubSection label={`${t("label.badge")}s`} description={t("settingsRow.badgesDesc")} jsonKey="badges" onOpenJson={onOpenJson}>
-            <BadgesEditor state={state} onChange={onChange} testIdPrefix="field-badge" />
-          </AssetSubSection>
-          <AssetSubSection label={t("group.stack")} description={t("group.stack.hint")} jsonKey="stack" onOpenJson={onOpenJson}>
-            <div data-testid="live-data-stack">
-              <StackEditor state={state} onChange={onChange} />
-            </div>
-          </AssetSubSection>
-          <AssetSubSection label={`${t("label.social")}s`} description={t("settingsRow.socialsDesc")} jsonKey="socials" onOpenJson={onOpenJson}>
-            <SocialsEditor state={state} onChange={onChange} testIdPrefix="field-social" />
-          </AssetSubSection>
-        </div>
-      ),
-    },
-    {
-      id: "display",
-      titleKey: "settingsGroup.display",
-      hintKey: "settingsGroup.displayHint",
-      render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <div data-testid="live-data-sections" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={fieldLabel}>{t("label.activeSection")}</span>
+          </AssetRow>
+          <AssetRow label={t("label.section") + "s"} description={t("settingsRow.sectionsDesc")}>
+            <div data-testid="live-data-sections" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <LineSegmented
                 testId="live-data-section-tabs"
                 active={String(activeSectionIndex)}
@@ -163,13 +145,33 @@ export default function ManualSettings({
                   testId: `live-data-section-tab-${idx}`,
                 }))}
               />
+              {activeSection && (
+                <div data-testid={`live-data-section-panel-${activeSectionIndex}`}>
+                  <SidebarSectionEditor state={state} onChange={onChange} index={activeSectionIndex} accentColor={UI_COLORS.accent} />
+                </div>
+              )}
             </div>
-            {activeSection && (
-              <div data-testid={`live-data-section-panel-${activeSectionIndex}`}>
-                <SidebarSectionEditor state={state} onChange={onChange} index={activeSectionIndex} accentColor={UI_COLORS.accent} />
-              </div>
-            )}
-          </div>
+          </AssetRow>
+          <AssetRow label={t("group.stack")} description={t("group.stack.hint")}>
+            <div data-testid="live-data-stack">
+              <StackEditor state={state} onChange={onChange} />
+            </div>
+          </AssetRow>
+          <AssetRow label={`${t("label.badge")}s`} description={t("settingsRow.badgesDesc")}>
+            <BadgesEditor state={state} onChange={onChange} testIdPrefix="field-badge" />
+          </AssetRow>
+          <AssetRow label={`${t("label.social")}s`} description={t("settingsRow.socialsDesc")}>
+            <SocialsEditor state={state} onChange={onChange} testIdPrefix="field-social" />
+          </AssetRow>
+        </div>
+      ),
+    },
+    {
+      id: "display",
+      titleKey: "settingsGroup.display",
+      hintKey: "settingsGroup.displayHint",
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <div data-testid="live-data-bottom-bar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <span style={fieldLabel}>{t("group.bottomBarSegments")}</span>
             {[0, 1, 2].map((idx) => (
@@ -177,8 +179,13 @@ export default function ManualSettings({
                 <BottomBarSegmentEditor state={state} onChange={onChange} index={idx} />
               </SettingRow>
             ))}
-            <RuleNote>{t("settingsRow.displayNote")}</RuleNote>
           </div>
+          <SettingRow title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
+            <div data-testid="live-data-live-session">
+              <LiveSessionEditor state={state} onChange={onChange} />
+            </div>
+          </SettingRow>
+          <RuleNote>{t("settingsRow.displayNote")}</RuleNote>
         </div>
       ),
     },
@@ -191,17 +198,34 @@ export default function ManualSettings({
       ),
     },
     {
+      id: "provider",
+      titleKey: "settingsGroup.provider",
+      hintKey: "settingsGroup.providerHint",
+      render: () => <AIProviderSettings />,
+    },
+    {
       id: "data",
       titleKey: "settingsGroup.data",
       hintKey: "settingsGroup.dataHint",
       render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <RuleNote>{t("settingsRow.persistenceNote")}</RuleNote>
-          <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>
-          <RuleNote>{t("settingsRow.fileStrategyNote")}</RuleNote>
-          <WorkbenchButton data-testid="open-json-advanced" onClick={() => onOpenJson()} style={{ alignSelf: "flex-start", height: 32, padding: "0 12px" }}>
-            {t("drawer.openJson")}
-          </WorkbenchButton>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <SourceOfTruthBar
+            dateKey={dateKey}
+            persistence={persistence}
+            obsSync={obsSync}
+            onReload={onReload}
+            onStartSession={onStartSession}
+            onEndSession={onEndSession}
+            onOpenJson={() => onOpenJson()}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "0 2px" }}>
+            <RuleNote>{t("settingsRow.persistenceNote")}</RuleNote>
+            <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>
+            <RuleNote>{t("settingsRow.fileStrategyNote")}</RuleNote>
+            <WorkbenchButton data-testid="open-json-advanced" onClick={() => onOpenJson()} style={{ alignSelf: "flex-start", height: 32, padding: "0 12px" }}>
+              {t("drawer.openJson")}
+            </WorkbenchButton>
+          </div>
         </div>
       ),
     },
@@ -234,7 +258,7 @@ export default function ManualSettings({
 
   return (
     <div data-testid="manual-settings" style={{ display: "flex", flexDirection: "row", minHeight: 0, flex: 1, width: "100%" }}>
-      {/* Left menu — a stable, scannable vertical nav (secondary to the mode). */}
+      {/* Left menu — a stable, scannable vertical nav, only in Settings mode. */}
       <nav
         data-testid="settings-tab-bar"
         role="tablist"
@@ -342,87 +366,15 @@ function SettingRow({ title, description, children }: { title: string; descripti
   );
 }
 
-/**
- * An editable v1-core field row: title + description + an "Edit in JSON" jump on
- * the right, control stacked below. Directly edits OverlayState — the JSON link
- * is a shortcut to the same value, not a second write path.
- */
-function FieldRow({
-  title,
-  description,
-  jsonKey,
-  onOpenJson,
-  children,
-}: {
-  title: string;
-  description: string;
-  jsonKey: string;
-  onOpenJson: (key?: string) => void;
-  children: ReactNode;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 16, marginTop: 16, borderTop: `1px solid ${UI_COLORS.border}` }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: UI_COLORS.textSoft }}>{title}</span>
-          {description && <span style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4 }}>{description}</span>}
-        </div>
-        <EditInJson jsonKey={jsonKey} onOpenJson={onOpenJson} />
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/** A labelled brand-asset sub-section. */
-function AssetSubSection({
-  label,
-  description,
-  jsonKey,
-  onOpenJson,
-  children,
-}: {
-  label: string;
-  description: string;
-  jsonKey: string;
-  onOpenJson: (key?: string) => void;
-  children: ReactNode;
-}) {
+/** A labelled content / brand-asset sub-section (mono label, no JSON link). */
+function AssetRow({ label, description, children }: { label: string; description: string; children: ReactNode }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={fieldLabel}>{label}</span>
-          {description && <span style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4 }}>{description}</span>}
-        </div>
-        <EditInJson jsonKey={jsonKey} onOpenJson={onOpenJson} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <span style={fieldLabel}>{label}</span>
+        {description && <span style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.4 }}>{description}</span>}
       </div>
       {children}
     </div>
-  );
-}
-
-function EditInJson({ jsonKey, onOpenJson }: { jsonKey: string; onOpenJson: (key?: string) => void }) {
-  const { t } = useLocale();
-  return (
-    <button
-      data-testid={`settings-openjson-${jsonKey}`}
-      onClick={() => onOpenJson(jsonKey)}
-      style={{
-        appearance: "none",
-        border: "none",
-        background: "transparent",
-        color: cssAlpha(UI_COLORS.accentText, 100),
-        cursor: "pointer",
-        fontFamily: "var(--app-font-mono)",
-        fontSize: 10,
-        fontWeight: 600,
-        letterSpacing: "0.04em",
-        flexShrink: 0,
-        padding: 0,
-      }}
-    >
-      {t("manualSettings.openJsonAt")}
-    </button>
   );
 }

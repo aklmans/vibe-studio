@@ -59,11 +59,11 @@ const DRAWER_SRC = readFileSync(
 );
 const APP_SRC = readFileSync(resolve("src/components/OverlayBuilderApp.tsx"), "utf8");
 
-test("mode is a segmented switch (Manual / Agent), not a left-nav of pages", () => {
+test("mode is a segmented switch (Agent / Settings), not a left-nav of pages", () => {
   const html = renderCenter();
   assert.match(html, /data-testid="config-mode-switch"/);
-  assert.match(html, /data-testid="config-mode-manual"/);
   assert.match(html, /data-testid="config-mode-agent"/);
+  assert.match(html, /data-testid="config-mode-settings"/);
   // The old AI-Prepare/Settings/JSON left-nav pages are gone.
   assert.doesNotMatch(html, /data-testid="config-nav-prepare"/);
   assert.doesNotMatch(html, /data-testid="config-nav-settings"/);
@@ -119,7 +119,7 @@ test("Manual Settings is a tabbed panel — left vertical menu + panels, no tree
   assert.match(html, /data-testid="manual-settings"/);
   assert.match(html, /data-testid="settings-tab-bar"[^>]*role="tablist"/);
   assert.match(html, /aria-orientation="vertical"/); // a left rail, not wide top tabs
-  for (const id of ["session", "cover", "branding", "display", "appearance", "data"]) {
+  for (const id of ["session", "content", "display", "appearance", "provider", "data"]) {
     assert.match(html, new RegExp(`data-testid="settings-tab-${id}"`));
     assert.match(html, new RegExp(`data-testid="settings-panel-${id}"`));
     assert.match(html, new RegExp(`id="settings-tab-${id}"[^>]*aria-controls="settings-panel-${id}"`));
@@ -162,10 +162,71 @@ test("Manual Settings edits the v1 portable-core fields directly", () => {
   assert.match(html, /data-testid="cover-visual"/);
   assert.match(html, /data-testid="field-badge-0-label"/);
   assert.match(html, /data-testid="field-social-0-label"/);
-  // Each v1 field keeps an "Edit in JSON" jump to the same value (not a 2nd write path).
-  for (const key of ["title", "subtitle", "author", "profile", "cover", "badges", "socials"]) {
-    assert.match(html, new RegExp(`data-testid="settings-openjson-${key}"`));
+  // JSON is demoted to an advanced tool — basic fields no longer carry a per-field
+  // "Edit in JSON" link; the entry points are the header + Data & Sync + Agent.
+  assert.doesNotMatch(html, /data-testid="settings-openjson-/);
+});
+
+test("Session Config opens Agent-first — Agent is the default visible mode", () => {
+  const html = renderCenter();
+  // Agent is shown; Settings is mounted but hidden until selected.
+  assert.match(html, /data-testid="config-view-agent"[^>]*display:flex/);
+  assert.match(html, /data-testid="config-view-settings"[^>]*display:none/);
+  assert.match(html, /data-testid="agent-view"/);
+  // The mode segmented leads with Agent, then Settings — no "Manual" copy.
+  const agentIdx = html.indexOf('data-testid="config-mode-agent"');
+  const settingsIdx = html.indexOf('data-testid="config-mode-settings"');
+  assert.ok(agentIdx > 0 && settingsIdx > agentIdx, "Agent precedes Settings");
+  assert.doesNotMatch(html, /data-testid="config-mode-manual"/);
+  assert.doesNotMatch(html, /Manual Settings/);
+});
+
+test("Agent offers slash commands and guides to Settings, never editing settings via chat", () => {
+  // The slash menu appears once a "/" is typed (assert the wiring at the source).
+  assert.match(AGENT_SRC, /SLASH_COMMANDS/);
+  assert.match(AGENT_SRC, /data-testid=\{`agent-slash-\$\{s\.cmd\}`\}/);
+  assert.match(AGENT_SRC, /slashMatches/);
+  assert.match(AGENT_SRC, /onOpenSettings\?\.\(s\.group\)/);
+  // Not-connected default surfaces a "set up provider" guide to Settings.
+  const html = renderCenter();
+  assert.match(html, /data-testid="agent-setup-provider"/);
+  assert.match(html, /data-testid="agent-provider-guide"/);
+});
+
+test("Agent slash menu has a full keyboard contract + distinct /provider and /settings", () => {
+  // Listbox / option semantics with an active-descendant highlight.
+  assert.match(AGENT_SRC, /role="listbox"/);
+  assert.match(AGENT_SRC, /role="option"/);
+  assert.match(AGENT_SRC, /aria-selected=\{active\}/);
+  assert.match(AGENT_SRC, /aria-activedescendant=/);
+  // Keyboard contract: ↑/↓ move, Enter runs, Esc dismisses (without clearing).
+  for (const key of ["ArrowDown", "ArrowUp", "Enter", "Escape"]) {
+    assert.match(AGENT_SRC, new RegExp(`event\\.key === "${key}"`));
   }
+  // Esc / Enter use a capture listener + stopImmediatePropagation so Esc
+  // dismisses the menu without also closing the dialog, and keeps the input.
+  assert.match(AGENT_SRC, /addEventListener\("keydown", onKey, true\)/);
+  assert.match(AGENT_SRC, /stopImmediatePropagation/);
+  assert.match(AGENT_SRC, /setSlashDismissed\(true\)/);
+  // /provider → AI Provider group; /settings → Settings default (Session).
+  assert.match(AGENT_SRC, /\{ cmd: "provider", group: "provider" \}/);
+  assert.match(AGENT_SRC, /\{ cmd: "settings", group: "session" \}/);
+});
+
+test("AI Provider is a Settings group — status + test, the key never enters the client", () => {
+  const html = renderCenter();
+  assert.match(html, /data-testid="settings-tab-provider"/);
+  assert.match(html, /data-testid="settings-panel-provider"/);
+  assert.match(html, /data-testid="ai-provider-settings"/);
+  assert.match(html, /data-testid="ai-provider-test"/);
+  assert.match(html, /data-testid="ai-provider-api-key"/);
+  // The provider panel never holds a key or hits a provider directly.
+  const providerSrc = readFileSync(resolve("src/components/live-data/AIProviderSettings.tsx"), "utf8");
+  assert.doesNotMatch(providerSrc, /Authorization|Bearer |process\.env|api\.deepseek\.com|api\.openai\.com/i);
+  // The key-free status carries the non-secret base URL; a server test path exists.
+  const agentLibSrc = readFileSync(resolve("src/lib/session-agent.ts"), "utf8");
+  assert.match(agentLibSrc, /baseUrl: config\.baseUrl/);
+  assert.match(agentLibSrc, /export async function testAgentConnection/);
 });
 
 test("Agent mode is a local chat-style prep with a transcript and honest framing", () => {
@@ -275,7 +336,7 @@ test("Settings is merged into Session Config: no standalone drawer, deep-link to
 
   // Gear / ⌘, / command-palette "Settings" deep-link into the dialog at the
   // Studio Appearance group (open the live tab + request the focus).
-  assert.match(APP_SRC, /setSessionConfigFocus\(\{ mode: "manual", group: "appearance"/);
+  assert.match(APP_SRC, /setSessionConfigFocus\(\{ mode: "settings", group: "appearance"/);
   assert.match(APP_SRC, /draft\.activeTab = "live"/);
   assert.match(APP_SRC, /onOpenSettings: openSessionConfigAppearance/); // ⌘, shortcut
   assert.match(APP_SRC, /onOpenSettings=\{openSessionConfigAppearance\}/); // TopBar + palette
@@ -286,7 +347,7 @@ test("Settings is merged into Session Config: no standalone drawer, deep-link to
   const managerSrc = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
   assert.match(managerSrc, /setMode\(focus\.mode\)/);
   assert.match(managerSrc, /onFocusConsumed\?\.\(\)/);
-  assert.match(managerSrc, /focus=\{focus\}/); // forwarded to ManualSettings
+  assert.match(managerSrc, /focus=\{localFocus \?\? focus\}/); // forwarded to ManualSettings
   assert.match(MANUAL_SRC, /if \(focus\?\.group\) setActiveTab\(focus\.group\)/);
 
   // The drawer fallback button + its plumbing are removed from Manual.
@@ -312,7 +373,7 @@ test("Settings is merged into Session Config: no standalone drawer, deep-link to
   assert.match(html, /data-testid="studio-theme-dark"/);
 });
 
-test("the JSON drawer is global, drift-safe, and openable from bar / manual / agent", () => {
+test("the JSON drawer is global, drift-safe, and openable from header / data & sync / agent", () => {
   const html = renderCenter();
   assert.match(html, /data-testid="config-json-drawer"/);
   assert.match(html, /role="dialog"/);
@@ -324,12 +385,11 @@ test("the JSON drawer is global, drift-safe, and openable from bar / manual / ag
   for (const key of ["title", "cover", "stack", "socials", "sections"]) {
     assert.match(html, new RegExp(`data-testid="config-json-module-${key}"`));
   }
-  // Open entry points.
+  // Open entry points — the dialog header, Data & Sync, and the Agent.
+  assert.match(html, /data-testid="open-json-top"/);
   assert.match(html, /data-testid="open-json-bar"/);
   assert.match(html, /data-testid="open-json-advanced"/);
   assert.match(html, /data-testid="open-json-agent"/);
-  // A setting row can open the JSON at a key.
-  assert.match(html, /data-testid="settings-openjson-title"/);
 });
 
 test("the JSON drawer manages focus and is inert while closed", () => {
@@ -497,7 +557,7 @@ test("switching Manual tabs only swaps the visible panel (state preserved)", () 
   assert.match(MANUAL_SRC, /role="tabpanel"/);
   assert.match(MANUAL_SRC, /hidden=\{tab\.id !== activeTab\}/);
   // All six panels are present in the markup even though one is active.
-  for (const id of ["session", "cover", "branding", "display", "appearance", "data"]) {
+  for (const id of ["session", "content", "display", "appearance", "provider", "data"]) {
     assert.match(html, new RegExp(`data-testid="settings-panel-${id}"`));
   }
 });

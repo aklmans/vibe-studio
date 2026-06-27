@@ -33,10 +33,14 @@ For OBS/live-data behavior, also read:
 Naming note: **"Live Data" is the persistence / API layer** (DB repo, `live-data*`
 libs, `/api/sessions`, the OBS `live-state` bridge), not a page. The user-facing
 tab is **Session Config** (`src/components/live-data/` — `LiveDataManager` shell
-with Manual Settings, an Agent prep mode, and a global drift-safe JSON drawer).
-There is no Recipe / Brief flow and no `SessionRecipePanel`; those earlier stages
-were retired. The Agent mode is a **local** handoff prep — it does not call a
-model or hit the network.
+that opens **Agent-first**, with a **Settings** mode grouped Session / Content /
+Broadcast Display / Studio Appearance / AI Provider / Data & Sync, and a global
+drift-safe JSON drawer). There is no Recipe / Brief flow and no `SessionRecipePanel`;
+those earlier stages were retired. The Agent calls a configured provider
+server-side (the API key stays in server env, never in the client bundle /
+localStorage / logs — the client only ever sees `configured` / `not set`) or
+falls back to a local copy-handoff; it never edits settings via chat and never
+bypasses the JSON review/apply path.
 
 ## Current Branch Goal: `editorial-live`
 
