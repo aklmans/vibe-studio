@@ -47,3 +47,12 @@ test("session API routes wrap optional database calls with the fallback helper",
     );
   }
 });
+
+test("live data repository normalizes persisted snapshots at read and write boundaries", () => {
+  const source = readFileSync(resolve("src/db/live-data-repository.ts"), "utf8");
+
+  assert.match(source, /normalizeLiveDataSnapshot/);
+  assert.match(source, /return normalizeLiveDataSnapshot\(\{/);
+  assert.match(source, /const normalizedLiveData = normalizeLiveDataSnapshot\(liveData\)/);
+  assert.match(source, /replaceLiveDataChildren\(db, \{\s*\.\.\.normalizedLiveData,/);
+});

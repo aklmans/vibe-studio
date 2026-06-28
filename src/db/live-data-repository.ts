@@ -4,6 +4,7 @@ import { DEFAULT_STATE_BY_LOCALE } from "../types";
 import type { BottomBarSlot } from "../lib/bottomBar";
 import type { Locale } from "../lib/i18n";
 import {
+  normalizeLiveDataSnapshot,
   overlayStateToLiveData,
   type LiveDataSnapshot,
   type LiveSessionStatus,
@@ -163,7 +164,7 @@ async function readLiveDataBySessionId(
       .orderBy(asc(liveBottomBarSegments.sortOrder)),
   ]);
 
-  return {
+  return normalizeLiveDataSnapshot({
     session: rowToSession(sessionRow),
     activeSection: sessionRow.activeSection,
     sections: sectionRows.map((section) => ({
@@ -178,7 +179,7 @@ async function readLiveDataBySessionId(
       segments: segmentRows.map(segmentFromRow),
     },
     stackItems: stackRows.map((item) => item.label),
-  };
+  });
 }
 
 async function replaceLiveDataChildren(
@@ -288,6 +289,7 @@ export async function saveCurrentLiveData(
 ): Promise<LiveDataRepositoryResult> {
   const db = getDb();
   if (!db) return { databaseConfigured: false, liveData: null };
+  const normalizedLiveData = normalizeLiveDataSnapshot(liveData);
 
   const current = await getCurrentLiveData(locale, dateKey);
   if (!current.liveData) {
@@ -296,10 +298,10 @@ export async function saveCurrentLiveData(
 
   const session = {
     ...current.liveData.session,
-    title: liveData.session.title || current.liveData.session.title,
-    status: liveData.session.status,
-    startedAt: liveData.session.startedAt,
-    endedAt: liveData.session.endedAt,
+    title: normalizedLiveData.session.title || current.liveData.session.title,
+    status: normalizedLiveData.session.status,
+    startedAt: normalizedLiveData.session.startedAt,
+    endedAt: normalizedLiveData.session.endedAt,
   };
 
   await db
@@ -307,8 +309,8 @@ export async function saveCurrentLiveData(
     .set({
       title: session.title,
       status: session.status,
-      activeSection: liveData.activeSection,
-      bottomBarVisible: liveData.bottomBar.visible,
+      activeSection: normalizedLiveData.activeSection,
+      bottomBarVisible: normalizedLiveData.bottomBar.visible,
       startedAt: dateOrNull(session.startedAt),
       endedAt: dateOrNull(session.endedAt),
       updatedAt: new Date(),
@@ -316,7 +318,7 @@ export async function saveCurrentLiveData(
     .where(eq(liveSessions.id, session.id));
 
   await replaceLiveDataChildren(db, {
-    ...liveData,
+    ...normalizedLiveData,
     session,
   });
 

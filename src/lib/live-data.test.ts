@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { DEFAULT_STATE_BY_LOCALE } from "../types";
 import {
   applyLiveDataToOverlayState,
+  normalizeLiveDataSnapshot,
   overlayStateToLiveData,
 } from "./live-data";
 
@@ -98,4 +99,166 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
   assert.deepEqual(next.stack.items.map((item) => item.label), ["Next.js", "Postgres"]);
   assert.equal(next.stack.items[0].iconKey, "nextdotjs");
   assert.equal(next.liveSession.startedAt, "2026-05-11T16:00:00.000Z");
+});
+
+test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
+  const duplicated = {
+    session: {
+      id: "session-dup",
+      dateKey: "2026-06-27",
+      locale: "zh" as const,
+      title: "Dup",
+      status: "draft" as const,
+      startedAt: "",
+      endedAt: null,
+      createdAt: "2026-06-27T00:00:00.000Z",
+      updatedAt: "2026-06-27T00:00:00.000Z",
+    },
+    activeSection: 5,
+    sections: [
+      {
+        title: "今日目标",
+        tasks: [
+          { text: "配置直播画面", done: false },
+          { text: "优化 AI 工作流", done: false },
+          { text: "边做边解释", done: false },
+        ],
+      },
+      {
+        title: "今日目标",
+        tasks: [
+          { text: "配置直播画面", done: false },
+          { text: "优化 AI 工作流", done: false },
+          { text: "边做边解释", done: false },
+        ],
+      },
+      {
+        title: "当前问题",
+        tasks: [
+          { text: "哪一步最卡？", done: false },
+          { text: "如何更简单？", done: false },
+          { text: "下一步测什么？", done: false },
+        ],
+      },
+      {
+        title: "当前问题",
+        tasks: [
+          { text: "哪一步最卡？", done: false },
+          { text: "如何更简单？", done: false },
+          { text: "下一步测什么？", done: false },
+        ],
+      },
+      {
+        title: "输出记录",
+        tasks: [
+          { text: "已更新布局", done: false },
+          { text: "已验证效果", done: false },
+          { text: "下一步继续简化", done: false },
+        ],
+      },
+      {
+        title: "输出记录",
+        tasks: [
+          { text: "已更新布局", done: false },
+          { text: "已验证效果", done: true },
+          { text: "下一步继续简化", done: false },
+        ],
+      },
+    ],
+    bottomBar: {
+      visible: true,
+      segments: [
+        { kind: "live" as const },
+        { kind: "live" as const },
+        { kind: "progress" as const, sectionIndex: 5 },
+        { kind: "progress" as const, sectionIndex: 5 },
+        { kind: "stack" as const },
+        { kind: "stack" as const },
+      ],
+    },
+    stackItems: [
+      "Claude Opus 4.7",
+      "Claude Opus 4.7",
+      "Cursor",
+      "Cursor",
+      "React + Vite",
+      "React + Vite",
+    ],
+  };
+
+  const normalized = normalizeLiveDataSnapshot(duplicated);
+
+  assert.deepEqual(
+    normalized.sections.map((section) => section.title),
+    ["今日目标", "当前问题", "输出记录"],
+  );
+  assert.equal(normalized.activeSection, 2);
+  assert.deepEqual(normalized.sections[2]?.tasks.map((task) => task.done), [false, true, false]);
+  assert.deepEqual(normalized.bottomBar.segments, [
+    { kind: "live" },
+    { kind: "progress", sectionIndex: 2 },
+    { kind: "stack" },
+  ]);
+  assert.deepEqual(normalized.stackItems, ["Claude Opus 4.7", "Cursor", "React + Vite"]);
+});
+
+test("applyLiveDataToOverlayState normalizes duplicated persisted snapshots", () => {
+  const base = DEFAULT_STATE_BY_LOCALE.zh;
+  const next = applyLiveDataToOverlayState(base, {
+    session: {
+      id: "session-dup",
+      dateKey: "2026-06-27",
+      locale: "zh",
+      title: "Dup",
+      status: "draft",
+      startedAt: "",
+      endedAt: null,
+      createdAt: "2026-06-27T00:00:00.000Z",
+      updatedAt: "2026-06-27T00:00:00.000Z",
+    },
+    activeSection: 5,
+    sections: [
+      { title: "今日目标", tasks: [{ text: "配置直播画面", done: false }] },
+      { title: "今日目标", tasks: [{ text: "配置直播画面", done: false }] },
+      { title: "当前问题", tasks: [{ text: "哪一步最卡？", done: false }] },
+      { title: "当前问题", tasks: [{ text: "哪一步最卡？", done: false }] },
+      { title: "输出记录", tasks: [{ text: "已验证效果", done: true }] },
+      { title: "输出记录", tasks: [{ text: "已验证效果", done: true }] },
+    ],
+    bottomBar: {
+      visible: true,
+      segments: [
+        { kind: "live" },
+        { kind: "live" },
+        { kind: "progress", sectionIndex: 5 },
+        { kind: "progress", sectionIndex: 5 },
+        { kind: "stack" },
+        { kind: "stack" },
+      ],
+    },
+    stackItems: [
+      "Claude Opus 4.7",
+      "Claude Opus 4.7",
+      "Cursor",
+      "Cursor",
+      "React + Vite",
+      "React + Vite",
+    ],
+  });
+
+  assert.deepEqual(
+    next.sidebar.sections.map((section) => section.title),
+    ["今日目标", "当前问题", "输出记录"],
+  );
+  assert.equal(next.sidebar.activeSection, 2);
+  assert.deepEqual(next.bottomBar.segments, [
+    { kind: "live" },
+    { kind: "progress", sectionIndex: 2 },
+    { kind: "stack" },
+  ]);
+  assert.deepEqual(next.stack.items.map((item) => item.label), [
+    "Claude Opus 4.7",
+    "Cursor",
+    "React + Vite",
+  ]);
 });
