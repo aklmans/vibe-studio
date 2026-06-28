@@ -28,23 +28,31 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /href="https:\/\/aklman\.com"/);
   assert.match(html, /Aklman/);
   assert.match(html, /Vibe Coding Live/);
-  assert.match(html, /Editorial live graphics for coding streams\./);
+  assert.match(html, /coding streams/);
 
+  // Desktop nav is reduced to the 5 product-level items.
+  assert.match(html, /data-testid="landing-desktop-nav"/);
   assert.match(html, /href="#product"/);
-  assert.match(html, /href="#features"/);
   assert.match(html, /href="#surfaces"/);
+  assert.match(html, /href="#workflow"/);
+  assert.match(html, /href="\/studio"/);
+  assert.match(html, /href="https:\/\/github\.com\/aklmans\/Vibe-Coding-Live"/);
   assert.match(html, /data-testid="landing-demo-link"/);
   assert.match(html, /href="\/demo"/);
-  assert.match(html, /href="https:\/\/github\.com\/aklmans\/Vibe-Coding-Live"/);
-  assert.match(html, /href="#guide"/);
   assert.match(html, /Main site/);
+
+  // Main-site entries must not carry main-site blog nav labels.
   assert.doesNotMatch(html, />Posts</);
   assert.doesNotMatch(html, />Works</);
   assert.doesNotMatch(html, />Sessions</);
   assert.doesNotMatch(html, />About</);
 
+  // Hero communicates value, not just the product name.
+  assert.match(html, /Broadcast graphics for coding streams/);
   assert.match(html, /Try Demo/);
-  assert.match(html, /View GitHub/);
+  assert.match(html, /Open Studio/);
+
+  // Feature and workflow content preserved.
   assert.match(html, /Live Overlay Builder/);
   assert.match(html, /Session Config Agent/);
   assert.match(html, /OBS-ready browser sources/);
@@ -54,6 +62,7 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /Connect OBS/);
   assert.match(html, /Export assets/);
 
+  // Product images.
   assert.match(html, /src="\/product\/vibe-coding-overlay\.png"/);
   assert.match(html, /src="\/product\/vibe-coding-cover\.png"/);
   assert.match(html, /src="\/product\/vibe-coding-poster\.png"/);
@@ -66,9 +75,33 @@ test("root route is a product landing page with public navigation and real expor
   for (const asset of PRODUCT_ASSETS) {
     assert.equal(existsSync(resolve(asset)), true, `${asset} should be a public product image`);
   }
+
+  // Surfaces preview uses per-kind classes, not a single uniform ratio.
+  assert.match(html, /akl-surface-kind-wide/);
+  assert.match(html, /akl-surface-kind-tall/);
+  assert.match(html, /akl-surface-kind-strip/);
+  assert.match(html, /data-surface-kind="wide"/);
+  assert.match(html, /data-surface-kind="tall"/);
+  assert.match(html, /data-surface-kind="strip"/);
+
+  // Mobile menu is present (not just display:none with no alternative).
+  assert.match(html, /data-testid="landing-mobile-menu"/);
+  assert.match(html, /akl-mobile-nav/);
+
+  // Header is fixed, nav has underline hover, light button keeps dark ink.
   assert.match(PAGE_SRC, /\.akl-site-header\s*{[^}]*position: fixed/s);
   assert.match(PAGE_SRC, /\.akl-site-nav a::after/);
   assert.match(PAGE_SRC, /\.akl-page \.akl-button-light\s*{[^}]*color: #161513/s);
+
+  // Anchor offset prevents fixed header from covering section headings.
+  assert.match(PAGE_SRC, /scroll-margin-top/);
+
+  // Per-surface aspect ratios in CSS (not a single 16\/10 for all).
+  assert.match(PAGE_SRC, /aspect-ratio: 16 \/ 9/);
+  assert.match(PAGE_SRC, /aspect-ratio: 470 \/ 760/);
+  assert.match(PAGE_SRC, /aspect-ratio: 1856 \/ 180/);
+
+  // Landing stays static — no builder import.
   assert.doesNotMatch(PAGE_SRC, /ClientPage/);
 });
 

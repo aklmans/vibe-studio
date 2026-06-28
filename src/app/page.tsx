@@ -6,11 +6,17 @@ const RSS_URL = "https://aklman.com/rss.xml";
 
 const appNav = [
   { label: "Product", href: "#product" },
-  { label: "Features", href: "#features" },
   { label: "Surfaces", href: "#surfaces" },
   { label: "Workflow", href: "#workflow" },
-  { label: "FAQ", href: "#faq" },
-  { label: "Docs / Guide", href: "#guide" },
+  { label: "Studio", href: "/studio" },
+  { label: "GitHub", href: GITHUB_URL },
+];
+
+const mobileNav = [
+  { label: "Product", href: "#product" },
+  { label: "Surfaces", href: "#surfaces" },
+  { label: "Workflow", href: "#workflow" },
+  { label: "Try demo", href: "/demo" },
   { label: "Studio", href: "/studio" },
   { label: "GitHub", href: GITHUB_URL },
   { label: "Main site", href: MAIN_SITE_URL },
@@ -50,9 +56,20 @@ const workflowItems = [
   },
 ];
 
-const visualCards = [
+type SurfaceKind = "wide" | "tall" | "strip";
+
+const visualCards: ReadonlyArray<{
+  id: string;
+  kind: SurfaceKind;
+  title: string;
+  src: string;
+  alt: string;
+  summary: string;
+  points: string[];
+}> = [
   {
     id: "cover",
+    kind: "wide",
     title: "Cover",
     src: "/product/vibe-coding-cover.png",
     alt: "Vibe Coding Live cover export",
@@ -61,6 +78,7 @@ const visualCards = [
   },
   {
     id: "poster",
+    kind: "wide",
     title: "Poster",
     src: "/product/vibe-coding-poster.png",
     alt: "Vibe Coding Live poster export",
@@ -69,6 +87,7 @@ const visualCards = [
   },
   {
     id: "sidebar",
+    kind: "tall",
     title: "Sidebar",
     src: "/product/vibe-coding-sidebar.png",
     alt: "Vibe Coding Live sidebar export",
@@ -77,6 +96,7 @@ const visualCards = [
   },
   {
     id: "bottom-bar",
+    kind: "strip",
     title: "Bottom bar",
     src: "/product/vibe-coding-bottom-bar.png",
     alt: "Vibe Coding Live bottom bar export",
@@ -104,6 +124,16 @@ const faqItems = [
   },
 ];
 
+const mobileMenuScript = `
+  (function () {
+    var menu = document.querySelector('[data-testid="landing-mobile-menu"]');
+    if (!menu) return;
+    menu.addEventListener('click', function (e) {
+      if (e.target instanceof Element && e.target.closest('a')) menu.open = false;
+    });
+  })();
+`;
+
 export default function LandingPage() {
   return (
     <main data-testid="landing-page" className="akl-page">
@@ -114,7 +144,11 @@ export default function LandingPage() {
           <a className="akl-brand" href={MAIN_SITE_URL} aria-label="Return to Aklman main site">
             Aklman
           </a>
-          <nav className="akl-site-nav" aria-label="Vibe Coding Live navigation">
+          <nav
+            className="akl-site-nav"
+            aria-label="Vibe Coding Live navigation"
+            data-testid="landing-desktop-nav"
+          >
             {appNav.map((item) => (
               <a key={item.label} href={item.href}>
                 {item.label}
@@ -122,30 +156,53 @@ export default function LandingPage() {
             ))}
           </nav>
           <div className="akl-header-actions">
+            <a
+              href={MAIN_SITE_URL}
+              className="akl-main-site-link"
+              data-testid="landing-main-site-link"
+            >
+              Main site
+            </a>
             <a href="/demo" data-testid="landing-demo-link" className="akl-button akl-button-light">
               Try Demo
             </a>
+            <details className="akl-mobile-menu" data-testid="landing-mobile-menu">
+              <summary className="akl-mobile-toggle" aria-label="Open navigation menu">
+                <span>Menu</span>
+                <i aria-hidden="true"></i>
+              </summary>
+              <nav className="akl-mobile-nav" aria-label="Mobile navigation">
+                {mobileNav.map((item) => (
+                  <a key={item.label} href={item.href}>
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </details>
           </div>
         </div>
       </header>
 
       <section id="product" className="akl-hero">
+        <p className="akl-hero-wordmark">Vibe Coding Live</p>
         <p className="akl-eyebrow">Editorial broadcast workbench</p>
-        <h1>Vibe Coding Live</h1>
+        <h1>Broadcast graphics for coding streams</h1>
         <p className="akl-hero-lede">
-          Editorial live graphics for coding streams. Prepare sessions, design broadcast
-          surfaces, connect OBS browser sources, and export the full visual kit.
+          Prepare a live session, design every broadcast surface, point OBS browser sources at it,
+          and export the full visual kit. The agent can draft the config — you review and apply.
         </p>
         <div className="akl-hero-actions">
           <a href="/demo" className="akl-button akl-button-light">
             Try Demo
           </a>
-          <a href={GITHUB_URL} className="akl-button akl-button-dark">
-            View GitHub
+          <a href="/studio" className="akl-button akl-button-dark">
+            Open Studio
           </a>
         </div>
         <p className="akl-hero-note">
-          Demo mode is local-only. Private studio mode stays available at <a href="/studio">/studio</a>.
+          Demo mode is local-only. Private studio at <a href="/studio">/studio</a>.
+          <br />
+          <a href={GITHUB_URL} className="akl-hero-github">View on GitHub</a>
         </p>
       </section>
 
@@ -183,14 +240,14 @@ export default function LandingPage() {
       <section id="surfaces" className="akl-section akl-surface-tabs" aria-label="Export examples">
         <p className="akl-eyebrow">Surfaces</p>
         <h2>One session config, many broadcast assets</h2>
-        {visualCards.map((item, index) => (
+        {visualCards.map((item) => (
           <input
             key={item.id}
             className="akl-surface-input"
             type="radio"
             id={`surface-${item.id}`}
             name="akl-surface"
-            defaultChecked={index === 0}
+            defaultChecked={item.id === "cover"}
           />
         ))}
         <div className="akl-surface-tablist" aria-label="Broadcast surface examples">
@@ -202,7 +259,11 @@ export default function LandingPage() {
         </div>
         <div className="akl-surface-stage">
           {visualCards.map((item) => (
-            <article key={item.id} className={`akl-surface-panel akl-surface-panel-${item.id}`}>
+            <article
+              key={item.id}
+              className={`akl-surface-panel akl-surface-panel-${item.id} akl-surface-kind-${item.kind}`}
+              data-surface-kind={item.kind}
+            >
               <div className="akl-surface-preview">
                 <img src={item.src} alt={item.alt} />
               </div>
@@ -280,16 +341,29 @@ export default function LandingPage() {
           </nav>
         </div>
       </footer>
+
+      <script dangerouslySetInnerHTML={{ __html: mobileMenuScript }} />
     </main>
   );
 }
 
 const landingCss = `
   .akl-page {
-    --akl-fixed-header-height: 91px;
+    --akl-fixed-header-height: 88px;
+    --akl-anchor-offset: calc(var(--akl-fixed-header-height) + 16px);
+    --akl-border: #3a3832;
+    --akl-border-subtle: #2f2d29;
+    --akl-bg: #1a1a1a;
+    --akl-surface: #20201e;
+    --akl-text: #fafafa;
+    --akl-text-muted: #9b958d;
+    --akl-text-subtle: #7e776e;
+    --akl-accent: #e8835b;
+    --akl-paper: #f4efe6;
+    --akl-paper-ink: #161513;
     min-height: 100vh;
     padding-top: var(--akl-fixed-header-height);
-    background: #111111;
+    background: var(--akl-bg);
     color: #f4efe6;
     font-family: var(--app-font-sans);
   }
@@ -299,11 +373,18 @@ const landingCss = `
     text-decoration: none;
   }
 
+  /* Offset anchor targets so fixed header does not cover section headings. */
+  .akl-page section[id] {
+    scroll-margin-top: var(--akl-anchor-offset);
+  }
+
   .akl-shell {
     width: min(100%, 1180px);
     margin: 0 auto;
     padding-inline: 32px;
   }
+
+  /* ─── Header ─────────────────────────────────────────── */
 
   .akl-site-header {
     position: fixed;
@@ -311,54 +392,52 @@ const landingCss = `
     right: 0;
     left: 0;
     z-index: 50;
-    background: color-mix(in srgb, #111111 92%, transparent);
+    background: color-mix(in srgb, var(--akl-bg) 92%, transparent);
     backdrop-filter: saturate(140%) blur(10px);
     -webkit-backdrop-filter: saturate(140%) blur(10px);
-    border-bottom: 0.5px solid #2f2d29;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-header-row {
-    min-height: 86px;
+    min-height: 84px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 28px;
+    gap: 24px;
   }
 
   .akl-brand {
-    color: #f4efe6;
+    color: var(--akl-text);
     font-family: var(--app-font-serif);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 500;
     line-height: 1;
+    transition: color 180ms ease;
   }
 
   .akl-brand:hover,
   .akl-brand:focus-visible {
-    color: #e8835b;
-  }
-
-  .akl-site-nav,
-  .akl-header-actions,
-  .akl-footer-row nav {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+    color: var(--akl-accent);
   }
 
   .akl-site-nav {
-    gap: 26px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
     margin-left: auto;
   }
 
   .akl-header-actions {
-    gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: nowrap;
   }
 
-  .akl-site-nav a,
-  .akl-header-actions > a:not(.akl-button) {
+  .akl-site-nav a {
     position: relative;
-    color: #9b958d;
+    color: var(--akl-text-muted);
     font-family: var(--app-font-mono);
     font-size: 11px;
     font-weight: 600;
@@ -376,7 +455,7 @@ const landingCss = `
     bottom: -8px;
     left: 0;
     height: 1.5px;
-    background: #e8835b;
+    background: var(--akl-accent);
     opacity: 0;
     transform: scaleX(0.42);
     transform-origin: center;
@@ -386,10 +465,8 @@ const landingCss = `
   }
 
   .akl-site-nav a:hover,
-  .akl-header-actions > a:not(.akl-button):hover,
-  .akl-site-nav a:focus-visible,
-  .akl-header-actions > a:not(.akl-button):focus-visible {
-    color: #e8835b;
+  .akl-site-nav a:focus-visible {
+    color: var(--akl-accent);
   }
 
   .akl-site-nav a:hover::after,
@@ -398,50 +475,204 @@ const landingCss = `
     transform: scaleX(1);
   }
 
+  /* Subtle "Main site" return link — visually below product nav. */
+  .akl-main-site-link {
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color 180ms ease;
+  }
+
+  .akl-main-site-link:hover,
+  .akl-main-site-link:focus-visible {
+    color: var(--akl-accent);
+  }
+
   .akl-site-nav a:focus-visible,
-  .akl-header-actions > a:not(.akl-button):focus-visible,
+  .akl-main-site-link:focus-visible,
   .akl-brand:focus-visible,
   .akl-button:focus-visible,
   .akl-command a:focus-visible,
-  .akl-surface-tab:focus-visible {
-    outline: 0.5px solid #e8835b;
+  .akl-surface-tab:focus-visible,
+  .akl-mobile-toggle:focus-visible,
+  .akl-mobile-nav a:focus-visible,
+  .akl-hero-github:focus-visible {
+    outline: 0.5px solid var(--akl-accent);
     outline-offset: 4px;
   }
+
+  /* ─── Mobile menu ────────────────────────────────────── */
+
+  .akl-mobile-menu {
+    display: none;
+  }
+
+  .akl-mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--akl-text-muted);
+    font-family: var(--app-font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    line-height: 1;
+    list-style: none;
+    white-space: nowrap;
+    transition: color 180ms ease;
+  }
+
+  .akl-mobile-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .akl-mobile-toggle i {
+    position: relative;
+    width: 1rem;
+    height: 0.7rem;
+  }
+
+  .akl-mobile-toggle i::before,
+  .akl-mobile-toggle i::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: currentColor;
+    transition:
+      top 180ms ease,
+      transform 180ms ease;
+  }
+
+  .akl-mobile-toggle i::before {
+    top: 0.1rem;
+  }
+
+  .akl-mobile-toggle i::after {
+    top: 0.48rem;
+  }
+
+  .akl-mobile-toggle:hover,
+  .akl-mobile-toggle:focus-visible {
+    color: var(--akl-accent);
+  }
+
+  .akl-mobile-menu[open] .akl-mobile-toggle i::before {
+    top: 0.3rem;
+    transform: rotate(45deg);
+  }
+
+  .akl-mobile-menu[open] .akl-mobile-toggle i::after {
+    top: 0.3rem;
+    transform: rotate(-45deg);
+  }
+
+  .akl-mobile-nav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    padding: 8px 18px 20px;
+    border-bottom: 0.5px solid var(--akl-border);
+    background: color-mix(in srgb, var(--akl-bg) 96%, transparent);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+  }
+
+  .akl-mobile-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 2.4rem;
+    padding: 0.5rem 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
+    color: #c8c5be;
+    font-family: var(--app-font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: color 160ms ease;
+  }
+
+  .akl-mobile-nav a:hover,
+  .akl-mobile-nav a:focus-visible {
+    color: var(--akl-accent);
+  }
+
+  /* ─── Buttons ────────────────────────────────────────── */
 
   .akl-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 42px;
-    border-radius: 8px;
+    border-radius: 2px;
     padding: 0 18px;
     font-family: var(--app-font-sans);
     font-size: 15px;
     font-weight: 700;
     line-height: 1;
+    transition:
+      background 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease;
   }
 
   .akl-page .akl-button-light {
-    background: #f4efe6;
+    background: var(--akl-paper);
     color: #161513;
   }
 
-  .akl-page .akl-button-dark {
-    border: 1px solid #3a3732;
-    background: #282622;
-    color: #f4efe6;
+  .akl-page .akl-button-light:hover,
+  .akl-page .akl-button-light:focus-visible {
+    background: #fff;
   }
+
+  .akl-page .akl-button-dark {
+    border: 0.5px solid var(--akl-border);
+    background: var(--akl-surface);
+    color: var(--akl-text);
+  }
+
+  .akl-page .akl-button-dark:hover,
+  .akl-page .akl-button-dark:focus-visible {
+    border-color: var(--akl-accent);
+    color: var(--akl-accent);
+  }
+
+  /* ─── Hero ───────────────────────────────────────────── */
 
   .akl-hero {
     width: min(100%, 1080px);
     margin: 0 auto;
-    padding: 96px 32px 74px;
+    padding: 88px 32px 64px;
     text-align: center;
+  }
+
+  .akl-hero-wordmark {
+    margin: 0 0 14px;
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
   }
 
   .akl-eyebrow {
     margin: 0;
-    color: #e8835b;
+    color: var(--akl-accent);
     font-family: var(--app-font-mono);
     font-size: 11px;
     font-weight: 800;
@@ -454,7 +685,7 @@ const landingCss = `
   .akl-guide-copy h2,
   .akl-faq h2 {
     margin: 0;
-    color: #f4efe6;
+    color: var(--akl-text);
     font-family: var(--app-font-serif);
     font-weight: 500;
     letter-spacing: 0;
@@ -462,20 +693,25 @@ const landingCss = `
 
   .akl-hero h1 {
     margin-top: 16px;
-    font-size: 88px;
-    line-height: 0.95;
+    font-size: 80px;
+    line-height: 1;
+  }
+
+  .akl-hero h1::after {
+    content: ".";
+    color: var(--akl-accent);
   }
 
   .akl-hero-lede {
     max-width: 720px;
-    margin: 28px auto 0;
-    color: #9b958d;
-    font-size: 24px;
-    line-height: 1.42;
+    margin: 26px auto 0;
+    color: var(--akl-text-muted);
+    font-size: 22px;
+    line-height: 1.45;
   }
 
   .akl-hero-actions {
-    margin-top: 34px;
+    margin-top: 32px;
     display: flex;
     justify-content: center;
     gap: 12px;
@@ -484,36 +720,66 @@ const landingCss = `
 
   .akl-hero-note {
     margin: 18px 0 0;
-    color: #7e776e;
-    font-size: 15px;
+    color: var(--akl-text-subtle);
+    font-size: 14px;
+    line-height: 1.7;
   }
 
   .akl-hero-note a {
-    border-bottom: 1px solid #6b6258;
+    border-bottom: 0.5px solid #4a463d;
     color: #aaa49b;
+    transition:
+      color 180ms ease,
+      border-color 180ms ease;
   }
+
+  .akl-hero-note a:hover,
+  .akl-hero-note a:focus-visible {
+    color: var(--akl-accent);
+    border-bottom-color: var(--akl-accent);
+  }
+
+  .akl-hero-github {
+    display: inline-block;
+    margin-top: 4px;
+    color: var(--akl-text-muted);
+    font-family: var(--app-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 0.5px solid var(--akl-border);
+    padding-bottom: 1px;
+  }
+
+  .akl-hero-github:hover,
+  .akl-hero-github:focus-visible {
+    color: var(--akl-accent);
+    border-bottom-color: var(--akl-accent);
+  }
+
+  /* ─── Product showcase ───────────────────────────────── */
 
   .akl-showcase {
     width: min(100%, 1420px);
     margin: 0 auto;
-    padding: 22px 32px 126px;
+    padding: 20px 32px 112px;
   }
 
   .akl-product-frame {
     overflow: hidden;
-    border: 1px solid #302d28;
-    border-radius: 24px;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
     background: #171615;
-    box-shadow: 0 44px 90px rgba(0, 0, 0, 0.42);
   }
 
   .akl-window-top {
-    min-height: 38px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 18px;
-    border-bottom: 1px solid #302d28;
+    border-bottom: 0.5px solid var(--akl-border);
     background: #25231f;
   }
 
@@ -540,16 +806,18 @@ const landingCss = `
     height: auto;
   }
 
+  /* ─── Sections ───────────────────────────────────────── */
+
   .akl-section {
     width: min(100%, 1180px);
     margin: 0 auto;
-    padding: 106px 32px;
+    padding: 96px 32px;
   }
 
   .akl-split-section {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
-    gap: 76px;
+    gap: 72px;
     align-items: start;
   }
 
@@ -557,24 +825,23 @@ const landingCss = `
   .akl-guide-copy h2,
   .akl-faq h2 {
     margin-top: 16px;
-    font-size: 54px;
-    line-height: 1.03;
+    font-size: 48px;
+    line-height: 1.05;
   }
 
   .akl-feature-list {
-    border-top: 1px solid #2f2d29;
+    border-top: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-feature-list article {
-    padding: 28px 0;
-    border-bottom: 1px solid #2f2d29;
+    padding: 26px 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-feature-list h3,
-  .akl-visual-card h3,
   .akl-workflow-card h3 {
     margin: 0;
-    color: #f4efe6;
+    color: var(--akl-text);
     font-family: var(--app-font-serif);
     font-size: 22px;
     font-weight: 600;
@@ -586,13 +853,15 @@ const landingCss = `
   .akl-guide-copy p,
   .akl-faq details p {
     margin: 10px 0 0;
-    color: #9b958d;
+    color: var(--akl-text-muted);
     font-size: 16px;
     line-height: 1.62;
   }
 
+  /* ─── Surfaces tabs ──────────────────────────────────── */
+
   .akl-surface-tabs {
-    padding-top: 110px;
+    padding-top: 96px;
   }
 
   .akl-surface-input {
@@ -605,55 +874,96 @@ const landingCss = `
     white-space: nowrap;
   }
 
+  .akl-surface-input:focus {
+    outline: none;
+  }
+
   .akl-surface-tablist {
     width: max-content;
     max-width: 100%;
-    margin-top: 38px;
+    margin-top: 36px;
     display: flex;
     gap: 0;
     overflow-x: auto;
-    border: 1px solid #302d28;
-    border-radius: 18px;
-    background: #292723;
-    padding: 7px;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-surface-tab {
+    position: relative;
     display: inline-flex;
-    min-height: 48px;
+    min-height: 44px;
     align-items: center;
-    justify-content: center;
-    border-radius: 12px;
     padding: 0 22px;
-    color: #c7bfb4;
+    color: var(--akl-text-muted);
     cursor: pointer;
     font-family: var(--app-font-sans);
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 500;
     line-height: 1;
     white-space: nowrap;
-    transition:
-      background 160ms ease,
-      color 160ms ease;
+    transition: color 160ms ease;
   }
 
+  .akl-surface-tab::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 1.5px;
+    background: var(--akl-accent);
+    opacity: 0;
+    transform: scaleX(0.42);
+    transform-origin: center;
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease;
+  }
+
+  .akl-surface-tab:hover {
+    color: var(--akl-accent);
+  }
+
+  /* Checked state — accent underline + bright text (not a pill fill). */
   .akl-surface-tabs:has(#surface-cover:checked) label[for="surface-cover"],
   .akl-surface-tabs:has(#surface-poster:checked) label[for="surface-poster"],
   .akl-surface-tabs:has(#surface-sidebar:checked) label[for="surface-sidebar"],
   .akl-surface-tabs:has(#surface-bottom-bar:checked) label[for="surface-bottom-bar"] {
-    background: #f4efe6;
-    color: #161513;
+    color: var(--akl-text);
+  }
+
+  .akl-surface-tabs:has(#surface-cover:checked) label[for="surface-cover"]::after,
+  .akl-surface-tabs:has(#surface-poster:checked) label[for="surface-poster"]::after,
+  .akl-surface-tabs:has(#surface-sidebar:checked) label[for="surface-sidebar"]::after,
+  .akl-surface-tabs:has(#surface-bottom-bar:checked) label[for="surface-bottom-bar"]::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  /* Keyboard focus — relay from hidden radio to visible label via :has(). */
+  .akl-surface-tabs:has(#surface-cover:focus-visible) label[for="surface-cover"],
+  .akl-surface-tabs:has(#surface-poster:focus-visible) label[for="surface-poster"],
+  .akl-surface-tabs:has(#surface-sidebar:focus-visible) label[for="surface-sidebar"],
+  .akl-surface-tabs:has(#surface-bottom-bar:focus-visible) label[for="surface-bottom-bar"] {
+    color: var(--akl-accent);
+    outline: 0.5px solid var(--akl-accent);
+    outline-offset: 4px;
+  }
+
+  .akl-surface-tabs:has(#surface-cover:focus-visible) label[for="surface-cover"]::after,
+  .akl-surface-tabs:has(#surface-poster:focus-visible) label[for="surface-poster"]::after,
+  .akl-surface-tabs:has(#surface-sidebar:focus-visible) label[for="surface-sidebar"]::after,
+  .akl-surface-tabs:has(#surface-bottom-bar:focus-visible) label[for="surface-bottom-bar"]::after {
+    opacity: 1;
+    transform: scaleX(1);
   }
 
   .akl-surface-stage {
-    margin-top: 34px;
+    margin-top: 44px;
   }
 
   .akl-surface-panel {
     display: none;
-    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
-    gap: 66px;
-    align-items: center;
   }
 
   .akl-surface-tabs:has(#surface-cover:checked) .akl-surface-panel-cover,
@@ -663,24 +973,58 @@ const landingCss = `
     display: grid;
   }
 
+  /* Layout per surface kind. */
+  .akl-surface-kind-wide {
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
+    gap: 64px;
+    align-items: center;
+  }
+
+  .akl-surface-kind-tall {
+    grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
+    gap: 64px;
+    align-items: center;
+  }
+
+  .akl-surface-kind-strip {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
   .akl-surface-preview {
     overflow: hidden;
-    border: 1px solid #302d28;
-    border-radius: 22px;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
     background: #151413;
-    box-shadow: 0 34px 76px rgba(0, 0, 0, 0.32);
   }
 
   .akl-surface-preview img {
     display: block;
     width: 100%;
-    aspect-ratio: 16 / 10;
+    height: auto;
     object-fit: cover;
+  }
+
+  .akl-surface-kind-wide .akl-surface-preview img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .akl-surface-kind-tall .akl-surface-preview img {
+    aspect-ratio: 470 / 760;
+  }
+
+  .akl-surface-kind-tall .akl-surface-preview {
+    max-width: 340px;
+  }
+
+  .akl-surface-kind-strip .akl-surface-preview img {
+    aspect-ratio: 1856 / 180;
   }
 
   .akl-surface-copy h3 {
     margin: 14px 0 0;
-    color: #f4efe6;
+    color: var(--akl-text);
     font-family: var(--app-font-serif);
     font-size: 30px;
     font-weight: 600;
@@ -690,20 +1034,20 @@ const landingCss = `
   .akl-surface-copy p:not(.akl-eyebrow) {
     margin: 18px 0 0;
     color: #aaa49b;
-    font-size: 19px;
+    font-size: 18px;
     line-height: 1.6;
   }
 
   .akl-surface-copy ul {
-    margin: 30px 0 0;
+    margin: 28px 0 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid #302d28;
+    border-top: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-surface-copy li {
-    padding: 17px 0;
-    border-bottom: 1px solid #302d28;
+    padding: 16px 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
     color: #d8d0c4;
     font-size: 16px;
     line-height: 1.35;
@@ -716,39 +1060,43 @@ const landingCss = `
     height: 0.36rem;
     margin-right: 12px;
     border-radius: 999px;
-    background: #e8835b;
+    background: var(--akl-accent);
     vertical-align: 0.08em;
   }
 
+  /* ─── Workflow ───────────────────────────────────────── */
+
   .akl-workflow-grid {
-    margin-top: 44px;
+    margin-top: 40px;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    border-top: 1px solid #302d28;
-    border-left: 1px solid #302d28;
+    border-top: 0.5px solid var(--akl-border-subtle);
+    border-left: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-workflow-card {
     min-height: 240px;
     padding: 24px;
-    border-right: 1px solid #302d28;
-    border-bottom: 1px solid #302d28;
+    border-right: 0.5px solid var(--akl-border-subtle);
+    border-bottom: 0.5px solid var(--akl-border-subtle);
   }
 
   .akl-workflow-card span {
     display: block;
-    margin-bottom: 34px;
-    color: #e8835b;
+    margin-bottom: 32px;
+    color: var(--akl-accent);
     font-family: var(--app-font-mono);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.12em;
   }
 
+  /* ─── Guide ──────────────────────────────────────────── */
+
   .akl-guide {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
-    gap: 76px;
+    gap: 72px;
     align-items: center;
   }
 
@@ -756,11 +1104,11 @@ const landingCss = `
     display: flex;
     align-items: center;
     gap: 14px;
-    min-height: 62px;
-    padding: 9px;
-    border: 1px solid #302d28;
-    border-radius: 12px;
-    background: #22201d;
+    min-height: 60px;
+    padding: 8px;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
+    background: var(--akl-surface);
     color: #aaa49b;
     font-family: var(--app-font-mono);
     font-size: 14px;
@@ -770,28 +1118,35 @@ const landingCss = `
   .akl-command-button {
     flex: 0 0 auto;
     padding: 12px 18px;
-    border-radius: 8px;
-    background: #f4efe6;
-    color: #161513;
+    border-radius: 2px;
+    background: var(--akl-paper);
+    color: var(--akl-paper-ink);
     font-family: var(--app-font-sans);
     font-weight: 700;
   }
 
   .akl-command code {
-    color: #e8835b;
+    color: var(--akl-accent);
     white-space: nowrap;
   }
 
   .akl-command a:last-child {
     margin-left: auto;
-    color: #f4efe6;
+    color: var(--akl-text);
     white-space: nowrap;
   }
+
+  .akl-command a:last-child:hover,
+  .akl-command a:last-child:focus-visible {
+    color: var(--akl-accent);
+  }
+
+  /* ─── FAQ ────────────────────────────────────────────── */
 
   .akl-faq {
     width: min(100%, 760px);
     margin: 0 auto;
-    padding: 98px 32px 128px;
+    padding: 88px 32px 112px;
     text-align: center;
   }
 
@@ -799,26 +1154,26 @@ const landingCss = `
     margin: 0;
     color: #d8d0c4;
     font-family: var(--app-font-serif);
-    font-size: 64px;
+    font-size: 56px;
     line-height: 1;
   }
 
   .akl-faq-list {
-    margin-top: 58px;
-    border-top: 1px solid #302d28;
+    margin-top: 52px;
+    border-top: 0.5px solid var(--akl-border-subtle);
     text-align: left;
   }
 
   .akl-faq details {
-    border-bottom: 1px solid #302d28;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
     padding: 22px 0;
   }
 
   .akl-faq summary {
     cursor: pointer;
-    color: #f4efe6;
+    color: var(--akl-text);
     font-family: var(--app-font-serif);
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 600;
     list-style: none;
   }
@@ -835,16 +1190,18 @@ const landingCss = `
   }
 
   .akl-faq details[open] summary::after {
-    content: "-";
+    content: "–";
   }
 
+  /* ─── Footer ─────────────────────────────────────────── */
+
   .akl-site-footer {
-    border-top: 1px solid #302d28;
-    color: #7e776e;
+    border-top: 0.5px solid var(--akl-border-subtle);
+    color: var(--akl-text-subtle);
   }
 
   .akl-footer-row {
-    min-height: 104px;
+    min-height: 96px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -861,38 +1218,59 @@ const landingCss = `
   }
 
   .akl-footer-row nav {
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
   }
 
   .akl-footer-row a:hover,
   .akl-footer-row a:focus-visible {
-    color: #e8835b;
+    color: var(--akl-accent);
   }
+
+  /* ─── Responsive ─────────────────────────────────────── */
 
   @media (max-width: 980px) {
     .akl-site-nav {
       display: none;
     }
 
+    .akl-main-site-link {
+      display: none;
+    }
+
+    .akl-mobile-menu {
+      display: block;
+    }
+
     .akl-hero h1 {
-      font-size: 62px;
+      font-size: 52px;
     }
 
     .akl-split-section,
-    .akl-guide,
-    .akl-surface-panel {
+    .akl-guide {
       grid-template-columns: 1fr;
-      gap: 38px;
+      gap: 36px;
+    }
+
+    .akl-surface-kind-wide {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .akl-surface-kind-tall {
+      grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+      gap: 32px;
     }
 
     .akl-workflow-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 720px) {
     .akl-page {
-      --akl-fixed-header-height: 73px;
+      --akl-fixed-header-height: 72px;
     }
 
     .akl-shell {
@@ -901,27 +1279,28 @@ const landingCss = `
 
     .akl-header-row {
       min-height: 72px;
-      gap: 16px;
+      gap: 12px;
     }
 
     .akl-brand {
       font-size: 24px;
     }
 
-    .akl-site-nav {
-      display: none;
+    .akl-header-actions {
+      gap: 12px;
     }
 
     .akl-hero {
-      padding: 68px 20px 48px;
+      padding: 56px 18px 44px;
     }
 
     .akl-hero h1 {
-      font-size: 46px;
+      font-size: 34px;
+      line-height: 1.08;
     }
 
     .akl-hero-lede {
-      font-size: 18px;
+      font-size: 17px;
     }
 
     .akl-showcase,
@@ -940,14 +1319,22 @@ const landingCss = `
       font-size: 14px;
     }
 
-    .akl-surface-preview img {
-      aspect-ratio: 4 / 3;
+    .akl-surface-kind-tall {
+      grid-template-columns: 1fr;
+    }
+
+    .akl-surface-kind-tall .akl-surface-preview {
+      max-width: 240px;
     }
 
     .akl-section h2,
     .akl-guide-copy h2,
     .akl-faq h2 {
-      font-size: 36px;
+      font-size: 32px;
+    }
+
+    .akl-workflow-grid {
+      grid-template-columns: 1fr;
     }
 
     .akl-command {
@@ -963,7 +1350,7 @@ const landingCss = `
       align-items: flex-start;
       flex-direction: column;
       justify-content: center;
-      padding-block: 26px;
+      padding-block: 24px;
     }
   }
 `;
