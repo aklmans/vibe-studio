@@ -68,3 +68,18 @@ test("OverlayCanvas main screen frame matches a 3840x2160 capture ratio", () => 
     /left:24px;top:24px;width:1440px;height:810px/,
   );
 });
+
+test("OverlayCanvas main screen is a transparent OBS frame, not a filled placeholder", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayCanvas, { state: DEFAULT_STATE }),
+    }),
+  );
+
+  assert.match(html, /data-testid="overlay-backdrop"/);
+  assert.match(html, /M24 24H1464V834H24Z/);
+  assert.match(html, /data-testid="overlay-main-screen-frame"[^>]*background:transparent/);
+  assert.doesNotMatch(html, /VIBE STUDIO/);
+});

@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { closeSync, openSync } from "node:fs";
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -16,14 +16,26 @@ import {
 } from "../src/lib/live-prepare.ts";
 
 const PORT = 3000;
-const OBS_PROFILE = "Vibe Studio Overlay";
-const OBS_SCENE_COLLECTION = "Vibe Studio Overlay";
 const OBS_SCENE = "Vibe Live Overlay";
+const OBS_PROFILE_CANDIDATES = [
+  "Vibe Live Overlay",
+  "Vibe Studio Overlay",
+  "Vibe Coding Live Overlay",
+] as const;
+const OBS_SCENE_COLLECTION_CANDIDATES = [
+  "Vibe Live Overlay",
+  "Vibe Studio Overlay",
+  "Vibe Coding Live Overlay",
+] as const;
 const OBS_PROCESS_PATTERN = "/Applications/OBS.app/Contents/MacOS/OBS";
 const OBS_PROCESS_NAME = "OBS";
 const OBS_SCENE_DIR = path.join(
   homedir(),
   "Library/Application Support/obs-studio/basic/scenes",
+);
+const OBS_PROFILE_DIR = path.join(
+  homedir(),
+  "Library/Application Support/obs-studio/basic/profiles",
 );
 const OBS_WEBSOCKET_CONFIG_FILE = path.join(
   homedir(),
@@ -195,24 +207,68 @@ async function stopNextDevServer(): Promise<void> {
 }
 
 async function resolveObsTarget(): Promise<ObsTarget> {
-  const sceneFile = path.join(OBS_SCENE_DIR, `${OBS_SCENE_COLLECTION}.json`);
+  const profile = await resolveObsProfile();
+  const sceneCollection = await resolveObsSceneCollection();
+
+  return {
+    profile,
+    sceneCollection,
+    sceneFile: path.join(OBS_SCENE_DIR, `${sceneCollection}.json`),
+  };
+}
+
+async function resolveObsProfile(): Promise<string> {
+  for (const candidate of OBS_PROFILE_CANDIDATES) {
+    try {
+      const info = await stat(path.join(OBS_PROFILE_DIR, candidate));
+      if (info.isDirectory()) return candidate;
+    } catch (error) {
+      if (getErrorCode(error) !== "ENOENT") throw error;
+    }
+  }
+
+  throw new Error(
+    `OBS profile was not found. Checked: ${OBS_PROFILE_CANDIDATES.join(", ")}`,
+  );
+}
+
+async function resolveObsSceneCollection(): Promise<string> {
+  const checked: string[] = [];
+
+  for (const candidate of OBS_SCENE_COLLECTION_CANDIDATES) {
+    const sceneFile = path.join(OBS_SCENE_DIR, `${candidate}.json`);
+    checked.push(sceneFile);
+    try {
+      const raw = await readFile(sceneFile, "utf8");
+      const parsed = JSON.parse(raw) as ObsSceneConfig;
+      const hasLiveScene = parsed.sources?.some(
+        (source) => source.name === OBS_SCENE && source.settings?.items,
+      );
+      if (hasLiveScene) return candidate;
+    } catch (error) {
+      if (getErrorCode(error) === "ENOENT") continue;
+      throw error;
+    }
+  }
+
+  throw new Error(
+    `OBS scene collection containing "${OBS_SCENE}" was not found. Checked: ${checked.join(", ")}`,
+  );
+}
+
+async function readObsSceneFileRaw(target: ObsTarget): Promise<string> {
   try {
-    await readFile(sceneFile, "utf8");
-    return {
-      profile: OBS_PROFILE,
-      sceneCollection: OBS_SCENE_COLLECTION,
-      sceneFile,
-    };
+    return await readFile(target.sceneFile, "utf8");
   } catch (error) {
     if (getErrorCode(error) === "ENOENT") {
-      throw new Error(`OBS scene collection was not found: ${sceneFile}`);
+      throw new Error(`OBS scene collection was not found: ${target.sceneFile}`);
     }
     throw error;
   }
 }
 
 async function updateObsSceneFile(target: ObsTarget): Promise<void> {
-  const raw = await readFile(target.sceneFile, "utf8");
+  const raw = await readObsSceneFileRaw(target);
   const parsed = JSON.parse(raw) as ObsSceneConfig;
   const { config, changes } = prepareObsSceneConfig(parsed, {
     port: PORT,

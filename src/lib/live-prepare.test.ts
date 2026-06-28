@@ -1,5 +1,7 @@
 import { deepStrictEqual, equal } from "node:assert/strict";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { test } from "node:test";
 
 import {
@@ -53,6 +55,18 @@ test("buildObsOverlayUrl returns the OBS browser source URL for a camera mode", 
     buildObsOverlayUrl(3000, "avatar"),
     "http://localhost:3000/obs/overlay?camera=avatar",
   );
+});
+
+test("live prepare script fixes the OBS scene name and resolves branch collections safely", () => {
+  const source = readFileSync(resolve("scripts/prepare-live.ts"), "utf8");
+
+  assert.match(source, /const OBS_SCENE = "Vibe Live Overlay";/);
+  assert.match(source, /const OBS_PROFILE_CANDIDATES = \[/);
+  assert.match(source, /const OBS_SCENE_COLLECTION_CANDIDATES = \[/);
+  assert.match(source, /"Vibe Live Overlay",\s+"Vibe Studio Overlay",\s+"Vibe Coding Live Overlay"/);
+  assert.match(source, /function resolveObsSceneCollection/);
+  assert.match(source, /source\.name === OBS_SCENE && source\.settings\?\.items/);
+  assert.doesNotMatch(source, /const OBS_(?:PROFILE|SCENE_COLLECTION) = "Vibe Studio Overlay";/);
 });
 
 test("prepareObsSceneConfig updates overlay URLs and resets the live scene layering", () => {

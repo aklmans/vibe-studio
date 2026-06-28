@@ -101,10 +101,32 @@ function getCurrentFocus(state: OverlayState): {
   };
 }
 
-function cameraSlotCutoutPath(): string {
-  const right = OBS_CAMERA_SLOT.left + OBS_CAMERA_SLOT.width;
-  const bottom = OBS_CAMERA_SLOT.top + OBS_CAMERA_SLOT.height;
-  return `M0 0H1920V1080H0Z M${OBS_CAMERA_SLOT.left} ${OBS_CAMERA_SLOT.top}H${right}V${bottom}H${OBS_CAMERA_SLOT.left}Z`;
+type OverlaySlot = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+function slotCutoutPath(slot: OverlaySlot): string {
+  const right = slot.left + slot.width;
+  const bottom = slot.top + slot.height;
+  return `M${slot.left} ${slot.top}H${right}V${bottom}H${slot.left}Z`;
+}
+
+function overlayBackdropPath({
+  mainScreenVisible,
+  transparentCameraSlot,
+}: {
+  mainScreenVisible: boolean;
+  transparentCameraSlot: boolean;
+}): string {
+  const cutouts = [
+    mainScreenVisible ? slotCutoutPath(MAIN_SCREEN_SLOT) : null,
+    transparentCameraSlot ? slotCutoutPath(OBS_CAMERA_SLOT) : null,
+  ].filter(Boolean);
+
+  return `M0 0H1920V1080H0Z${cutouts.length > 0 ? ` ${cutouts.join(" ")}` : ""}`;
 }
 
 const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
@@ -129,7 +151,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     const showCameraAvatar = cameraMode === "avatar";
     const cameraFrameColors = getObsCameraFrameColors(cameraMode);
     const hasTransparentCameraSlot = cameraMode === "empty" && mainScreen.cameraVisible;
-    const cutoutPath = cameraSlotCutoutPath();
+    const backdropPath = overlayBackdropPath({
+      mainScreenVisible: mainScreen.visible,
+      transparentCameraSlot: hasTransparentCameraSlot,
+    });
     const currentFocus = getCurrentFocus(state);
 
     return (
@@ -140,63 +165,51 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           width: 1920,
           height: 1080,
           position: "relative",
-          background: hasTransparentCameraSlot ? "transparent" : `${bgDark}`,
+          background: "transparent",
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
           overflow: "hidden",
           flexShrink: 0,
         }}
       >
-        {hasTransparentCameraSlot && (
-          <svg
-            aria-hidden="true"
-            width="1920"
-            height="1080"
-            viewBox="0 0 1920 1080"
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-            }}
-          >
-            <defs>
-              <pattern id={dotPatternId} width="32" height="32" patternUnits="userSpaceOnUse">
-                <circle cx="0" cy="0" r="1" fill={E.lineSoft} />
-              </pattern>
-            </defs>
-            <path d={cutoutPath} fill={bgDark} fillRule="evenodd" />
-            <path d={cutoutPath} fill={`url(#${dotPatternId})`} fillRule="evenodd" />
-          </svg>
-        )}
+        <svg
+          aria-hidden="true"
+          data-testid="overlay-backdrop"
+          width="1920"
+          height="1080"
+          viewBox="0 0 1920 1080"
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+          }}
+        >
+          <defs>
+            <pattern id={dotPatternId} width="32" height="32" patternUnits="userSpaceOnUse">
+              <circle cx="0" cy="0" r="1" fill={E.lineSoft} />
+            </pattern>
+          </defs>
+          <path d={backdropPath} fill={bgDark} fillRule="evenodd" />
+          <path d={backdropPath} fill={`url(#${dotPatternId})`} fillRule="evenodd" />
+        </svg>
 
-        {!hasTransparentCameraSlot && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `radial-gradient(circle, ${E.lineSoft} 1px, transparent 1px)`,
-              backgroundSize: "32px 32px",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        {/* Main Screen Placeholder */}
+        {/* Main screen OBS frame: only the UI frame is rendered here.
+            The actual display/window capture should sit underneath this source in OBS. */}
         {mainScreen.visible && (
           <div
+            data-testid="overlay-main-screen-frame"
             style={{
               position: "absolute",
               left: MAIN_SCREEN_SLOT.left,
               top: MAIN_SCREEN_SLOT.top,
               width: MAIN_SCREEN_SLOT.width,
               height: MAIN_SCREEN_SLOT.height,
-              background: bgDark,
+              background: "transparent",
               border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
               boxShadow: `inset 0 0 0 1px ${E.lineSoft}`,
               overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
+              pointerEvents: "none",
             }}
           >
             <div
@@ -212,36 +225,6 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
                 zIndex: 1,
               }}
             />
-            {/* Main screen capture titlebar intentionally hidden.
-                The captured app already has its own chrome, so the preview area
-                gets the full frame height here. */}
-
-            {/* Main content area — large idle watermark */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: fontFamilies.serif,
-                  fontSize: 120,
-                  fontWeight: 600,
-                  color: mutedText,
-                  opacity: 0.075,
-                  letterSpacing: "0.04em",
-                  userSelect: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t("canvas.idleBrand")}
-              </div>
-            </div>
           </div>
         )}
 

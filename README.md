@@ -129,12 +129,12 @@ pnpm live:restart   # Stop local live tooling, then run live:prepare again.
 The script:
 
 1. Ensures the Next.js app is available on `http://localhost:3000`.
-2. Updates the OBS scene collection `Vibe Studio Overlay`.
+2. Updates the OBS scene named `Vibe Live Overlay` in the matching scene collection.
 3. Points the overlay Browser Sources at:
    - `http://localhost:3000/obs/overlay?camera=empty`
    - `http://localhost:3000/obs/overlay?camera=avatar`
 4. Resets the expected OBS source order and visibility.
-5. Opens OBS with the `Vibe Studio Overlay` profile, collection, and `Vibe Live Overlay` scene.
+5. Opens OBS with the resolved profile/collection and the `Vibe Live Overlay` scene.
 6. Starts OBS Virtual Camera after OBS has finished launching.
 7. Opens the web app and Bilibili Livehime.
 
