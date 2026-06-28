@@ -23,7 +23,7 @@ complete, valid example.
 | `cover.visual` | `"avatar" \| "scene" \| "title"` | Cover visual type. |
 | `cover.portraitUrl` | string? | Avatar-type image. |
 | `cover.sceneUrl` | string? | Scene-type image. |
-| `badges` | string[] | Agent badge icon keys, e.g. `["claude","codex"]`. |
+| `badges` | string[] | Agent badge icon keys, e.g. `["claude","codex"]`. See badge rules below. |
 | `stack` | string[] | Tool-stack labels. |
 | `socials` | `{ icon?, label, value, color? }[]` | Social links. |
 | `sections` | `{ title, bullets: string[] }[]` | Sidebar progress sections. |
@@ -69,6 +69,23 @@ The boundary is also pinned in code: `src/lib/session-config-boundary.ts`
 defines `LIVE_SESSION_CONFIG_V1_KEYS`, `RUNTIME_STATE_EXCLUSIONS`,
 `STUDIO_CONFIG_FIELDS`, and a `StudioConfigV1Draft` type + parser. The future
 studio config is specified (as a draft) in [`studio.config.md`](./studio.config.md).
+
+## Badge icon rules
+
+`badges` are not free-form labels. They are the curated AI / LLM model,
+provider, and coding-agent icons rendered from `@lobehub/icons` through the
+project registry in `src/lib/badges.ts` and `src/lib/badge-icons.tsx`.
+
+Badges are optional. Add them only when a supported AI / LLM model, provider,
+or coding-agent icon clearly matches the session topic or featured tool. If
+there is no clear match, use `badges: []`; the app will not invent badges from
+`stack`.
+
+Use exact registry keys such as `claude`, `claude-code`, `codex`, `chatgpt`,
+`kimi`, `deepseek`, `qwen`, `z-ai`, `cursor`, or `opencode`. Generic labels such
+as `AI`, `LLM`, or `AI/LLM` are placeholders and are ignored; framework /
+tool-stack labels such as `React`, `Next.js`, `OBS`, or `Vite` belong in
+`stack`, not in `badges`.
 
 ## File handling — manual import / export + optional bound file (never watched)
 

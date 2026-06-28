@@ -89,6 +89,50 @@ test("validateLiveStudioConfig rejects unsupported registry and cover values", (
   assert.equal(parseLiveStudioConfigJson(JSON.stringify(invalid)), null);
 });
 
+test("badge config accepts LobeHub-backed labels and ignores generic AI placeholders", () => {
+  const parsed = parseLiveStudioConfigJson(JSON.stringify({
+    version: 1,
+    title: "Build",
+    subtitle: "Config",
+    badges: ["Claude Code", "ChatGPT", "Z.ai", "AI/LLM", "LLM"],
+    stack: ["React", "Next.js"],
+    socials: [],
+    sections: [{ title: "Goal", bullets: ["Ship"] }],
+  }));
+
+  assert.deepEqual(parsed?.badges, ["claude-code", "chatgpt", "z-ai"]);
+
+  const genericOnly = validateLiveStudioConfig({
+    version: 1,
+    title: "Build",
+    subtitle: "Config",
+    badges: ["AI", "LLM"],
+    stack: ["React"],
+    socials: [],
+    sections: [{ title: "Goal", bullets: ["Ship"] }],
+  });
+  assert.equal(genericOnly.valid, true);
+});
+
+test("badge config rejects non AI/LLM registry keys with allowed-key guidance", () => {
+  const result = validateLiveStudioConfig({
+    version: 1,
+    title: "Build",
+    subtitle: "Config",
+    badges: ["react", "unknown-agent"],
+    stack: ["React", "Next.js"],
+    socials: [],
+    sections: [{ title: "Goal", bullets: ["Ship"] }],
+  });
+  const issues = result.issues.join("\n");
+
+  assert.equal(result.valid, false);
+  assert.match(issues, /badges\[0\] is not supported/);
+  assert.match(issues, /Allowed badge keys:/);
+  assert.match(issues, /claude-code/);
+  assert.match(issues, /chatgpt/);
+});
+
 test("configToOverlayState applies all broadcast surfaces", () => {
   const next = configToOverlayState({
     ...DEFAULT_STATE,
@@ -153,6 +197,30 @@ test("configToOverlayState applies all broadcast surfaces", () => {
     { kind: "progress", sectionIndex: 0 },
     { kind: "stack" },
   ]);
+});
+
+test("configToOverlayState respects an explicit empty badges array", () => {
+  const next = configToOverlayState(DEFAULT_STATE, {
+    version: 1,
+    title: "No Badge Stream",
+    subtitle: "Use badges only when they match",
+    author: "Aklman",
+    profile: {
+      avatarUrl: "/broadcast-avatar.png",
+      avatarVisible: true,
+    },
+    cover: {
+      visual: "avatar",
+      portraitUrl: "/cover-portrait.png",
+      sceneUrl: "/vibe-studio-bg.png",
+    },
+    badges: [],
+    stack: ["Claude Opus", "Codex", "React + Vite"],
+    socials: [],
+    sections: [{ title: "Goal", bullets: ["A"] }],
+  });
+
+  assert.deepEqual(next.cover.badges, []);
 });
 
 test("overlayStateToConfig exports a reusable config", () => {

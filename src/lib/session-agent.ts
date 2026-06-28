@@ -13,6 +13,8 @@
  * plain `fetch`, with a configurable User-Agent.
  */
 
+import { CONFIG_BADGE_PROMPT_RULE } from "./badges";
+
 export interface SessionAgentConfig {
   provider: string;
   baseUrl: string;
@@ -149,6 +151,7 @@ export function buildChatMessages(request: SessionAgentRequest): ChatMessage[] {
   const system = [
     "You are a configuration assistant for a livestream studio app.",
     "You edit live-session.config.json (v1): version, title, subtitle, author?, profile { avatarUrl, avatarVisible }, cover { visual, portraitUrl, sceneUrl }, badges: string[], stack: string[], socials: [{ icon?, label, value, color? }], sections: [{ title, bullets: string[] }].",
+    CONFIG_BADGE_PROMPT_RULE,
     "Runtime/display state (bottomBar, liveSession.startedAt, activeSection, sectionsDone) and studio appearance (theme, colors) are NOT part of this config — never add them.",
     "When changing the config, reply with one fenced ```json block containing the FULL updated config (keep version: 1, no comments), then a short plain explanation.",
     "If the user only asks a question, answer in plain text without a JSON block.",

@@ -186,6 +186,8 @@ test("Agent shows a split proposal review rail once the AI returns a config", ()
   assert.match(AGENT_SRC, /agent\.reviewChanges/);
   assert.match(AGENT_SRC, /data-testid=\{`agent-proposal-group-\$\{group\.id\}`\}/);
   assert.match(AGENT_SRC, /data-testid="agent-proposal-runtime-safe"/);
+  assert.match(AGENT_SRC, /field\.optionalEmpty/);
+  assert.match(AGENT_SRC, /agent\.badgesOptionalEmpty/);
   // Proposal preview is derived only; Review in JSON remains the only apply path.
   assert.match(AGENT_SRC, /configToOverlayState\(state, parsed\.config\)/);
   assert.match(AGENT_SRC, /previewing && parsed\.ok/);
@@ -602,6 +604,13 @@ test("the agent handoff includes the current config and changes with the task", 
   for (const p of [sections, check]) {
     assert.match(p, /"title": "Building With Agents"/);
     assert.match(p, /version: 1/);
+    assert.match(p, /Allowed badge keys:/);
+    assert.match(p, /claude-code/);
+    assert.match(p, /chatgpt/);
+    assert.match(p, /Do not use generic labels such as AI, LLM, or AI\/LLM/);
+    assert.match(p, /Badges are optional/);
+    assert.match(p, /never invent or force a badge/);
+    assert.doesNotMatch(p, /Allowed badge keys:[^\n]*(react|nextdotjs)/);
   }
 });
 

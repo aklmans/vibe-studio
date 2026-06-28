@@ -1,4 +1,5 @@
 import type { OverlayState } from "../types";
+import { CONFIG_BADGE_PROMPT_RULE } from "./badges";
 import { projectConfigText } from "./session-config-drift";
 
 /*
@@ -28,6 +29,7 @@ export function buildAgentPrompt(
     "{ version: 1, title, subtitle, author?, profile { avatarUrl, avatarVisible },",
     "  cover { visual, portraitUrl, sceneUrl }, badges: string[], stack: string[],",
     "  socials: [{ icon?, label, value, color? }], sections: [{ title, bullets: string[] }] }",
+    CONFIG_BADGE_PROMPT_RULE,
     "Do NOT include runtime fields: bottomBar, liveSession.startedAt, activeSection, sectionsDone.",
     "",
     taskLine,

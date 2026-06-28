@@ -103,6 +103,8 @@ export interface FieldDiff {
   added?: string[];
   removed?: string[];
   changed?: string[];
+  /** Badges are optional; empty badges means "no matched badge", not a destructive removal. */
+  optionalEmpty?: boolean;
 }
 
 export type ProposalDiff = { ok: true; fields: FieldDiff[] } | { ok: false };
@@ -260,7 +262,14 @@ export function diffConfigProposal(currentConfigText: string, proposedConfigText
       (d.removed?.length ?? 0) === 0 &&
       (d.changed?.length ?? 0) === 0;
     if (noChange) continue;
-    fields.push({ field, group: FIELD_GROUP[field], status: arrayStatus(d.oldCount ?? 0, d.newCount ?? 0), ...d });
+    const optionalEmpty = field === "badges" && (d.oldCount ?? 0) > 0 && (d.newCount ?? 0) === 0;
+    fields.push({
+      field,
+      group: FIELD_GROUP[field],
+      status: optionalEmpty ? "changed" : arrayStatus(d.oldCount ?? 0, d.newCount ?? 0),
+      ...d,
+      ...(optionalEmpty ? { optionalEmpty: true, removed: [] } : {}),
+    });
   }
 
   return { ok: true, fields };

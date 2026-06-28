@@ -2,11 +2,13 @@ import type { CoverVisual, OverlayState } from "../types";
 import { createBadge } from "./badge-editor";
 import {
   badgeLabelForIconKey,
+  CONFIG_BADGE_ICON_KEY_LIST,
+  isGenericBadgePlaceholder,
   isBadgeIconKey,
+  normalizeBadgeIconKey,
   type BadgeIconKey,
 } from "./badges";
 import {
-  inferBrandIconKey,
   isBrandIconKey,
   type BrandIconKey,
 } from "./brand-icons";
@@ -99,8 +101,8 @@ function normalizeBadgeKeys(value: unknown): BadgeIconKey[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<BadgeIconKey>();
   return value.reduce<BadgeIconKey[]>((keys, item) => {
-    const key = cleanString(item);
-    if (!isBadgeIconKey(key) || seen.has(key)) return keys;
+    const key = normalizeBadgeIconKey(item);
+    if (!key || seen.has(key)) return keys;
     seen.add(key);
     keys.push(key);
     return keys;
@@ -213,7 +215,16 @@ function validateBadges(value: unknown, issues: string[]): void {
   }
   value.forEach((item, index) => {
     const key = cleanString(item);
-    if (!key || !isBadgeIconKey(key)) issues.push(`badges[${index}] is not supported.`);
+    if (!key) {
+      issues.push(`badges[${index}] must be a non-empty string.`);
+      return;
+    }
+    if (isGenericBadgePlaceholder(key)) return;
+    if (!normalizeBadgeIconKey(key)) {
+      issues.push(
+        `badges[${index}] is not supported. Allowed badge keys: ${CONFIG_BADGE_ICON_KEY_LIST}. Use exact keys; generic AI/LLM labels are ignored.`,
+      );
+    }
   });
 }
 
@@ -296,11 +307,6 @@ function authorToHook(author: string | undefined, fallback: string): string {
   return /^with\s+/i.test(clean) ? clean : `with ${clean}`;
 }
 
-function badgeKeyFromStackLabel(label: string): BadgeIconKey | null {
-  const brandKey = inferBrandIconKey(label);
-  return brandKey && isBadgeIconKey(brandKey) ? brandKey : null;
-}
-
 function configSocialToState(social: LiveStudioConfigSocial): SocialConfig {
   return {
     visible: true,
@@ -326,9 +332,6 @@ export function configToOverlayState(
     title: section.title,
     bullets: [...section.bullets],
   }));
-  const badgeKeys = config.badges.length > 0
-    ? config.badges
-    : config.stack.map(badgeKeyFromStackLabel).filter((key): key is BadgeIconKey => Boolean(key));
   const avatarVisible = config.profile?.avatarVisible;
 
   return {
@@ -360,9 +363,7 @@ export function configToOverlayState(
       visual: config.cover?.visual ?? state.cover.visual,
       portraitUrl: config.cover?.portraitUrl ?? state.cover.portraitUrl,
       sceneUrl: config.cover?.sceneUrl ?? state.cover.sceneUrl,
-      badges: badgeKeys.length > 0
-        ? badgeKeys.map((key) => createBadge(key))
-        : state.cover.badges,
+      badges: config.badges.map((key) => createBadge(key)),
       socials: config.socials.length > 0
         ? config.socials.map(configSocialToState)
         : state.cover.socials,

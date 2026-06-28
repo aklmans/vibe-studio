@@ -106,6 +106,26 @@ test("buildChatMessages includes the current config projection + task + brief", 
   assert.match(user, /Marker Title/); // the projection is sent
 });
 
+test("buildChatMessages constrains badges to supported LobeHub-backed icon keys", () => {
+  const messages = buildChatMessages({
+    brief: "use AI badges",
+    task: "Task: update badges",
+    configText: '{"version":1,"title":"Marker Title"}',
+    locale: "en",
+  });
+  const system = messages[0].content;
+
+  assert.match(system, /Allowed badge keys:/);
+  assert.match(system, /claude-code/);
+  assert.match(system, /chatgpt/);
+  assert.match(system, /Use exact badge keys/);
+  assert.match(system, /Do not use generic labels such as AI, LLM, or AI\/LLM/);
+  assert.match(system, /Badges are optional/);
+  assert.match(system, /If there is no clear match/);
+  assert.match(system, /never invent or force a badge/);
+  assert.doesNotMatch(system, /react/);
+});
+
 test("callOpenAICompatibleChat builds an OpenAI-compatible request and parses content", async () => {
   let captured: { url: string; init: RequestInit } | null = null;
   const fetchImpl = (async (url: string, init: RequestInit) => {

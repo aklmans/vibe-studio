@@ -70,12 +70,8 @@ export function stateForLocaleChange(
   current: OverlayState,
   locale: keyof typeof DEFAULT_STATE_BY_LOCALE,
 ): OverlayState {
-  return {
-    ...DEFAULT_STATE_BY_LOCALE[locale],
-    theme: current.theme,
-    colors: { ...current.colors },
-    activeTab: current.activeTab,
-  };
+  void locale;
+  return current;
 }
 
 export const PREVIEW_HEADER_STYLES = {
@@ -184,6 +180,10 @@ export default function App() {
       session: null,
     });
   const prevLocaleRef = useRef(locale);
+  // UI language can change while editing. Live-data persistence is tied to the
+  // current broadcast session, so it must not auto-switch to another locale row
+  // and overwrite the user's content when the interface language changes.
+  const liveDataLocaleRef = useRef(locale);
   const liveSessionRef = useRef<LiveSessionSummary | null>(null);
 
   const applyLoadedLiveData = useCallback((result: LiveDataApiResult) => {
@@ -219,7 +219,7 @@ export default function App() {
       error: null,
     }));
 
-    void fetchCurrentLiveData(locale, liveDateKey, controller.signal)
+    void fetchCurrentLiveData(liveDataLocaleRef.current, liveDateKey, controller.signal)
       .then(applyLoadedLiveData)
       .catch((err) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -231,7 +231,7 @@ export default function App() {
       });
 
     return () => controller.abort();
-  }, [applyLoadedLiveData, liveDateKey, locale]);
+  }, [applyLoadedLiveData, liveDateKey]);
 
   useEffect(() => reloadLiveData(), [reloadLiveData]);
 
@@ -315,7 +315,7 @@ export default function App() {
         error: null,
       }));
 
-      void saveRemoteLiveData(locale, liveDateKey, liveData, controller.signal)
+      void saveRemoteLiveData(liveDataLocaleRef.current, liveDateKey, liveData, controller.signal)
         .then((result) => {
           liveSessionRef.current = result.liveData?.session ?? liveSessionRef.current;
           setLiveDataPersistence((current) => ({
@@ -344,7 +344,6 @@ export default function App() {
   }, [
     liveDataPersistence.databaseConfigured,
     liveDateKey,
-    locale,
     state,
   ]);
 
@@ -354,7 +353,7 @@ export default function App() {
       saving: true,
       error: null,
     }));
-    void startRemoteLiveSession(locale, liveDateKey)
+    void startRemoteLiveSession(liveDataLocaleRef.current, liveDateKey)
       .then(applyLoadedLiveData)
       .catch((err) => {
         setLiveDataPersistence((current) => ({
@@ -363,7 +362,7 @@ export default function App() {
           error: err instanceof Error ? err.message : "Failed to start live session",
         }));
       });
-  }, [applyLoadedLiveData, liveDateKey, locale]);
+  }, [applyLoadedLiveData, liveDateKey]);
 
   const handleEndLiveSession = useCallback(() => {
     setLiveDataPersistence((current) => ({
@@ -371,7 +370,7 @@ export default function App() {
       saving: true,
       error: null,
     }));
-    void endRemoteLiveSession(locale, liveDateKey)
+    void endRemoteLiveSession(liveDataLocaleRef.current, liveDateKey)
       .then(applyLoadedLiveData)
       .catch((err) => {
         setLiveDataPersistence((current) => ({
@@ -380,7 +379,7 @@ export default function App() {
           error: err instanceof Error ? err.message : "Failed to end live session",
         }));
       });
-  }, [applyLoadedLiveData, liveDateKey, locale]);
+  }, [applyLoadedLiveData, liveDateKey]);
 
   const handleExport = useCallback(
     async (

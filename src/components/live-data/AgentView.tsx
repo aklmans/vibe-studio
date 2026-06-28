@@ -55,7 +55,7 @@ const TASKS: AgentTask[] = [
   { id: "generate", labelKey: "agentTask.generate", descKey: "agentTask.generateDesc", line: "Task: generate the full config for this stream." },
   { id: "sections", labelKey: "agentTask.sections", descKey: "agentTask.sectionsDesc", line: "Task: update only the sections (titles + bullets); keep everything else." },
   { id: "titleCover", labelKey: "agentTask.titleCover", descKey: "agentTask.titleCoverDesc", line: "Task: update the title, subtitle, author and cover copy; keep everything else." },
-  { id: "assets", labelKey: "agentTask.assets", descKey: "agentTask.assetsDesc", line: "Task: update the stack, badges and socials; keep everything else." },
+  { id: "assets", labelKey: "agentTask.assets", descKey: "agentTask.assetsDesc", line: "Task: update the stack, optional topic-matched badges, and socials; keep everything else." },
   { id: "check", labelKey: "agentTask.check", descKey: "agentTask.checkDesc", line: "Task: review the current config for issues and return a corrected version." },
 ];
 
@@ -1010,8 +1010,12 @@ function ProposalRail({
 function DiffRow({ field }: { field: FieldDiff }) {
   const { t } = useLocale();
   const statusColor =
-    field.status === "added" ? UI_COLORS.accentText : field.status === "removed" ? UI_COLORS.danger : UI_COLORS.textMuted;
-  const statusKey = (field.status === "added" ? "agent.diffAdded" : field.status === "removed" ? "agent.diffRemoved" : "agent.diffChanged") as TranslationKey;
+    field.optionalEmpty || field.status === "changed"
+      ? UI_COLORS.textMuted
+      : field.status === "added"
+        ? UI_COLORS.accentText
+        : UI_COLORS.danger;
+  const statusKey = (field.optionalEmpty || field.status === "changed" ? "agent.diffChanged" : field.status === "added" ? "agent.diffAdded" : "agent.diffRemoved") as TranslationKey;
   const isArray = field.oldCount !== undefined;
   return (
     <div data-testid={`agent-proposal-change-${field.field}`} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -1022,8 +1026,9 @@ function DiffRow({ field }: { field: FieldDiff }) {
       {isArray ? (
         <div style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.45 }}>
           <span style={{ fontFamily: mono }}>{field.oldCount} → {field.newCount}</span>
+          {field.optionalEmpty && <div>{t("agent.badgesOptionalEmpty")}</div>}
           {field.added && field.added.length > 0 && <div>{t("agent.diffAdded")}: {field.added.join(", ")}</div>}
-          {field.removed && field.removed.length > 0 && <div>{t("agent.diffRemoved")}: {field.removed.join(", ")}</div>}
+          {!field.optionalEmpty && field.removed && field.removed.length > 0 && <div>{t("agent.diffRemoved")}: {field.removed.join(", ")}</div>}
           {field.changed && field.changed.length > 0 && <div>{t("agent.diffChanged")}: {field.changed.join(", ")}</div>}
         </div>
       ) : (

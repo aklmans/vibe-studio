@@ -196,6 +196,31 @@ export const BADGE_ICON_REGISTRY: Record<
 };
 
 export const BADGE_ICON_OPTIONS = Object.values(BADGE_ICON_REGISTRY);
+export type ConfigBadgeIconKey = Exclude<BadgeIconKey, "custom">;
+export const CONFIG_BADGE_ICON_KEYS = BADGE_ICON_OPTIONS.map(
+  (meta) => meta.iconKey,
+) as ConfigBadgeIconKey[];
+export const CONFIG_BADGE_ICON_KEY_LIST = CONFIG_BADGE_ICON_KEYS.join(", ");
+export const CONFIG_BADGE_PROMPT_RULE = [
+  `Allowed badge keys: ${CONFIG_BADGE_ICON_KEY_LIST}.`,
+  "Use exact badge keys only; these are the curated @lobehub/icons AI/LLM model, provider, and coding-agent icons supported by this app.",
+  "Badges are optional. Only include badge keys when a listed AI/LLM/provider/coding-agent clearly matches the stream topic, featured tool, or provider. If there is no clear match, use an empty badges array; never invent or force a badge.",
+  "Do not use generic labels such as AI, LLM, or AI/LLM, and do not put framework/tool-stack labels such as React or Next.js in badges.",
+].join(" ");
+
+const GENERIC_BADGE_PLACEHOLDERS = new Set([
+  "ai",
+  "llm",
+  "ai/llm",
+  "ai-llm",
+  "ai llm",
+  "ai model",
+  "llm model",
+  "model",
+  "models",
+  "agent",
+  "agents",
+]);
 
 export const LEGACY_BADGE_KIND_TO_ICON_KEY: Record<LegacyBadgeKind, BadgeIconKey> = {
   claude: "claude",
@@ -219,6 +244,65 @@ export function isBadgeIconKey(value: unknown): value is BadgeIconKey {
     value === "custom" ||
     (typeof value === "string" && value in BADGE_ICON_REGISTRY)
   );
+}
+
+function normalizeBadgeLookupValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[._]+/g, "-")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ");
+}
+
+function slugBadgeLookupValue(value: string): string {
+  return normalizeBadgeLookupValue(value).replace(/\s+/g, "-");
+}
+
+export function isGenericBadgePlaceholder(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = normalizeBadgeLookupValue(value);
+  const slug = slugBadgeLookupValue(value);
+  return (
+    GENERIC_BADGE_PLACEHOLDERS.has(normalized) ||
+    GENERIC_BADGE_PLACEHOLDERS.has(slug)
+  );
+}
+
+export function normalizeBadgeIconKey(value: unknown): ConfigBadgeIconKey | null {
+  if (typeof value !== "string") return null;
+  const clean = value.trim();
+  if (!clean || isGenericBadgePlaceholder(clean)) return null;
+
+  const normalized = normalizeBadgeLookupValue(clean);
+  const slug = slugBadgeLookupValue(clean);
+
+  for (const meta of BADGE_ICON_OPTIONS) {
+    if (meta.iconKey === clean || meta.iconKey === slug) return meta.iconKey;
+  }
+
+  for (const meta of BADGE_ICON_OPTIONS) {
+    const normalizedLabel = normalizeBadgeLookupValue(meta.label);
+    if (
+      normalizedLabel === normalized ||
+      slugBadgeLookupValue(meta.label) === slug
+    ) {
+      return meta.iconKey;
+    }
+  }
+
+  for (const meta of BADGE_ICON_OPTIONS) {
+    if (
+      meta.aliases.some((alias) => {
+        const normalizedAlias = normalizeBadgeLookupValue(alias);
+        return normalizedAlias === normalized || slugBadgeLookupValue(alias) === slug;
+      })
+    ) {
+      return meta.iconKey;
+    }
+  }
+
+  return null;
 }
 
 export function isLegacyBadgeKind(value: unknown): value is LegacyBadgeKind {

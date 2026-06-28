@@ -106,6 +106,35 @@ test("diffConfigProposal does array diffs: counts + added / removed / changed", 
   assert.equal(byField.sections.group, "sections");
 });
 
+test("diffConfigProposal treats empty badges as an optional change, not a removal action", () => {
+  const cur = JSON.stringify({
+    version: 1,
+    title: "A",
+    subtitle: "S",
+    badges: ["claude", "codex"],
+    stack: [],
+    socials: [],
+    sections: [],
+  });
+  const prop = JSON.stringify({
+    version: 1,
+    title: "A",
+    subtitle: "S",
+    badges: [],
+    stack: [],
+    socials: [],
+    sections: [],
+  });
+
+  const result = diffConfigProposal(cur, prop);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const badges = result.fields.find((f) => f.field === "badges");
+  assert.equal(badges?.status, "changed");
+  assert.equal(badges?.optionalEmpty, true);
+  assert.deepEqual(badges?.removed, []);
+});
+
 test("diffConfigProposal is order-independent on object keys (no false change)", () => {
   const cur = JSON.stringify({ version: 1, title: "A", subtitle: "S", cover: { visual: "avatar", portraitUrl: "/p.png" }, badges: [], stack: [], socials: [], sections: [] });
   const prop = JSON.stringify({ version: 1, subtitle: "S", title: "A", cover: { portraitUrl: "/p.png", visual: "avatar" }, sections: [], socials: [], stack: [], badges: [] });

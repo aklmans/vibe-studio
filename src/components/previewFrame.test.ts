@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { DEFAULT_STATE_BY_LOCALE } from "../types";
 import { LIGHT_PRESET } from "../lib/theme";
@@ -52,9 +54,22 @@ test("preview header layout allows metadata to wrap instead of overlapping", () 
   assert.equal(styles.metrics?.textAlign, "right");
 });
 
-test("locale changes keep appearance and asset palette", () => {
+test("locale changes keep the user's broadcast config, appearance and asset palette", () => {
   const current = {
     ...DEFAULT_STATE_BY_LOCALE.zh,
+    cover: {
+      ...DEFAULT_STATE_BY_LOCALE.zh.cover,
+      title: "Custom Session",
+      todayLabel: "我的标签",
+      todayTopic: "用户自己的主题",
+    },
+    sidebar: {
+      ...DEFAULT_STATE_BY_LOCALE.zh.sidebar,
+      sections: [
+        { title: "自定义段落", bullets: ["保留这一条"] },
+        ...DEFAULT_STATE_BY_LOCALE.zh.sidebar.sections.slice(1),
+      ],
+    },
     theme: "light" as const,
     colors: { ...LIGHT_PRESET },
     activeTab: "wallpaper" as const,
@@ -65,5 +80,23 @@ test("locale changes keep appearance and asset palette", () => {
   assert.equal(next.theme, "light");
   assert.deepEqual(next.colors, LIGHT_PRESET);
   assert.equal(next.activeTab, "wallpaper");
-  assert.equal(next.cover.todayLabel, "TODAY'S BUILD");
+  assert.equal(next.cover.title, "Custom Session");
+  assert.equal(next.cover.todayLabel, "我的标签");
+  assert.equal(next.cover.todayTopic, "用户自己的主题");
+  assert.equal(next.sidebar.sections[0].title, "自定义段落");
+  assert.deepEqual(next.sidebar.sections[0].bullets, ["保留这一条"]);
+});
+
+test("live-data persistence is keyed by the session locale, not UI language changes", () => {
+  const src = readFileSync(resolve("src/components/OverlayBuilderApp.tsx"), "utf8");
+
+  assert.match(src, /const liveDataLocaleRef = useRef\(locale\)/);
+  assert.match(src, /fetchCurrentLiveData\(liveDataLocaleRef\.current/);
+  assert.match(src, /saveRemoteLiveData\(liveDataLocaleRef\.current/);
+  assert.match(src, /startRemoteLiveSession\(liveDataLocaleRef\.current/);
+  assert.match(src, /endRemoteLiveSession\(liveDataLocaleRef\.current/);
+  assert.doesNotMatch(src, /fetchCurrentLiveData\(locale/);
+  assert.doesNotMatch(src, /saveRemoteLiveData\(locale/);
+  assert.doesNotMatch(src, /startRemoteLiveSession\(locale/);
+  assert.doesNotMatch(src, /endRemoteLiveSession\(locale/);
 });
