@@ -82,9 +82,6 @@ export default function LandingPage() {
             >
               Main site
             </a>
-            <a href="/demo" data-testid="landing-demo-link" className="akl-button akl-button-light">
-              Try Demo
-            </a>
             <details className="akl-mobile-menu" data-testid="landing-mobile-menu">
               <summary className="akl-mobile-toggle" aria-label="Open navigation menu">
                 <span>Menu</span>
@@ -940,6 +937,7 @@ const landingCss = `
 
   .akl-surface-stage {
     margin-top: 44px;
+    --akl-surface-media-ratio: 16 / 9;
   }
 
   .akl-surface-panel[hidden] {
@@ -951,7 +949,7 @@ const landingCss = `
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
     gap: 64px;
-    align-items: center;
+    align-items: start;
   }
 
   .akl-surface-kind-tall {
@@ -972,24 +970,26 @@ const landingCss = `
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
     gap: 64px;
-    align-items: center;
+    align-items: start;
   }
 
   .akl-surface-gallery {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: block;
   }
 
   .akl-gallery-viewport {
     position: relative;
-    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .akl-surface-preview,
+  .akl-gallery-viewport {
     overflow: hidden;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
     background: #151413;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: var(--akl-surface-media-ratio);
   }
 
   .akl-gallery-viewport:focus-visible {
@@ -1035,7 +1035,10 @@ const landingCss = `
   }
 
   .akl-gallery-arrow {
-    flex: 0 0 auto;
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1049,6 +1052,14 @@ const landingCss = `
     transition:
       color 160ms ease,
       border-color 160ms ease;
+  }
+
+  .akl-gallery-prev {
+    left: 12px;
+  }
+
+  .akl-gallery-next {
+    right: 12px;
   }
 
   .akl-gallery-arrow:hover,
@@ -1092,34 +1103,11 @@ const landingCss = `
     opacity: 0.5;
   }
 
-  .akl-surface-preview {
-    overflow: hidden;
-    border: 0.5px solid var(--akl-border);
-    border-radius: 2px;
-    background: #151413;
-  }
-
   .akl-surface-preview img {
     display: block;
     width: 100%;
-    height: auto;
-    object-fit: cover;
-  }
-
-  .akl-surface-kind-wide .akl-surface-preview img {
-    aspect-ratio: 16 / 9;
-  }
-
-  .akl-surface-kind-tall .akl-surface-preview img {
-    aspect-ratio: 470 / 760;
-  }
-
-  .akl-surface-kind-tall .akl-surface-preview {
-    max-width: 340px;
-  }
-
-  .akl-surface-kind-strip .akl-surface-preview img {
-    aspect-ratio: 1856 / 180;
+    height: 100%;
+    object-fit: contain;
   }
 
   .akl-surface-copy h3 {

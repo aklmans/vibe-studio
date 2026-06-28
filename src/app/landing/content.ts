@@ -8,7 +8,6 @@ export const appNav = [
   { label: "Product", href: "#product" },
   { label: "Surfaces", href: "#surfaces" },
   { label: "Workflow", href: "#workflow" },
-  { label: "Studio", href: "/studio" },
   { label: "GitHub", href: GITHUB_URL },
 ];
 
@@ -16,8 +15,6 @@ export const mobileNav = [
   { label: "Product", href: "#product" },
   { label: "Surfaces", href: "#surfaces" },
   { label: "Workflow", href: "#workflow" },
-  { label: "Try demo", href: "/demo" },
-  { label: "Studio", href: "/studio" },
   { label: "GitHub", href: GITHUB_URL },
   { label: "Main site", href: MAIN_SITE_URL },
 ];

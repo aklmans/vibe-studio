@@ -34,15 +34,13 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /Vibe Coding Live/);
   assert.match(html, /coding streams/);
 
-  // Desktop nav is reduced to the 5 product-level items.
+  // Desktop nav stays light: product anchors + GitHub only. Demo / Studio CTAs live in the page body.
   assert.match(html, /data-testid="landing-desktop-nav"/);
   assert.match(html, /href="#product"/);
   assert.match(html, /href="#surfaces"/);
   assert.match(html, /href="#workflow"/);
-  assert.match(html, /href="\/studio"/);
   assert.match(html, /href="https:\/\/github\.com\/aklmans\/vibe-studio"/);
-  assert.match(html, /data-testid="landing-demo-link"/);
-  assert.match(html, /href="\/demo"/);
+  assert.doesNotMatch(html, /data-testid="landing-demo-link"/);
   assert.match(html, /Main site/);
   assert.doesNotMatch(html, /https:\/\/github\.com\/aklmans\/Vibe-Coding-Live/);
 
@@ -56,6 +54,8 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /AI-prepared broadcast graphics for coding streams/);
   assert.match(html, /Try Demo/);
   assert.match(html, /Open Studio/);
+  assert.match(html, /href="\/demo"/);
+  assert.match(html, /href="\/studio"/);
   assert.match(html, /Copy Agent Setup Prompt/);
   assert.match(html, /data-testid="landing-hero-copy-prompt"/);
   // Hero proof chips.
@@ -106,10 +106,13 @@ test("root route is a product landing page with public navigation and real expor
   // Anchor offset prevents fixed header from covering section headings.
   assert.match(PAGE_SRC, /scroll-margin-top/);
 
-  // Per-surface aspect ratios in CSS (not a single 16\/10 for all).
-  assert.match(PAGE_SRC, /aspect-ratio: 16 \/ 9/);
-  assert.match(PAGE_SRC, /aspect-ratio: 470 \/ 760/);
-  assert.match(PAGE_SRC, /aspect-ratio: 1856 \/ 180/);
+  // Surface tabs use one consistent media frame, including the export gallery.
+  assert.match(PAGE_SRC, /--akl-surface-media-ratio: 16 \/ 9/);
+  assert.match(PAGE_SRC, /\.akl-surface-preview,\s*\.akl-gallery-viewport\s*{[^}]*aspect-ratio: var\(--akl-surface-media-ratio\)/s);
+  assert.match(PAGE_SRC, /\.akl-surface-gallery\s*{[^}]*display: block/s);
+  assert.match(PAGE_SRC, /\.akl-gallery-arrow\s*{[^}]*position: absolute/s);
+  assert.match(PAGE_SRC, /\.akl-surface-kind-wide\s*{[^}]*align-items: start/s);
+  assert.match(PAGE_SRC, /\.akl-surface-kind-gallery\s*{[^}]*align-items: start/s);
 
   // Landing stays static — no builder import.
   assert.doesNotMatch(PAGE_SRC, /ClientPage/);
