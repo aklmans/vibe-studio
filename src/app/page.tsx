@@ -29,7 +29,7 @@ const featureItems = [
   },
   {
     title: "Session Config Agent",
-    copy: "Ask for a stream plan, review the proposed live-session.config.json, then apply it only after human review.",
+    copy: "Ask the agent for a session plan. Review the proposed config in a JSON drawer. Apply it only when you are ready.",
   },
   {
     title: "OBS-ready browser sources",
@@ -39,21 +39,44 @@ const featureItems = [
 
 const workflowItems = [
   {
-    title: "Prepare session",
-    copy: "Start with demo data, write the session brief, or ask the agent for a safe proposal.",
+    title: "Describe the session",
+    copy: "Write a short brief or ask the agent to draft one. The agent proposes a config; nothing is applied yet.",
   },
   {
-    title: "Design broadcast surfaces",
-    copy: "Preview overlay, cover, poster, sidebar, bottom bar and wallpaper exports in one visual language.",
+    title: "Review the config",
+    copy: "Open the proposal in the JSON review drawer. Inspect the diff, then Apply — or discard. You stay in control.",
   },
   {
-    title: "Connect OBS",
-    copy: "Use browser sources for the frame and freely place real captures underneath in OBS or Livehime.",
+    title: "Connect OBS sources",
+    copy: "Add overlay, sidebar and bottom bar as browser sources. OBS or Livehime keeps the real screen capture underneath.",
   },
   {
-    title: "Export assets",
-    copy: "Export cover / poster / sidebar / bottom bar / wallpapers, or run Export All for the whole package.",
+    title: "Export the kit",
+    copy: "Export cover, poster, sidebar, bottom bar and wallpapers. Run Export All for the whole package from one state.",
   },
+];
+
+const agentFlow = [
+  {
+    step: "01",
+    title: "Agent drafts a session config",
+    copy: "Describe the stream. The agent returns a proposed config — title, sections, stack, socials — as JSON you can read.",
+  },
+  {
+    step: "02",
+    title: "Human reviews and applies",
+    copy: "The proposal opens in the JSON review drawer. Inspect the field-level diff, then Apply. Nothing is auto-applied.",
+  },
+  {
+    step: "03",
+    title: "OBS renders browser sources",
+    copy: "The overlay, sidebar and bottom bar render as clean browser sources. OBS owns the real capture below the frame.",
+  },
+];
+
+const agentSafety = [
+  "AI output is never auto-applied. A returned config opens in the JSON review drawer, exactly like Import.",
+  "The API key stays on the server. It never enters the client bundle, localStorage, or logs.",
 ];
 
 type SurfaceKind = "wide" | "tall" | "strip";
@@ -109,6 +132,11 @@ const faqItems = [
   {
     question: "Is the public demo connected to my private stream?",
     answer: "No. Demo mode uses local browser storage and avoids real provider calls, database writes and OBS live-state publishing.",
+  },
+  {
+    question: "Does the AI agent ever auto-apply changes?",
+    answer:
+      "No. Returned configs open in the JSON review drawer. You apply them manually. The agent never writes directly to OBS, localStorage, the database, or runtime state.",
   },
   {
     question: "Can I still use this as a private studio?",
@@ -189,7 +217,7 @@ export default function LandingPage() {
         <h1>Broadcast graphics for coding streams</h1>
         <p className="akl-hero-lede">
           Prepare a live session, design every broadcast surface, point OBS browser sources at it,
-          and export the full visual kit. The agent can draft the config — you review and apply.
+          and export the full visual kit. Optional AI drafts the config — you review and apply.
         </p>
         <div className="akl-hero-actions">
           <a href="/demo" className="akl-button akl-button-light">
@@ -296,21 +324,84 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="guide" className="akl-section akl-guide">
+      <section id="agent" className="akl-section akl-agent" aria-label="AI-assisted session prep">
+        <p className="akl-eyebrow">Agent-assisted session prep</p>
+        <h2>AI prepares. You review. OBS renders.</h2>
+        <p className="akl-agent-lede">
+          The Session Config Agent drafts a live-session config from your brief. You read the
+          proposal, inspect the diff, and apply it only when it looks right. OBS then renders the
+          overlay, sidebar and bottom bar as clean browser sources.
+        </p>
+
+        <ol className="akl-agent-flow" data-testid="landing-agent-flow">
+          {agentFlow.map((item) => (
+            <li key={item.step} className="akl-agent-step">
+              <span className="akl-agent-step-num">{item.step}</span>
+              <div className="akl-agent-step-body">
+                <h3>{item.title}</h3>
+                <p>{item.copy}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <ul className="akl-agent-safety" data-testid="landing-agent-safety">
+          {agentSafety.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+
+        <p className="akl-agent-providers">
+          Works with any OpenAI-compatible provider — DeepSeek, OpenAI, Kimi, z.ai and others —
+          configured by server env. No key configured? The agent falls back to a local copy handoff.
+        </p>
+      </section>
+
+      <section id="get-started" className="akl-section akl-guide">
         <div className="akl-guide-copy">
-          <p className="akl-eyebrow">Docs / Guide</p>
-          <h2>Public demo first. Private studio when you go live.</h2>
+          <p className="akl-eyebrow">Get started</p>
+          <h2>Try the demo, then take the studio live.</h2>
           <p>
-            Start with the safe demo, then move to the private studio when you want real
-            AI provider configuration, database persistence and OBS automation.
+            Start with the safe public demo, then move to the private studio when you want real AI
+            provider configuration, database persistence and OBS automation.
           </p>
         </div>
-        <div className="akl-command">
-          <a href="/demo" className="akl-command-button">
-            Open demo
-          </a>
-          <code>pnpm dev</code>
-          <a href="/studio">Open studio</a>
+        <div className="akl-guide-steps">
+          <ol>
+            <li>
+              <span>01</span>
+              <div>
+                <h3>Open the public demo</h3>
+                <p>Local-only. No provider calls, no database writes, no OBS side effects.</p>
+                <a href="/demo" className="akl-guide-link">Try Demo →</a>
+              </div>
+            </li>
+            <li>
+              <span>02</span>
+              <div>
+                <h3>Run the private studio</h3>
+                <p>Full workspace with optional AI, persistence and OBS automation.</p>
+                <a href="/studio" className="akl-guide-link">Open Studio →</a>
+              </div>
+            </li>
+            <li>
+              <span>03</span>
+              <div>
+                <h3>Add OBS browser sources</h3>
+                <p>Point OBS at these routes, place real captures underneath.</p>
+                <code className="akl-guide-routes">
+                  /obs/overlay?camera=empty<br />
+                  /obs/overlay?camera=avatar<br />
+                  /obs/sidebar<br />
+                  /obs/bottom-bar
+                </code>
+              </div>
+            </li>
+          </ol>
+          <div className="akl-guide-meta">
+            <code>pnpm dev</code>
+            <a href={GITHUB_URL} className="akl-guide-link">README on GitHub →</a>
+          </div>
         </div>
       </section>
 
@@ -1091,54 +1182,198 @@ const landingCss = `
     letter-spacing: 0.12em;
   }
 
-  /* ─── Guide ──────────────────────────────────────────── */
+  /* ─── Agent section ──────────────────────────────────── */
+
+  .akl-agent-lede {
+    max-width: 640px;
+    margin: 18px 0 0;
+    color: var(--akl-text-muted);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .akl-agent-flow {
+    margin: 56px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-agent-step {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+    padding: 32px 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-agent-step-num {
+    color: var(--akl-accent);
+    font-family: var(--app-font-mono);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    padding-top: 6px;
+  }
+
+  .akl-agent-step-body h3 {
+    margin: 0;
+    color: var(--akl-text);
+    font-family: var(--app-font-serif);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .akl-agent-step-body p {
+    margin: 10px 0 0;
+    color: var(--akl-text-muted);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  .akl-agent-safety {
+    margin: 48px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 0.5px solid var(--akl-border-subtle);
+    border-bottom: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-agent-safety li {
+    padding: 18px 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
+    color: #d8d0c4;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .akl-agent-safety li:last-child {
+    border-bottom: 0;
+  }
+
+  .akl-agent-safety li::before {
+    content: "";
+    display: inline-block;
+    width: 0.36rem;
+    height: 0.36rem;
+    margin-right: 12px;
+    border-radius: 999px;
+    background: var(--akl-accent);
+    vertical-align: 0.08em;
+  }
+
+  .akl-agent-providers {
+    margin: 28px 0 0;
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ─── Get started ────────────────────────────────────── */
 
   .akl-guide {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
     gap: 72px;
-    align-items: center;
+    align-items: start;
   }
 
-  .akl-command {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-height: 60px;
-    padding: 8px;
+  .akl-guide-steps ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-guide-steps li {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    padding: 24px 0;
+    border-bottom: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-guide-steps li > span {
+    color: var(--akl-accent);
+    font-family: var(--app-font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    padding-top: 4px;
+  }
+
+  .akl-guide-steps h3 {
+    margin: 0;
+    color: var(--akl-text);
+    font-family: var(--app-font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .akl-guide-steps p {
+    margin: 8px 0 12px;
+    color: var(--akl-text-muted);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .akl-guide-link {
+    display: inline-block;
+    color: #aaa49b;
+    font-family: var(--app-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    border-bottom: 0.5px solid var(--akl-border);
+    padding-bottom: 1px;
+    transition:
+      color 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .akl-guide-link:hover,
+  .akl-guide-link:focus-visible {
+    color: var(--akl-accent);
+    border-bottom-color: var(--akl-accent);
+  }
+
+  .akl-guide-routes {
+    display: block;
+    margin-top: 10px;
+    padding: 12px 14px;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
     background: var(--akl-surface);
-    color: #aaa49b;
+    color: var(--akl-accent);
     font-family: var(--app-font-mono);
-    font-size: 14px;
-    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: normal;
   }
 
-  .akl-command-button {
-    flex: 0 0 auto;
-    padding: 12px 18px;
+  .akl-guide-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 28px;
+    padding: 14px 16px;
+    border: 0.5px solid var(--akl-border);
     border-radius: 2px;
-    background: var(--akl-paper);
-    color: var(--akl-paper-ink);
-    font-family: var(--app-font-sans);
-    font-weight: 700;
+    background: var(--akl-surface);
   }
 
-  .akl-command code {
+  .akl-guide-meta code {
     color: var(--akl-accent);
+    font-family: var(--app-font-mono);
+    font-size: 13px;
     white-space: nowrap;
-  }
-
-  .akl-command a:last-child {
-    margin-left: auto;
-    color: var(--akl-text);
-    white-space: nowrap;
-  }
-
-  .akl-command a:last-child:hover,
-  .akl-command a:last-child:focus-visible {
-    color: var(--akl-accent);
   }
 
   /* ─── FAQ ────────────────────────────────────────────── */
@@ -1253,6 +1488,11 @@ const landingCss = `
       gap: 36px;
     }
 
+    .akl-agent-step {
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 24px;
+    }
+
     .akl-surface-kind-wide {
       grid-template-columns: 1fr;
       gap: 32px;
@@ -1337,13 +1577,20 @@ const landingCss = `
       grid-template-columns: 1fr;
     }
 
-    .akl-command {
-      align-items: flex-start;
-      flex-direction: column;
+    .akl-agent-step {
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 18px;
     }
 
-    .akl-command a:last-child {
-      margin-left: 0;
+    .akl-guide-steps li {
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .akl-guide-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
     }
 
     .akl-footer-row {
