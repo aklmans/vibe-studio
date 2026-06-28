@@ -52,7 +52,7 @@ export const workflowItems = [
   },
   {
     title: "Export the kit",
-    copy: "Export cover, poster, sidebar, bottom bar and wallpapers. Run Export All for the whole package from one state.",
+    copy: "Export the overlay, cover, poster and wallpaper set. Run Export All for the public kit from one state.",
   },
 ];
 
@@ -79,7 +79,15 @@ export const agentSafety = [
   "The API key stays on the server. It never enters the client bundle, localStorage, or logs.",
 ];
 
-export type SurfaceKind = "wide" | "tall" | "strip";
+export type SurfaceKind = "wide" | "tall" | "strip" | "gallery";
+
+export interface SurfaceGalleryImage {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  label: string;
+}
 
 export interface SurfaceCard {
   id: string;
@@ -91,52 +99,103 @@ export interface SurfaceCard {
   height: number;
   summary: string;
   points: string[];
+  gallery?: ReadonlyArray<SurfaceGalleryImage>;
 }
 
 export const surfaceCards: ReadonlyArray<SurfaceCard> = [
   {
-    id: "cover",
+    id: "prepare",
     kind: "wide",
-    title: "Cover",
-    src: "/product/vibe-coding-cover.png",
-    alt: "Vibe Coding Live cover export",
-    width: 1280,
-    height: 720,
-    summary: "Open the stream with an editorial title card that already matches the overlay language.",
-    points: ["Serif headline and host profile", "Warm dark / light theme aware", "Export-ready social preview"],
+    title: "Prepare with Agent",
+    src: "/product/agent-proposal-dark.png",
+    alt: "Vibe Coding Live Session Config agent returning a reviewed proposal",
+    width: 3960,
+    height: 2128,
+    summary:
+      "Describe the stream in plain language. The Session Config Agent drafts title, sections, stack, socials and bottom bar — no manual form filling.",
+    points: [
+      "Natural-language brief becomes a structured config",
+      "Title, sections, stack, socials proposed in one pass",
+      "Faster prep than editing every field by hand",
+    ],
   },
   {
-    id: "poster",
+    id: "review",
     kind: "wide",
-    title: "Poster",
-    src: "/product/vibe-coding-poster.png",
-    alt: "Vibe Coding Live poster export",
-    width: 1920,
-    height: 1080,
-    summary: "Generate a compact promotional poster from the same session configuration.",
-    points: ["Session topic and agenda", "Reusable host identity", "Clean social sharing asset"],
+    src: "/product/json-drawer-review-dark.png",
+    alt: "Vibe Coding Live JSON review drawer with a proposal staged for manual apply",
+    width: 3960,
+    height: 2128,
+    title: "Review safely",
+    summary:
+      "AI output is never auto-applied. The proposal opens in a JSON review drawer with a field-level diff. You inspect, then Apply — or discard.",
+    points: [
+      "Proposal enters a review drawer, never live state",
+      "Field-level diff before any change is applied",
+      "The agent never writes directly to OBS or the database",
+    ],
   },
   {
-    id: "sidebar",
-    kind: "tall",
-    title: "Sidebar",
-    src: "/product/vibe-coding-sidebar.png",
-    alt: "Vibe Coding Live sidebar export",
-    width: 470,
-    height: 760,
-    summary: "Keep the live sidebar readable as a separate OBS browser source.",
-    points: ["Current focus and section progress", "Quiet social metadata", "Transparent source friendly"],
+    id: "compose",
+    kind: "wide",
+    title: "Compose in OBS",
+    src: "/product/obs-main-screen-dark.png",
+    alt: "OBS-style broadcast composition with the real capture under the Vibe Coding Live frame",
+    width: 1174,
+    height: 660,
+    summary:
+      "Vibe Coding Live owns only the transparent editorial frame. Real screen capture, camera and windows stay free underneath in OBS or Livehime.",
+    points: [
+      "Overlay is a transparent UI frame, not a locked layout",
+      "Screen capture and camera stay in OBS where they belong",
+      "Sidebar and bottom bar are independent browser sources",
+    ],
   },
   {
-    id: "bottom-bar",
-    kind: "strip",
-    title: "Bottom bar",
-    src: "/product/vibe-coding-bottom-bar.png",
-    alt: "Vibe Coding Live bottom bar export",
-    width: 1856,
-    height: 180,
-    summary: "Use a broadcast metadata strip for timer, progress and stack details.",
-    points: ["Low-profile status signals", "Stack chips and session metadata", "Consistent export slice"],
+    id: "export",
+    kind: "gallery",
+    title: "Export the kit",
+    src: "/product/broadcast-kit-dark.png",
+    alt: "Vibe Coding Live broadcast kit exported from one session config",
+    width: 2400,
+    height: 1350,
+    summary:
+      "One session config drives the high-value public assets: overlay, cover, poster and desktop/mobile wallpapers. Export All keeps the whole package visually aligned.",
+    points: [
+      "Overlay, cover, poster and wallpapers from one state",
+      "Desktop and mobile wallpaper variants stay aligned",
+      "Export All for the whole package before you go live",
+    ],
+    gallery: [
+      {
+        src: "/product/vibe-coding-overlay-dark.png",
+        alt: "Vibe Coding Live overlay export (dark theme)",
+        width: 1920,
+        height: 1080,
+        label: "Overlay · 1920×1080",
+      },
+      {
+        src: "/product/vibe-coding-cover-dark.png",
+        alt: "Vibe Coding Live cover export (dark theme)",
+        width: 1280,
+        height: 720,
+        label: "Cover · 1280×720",
+      },
+      {
+        src: "/product/vibe-coding-poster-dark.png",
+        alt: "Vibe Coding Live poster export (dark theme)",
+        width: 1920,
+        height: 1080,
+        label: "Poster · 1920×1080",
+      },
+      {
+        src: "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
+        alt: "Vibe Coding Live desktop wallpaper export (dark theme, 4K)",
+        width: 3840,
+        height: 2160,
+        label: "Wallpaper · 3840×2160",
+      },
+    ],
   },
 ];
 
@@ -160,6 +219,6 @@ export const faqItems = [
   },
   {
     question: "Can I export the whole broadcast kit?",
-    answer: "Yes. The app exports overlay, cover, poster, wallpaper set, sidebar and bottom bar assets from the same state.",
+    answer: "Yes. The app exports overlay, cover, poster and desktop/mobile wallpaper assets from the same state. Sidebar and bottom-bar sources remain available for OBS workflows, but the public kit focuses on the higher-value shareable assets.",
   },
 ];

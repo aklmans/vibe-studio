@@ -132,9 +132,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="surfaces" className="akl-section akl-surface-tabs" aria-label="Export examples">
-        <p className="akl-eyebrow">Surfaces</p>
-        <h2>One session config, many broadcast assets</h2>
+      <section id="surfaces" className="akl-section akl-surface-tabs" aria-label="Live studio system">
+        <p className="akl-eyebrow">Studio system</p>
+        <h2>From one idea to a broadcast-ready live studio</h2>
+        <p className="akl-surface-intro">
+          Describe the session once. Review the AI proposal. Let OBS own the real capture while
+          Vibe Coding Live renders the editorial frame, metadata and export kit.
+        </p>
         <SurfacesTabs cards={surfaceCards} />
       </section>
 
@@ -788,6 +792,14 @@ const landingCss = `
     padding-top: 96px;
   }
 
+  .akl-surface-intro {
+    max-width: 640px;
+    margin: 18px 0 0;
+    color: var(--akl-text-muted);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
   .akl-surface-tablist {
     width: max-content;
     max-width: 100%;
@@ -795,7 +807,12 @@ const landingCss = `
     display: flex;
     gap: 0;
     overflow-x: auto;
+    scrollbar-width: none;
     border-bottom: 0.5px solid var(--akl-border-subtle);
+  }
+
+  .akl-surface-tablist::-webkit-scrollbar {
+    display: none;
   }
 
   .akl-surface-tab {
@@ -874,6 +891,130 @@ const landingCss = `
     grid-template-columns: 1fr;
     gap: 32px;
     align-items: start;
+  }
+
+  .akl-surface-kind-gallery {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
+    gap: 64px;
+    align-items: center;
+  }
+
+  .akl-surface-gallery {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .akl-gallery-viewport {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
+    background: #151413;
+    aspect-ratio: 16 / 9;
+  }
+
+  .akl-gallery-viewport:focus-visible {
+    outline: 0.5px solid var(--akl-accent);
+    outline-offset: 4px;
+  }
+
+  .akl-surface-gallery-item {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+
+  .akl-surface-gallery-item[data-active] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .akl-surface-gallery-item img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .akl-surface-gallery-label {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 4px 8px;
+    background: color-mix(in srgb, #1a1a1a 85%, transparent);
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .akl-gallery-arrow {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
+    background: var(--akl-surface);
+    color: var(--akl-text-muted);
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .akl-gallery-arrow:hover,
+  .akl-gallery-arrow:focus-visible {
+    color: var(--akl-accent);
+    border-color: var(--akl-accent);
+  }
+
+  .akl-gallery-arrow:focus-visible {
+    outline: 0.5px solid var(--akl-accent);
+    outline-offset: 2px;
+  }
+
+  .akl-gallery-arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .akl-gallery-counter {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    padding: 4px 8px;
+    background: color-mix(in srgb, #1a1a1a 85%, transparent);
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .akl-gallery-counter-current {
+    color: var(--akl-text);
+  }
+
+  .akl-gallery-counter-sep {
+    opacity: 0.5;
   }
 
   .akl-surface-preview {
@@ -1341,6 +1482,11 @@ const landingCss = `
       gap: 32px;
     }
 
+    .akl-surface-kind-gallery {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
     .akl-surface-kind-tall {
       grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
       gap: 32px;
@@ -1408,6 +1554,11 @@ const landingCss = `
 
     .akl-surface-kind-tall .akl-surface-preview {
       max-width: 240px;
+    }
+
+    .akl-gallery-arrow {
+      width: 32px;
+      height: 32px;
     }
 
     .akl-section h2,

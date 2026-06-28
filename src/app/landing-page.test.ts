@@ -15,10 +15,10 @@ const DEMO_PAGE_PATH = resolve("src/app/demo/page.tsx");
 const STUDIO_PAGE_PATH = resolve("src/app/studio/page.tsx");
 const PRODUCT_ASSETS = [
   "public/product/vibe-coding-overlay.png",
-  "public/product/vibe-coding-cover.png",
-  "public/product/vibe-coding-poster.png",
-  "public/product/vibe-coding-sidebar.png",
-  "public/product/vibe-coding-bottom-bar.png",
+  "public/product/agent-proposal-dark.png",
+  "public/product/json-drawer-review-dark.png",
+  "public/product/obs-main-screen-dark.png",
+  "public/product/broadcast-kit-dark.png",
 ];
 
 test("root route is a product landing page with public navigation and real export imagery", () => {
@@ -59,26 +59,30 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /Session Config Agent/);
   assert.match(html, /OBS-ready browser sources/);
 
-  // Product images.
+  // Product images — hero overlay plus dark-mode workflow screenshots.
   assert.match(html, /src="\/product\/vibe-coding-overlay\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-cover\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-poster\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-sidebar\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-bottom-bar\.png"/);
-  assert.match(html, /One session config, many broadcast assets/);
+  assert.match(html, /src="\/product\/agent-proposal-dark\.png"/);
+  assert.match(html, /src="\/product\/json-drawer-review-dark\.png"/);
+  assert.match(html, /src="\/product\/obs-main-screen-dark\.png"/);
+  // Export the kit uses a gallery, not a single composite image.
+  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-cover-dark\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-poster-dark\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-dark\.png"/);
+  assert.match(html, /From one idea to a broadcast-ready live studio/);
   assert.match(html, /class="akl-surface-tablist"/);
   assert.match(html, /FAQ/);
   for (const asset of PRODUCT_ASSETS) {
     assert.equal(existsSync(resolve(asset)), true, `${asset} should be a public product image`);
   }
 
-  // Surfaces preview uses per-kind classes, not a single uniform ratio.
+  // Surfaces preview keeps real workflow imagery. Export the kit uses a gallery.
   assert.match(html, /akl-surface-kind-wide/);
-  assert.match(html, /akl-surface-kind-tall/);
-  assert.match(html, /akl-surface-kind-strip/);
   assert.match(html, /data-surface-kind="wide"/);
-  assert.match(html, /data-surface-kind="tall"/);
-  assert.match(html, /data-surface-kind="strip"/);
+  assert.match(html, /akl-surface-kind-gallery/);
+  assert.match(html, /data-surface-kind="gallery"/);
+  assert.doesNotMatch(html, /src="\/product\/vibe-coding-bottom-bar-dark\.png"/);
+  assert.doesNotMatch(html, /src="\/product\/vibe-coding-sidebar-dark\.png"/);
 
   // Mobile menu is present (not just display:none with no alternative).
   assert.match(html, /data-testid="landing-mobile-menu"/);
@@ -130,6 +134,76 @@ test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
   assert.match(SURFACES_TABS_SRC, /^['"]use client['"]/m);
 });
 
+test("Surfaces section tells the broadcast workflow story, not an asset list", () => {
+  const html = renderToStaticMarkup(React.createElement(Page));
+
+  // Section heading + intro tell the product story.
+  assert.match(html, /From one idea to a broadcast-ready live studio/);
+  assert.match(html, /Describe the session once/);
+  assert.match(html, /Let OBS own the real capture/);
+  // Eyebrow upgraded from "Surfaces" to a product-level label.
+  assert.match(html, /Studio system/);
+
+  // Four tabs express product capabilities, not asset names.
+  assert.match(html, /Prepare with Agent/);
+  assert.match(html, /Review safely/);
+  assert.match(html, /Compose in OBS/);
+  assert.match(html, /Export the kit/);
+
+  // The old asset-list tab names must not return as tab titles.
+  // (Asset names like "Cover" may still appear inside copy, but not as
+  //  the four tab labels that define the section.)
+  assert.doesNotMatch(html, /class="akl-surface-tab[^"]*"[^>]*>Cover</);
+  assert.doesNotMatch(html, /class="akl-surface-tab[^"]*"[^>]*>Poster</);
+  assert.doesNotMatch(html, /class="akl-surface-tab[^"]*"[^>]*>Sidebar</);
+  assert.doesNotMatch(html, /class="akl-surface-tab[^"]*"[^>]*>Bottom bar</);
+
+  // The old section heading must not return.
+  assert.doesNotMatch(html, /One session config, many broadcast assets/);
+  // The old eyebrow must not return.
+  assert.doesNotMatch(html, /class="akl-eyebrow">Surfaces</);
+  // The old panel eyebrow must not return.
+  assert.doesNotMatch(html, /Export surface/);
+
+  // Each tab panel carries the "Studio layer" eyebrow.
+  assert.match(html, /Studio layer/);
+
+  // Agent prep story: natural-language → structured config.
+  assert.match(html, /Natural-language brief becomes a structured config/);
+  // Safe review story: never auto-applied, diff drawer.
+  assert.match(html, /Proposal enters a review drawer, never live state/);
+  // OBS composition story: transparent frame, real capture in OBS.
+  assert.match(html, /Overlay is a transparent UI frame, not a locked layout/);
+  // Export kit story: one config → full kit, Export All.
+  assert.match(html, /Overlay, cover, poster and wallpapers from one state/);
+  assert.match(html, /Desktop and mobile wallpaper variants stay aligned/);
+  assert.match(html, /Export All for the whole package before you go live/);
+  assert.doesNotMatch(html, /Cover, poster, sidebar, bottom bar, wallpapers from one state/);
+
+  // Export the kit uses a carousel of 4 real export images with prev/next arrows.
+  assert.match(html, /class="akl-surface-gallery"/);
+  assert.match(html, /class="akl-gallery-viewport"/);
+  assert.match(html, /class="akl-gallery-arrow akl-gallery-prev"/);
+  assert.match(html, /class="akl-gallery-arrow akl-gallery-next"/);
+  assert.match(html, /aria-label="Previous export asset"/);
+  assert.match(html, /aria-label="Next export asset"/);
+  assert.match(html, /aria-label="Export asset carousel"/);
+  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"[^>]*width="1920"/);
+  assert.match(html, /src="\/product\/vibe-coding-cover-dark\.png"[^>]*width="1280"/);
+  assert.match(html, /src="\/product\/vibe-coding-poster-dark\.png"[^>]*width="1920"/);
+  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-dark\.png"[^>]*width="3840"/);
+  // Each gallery item has a mono dimension label.
+  assert.match(html, /Overlay · 1920×1080/);
+  assert.match(html, /Cover · 1280×720/);
+  assert.match(html, /Poster · 1920×1080/);
+  assert.match(html, /Wallpaper · 3840×2160/);
+  // Carousel slides have aria-roledescription="slide".
+  assert.match(html, /aria-roledescription="slide"/);
+  // Keyboard contract exists in the component source.
+  assert.match(SURFACES_TABS_SRC, /GalleryCarousel/);
+  assert.match(SURFACES_TABS_SRC, /aria-label="Export asset carousel"/);
+});
+
 test("landing images have width, height, loading, and decoding attributes", () => {
   const html = renderToStaticMarkup(React.createElement(Page));
 
@@ -139,11 +213,17 @@ test("landing images have width, height, loading, and decoding attributes", () =
     /src="\/product\/vibe-coding-overlay\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/,
   );
 
-  // Surface tab images — lazy + dimensions. Check each one has width+height+loading="lazy"+decoding.
-  assert.match(html, /src="\/product\/vibe-coding-cover\.png"[^>]*width="1280"[^>]*height="720"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-poster\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-sidebar\.png"[^>]*width="470"[^>]*height="760"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-bottom-bar\.png"[^>]*width="1856"[^>]*height="180"[^>]*loading="lazy"[^>]*decoding="async"/);
+  // Surface tab images — lazy + dimensions. These are dark-mode product
+  // screenshots for the workflow story (prepare/review/compose).
+  assert.match(html, /src="\/product\/agent-proposal-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/json-drawer-review-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/obs-main-screen-dark\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="lazy"[^>]*decoding="async"/);
+
+  // Export the kit carousel images — first slide eager, rest lazy.
+  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-cover-dark\.png"[^>]*width="1280"[^>]*height="720"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-poster-dark\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-dark\.png"[^>]*width="3840"[^>]*height="2160"[^>]*loading="lazy"[^>]*decoding="async"/);
 });
 
 test("reduced-motion and focus-visible CSS are present", () => {
