@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import { getAppAppearanceBootScript } from "../lib/design-tokens";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://example.com"),
-  title: "Vibe Studio",
-  description: "Build and export broadcast-ready Vibe Studio livestream graphics.",
+  metadataBase: new URL(siteUrl),
+  title: "Vibe Coding Live",
+  description: "Editorial live graphics for coding streams.",
   icons: {
     icon: "/favicon.svg",
   },
   openGraph: {
-    title: "Vibe Studio",
-    description: "Build and export broadcast-ready Vibe Studio livestream graphics.",
+    title: "Vibe Coding Live",
+    description: "Editorial live graphics for coding streams.",
     images: ["/opengraph.jpg"],
   },
 };

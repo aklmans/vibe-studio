@@ -163,7 +163,12 @@ interface LiveDataPersistenceState {
 
 type WorkbenchTab = Exclude<OverlayState["activeTab"], "live">;
 
-export default function App() {
+interface OverlayBuilderAppProps {
+  /** Public product demo: local editing/export only; no AI provider, DB or OBS live-state side effects. */
+  demoMode?: boolean;
+}
+
+export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   const { t, locale } = useLocale();
   const [studioProfile, setStudioProfile] = useState<StudioProfile | null>(() => loadStudioProfile());
   const [state, setStateRaw] = useState<OverlayState>(() =>
@@ -183,7 +188,7 @@ export default function App() {
   const [liveDataPersistence, setLiveDataPersistence] =
     useState<LiveDataPersistenceState>({
       databaseConfigured: false,
-      loading: true,
+      loading: !demoMode,
       saving: false,
       error: null,
       savedAt: null,
@@ -222,6 +227,20 @@ export default function App() {
   }, [locale]);
 
   const reloadLiveData = useCallback(() => {
+    if (demoMode) {
+      setLiveDataPersistence((current) => ({
+        ...current,
+        databaseConfigured: false,
+        loading: false,
+        saving: false,
+        error: null,
+        savedAt: null,
+        session: null,
+      }));
+      liveSessionRef.current = null;
+      return () => {};
+    }
+
     const controller = new AbortController();
     setLiveDataPersistence((current) => ({
       ...current,
@@ -241,7 +260,7 @@ export default function App() {
       });
 
     return () => controller.abort();
-  }, [applyLoadedLiveData, liveDateKey]);
+  }, [applyLoadedLiveData, demoMode, liveDateKey]);
 
   useEffect(() => reloadLiveData(), [reloadLiveData]);
 
@@ -277,6 +296,11 @@ export default function App() {
   // edits don't spam the API or flicker the chip; the in-flight push is aborted
   // when a newer edit supersedes it.
   useEffect(() => {
+    if (demoMode) {
+      setObsSync(IDLE_OBS_SYNC);
+      return;
+    }
+
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setObsSync((prev) => ({ ...prev, status: "syncing", error: null }));
@@ -303,10 +327,10 @@ export default function App() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [state, locale]);
+  }, [demoMode, state, locale]);
 
   useEffect(() => {
-    if (!liveDataPersistence.databaseConfigured || !liveSessionRef.current) {
+    if (demoMode || !liveDataPersistence.databaseConfigured || !liveSessionRef.current) {
       return;
     }
 
@@ -354,10 +378,12 @@ export default function App() {
   }, [
     liveDataPersistence.databaseConfigured,
     liveDateKey,
+    demoMode,
     state,
   ]);
 
   const handleStartLiveSession = useCallback(() => {
+    if (demoMode) return;
     setLiveDataPersistence((current) => ({
       ...current,
       saving: true,
@@ -372,9 +398,10 @@ export default function App() {
           error: err instanceof Error ? err.message : "Failed to start live session",
         }));
       });
-  }, [applyLoadedLiveData, liveDateKey]);
+  }, [applyLoadedLiveData, demoMode, liveDateKey]);
 
   const handleEndLiveSession = useCallback(() => {
+    if (demoMode) return;
     setLiveDataPersistence((current) => ({
       ...current,
       saving: true,
@@ -389,7 +416,7 @@ export default function App() {
           error: err instanceof Error ? err.message : "Failed to end live session",
         }));
       });
-  }, [applyLoadedLiveData, liveDateKey]);
+  }, [applyLoadedLiveData, demoMode, liveDateKey]);
 
   const handleExport = useCallback(
     async (
@@ -775,6 +802,7 @@ export default function App() {
             state={state}
             onChange={setState}
             dateKey={liveDateKey}
+            demoMode={demoMode}
             persistence={liveDataPersistence}
             obsSync={obsSync}
             onReload={reloadLiveData}

@@ -10,10 +10,15 @@ const OverlayBuilderApp = dynamic(
   },
 );
 
-export default function ClientPage() {
+export interface ClientPageProps {
+  /** Public demo mode: the builder runs locally without AI/DB/OBS side effects. */
+  demoMode?: boolean;
+}
+
+export default function ClientPage({ demoMode = false }: ClientPageProps) {
   return (
     <LocaleProvider>
-      <OverlayBuilderApp />
+      <OverlayBuilderApp demoMode={demoMode} />
     </LocaleProvider>
   );
 }

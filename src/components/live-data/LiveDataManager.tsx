@@ -26,6 +26,8 @@ interface LiveDataManagerProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
   dateKey: string;
+  /** Public demo mode keeps this surface local-only: no provider, DB or OBS writes. */
+  demoMode?: boolean;
   persistence: SessionPersistence;
   /** Real OBS / live-state push status for the source-of-truth bar. */
   obsSync?: ObsSyncState;
@@ -63,6 +65,7 @@ export default function LiveDataManager({
   state,
   onChange,
   dateKey,
+  demoMode = false,
   persistence,
   obsSync = IDLE_OBS_SYNC,
   onReload,
@@ -218,6 +221,7 @@ export default function LiveDataManager({
             <AgentView
               state={state}
               dateKey={dateKey}
+              demoMode={demoMode}
               onOpenJson={() => openJson()}
               onReviewJson={openJsonForReview}
               onOpenSettings={openSettings}

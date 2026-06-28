@@ -34,6 +34,8 @@ import {
 interface AgentViewProps {
   state: OverlayState;
   dateKey: string;
+  /** Public demo mode: local handoff only; no provider or conversation persistence calls. */
+  demoMode?: boolean;
   /** Open the global drift-safe JSON drawer (single import / apply path). */
   onOpenJson: () => void;
   /** Open the JSON drawer with text seeded into the editing buffer (review path). */
@@ -188,7 +190,7 @@ function messagesToTurns(messages: AgentConversationMessage[]): Turn[] {
  * provider, the pill reads "local · no model" and Copy handoff is the path. The
  * API key stays on the server; the client only knows provider / model names.
  */
-export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, onOpenSettings, initialStatus }: AgentViewProps) {
+export default function AgentView({ state, dateKey, demoMode = false, onOpenJson, onReviewJson, onOpenSettings, initialStatus }: AgentViewProps) {
   const { t, locale } = useLocale();
   const [brief, setBrief] = useState("");
   const [taskId, setTaskId] = useState("generate");
@@ -258,6 +260,11 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
   }, []);
 
   useEffect(() => {
+    if (demoMode) {
+      setStatus({ configured: false });
+      return;
+    }
+
     let active = true;
     void fetchAgentStatus().then((next) => {
       if (active) setStatus(next);
@@ -265,9 +272,16 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
     return () => {
       active = false;
     };
-  }, []);
+  }, [demoMode]);
 
   useEffect(() => {
+    if (demoMode) {
+      setConversationAvailable(false);
+      setConversations([]);
+      setConversationId(null);
+      return;
+    }
+
     let active = true;
     void fetchAgentConversations(locale, dateKey).then((result) => {
       if (!active) return;
@@ -283,9 +297,10 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
     return () => {
       active = false;
     };
-  }, [locale, dateKey]);
+  }, [demoMode, locale, dateKey]);
 
   const refreshConversationList = () => {
+    if (demoMode) return;
     void fetchAgentConversations(locale, dateKey).then((result) => {
       setConversationAvailable(result.databaseConfigured === true);
       if (result.databaseConfigured) setConversations(result.conversations);
@@ -299,6 +314,7 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
   };
 
   const persistTurnPair = (turn: LocalTurn | AiTurn) => {
+    if (demoMode) return;
     if (!conversationId) return;
     void appendAgentConversationMessage(conversationId, {
       role: "user",
@@ -334,6 +350,7 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
   };
 
   const loadConversation = (id: string) => {
+    if (demoMode) return;
     void fetchAgentConversation(id).then((result) => {
       setConversationAvailable(result.databaseConfigured === true);
       if (!result.conversation) return;
@@ -350,6 +367,11 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
     setTurns([]);
     setMessage("");
     setHistoryOpen(false);
+    if (demoMode) {
+      setConversationId(null);
+      nextTurnId.current = 1;
+      return;
+    }
     void createAgentConversationClient(locale, dateKey).then((result) => {
       setConversationAvailable(result.databaseConfigured === true);
       if (!result.conversation) {
@@ -366,6 +388,7 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
   };
 
   const archiveConversation = (id: string) => {
+    if (demoMode) return;
     void archiveAgentConversationClient(id).then((result) => {
       setConversationAvailable(result.databaseConfigured === true);
       if (!result.databaseConfigured) return;
@@ -401,6 +424,10 @@ export default function AgentView({ state, dateKey, onOpenJson, onReviewJson, on
 
   const runWithAi = () => {
     if (running) return;
+    if (demoMode) {
+      recordLocalTurn(false);
+      return;
+    }
     const configText = projectConfigText(state);
     const id = nextTurnId.current++;
     const baseTurn = {
