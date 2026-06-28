@@ -179,11 +179,19 @@ test("Agent shows a split proposal review rail once the AI returns a config", ()
   assert.match(AGENT_SRC, /agent\.proposalReady/);
   assert.doesNotMatch(AGENT_SRC, /compactConfig/); // always compact — no per-turn toggle
   assert.doesNotMatch(AGENT_SRC, /\{turn\.configText\}\s*<\/pre>/); // full config JSON not dumped in chat
-  // Grouped review: content changes + an explicit runtime / OBS / storage-untouched note.
-  assert.match(AGENT_SRC, /agent\.proposalContentChanges/);
+  // Grouped field-level review: before/after diff groups + an explicit runtime /
+  // OBS / storage-untouched note.
+  assert.match(AGENT_SRC, /diffConfigProposal/);
+  assert.match(AGENT_SRC, /DIFF_GROUPS/);
+  assert.match(AGENT_SRC, /agent\.reviewChanges/);
+  assert.match(AGENT_SRC, /data-testid=\{`agent-proposal-group-\$\{group\.id\}`\}/);
   assert.match(AGENT_SRC, /data-testid="agent-proposal-runtime-safe"/);
-  // It summarizes changes (pure diff) and routes through Review in JSON — never apply.
-  assert.match(AGENT_SRC, /summarizeConfigProposal/);
+  // Proposal preview is derived only; Review in JSON remains the only apply path.
+  assert.match(AGENT_SRC, /configToOverlayState\(state, parsed\.config\)/);
+  assert.match(AGENT_SRC, /previewing && parsed\.ok/);
+  assert.match(AGENT_SRC, /data-testid=\{previewing \? "agent-proposal-stop-preview" : "agent-proposal-preview"\}/);
+  assert.match(AGENT_SRC, /data-testid="agent-proposal-preview-disabled"/);
+  assert.match(AGENT_SRC, /agent\.previewNote/);
   assert.match(AGENT_SRC, /data-testid="agent-proposal-review"/);
   assert.match(AGENT_SRC, /onReviewJson\(proposal\.configText as string\)/);
   assert.doesNotMatch(AGENT_SRC, /applyConfigText|onChange\(/); // no auto-apply / no state write
@@ -207,6 +215,13 @@ test("Settings field search has a full keyboard contract + combobox semantics", 
   assert.match(SETTINGS_SRC, /aria-selected=\{active\}/);
   // Hits carry a field name + a short description + the group.
   assert.match(SETTINGS_SRC, /f\.descKey &&/);
+  // Hits visibly mark the query, and the target row flashes after jump.
+  assert.match(SETTINGS_SRC, /function highlightMatch/);
+  assert.match(SETTINGS_SRC, /<mark/);
+  assert.match(SETTINGS_SRC, /target\.style\.outline/);
+  assert.match(SETTINGS_SRC, /window\.setTimeout/);
+  assert.match(SETTINGS_SRC, /target\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(SETTINGS_SRC, /previousTabIndex/);
 });
 
 test("Settings shows scannable summaries before the big editors", () => {
@@ -312,9 +327,14 @@ test("AI Provider is a Settings group — status + test, the key never enters th
   assert.match(html, /data-testid="ai-provider-settings"/);
   assert.match(html, /data-testid="ai-provider-test"/);
   assert.match(html, /data-testid="ai-provider-api-key"/);
+  assert.match(html, /data-testid="ai-provider-env-edit-note"/);
+  assert.match(html, /data-testid="ai-provider-copy-env-template"/);
   // The provider panel never holds a key or hits a provider directly.
   const providerSrc = readFileSync(resolve("src/components/live-data/AIProviderSettings.tsx"), "utf8");
   assert.doesNotMatch(providerSrc, /Authorization|Bearer |process\.env|api\.deepseek\.com|api\.openai\.com/i);
+  assert.match(providerSrc, /SESSION_AGENT_API_KEY=\.\.\./);
+  assert.doesNotMatch(providerSrc, /SESSION_AGENT_API_KEY=\$\{|SESSION_AGENT_API_KEY=.*sk-/);
+  assert.match(providerSrc, /navigator\.clipboard\.writeText\(ENV_TEMPLATE\)/);
   // The key-free status carries the non-secret base URL; a server test path exists.
   const agentLibSrc = readFileSync(resolve("src/lib/session-agent.ts"), "utf8");
   assert.match(agentLibSrc, /baseUrl: config\.baseUrl/);

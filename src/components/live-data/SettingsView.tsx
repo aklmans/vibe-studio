@@ -147,7 +147,29 @@ export default function SettingsView({
       const target =
         document.getElementById(`settings-row-${entry.id}`) ??
         document.getElementById(`settings-panel-${entry.group}`);
-      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (!target) return;
+      const previousTabIndex = target.getAttribute("tabindex");
+      const previousTransition = target.style.transition;
+      const previousOutline = target.style.outline;
+      const previousOutlineOffset = target.style.outlineOffset;
+      const previousBorderRadius = target.style.borderRadius;
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (previousTabIndex === null) target.setAttribute("tabindex", "-1");
+      target.focus({ preventScroll: true });
+      // A brief highlight ring so the user sees where the jump landed (the
+      // target group is already highlighted via the active tab).
+      target.style.transition = "outline-color 0.2s";
+      target.style.outline = `2px solid ${UI_COLORS.accent}`;
+      target.style.outlineOffset = "3px";
+      target.style.borderRadius = "4px";
+      window.setTimeout(() => {
+        if (previousTabIndex === null) target.removeAttribute("tabindex");
+        else target.setAttribute("tabindex", previousTabIndex);
+        target.style.transition = previousTransition;
+        target.style.outline = previousOutline;
+        target.style.outlineOffset = previousOutlineOffset;
+        target.style.borderRadius = previousBorderRadius;
+      }, 1100);
     });
   };
 
@@ -457,8 +479,8 @@ export default function SettingsView({
                       transition: "background 0.1s, border-color 0.1s",
                     }}
                   >
-                    <span style={{ fontSize: 12, fontWeight: 600, color: UI_COLORS.textSoft }}>{t(f.labelKey)}</span>
-                    {f.descKey && <span style={{ fontSize: 10, color: UI_COLORS.textMuted, lineHeight: 1.35 }}>{t(f.descKey)}</span>}
+                    <span style={{ fontSize: 12, fontWeight: 600, color: UI_COLORS.textSoft }}>{highlightMatch(t(f.labelKey), query)}</span>
+                    {f.descKey && <span style={{ fontSize: 10, color: UI_COLORS.textMuted, lineHeight: 1.35 }}>{highlightMatch(t(f.descKey), query)}</span>}
                     <span style={{ ...fieldLabel, fontSize: 9 }}>{t(`settingsGroup.${f.group}` as TranslationKey)}</span>
                   </button>
                 );
@@ -559,6 +581,22 @@ const summaryStyle: CSSProperties = {
   letterSpacing: "0.02em",
   marginTop: 2,
 };
+
+/** Wrap the matched query substring of a label in a highlight mark. */
+function highlightMatch(text: string, query: string): ReactNode {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query);
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark style={{ background: cssAlpha(UI_COLORS.accent, 24), color: "inherit", borderRadius: 2, padding: "0 1px" }}>
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 /** A settings row: title + description on the left, control stacked below. */
 function SettingRow({ rowId, title, description, children }: { rowId?: string; title: string; description: string; children: ReactNode }) {

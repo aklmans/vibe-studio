@@ -20,3 +20,14 @@ export function dateKeyFromSearchParams(
   const value = searchParams.get("dateKey");
   return value && DATE_KEY_PATTERN.test(value) ? value : formatDateKey(now);
 }
+
+export async function withOptionalDatabaseFallback<T>(
+  operation: () => Promise<T>,
+  fallback: T,
+): Promise<T> {
+  try {
+    return await operation();
+  } catch {
+    return fallback;
+  }
+}

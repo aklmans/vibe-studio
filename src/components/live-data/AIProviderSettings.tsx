@@ -6,6 +6,13 @@ import type { SessionAgentStatus, SessionAgentTestResponse } from "../../lib/ses
 import { fetchAgentStatus, testAgentConnection } from "../../lib/session-agent-client";
 
 const mono = "var(--app-font-mono)";
+const ENV_TEMPLATE = [
+  "SESSION_AGENT_PROVIDER=deepseek",
+  "SESSION_AGENT_BASE_URL=https://provider.example/v1",
+  "SESSION_AGENT_MODEL=deepseek-chat",
+  "SESSION_AGENT_USER_AGENT=Vibe-Coding-Live/1.0",
+  "SESSION_AGENT_API_KEY=...",
+].join("\n");
 
 interface AIProviderSettingsProps {
   /** Seed status for tests; the mount effect refreshes it from the route. */
@@ -25,6 +32,7 @@ export default function AIProviderSettings({ initialStatus }: AIProviderSettings
   const [status, setStatus] = useState<SessionAgentStatus>(initialStatus ?? { configured: false });
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<SessionAgentTestResponse | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   useEffect(() => {
     let active = true;
@@ -45,6 +53,14 @@ export default function AIProviderSettings({ initialStatus }: AIProviderSettings
     void testAgentConnection()
       .then(setResult)
       .finally(() => setTesting(false));
+  };
+
+  const copyEnvTemplate = () => {
+    if (!navigator.clipboard) {
+      setCopyStatus("failed");
+      return;
+    }
+    void navigator.clipboard.writeText(ENV_TEMPLATE).then(() => setCopyStatus("copied")).catch(() => setCopyStatus("failed"));
   };
 
   return (
@@ -107,6 +123,36 @@ export default function AIProviderSettings({ initialStatus }: AIProviderSettings
       >
         {t("aiProvider.envNote")}
       </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 14, marginTop: 14, borderTop: `1px solid ${UI_COLORS.border}` }}>
+        <p
+          data-testid="ai-provider-env-edit-note"
+          style={{ margin: 0, fontSize: 11, lineHeight: 1.6, color: UI_COLORS.textMuted }}
+        >
+          {t("aiProvider.envEditNote")}
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <WorkbenchButton
+            data-testid="ai-provider-copy-env-template"
+            onClick={copyEnvTemplate}
+            style={{ height: 30, padding: "0 12px" }}
+          >
+            {t("aiProvider.copyEnvTemplate")}
+          </WorkbenchButton>
+          {copyStatus !== "idle" && (
+            <span
+              data-testid="ai-provider-copy-status"
+              style={{
+                fontFamily: mono,
+                fontSize: 11,
+                color: copyStatus === "copied" ? UI_COLORS.accentText : UI_COLORS.danger,
+              }}
+            >
+              {t(copyStatus === "copied" ? "aiProvider.copied" : "aiProvider.copyFailed")}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

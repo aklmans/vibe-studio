@@ -2,6 +2,7 @@ import { startCurrentLiveSession } from "../../../../../db/live-data-repository"
 import {
   dateKeyFromSearchParams,
   localeFromSearchParams,
+  withOptionalDatabaseFallback,
 } from "../../../../../lib/live-data-api";
 
 export const runtime = "nodejs";
@@ -12,5 +13,10 @@ export async function POST(request: Request) {
   const locale = localeFromSearchParams(url.searchParams);
   const dateKey = dateKeyFromSearchParams(url.searchParams);
 
-  return Response.json(await startCurrentLiveSession(locale, dateKey));
+  return Response.json(
+    await withOptionalDatabaseFallback(() => startCurrentLiveSession(locale, dateKey), {
+      databaseConfigured: false,
+      liveData: null,
+    }),
+  );
 }

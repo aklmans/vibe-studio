@@ -4,8 +4,9 @@ import type { TranslationKey } from "../../lib/i18n";
 import { useLocale } from "../../hooks/useLocale";
 import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
-import { projectConfigText } from "../../lib/session-config-drift";
-import { summarizeConfigProposal, type ConfigChange } from "../../lib/config-proposal";
+import { parseConfigText, projectConfigText } from "../../lib/session-config-drift";
+import { configToOverlayState } from "../../lib/live-studio-config";
+import { diffConfigProposal, type ConfigChange, type DiffGroup, type FieldDiff } from "../../lib/config-proposal";
 import type { SessionAgentStatus } from "../../lib/session-agent";
 import { fetchAgentStatus, runSessionAgent } from "../../lib/session-agent-client";
 import { resolveCopyResult, shortConfigHash, turnMessageKey, type CopyStatus } from "./agent-copy";
@@ -576,6 +577,7 @@ export default function AgentView({ state, onOpenJson, onReviewJson, onOpenSetti
             <ProposalRail
               proposal={proposal}
               currentConfigText={projectConfigText(state)}
+              state={state}
               onReviewJson={onReviewJson}
               onCopy={copyText}
               onOpenSettings={onOpenSettings}
@@ -592,21 +594,41 @@ export default function AgentView({ state, onOpenJson, onReviewJson, onOpenSetti
  * config. It summarizes what would change (a pure diff), but never applies:
  * Review in JSON is the only path into the drift-safe drawer.
  */
+const DIFF_GROUPS: { id: DiffGroup; labelKey: TranslationKey }[] = [
+  { id: "identity", labelKey: "agent.diffGroup.identity" },
+  { id: "media", labelKey: "agent.diffGroup.media" },
+  { id: "assets", labelKey: "agent.diffGroup.assets" },
+  { id: "sections", labelKey: "agent.diffGroup.sections" },
+];
+
+/**
+ * Proposal review rail — a grouped before/after field diff once the AI returns a
+ * config, an optional read-only preview of the applied result (derived, never
+ * written to state), and the single path forward: Review in JSON. It never
+ * applies and never writes OverlayState / localStorage.
+ */
 function ProposalRail({
   proposal,
   currentConfigText,
+  state,
   onReviewJson,
   onCopy,
   onOpenSettings,
 }: {
   proposal: AiTurn;
   currentConfigText: string;
+  state: OverlayState;
   onReviewJson?: (text: string) => void;
   onCopy: (text: string) => void;
   onOpenSettings?: (group?: string) => void;
 }) {
   const { t } = useLocale();
-  const summary = summarizeConfigProposal(currentConfigText, proposal.configText ?? "");
+  const [previewing, setPreviewing] = useState(false);
+  const diff = diffConfigProposal(currentConfigText, proposal.configText ?? "");
+  const parsed = parseConfigText(proposal.configText ?? "");
+  // Ephemeral preview — derived from the proposal each render, never written to
+  // OverlayState / localStorage. Only computed while previewing a valid config.
+  const previewState = previewing && parsed.ok ? configToOverlayState(state, parsed.config) : null;
 
   return (
     <>
@@ -620,44 +642,60 @@ function ProposalRail({
         </span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <span style={subLabel}>{t("agent.proposalSummary")}</span>
-        {!summary.ok ? (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <span style={subLabel}>{t("agent.reviewChanges")}</span>
+        {!diff.ok ? (
           <span data-testid="agent-proposal-invalid" style={{ fontSize: 12, color: UI_COLORS.textMuted, lineHeight: 1.5 }}>
             {t("agent.proposalInvalid")}
           </span>
-        ) : summary.changes.length === 0 ? (
+        ) : diff.fields.length === 0 ? (
           <span data-testid="agent-proposal-nochanges" style={{ fontSize: 12, color: UI_COLORS.textMuted, lineHeight: 1.5 }}>
             {t("agent.proposalNoChanges")}
           </span>
         ) : (
-          <>
-            <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: UI_COLORS.textSoft }}>
-              {t("agent.proposalContentChanges")}
-            </span>
-            <ul data-testid="agent-proposal-changes" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-              {summary.changes.map((change) => (
-                <li
-                  key={change.field}
-                  data-testid={`agent-proposal-change-${change.field}`}
-                  style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12, color: UI_COLORS.textSoft }}
-                >
-                  <span aria-hidden style={{ color: UI_COLORS.accent }}>·</span>
-                  <span>
-                    {t(CHANGE_LABEL[change.field])}
-                    {change.count !== undefined ? ` · ${change.count}` : ""}
+          <div data-testid="agent-proposal-changes" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {DIFF_GROUPS.map((group) => {
+              const fields = diff.fields.filter((f) => f.group === group.id);
+              if (fields.length === 0) return null;
+              return (
+                <div key={group.id} data-testid={`agent-proposal-group-${group.id}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: UI_COLORS.textMuted }}>
+                    {t(group.labelKey)}
                   </span>
-                </li>
-              ))}
-            </ul>
+                  {fields.map((f) => (
+                    <DiffRow key={f.field} field={f} />
+                  ))}
+                </div>
+              );
+            })}
             <div
               data-testid="agent-proposal-runtime-safe"
-              style={{ marginTop: 4, paddingTop: 8, borderTop: `1px solid ${UI_COLORS.border}`, fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.5 }}
+              style={{ marginTop: 2, paddingTop: 8, borderTop: `1px solid ${UI_COLORS.border}`, fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.5 }}
             >
               {t("agent.proposalRuntimeSafe")}
             </div>
-          </>
+          </div>
         )}
+      </div>
+
+      {/* Preview — read-only, derived; never writes state. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {parsed.ok ? (
+          <button
+            data-testid={previewing ? "agent-proposal-stop-preview" : "agent-proposal-preview"}
+            aria-pressed={previewing}
+            onClick={() => setPreviewing((v) => !v)}
+            style={toggleStyle}
+          >
+            <span aria-hidden>{previewing ? "■" : "▸"}</span>
+            {previewing ? t("agent.stopPreview") : t("agent.previewProposal")}
+          </button>
+        ) : (
+          <span data-testid="agent-proposal-preview-disabled" style={{ fontSize: 10, color: UI_COLORS.textSubtle, lineHeight: 1.4 }}>
+            {t("agent.previewDisabled")}
+          </span>
+        )}
+        {previewState && <ProposalPreview previewState={previewState} />}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "auto" }}>
@@ -682,6 +720,66 @@ function ProposalRail({
         )}
       </div>
     </>
+  );
+}
+
+/** One field's before → after row (scalar / object summary, or array counts + items). */
+function DiffRow({ field }: { field: FieldDiff }) {
+  const { t } = useLocale();
+  const statusColor =
+    field.status === "added" ? UI_COLORS.accentText : field.status === "removed" ? UI_COLORS.danger : UI_COLORS.textMuted;
+  const statusKey = (field.status === "added" ? "agent.diffAdded" : field.status === "removed" ? "agent.diffRemoved" : "agent.diffChanged") as TranslationKey;
+  const isArray = field.oldCount !== undefined;
+  return (
+    <div data-testid={`agent-proposal-change-${field.field}`} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: UI_COLORS.textSoft }}>{t(CHANGE_LABEL[field.field])}</span>
+        <span style={{ fontFamily: mono, fontSize: 9, letterSpacing: "0.04em", textTransform: "uppercase", color: statusColor }}>{t(statusKey)}</span>
+      </div>
+      {isArray ? (
+        <div style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.45 }}>
+          <span style={{ fontFamily: mono }}>{field.oldCount} → {field.newCount}</span>
+          {field.added && field.added.length > 0 && <div>{t("agent.diffAdded")}: {field.added.join(", ")}</div>}
+          {field.removed && field.removed.length > 0 && <div>{t("agent.diffRemoved")}: {field.removed.join(", ")}</div>}
+          {field.changed && field.changed.length > 0 && <div>{t("agent.diffChanged")}: {field.changed.join(", ")}</div>}
+        </div>
+      ) : (
+        <div style={{ fontSize: 11, color: UI_COLORS.textMuted, lineHeight: 1.45, overflowWrap: "anywhere" }}>
+          <span style={{ textDecoration: field.status === "removed" ? "line-through" : undefined }}>{field.oldValue || "∅"}</span>
+          {" → "}
+          <span style={{ color: UI_COLORS.textSoft }}>{field.newValue || "∅"}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A small read-only preview of the proposal applied — derived, never written. */
+function ProposalPreview({ previewState }: { previewState: OverlayState }) {
+  const { t } = useLocale();
+  const sectionTitles = previewState.sidebar.sections.map((s, i) => s.title || `#${i + 1}`).join(" · ");
+  const stackLabels = previewState.stack.items.map((i) => i.label || i.iconKey).filter(Boolean).join(" · ");
+  return (
+    <div
+      data-testid="agent-proposal-preview"
+      style={{ border: `1px solid ${UI_COLORS.border}`, borderRadius: 8, background: UI_COLORS.inputInset, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}
+    >
+      <span style={{ ...subLabel, color: UI_COLORS.accentText }}>{t("agent.previewLabel")}</span>
+      <span style={{ fontFamily: "var(--app-font-serif)", fontSize: 15, fontWeight: 500, color: UI_COLORS.text }}>{previewState.cover.title || "∅"}</span>
+      <span style={{ fontSize: 12, color: UI_COLORS.textSoft }}>{previewState.cover.todayTopic || "∅"}</span>
+      <PreviewLine label={t("settingsField.sections")} value={sectionTitles} />
+      <PreviewLine label={t("group.stack")} value={stackLabels} />
+      <span style={{ fontSize: 10, color: UI_COLORS.textSubtle, lineHeight: 1.4, marginTop: 2 }}>{t("agent.previewNote")}</span>
+    </div>
+  );
+}
+
+function PreviewLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", gap: 6, fontSize: 11 }}>
+      <span style={{ ...subLabel, fontSize: 9, flexShrink: 0 }}>{label}</span>
+      <span style={{ color: UI_COLORS.textMuted, overflowWrap: "anywhere" }}>{value || "∅"}</span>
+    </div>
   );
 }
 

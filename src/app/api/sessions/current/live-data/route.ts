@@ -2,6 +2,7 @@ import { saveCurrentLiveData } from "../../../../../db/live-data-repository";
 import {
   dateKeyFromSearchParams,
   localeFromSearchParams,
+  withOptionalDatabaseFallback,
 } from "../../../../../lib/live-data-api";
 import { isLiveDataSnapshot } from "../../../../../lib/live-data";
 
@@ -25,5 +26,13 @@ export async function PUT(request: Request) {
     return Response.json({ error: "Invalid live data payload" }, { status: 400 });
   }
 
-  return Response.json(await saveCurrentLiveData(locale, dateKey, liveData));
+  return Response.json(
+    await withOptionalDatabaseFallback(
+      () => saveCurrentLiveData(locale, dateKey, liveData),
+      {
+        databaseConfigured: false,
+        liveData: null,
+      },
+    ),
+  );
 }
