@@ -179,6 +179,7 @@ export interface LandingContent {
   agentEyebrow: string;
   agentTitle: string;
   agentLede: string;
+  agentSkillNote: string;
   agentFlow: ReadonlyArray<{ step: string; title: string; copy: string }>;
   agentSafety: string[];
   agentProviders: string;
@@ -230,11 +231,11 @@ const enContent: LandingContent = {
 
   wordmark: "Vibe Coding Live",
   eyebrow: "Editorial broadcast workbench",
-  h1: "AI-prepared broadcast graphics for coding streams",
-  lede: "A calm, editorial workbench for coding livestreams. AI prepares the session config, you review it, OBS keeps the real capture.",
+  h1: "The AI-native live studio for coding streams",
+  lede: "Describe the stream once. AI drafts the session config, you review the JSON diff, and OBS keeps the real capture underneath. Export overlay, cover, poster and wallpapers from one aligned state.",
   tryDemo: "Try Demo",
   openStudio: "Open Studio",
-  copyAgentPrompt: "Copy Agent Setup Prompt",
+  copyAgentPrompt: "Copy agent prompt",
   heroChips: ["AI-prepared", "Human-reviewed", "OBS-rendered"],
   heroNote: "Demo mode is local-only. Private studio at",
   heroStudioLink: "/studio",
@@ -348,6 +349,7 @@ const enContent: LandingContent = {
   agentEyebrow: "Agent-assisted session prep",
   agentTitle: "AI prepares. You review. OBS renders.",
   agentLede: "The Session Config Agent drafts a live-session config from your brief. You read the proposal, inspect the diff, and apply it only when it looks right. OBS then renders the overlay, sidebar and bottom bar as clean browser sources.",
+  agentSkillNote: "For AI setup, send your agent to /skill.md.",
   agentFlow: [
     {
       step: "01",
@@ -520,13 +522,13 @@ const zhContent: LandingContent = {
   themeToggleLabel: "浅色主题",
 
   wordmark: "Vibe Coding Live",
-  eyebrow: "编辑式直播图形工作台",
-  h1: "面向编程直播的 AI 直播图形",
-  lede: "一个面向编程直播的安静编辑式工作台。AI 准备 session 配置，你审阅，OBS 掌控真实画面。",
+  eyebrow: "直播画面工作台",
+  h1: "编程直播的 AI 画面工作台",
+  lede: "描述直播内容。AI 根据描述草拟配置，由人工确认后生效；OBS 负责底层真实捕获。一份状态导出透明画面框架、封面、海报和桌面 / 手机壁纸。",
   tryDemo: "体验 Demo",
   openStudio: "打开 Studio",
-  copyAgentPrompt: "复制 Agent 配置提示词",
-  heroChips: ["AI 准备", "人工审阅", "OBS 渲染"],
+  copyAgentPrompt: "复制 Agent 提示词",
+  heroChips: ["AI 准备", "人工确认", "OBS 渲染"],
   heroNote: "Demo 模式仅限本地。私有工作台地址",
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
@@ -545,7 +547,7 @@ const zhContent: LandingContent = {
   featuresTitle: "Vibe Studio 直播场次的三块基石",
   features: [
     {
-      title: "直播合成画面构建器",
+      title: "合成画面构建器",
       copy: "设计透明主画面框架、摄像头位、侧栏与底栏，无需手工重建每个画面区域。",
     },
     {
@@ -560,7 +562,7 @@ const zhContent: LandingContent = {
 
   surfacesEyebrow: "工作室系统",
   surfacesTitle: "从一句话到可直播的完整工作台",
-  surfacesIntro: "一份 session config 贯穿每一层：Agent 草稿、JSON 审阅、OBS 浏览器源、导出套装。",
+  surfacesIntro: "一份 session config 贯穿每一层：Agent 草稿、JSON 审阅、OBS 浏览器源、导出资产。",
   surfacesAriaLabel: "直播工作室系统",
   surfacePanelEyebrow: "工作台层级",
   surfaceCards: [
@@ -585,7 +587,7 @@ const zhContent: LandingContent = {
     {
       id: "review",
       kind: "wide",
-      title: "安全审阅",
+      title: "安全确认",
       image: {
         darkSrc: "/product/json-drawer-review-dark.png",
         lightSrc: "/product/json-drawer-review-light.png",
@@ -593,7 +595,7 @@ const zhContent: LandingContent = {
         width: 3960,
         height: 2128,
       },
-      summary: "AI 输出不会自动应用。提案进入 JSON 审阅抽屉，显示字段级 diff，你检查后 Apply 或丢弃。",
+      summary: "AI 不直接修改直播状态。提案进入 JSON 审阅抽屉，显示字段级 diff，由人工确认后生效。",
       points: [
         "提案进入审阅抽屉，不直接改直播状态",
         "应用前可见字段级 diff",
@@ -611,7 +613,7 @@ const zhContent: LandingContent = {
         width: 1174,
         height: 660,
       },
-      summary: "Vibe Coding Live 只负责透明编辑式框架，真实屏幕捕获、摄像头与窗口保留在 OBS 或直播姬底层自由摆放。",
+      summary: "Vibe Coding Live 只负责透明画面框架，真实屏幕捕获、摄像头与窗口保留在 OBS 或直播姬底层自由摆放。",
       points: [
         "合成画面是透明 UI 框架，不锁定布局",
         "屏幕捕获与摄像头留在 OBS 底层",
@@ -621,7 +623,7 @@ const zhContent: LandingContent = {
     {
       id: "export",
       kind: "gallery",
-      title: "导出套装",
+      title: "导出资产",
       summary: "一份 session config 驱动高价值公开资产：合成画面、封面、海报与桌面/手机壁纸。Export All 保持整套视觉一致。",
       points: [
         "合成画面、封面、海报、壁纸来自同一状态",
@@ -637,8 +639,9 @@ const zhContent: LandingContent = {
   galleryNextLabel: "下一张导出资产",
 
   agentEyebrow: "Agent 辅助直播准备",
-  agentTitle: "AI 准备 · 人工审阅 · OBS 渲染",
+  agentTitle: "AI 准备 · 人工确认 · OBS 渲染",
   agentLede: "Session Config Agent 根据你的描述生成直播配置。你阅读提案、检查 diff，确认后再应用。OBS 将合成画面、侧栏与底栏渲染为干净的浏览器源。",
+  agentSkillNote: "让 AI Agent 先读 /skill.md，它会按项目约定安装、运行和配置。",
   agentFlow: [
     {
       step: "01",
@@ -647,8 +650,8 @@ const zhContent: LandingContent = {
     },
     {
       step: "02",
-      title: "人工审阅并应用",
-      copy: "提案进入 JSON 审阅抽屉，检查字段级 diff 后 Apply。不会自动应用任何内容。",
+      title: "人工确认并应用",
+      copy: "提案进入 JSON 审阅抽屉，检查字段级 diff，确认后再应用。AI 不直接修改直播状态。",
     },
     {
       step: "03",
@@ -657,10 +660,10 @@ const zhContent: LandingContent = {
     },
   ],
   agentSafety: [
-    "AI 输出不会自动应用。返回的配置进入 JSON 审阅抽屉，与 Import 完全一致。",
+    "AI 不直接修改直播状态。生成的配置需要进入 JSON 审阅抽屉人工确认，与 Import 完全一致。",
     "API key 仅存于服务器，不进入客户端 bundle、localStorage 或日志。",
   ],
-  agentProviders: "兼容任何 OpenAI 兼容 provider——DeepSeek、OpenAI、Kimi、z.ai 等——通过服务器环境变量配置。未配置 key？Agent 回退到本地复制交接。",
+  agentProviders: "兼容任何 OpenAI 兼容 provider——DeepSeek、OpenAI、Kimi、z.ai 等——通过服务器环境变量配置。未配置 key？Agent 回退到本地复制交接。生成的配置需人工确认后生效。",
 
   getStartedEyebrow: "开始使用",
   getStartedTitle: "从 Agent 就绪的交接开始",
@@ -703,7 +706,7 @@ https://github.com/aklmans/vibe-studio
 Agent 使用 OpenAI 兼容 Chat Completions 适配器——在 .env.local 设置（仅服务器，不提交）：
   SESSION_AGENT_PROVIDER, SESSION_AGENT_BASE_URL, SESSION_AGENT_API_KEY, SESSION_AGENT_MODEL, SESSION_AGENT_USER_AGENT
 API key 仅存于服务器——不要暴露 API key，不要放入客户端 bundle、localStorage 或日志。
-未配置 key？Agent 回退到本地复制交接。AI 输出不会自动应用；使用 JSON 审阅/应用。`,
+未配置 key？Agent 回退到本地复制交接。生成的配置需人工确认后生效；使用 JSON 审阅/应用。`,
     },
     {
       id: "prepare-obs",
@@ -745,15 +748,15 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
   faqItems: [
     {
       question: "Vibe Studio 是什么？",
-      answer: "Vibe Studio 是面向编程直播的 AI 辅助直播图形工作台。它准备编辑式合成画面、封面、海报与壁纸，OBS 负责真实屏幕捕获。",
+      answer: "Vibe Studio 是面向编程直播的 AI 画面工作台。它支持定制透明画面框架、封面、海报与壁纸，OBS 负责真实屏幕捕获。",
     },
     {
       question: "公开 Demo 连着我的私有直播吗？",
       answer: "不。Demo 模式使用本地浏览器存储，不触发真实 provider 调用、数据库写入或 OBS 实时状态发布。",
     },
     {
-      question: "AI Agent 会自动应用更改吗？",
-      answer: "不会。返回的配置进入 JSON 审阅抽屉，你手动应用。Agent 不直接写入 OBS、localStorage、数据库或运行时状态。",
+      question: "AI Agent 会自动修改直播状态吗？",
+      answer: "不会。返回的配置进入 JSON 审阅抽屉，由人工确认后生效。Agent 不直接写入 OBS、localStorage、数据库或运行时状态。",
     },
     {
       question: "我的 API key 存在哪里？",
@@ -772,7 +775,7 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
       answer: "Overlay 负责框架。OBS 或直播姬负责底层真实屏幕/视频捕获，布局保持灵活。",
     },
     {
-      question: "可以导出整套直播套装吗？",
+      question: "可以导出整套直播资产吗？",
       answer: "可以。一份状态可导出合成画面、封面、海报以及桌面 / 手机壁纸。Export All 会一次生成整套公开视觉资产。",
     },
     {

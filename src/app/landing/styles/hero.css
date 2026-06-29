@@ -45,30 +45,54 @@
   align-items: center;
 }
 
+.akl-hero-utility {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .akl-hero-copy-prompt {
   display: inline-flex;
   align-items: center;
-  min-height: 42px;
-  border: 0.5px solid color-mix(in srgb, var(--akl-accent) 45%, transparent);
-  border-radius: 2px;
+  border: none;
   background: transparent;
-  color: var(--akl-text);
-  padding: 0 18px;
+  color: var(--akl-text-muted);
+  padding: 0;
   font-family: var(--app-font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
-  transition:
-    color 180ms ease,
-    border-color 180ms ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 180ms ease;
 }
 
 .akl-hero-copy-prompt:hover,
 .akl-hero-copy-prompt:focus-visible {
   color: var(--akl-accent);
-  border-color: var(--akl-accent);
+}
+
+.akl-agent-skill-note {
+  margin: -12px auto 32px;
+  text-align: center;
+  font-family: var(--app-font-mono);
+  font-size: 13px;
+  color: var(--akl-text-muted);
+}
+
+.akl-agent-skill-note a {
+  color: var(--akl-text-subtle);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 180ms ease;
+}
+
+.akl-agent-skill-note a:hover,
+.akl-agent-skill-note a:focus-visible {
+  color: var(--akl-accent);
 }
 
 .akl-hero-chips {

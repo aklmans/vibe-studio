@@ -82,13 +82,24 @@ test("root route is a product landing page with public navigation and real expor
   assert.doesNotMatch(html, />About</);
 
   // Hero communicates AI-native value (English default).
-  assert.match(html, /AI-prepared broadcast graphics for coding streams/);
+  assert.match(html, /The AI-native live studio for coding streams/);
   assert.match(html, /Try Demo/);
   assert.match(html, /Open Studio/);
   assert.match(html, /href="\/demo"/);
   assert.match(html, /href="\/studio"/);
-  assert.match(html, /Copy Agent Setup Prompt/);
+  assert.match(html, /Copy agent prompt/);
   assert.match(html, /data-testid="landing-hero-copy-prompt"/);
+  const heroActionsIndex = html.indexOf('class="akl-hero-actions"');
+  const heroUtilityIndex = html.indexOf('class="akl-hero-utility"');
+  const heroCopyIndex = html.indexOf('data-testid="landing-hero-copy-prompt"');
+  assert.ok(heroActionsIndex >= 0, "primary hero actions should render");
+  assert.ok(heroUtilityIndex > heroActionsIndex, "copy prompt should render after primary actions");
+  assert.ok(heroCopyIndex > heroUtilityIndex, "copy prompt should live in the utility row");
+  assert.equal(
+    html.slice(heroActionsIndex, heroUtilityIndex).includes("landing-hero-copy-prompt"),
+    false,
+    "copy prompt should not be inside the primary CTA group",
+  );
   // Hero proof chips — three-step product claim.
   assert.match(html, /data-testid="landing-hero-chips"/);
   assert.match(html, /AI-prepared/);
@@ -182,10 +193,10 @@ test("landing page has bilingual zh/en content source", () => {
   assert.match(CONTENT_SRC, /contentByLocale/);
 
   // English content has the AI-native hero.
-  assert.match(CONTENT_SRC, /AI-prepared broadcast graphics for coding streams/);
+  assert.match(CONTENT_SRC, /The AI-native live studio for coding streams/);
 
   // Chinese content has a proper Chinese hero, not a machine translation.
-  assert.match(CONTENT_SRC, /面向编程直播的 AI 直播图形/);
+  assert.match(CONTENT_SRC, /编程直播的 AI 画面工作台/);
 
   // Both locales have the full set of sections (Workflow section removed).
   assert.match(CONTENT_SRC, /featuresEyebrow/);
@@ -565,6 +576,8 @@ test("landing images have width, height, loading, and decoding attributes", () =
 
 test("reduced-motion and focus-visible CSS are present", () => {
   assert.match(RESPONSIVE_CSS, /prefers-reduced-motion:\s*reduce/);
+  assert.match(BASE_CSS, /\.akl-hero-copy-prompt:focus-visible/);
+  assert.match(BASE_CSS, /\.akl-agent-skill-note a:focus-visible/);
   assert.match(FAQ_CSS, /\.akl-faq summary:focus-visible/);
   assert.match(FAQ_CSS, /\.akl-faq-indicator/);
   assert.doesNotMatch(BASE_CSS, /float:\s*right/);
@@ -696,7 +709,7 @@ test("Agent handoff prompts route agents through /skill.md and keep secrets serv
   assert.doesNotMatch(CLIENT_SRC, /<script/);
   assert.doesNotMatch(CLIENT_SRC, /dangerouslySetInnerHTML/);
   assert.match(HANDOFF_SRC, /currentPrompt/);
-  assert.match(CONTENT_SRC, /Copy Agent Setup Prompt/);
+  assert.match(CONTENT_SRC, /Copy agent prompt/);
   assert.match(CONTENT_SRC, /Read \/skill\.md first\./);
   assert.match(CONTENT_SRC, /SESSION_AGENT_API_KEY/);
   assert.match(CONTENT_SRC, /server env/);
@@ -705,6 +718,20 @@ test("Agent handoff prompts route agents through /skill.md and keep secrets serv
   // Chinese copied/failed labels exist for the hero copy button.
   assert.match(CONTENT_SRC, /已复制/);
   assert.match(CONTENT_SRC, /复制失败——请手动选择提示词/);
+
+  // Verify that the /skill.md entry exists in both languages
+  const htmlZh = renderLanding("zh");
+  const htmlEn = renderLanding("en");
+  assert.match(htmlEn, /data-testid="landing-agent-skill-note"/);
+  assert.match(htmlEn, /href="\/skill\.md"/);
+  assert.match(htmlEn, /For AI setup, send your agent to \/skill\.md/);
+  assert.match(htmlZh, /让 AI Agent 先读 \/skill\.md，它会按项目约定安装、运行和配置。/);
+
+  // Verify Chinese old jargon is removed from runtime copy
+  assert.doesNotMatch(htmlZh, /AI 直播图形/);
+  assert.doesNotMatch(htmlZh, /编辑式框架/);
+  assert.doesNotMatch(htmlZh, /编辑式直播图形/);
+  assert.doesNotMatch(htmlZh, /导出套装/);
 });
 
 test("FAQ covers AI auto-apply safety plus demo / studio / OBS / export", () => {

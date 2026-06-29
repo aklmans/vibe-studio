@@ -171,6 +171,8 @@ function LandingPageContent() {
           <a href="/studio" className="akl-button akl-button-dark">
             {c.openStudio}
           </a>
+        </div>
+        <div className="akl-hero-utility">
           <button
             type="button"
             className="akl-hero-copy-prompt"
@@ -247,6 +249,9 @@ function LandingPageContent() {
         <p className="akl-eyebrow">{c.agentEyebrow}</p>
         <h2>{c.agentTitle}</h2>
         <p className="akl-agent-lede">{c.agentLede}</p>
+        <p className="akl-agent-skill-note" data-testid="landing-agent-skill-note">
+          <a href="/skill.md">{c.agentSkillNote}</a>
+        </p>
 
         <ol className="akl-agent-flow" data-testid="landing-agent-flow">
           {c.agentFlow.map((item) => (
