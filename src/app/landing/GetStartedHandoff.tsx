@@ -8,24 +8,33 @@ interface GetStartedHandoffProps {
   setupPrompt: string;
   humanItems: ReadonlyArray<{ label: string; value: string; href?: string }>;
   githubUrl: string;
+  // i18n strings
+  agentTabLabel: string;
+  humanTabLabel: string;
+  agentTasksLabel: string;
+  copyPromptLabel: string;
+  copiedLabel: string;
+  copyFailedLabel: string;
+  readmeGithub: string;
+  setupModeLabel: string;
 }
 
 type Mode = "agent" | "human";
 type CopyState = "idle" | "copied" | "failed";
 
-/**
- * Agent / Human dual-mode handoff panel for the Get Started section.
- *
- * - Segmented control with ARIA tablist semantics (Agent default, Human secondary).
- * - Agent mode: task chips switch the prompt text; copy button copies the prompt.
- * - Human mode: traditional command checklist.
- * - Copy feedback is honest: "Copied" on success, "Copy failed" on failure.
- */
 export default function GetStartedHandoff({
   tasks,
   setupPrompt,
   humanItems,
   githubUrl,
+  agentTabLabel,
+  humanTabLabel,
+  agentTasksLabel,
+  copyPromptLabel,
+  copiedLabel,
+  copyFailedLabel,
+  readmeGithub,
+  setupModeLabel,
 }: GetStartedHandoffProps) {
   const [mode, setMode] = useState<Mode>("agent");
   const [taskIndex, setTaskIndex] = useState(0);
@@ -82,7 +91,7 @@ export default function GetStartedHandoff({
 
   return (
     <div className="akl-handoff" data-testid="landing-handoff">
-      <div className="akl-handoff-segmented" role="tablist" aria-label="Setup mode">
+      <div className="akl-handoff-segmented" role="tablist" aria-label={setupModeLabel}>
         <button
           ref={agentTabRef}
           type="button"
@@ -99,7 +108,7 @@ export default function GetStartedHandoff({
           }}
           onKeyDown={onSegmentedKeyDown}
         >
-          I'm an Agent
+          {agentTabLabel}
         </button>
         <button
           ref={humanTabRef}
@@ -117,7 +126,7 @@ export default function GetStartedHandoff({
           }}
           onKeyDown={onSegmentedKeyDown}
         >
-          I'm a Human
+          {humanTabLabel}
         </button>
       </div>
 
@@ -129,7 +138,7 @@ export default function GetStartedHandoff({
         className="akl-handoff-panel"
         data-testid="landing-agent-panel"
       >
-        <div className="akl-handoff-tasks" role="group" aria-label="Agent tasks">
+        <div className="akl-handoff-tasks" role="group" aria-label={agentTasksLabel}>
           {tasks.map((task, index) => (
             <button
               key={task.id}
@@ -152,13 +161,13 @@ export default function GetStartedHandoff({
             className="akl-handoff-copy"
             data-state={copyState}
             onClick={() => copyPrompt(currentPrompt)}
-            aria-label="Copy prompt to clipboard"
+            aria-label={copyPromptLabel}
           >
             {copyState === "copied"
-              ? "Copied"
+              ? copiedLabel
               : copyState === "failed"
-                ? "Copy failed — select the prompt manually."
-                : "Copy prompt"}
+                ? copyFailedLabel
+                : copyPromptLabel}
           </button>
         </div>
       </div>
@@ -186,7 +195,7 @@ export default function GetStartedHandoff({
           ))}
         </ul>
         <a href={githubUrl} className="akl-get-started-link" target="_blank" rel="noopener noreferrer">
-          README on GitHub →
+          {readmeGithub}
         </a>
       </div>
     </div>

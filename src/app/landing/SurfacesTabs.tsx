@@ -5,6 +5,8 @@ import type { SurfaceCard, SurfaceGalleryImage } from "./content";
 
 interface SurfacesTabsProps {
   cards: ReadonlyArray<SurfaceCard>;
+  tablistLabel: string;
+  panelEyebrow: string;
 }
 
 /**
@@ -19,7 +21,7 @@ interface SurfacesTabsProps {
  * Only this component is a client component; the rest of the landing page
  * stays server-rendered.
  */
-export default function SurfacesTabs({ cards }: SurfacesTabsProps) {
+export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow }: SurfacesTabsProps) {
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const baseId = useId();
@@ -63,7 +65,7 @@ export default function SurfacesTabs({ cards }: SurfacesTabsProps) {
 
   return (
     <>
-      <div className="akl-surface-tablist" role="tablist" aria-label="Broadcast surface examples">
+      <div className="akl-surface-tablist" role="tablist" aria-label={tablistLabel}>
         {cards.map((card, index) => {
           const tabId = `${baseId}-tab-${card.id}`;
           const panelId = `${baseId}-panel-${card.id}`;
@@ -120,7 +122,7 @@ export default function SurfacesTabs({ cards }: SurfacesTabsProps) {
                 )}
               </div>
               <div className="akl-surface-copy">
-                <p className="akl-eyebrow">Studio layer</p>
+                <p className="akl-eyebrow">{panelEyebrow}</p>
                 <h3>{card.title}</h3>
                 <p>{card.summary}</p>
                 <ul>

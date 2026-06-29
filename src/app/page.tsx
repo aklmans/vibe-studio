@@ -1,22 +1,13 @@
+"use client";
+
+import LandingProvider, { useLanding } from "./landing/LandingProvider";
 import GetStartedHandoff from "./landing/GetStartedHandoff";
 import SurfacesTabs from "./landing/SurfacesTabs";
 import {
-  agentFlow,
-  agentSafety,
-  agentSetupPrompt,
-  agentTasks,
-  appNav,
-  faqItems,
-  featureItems,
   GITHUB_PROFILE_URL,
   GITHUB_URL,
-  heroProofChips,
-  humanChecklist,
   MAIN_SITE_URL,
-  mobileNav,
   RSS_URL,
-  surfaceCards,
-  workflowItems,
   X_URL,
 } from "./landing/content";
 
@@ -33,19 +24,21 @@ const landingScript = `
       copyBtn.addEventListener('click', function () {
         var text = copyBtn.getAttribute('data-prompt') || '';
         var original = copyBtn.textContent;
+        var copiedLabel = copyBtn.getAttribute('data-copied-label') || 'Copied';
+        var failedLabel = copyBtn.getAttribute('data-failed-label') || 'Copy failed — select manually';
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(
             function () {
-              copyBtn.textContent = 'Copied';
+              copyBtn.textContent = copiedLabel;
               setTimeout(function () { copyBtn.textContent = original; }, 2500);
             },
             function () {
-              copyBtn.textContent = 'Copy failed — select manually';
+              copyBtn.textContent = failedLabel;
               setTimeout(function () { copyBtn.textContent = original; }, 3000);
             }
           );
         } else {
-          copyBtn.textContent = 'Copy failed — select manually';
+          copyBtn.textContent = failedLabel;
           setTimeout(function () { copyBtn.textContent = original; }, 3000);
         }
       });
@@ -55,40 +48,97 @@ const landingScript = `
 
 export default function LandingPage() {
   return (
-    <main data-testid="landing-page" className="akl-page">
-      <style>{landingCss}</style>
+    <LandingProvider>
+      {(value) => (
+        <main data-testid="landing-page" className="akl-page" data-landing-theme={value.theme}>
+          <style>{landingCss}</style>
+          <LandingPageContent />
+          <script dangerouslySetInnerHTML={{ __html: landingScript }} />
+        </main>
+      )}
+    </LandingProvider>
+  );
+}
 
+function LandingPageContent() {
+  const { content, locale, theme, toggleLocale, toggleTheme } = useLanding();
+  const c = content;
+
+  return (
+    <>
       <header data-testid="landing-site-header" className="akl-site-header">
         <div className="akl-shell akl-header-row">
-          <a className="akl-brand" href={MAIN_SITE_URL} aria-label="Return to Aklman main site">
-            Aklman
+          <a className="akl-brand" href={MAIN_SITE_URL} aria-label={c.mainSiteLabel}>
+            {c.brand}
           </a>
           <nav
             className="akl-site-nav"
             aria-label="Vibe Coding Live navigation"
             data-testid="landing-desktop-nav"
           >
-            {appNav.map((item) => (
+            {c.nav.map((item) => (
               <a key={item.label} href={item.href}>
                 {item.label}
               </a>
             ))}
           </nav>
           <div className="akl-header-actions">
+            <button
+              type="button"
+              className="akl-lang-toggle"
+              data-testid="landing-lang-toggle"
+              onClick={toggleLocale}
+              aria-label={c.langToggleLabel}
+            >
+              {c.langToggleLabel}
+            </button>
+            <button
+              type="button"
+              className="akl-theme-toggle"
+              data-testid="landing-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={c.themeToggleLabel}
+            >
+              <svg
+                className="akl-theme-icon-dark"
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                aria-hidden="true"
+              >
+                <circle cx="8" cy="8" r="3.5" />
+                <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" strokeLinecap="round" />
+              </svg>
+              <svg
+                className="akl-theme-icon-light"
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                aria-hidden="true"
+              >
+                <path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z" />
+              </svg>
+            </button>
             <a
               href={MAIN_SITE_URL}
               className="akl-main-site-link"
               data-testid="landing-main-site-link"
             >
-              Main site
+              {c.mainSiteLabel}
             </a>
             <details className="akl-mobile-menu" data-testid="landing-mobile-menu">
-              <summary className="akl-mobile-toggle" aria-label="Open navigation menu">
-                <span>Menu</span>
+              <summary className="akl-mobile-toggle" aria-label={c.menuLabel}>
+                <span>{c.menuLabel}</span>
                 <i aria-hidden="true"></i>
               </summary>
-              <nav className="akl-mobile-nav" aria-label="Mobile navigation">
-                {mobileNav.map((item) => (
+              <nav className="akl-mobile-nav" aria-label={c.menuLabel}>
+                {c.mobileNav.map((item) => (
                   <a key={item.label} href={item.href}>
                     {item.label}
                   </a>
@@ -100,52 +150,51 @@ export default function LandingPage() {
       </header>
 
       <section id="product" className="akl-hero">
-        <p className="akl-hero-wordmark">Vibe Coding Live</p>
-        <p className="akl-eyebrow">Editorial broadcast workbench</p>
-        <h1>AI-prepared broadcast graphics for coding streams</h1>
-        <p className="akl-hero-lede">
-          Describe the session. Review the config. Let OBS own the real capture while Vibe Coding
-          Live renders the editorial frame and export kit.
-        </p>
+        <p className="akl-hero-wordmark">{c.wordmark}</p>
+        <p className="akl-eyebrow">{c.eyebrow}</p>
+        <h1>{c.h1}</h1>
+        <p className="akl-hero-lede">{c.lede}</p>
         <div className="akl-hero-actions">
           <a href="/demo" className="akl-button akl-button-light">
-            Try Demo
+            {c.tryDemo}
           </a>
           <a href="/studio" className="akl-button akl-button-dark">
-            Open Studio
+            {c.openStudio}
           </a>
           <button
             type="button"
             className="akl-hero-copy-prompt"
             data-testid="landing-hero-copy-prompt"
-            data-prompt={agentSetupPrompt}
+            data-prompt={c.agentSetupPrompt}
+            data-copied-label={c.copiedLabel}
+            data-failed-label={c.copyFailedLabel}
           >
-            Copy Agent Setup Prompt
+            {c.copyAgentPrompt}
           </button>
         </div>
         <ul className="akl-hero-chips" data-testid="landing-hero-chips">
-          {heroProofChips.map((chip) => (
+          {c.heroChips.map((chip) => (
             <li key={chip}>{chip}</li>
           ))}
         </ul>
         <p className="akl-hero-note">
-          Demo mode is local-only. Private studio at <a href="/studio">/studio</a>.
+          {c.heroNote} <a href={c.heroStudioLink}>{c.heroStudioLink}</a>.
           <br />
-          <a href={GITHUB_URL} className="akl-hero-github">View on GitHub</a>
+          <a href={GITHUB_URL} className="akl-hero-github">{c.viewGithub}</a>
         </p>
       </section>
 
-      <section className="akl-showcase" aria-label="Vibe Coding Live product preview">
+      <section className="akl-showcase" aria-label={c.showcaseAlt}>
         <div data-testid="landing-product-preview" className="akl-product-frame">
           <div className="akl-window-top" aria-hidden="true">
             <span></span>
             <span></span>
             <span></span>
-            <b>overlay · 1920×1080</b>
+            <b>{c.showcaseLabel}</b>
           </div>
           <img
             src="/product/vibe-coding-overlay.png"
-            alt="Vibe Coding Live overlay export"
+            alt={c.showcaseAlt}
             className="akl-overlay-img"
             width={1920}
             height={1080}
@@ -157,11 +206,11 @@ export default function LandingPage() {
 
       <section id="features" className="akl-section akl-split-section">
         <div>
-          <p className="akl-eyebrow">Features</p>
-          <h2>What could you do with Vibe Coding Live?</h2>
+          <p className="akl-eyebrow">{c.featuresEyebrow}</p>
+          <h2>{c.featuresTitle}</h2>
         </div>
         <div className="akl-feature-list">
-          {featureItems.map((item) => (
+          {c.features.map((item) => (
             <article key={item.title}>
               <h3>{item.title}</h3>
               <p>{item.copy}</p>
@@ -170,21 +219,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="surfaces" className="akl-section akl-surface-tabs" aria-label="Live studio system">
-        <p className="akl-eyebrow">Studio system</p>
-        <h2>From one idea to a broadcast-ready live studio</h2>
-        <p className="akl-surface-intro">
-          Describe the session once. Review the AI proposal. Let OBS own the real capture while
-          Vibe Coding Live renders the editorial frame, metadata and export kit.
-        </p>
-        <SurfacesTabs cards={surfaceCards} />
+      <section id="surfaces" className="akl-section akl-surface-tabs" aria-label={c.surfacesAriaLabel}>
+        <p className="akl-eyebrow">{c.surfacesEyebrow}</p>
+        <h2>{c.surfacesTitle}</h2>
+        <p className="akl-surface-intro">{c.surfacesIntro}</p>
+        <SurfacesTabs
+          cards={c.surfaceCards}
+          tablistLabel={c.surfacesAriaLabel}
+          panelEyebrow={c.surfacePanelEyebrow}
+        />
       </section>
 
       <section id="workflow" className="akl-section">
-        <p className="akl-eyebrow">Workflow</p>
-        <h2>From session prep to OBS, in four steps</h2>
+        <p className="akl-eyebrow">{c.workflowEyebrow}</p>
+        <h2>{c.workflowTitle}</h2>
         <div className="akl-workflow-grid">
-          {workflowItems.map((item, index) => (
+          {c.workflow.map((item, index) => (
             <article key={item.title} className="akl-workflow-card">
               <span>{String(index + 1).padStart(2, "0")}</span>
               <h3>{item.title}</h3>
@@ -194,17 +244,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="agent" className="akl-section akl-agent" aria-label="AI-assisted session prep">
-        <p className="akl-eyebrow">Agent-assisted session prep</p>
-        <h2>AI prepares. You review. OBS renders.</h2>
-        <p className="akl-agent-lede">
-          The Session Config Agent drafts a live-session config from your brief. You read the
-          proposal, inspect the diff, and apply it only when it looks right. OBS then renders the
-          overlay, sidebar and bottom bar as clean browser sources.
-        </p>
+      <section id="agent" className="akl-section akl-agent" aria-label={c.agentEyebrow}>
+        <p className="akl-eyebrow">{c.agentEyebrow}</p>
+        <h2>{c.agentTitle}</h2>
+        <p className="akl-agent-lede">{c.agentLede}</p>
 
         <ol className="akl-agent-flow" data-testid="landing-agent-flow">
-          {agentFlow.map((item) => (
+          {c.agentFlow.map((item) => (
             <li key={item.step} className="akl-agent-step">
               <span className="akl-agent-step-num">{item.step}</span>
               <div className="akl-agent-step-body">
@@ -216,39 +262,41 @@ export default function LandingPage() {
         </ol>
 
         <ul className="akl-agent-safety" data-testid="landing-agent-safety">
-          {agentSafety.map((line) => (
+          {c.agentSafety.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>
 
-        <p className="akl-agent-providers">
-          Works with any OpenAI-compatible provider — DeepSeek, OpenAI, Kimi, z.ai and others —
-          configured by server env. No key configured? The agent falls back to a local copy handoff.
-        </p>
+        <p className="akl-agent-providers">{c.agentProviders}</p>
       </section>
 
       <section id="get-started" className="akl-section akl-get-started">
         <div className="akl-get-started-copy">
-          <p className="akl-eyebrow">Get started</p>
-          <h2>Start with an agent-ready handoff.</h2>
-          <p>
-            Most setup work is better delegated: clone, inspect, run, configure AI keys, and prepare
-            OBS routes. The demo stays safe and local-only.
-          </p>
+          <p className="akl-eyebrow">{c.getStartedEyebrow}</p>
+          <h2>{c.getStartedTitle}</h2>
+          <p>{c.getStartedLede}</p>
         </div>
         <GetStartedHandoff
-          tasks={agentTasks}
-          setupPrompt={agentSetupPrompt}
-          humanItems={humanChecklist}
+          tasks={c.agentTasks}
+          setupPrompt={c.agentSetupPrompt}
+          humanItems={c.humanChecklist}
           githubUrl={GITHUB_URL}
+          agentTabLabel={c.agentTabLabel}
+          humanTabLabel={c.humanTabLabel}
+          agentTasksLabel={c.agentTasksLabel}
+          copyPromptLabel={c.copyPromptLabel}
+          copiedLabel={c.copiedLabel}
+          copyFailedLabel={c.copyFailedLabel}
+          readmeGithub={c.readmeGithub}
+          setupModeLabel={c.getStartedEyebrow}
         />
       </section>
 
       <section id="faq" className="akl-faq">
         <p className="akl-faq-mark">?</p>
-        <h2>FAQ</h2>
+        <h2>{c.faqTitle}</h2>
         <div className="akl-faq-list">
-          {faqItems.map((item) => (
+          {c.faqItems.map((item) => (
             <details key={item.question}>
               <summary>
                 <span className="akl-faq-question">{item.question}</span>
@@ -262,9 +310,9 @@ export default function LandingPage() {
 
       <footer data-testid="landing-site-footer" className="akl-site-footer">
         <div className="akl-shell akl-footer-row">
-          <p>Aklman · 2026</p>
+          <p>{c.footerBrand}</p>
           <nav aria-label="Footer links">
-            <a href={MAIN_SITE_URL}>Main site</a>
+            <a href={MAIN_SITE_URL}>{c.mainSiteLabel}</a>
             <span aria-hidden="true">/</span>
             <a href={GITHUB_PROFILE_URL}>GitHub</a>
             <span aria-hidden="true">/</span>
@@ -274,9 +322,7 @@ export default function LandingPage() {
           </nav>
         </div>
       </footer>
-
-      <script dangerouslySetInnerHTML={{ __html: landingScript }} />
-    </main>
+    </>
   );
 }
 
@@ -284,6 +330,9 @@ const landingCss = `
   .akl-page {
     --akl-fixed-header-height: 88px;
     --akl-anchor-offset: calc(var(--akl-fixed-header-height) + 16px);
+    --akl-surface-media-ratio: 16 / 9;
+
+    /* Dark theme (default) */
     --akl-border: #3a3832;
     --akl-border-subtle: #2f2d29;
     --akl-bg: #1a1a1a;
@@ -294,11 +343,80 @@ const landingCss = `
     --akl-accent: #e8835b;
     --akl-paper: #f4efe6;
     --akl-paper-ink: #161513;
+    --akl-page-color: #f4efe6;
+    --akl-header-bg: color-mix(in srgb, #1a1a1a 92%, transparent);
+    --akl-mobile-nav-bg: color-mix(in srgb, #1a1a1a 96%, transparent);
+    --akl-product-bg: #171615;
+    --akl-window-bg: #25231f;
+    --akl-window-dot: #70695e;
+    --akl-window-label: #8b847a;
+    --akl-preview-bg: #151413;
+    --akl-gallery-label-bg: color-mix(in srgb, #1a1a1a 85%, transparent);
+    --akl-prompt-bg: #151413;
+    --akl-prompt-text: #d8d0c4;
+    --akl-hero-note-link: #aaa49b;
+    --akl-hero-note-border: #4a463d;
+
     min-height: 100vh;
     padding-top: var(--akl-fixed-header-height);
     background: var(--akl-bg);
-    color: #f4efe6;
+    color: var(--akl-page-color);
     font-family: var(--app-font-sans);
+  }
+
+  /* Light theme */
+  .akl-page[data-landing-theme="light"],
+  [data-landing-theme="light"] .akl-page {
+    --akl-border: #c6c0b6;
+    --akl-border-subtle: #d8d2c8;
+    --akl-bg: #f7f4ee;
+    --akl-surface: #eee8dd;
+    --akl-text: #1a1a1a;
+    --akl-text-muted: #55514b;
+    --akl-text-subtle: #857f74;
+    --akl-accent: #c95f3d;
+    --akl-paper: #1a1a1a;
+    --akl-paper-ink: #f7f4ee;
+    --akl-page-color: #1a1a1a;
+    --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
+    --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
+    --akl-product-bg: #e8e2d6;
+    --akl-window-bg: #e0d9cc;
+    --akl-window-dot: #a99f91;
+    --akl-window-label: #857f74;
+    --akl-preview-bg: #e8e2d6;
+    --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
+    --akl-prompt-bg: #f2ede4;
+    --akl-prompt-text: #403c36;
+    --akl-hero-note-link: #6c665e;
+    --akl-hero-note-border: #c6c0b6;
+  }
+
+  /* Fallback: when data-landing-theme is set on <html>, not .akl-page */
+  [data-landing-theme="light"] {
+    --akl-border: #c6c0b6;
+    --akl-border-subtle: #d8d2c8;
+    --akl-bg: #f7f4ee;
+    --akl-surface: #eee8dd;
+    --akl-text: #1a1a1a;
+    --akl-text-muted: #55514b;
+    --akl-text-subtle: #857f74;
+    --akl-accent: #c95f3d;
+    --akl-paper: #1a1a1a;
+    --akl-paper-ink: #f7f4ee;
+    --akl-page-color: #1a1a1a;
+    --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
+    --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
+    --akl-product-bg: #e8e2d6;
+    --akl-window-bg: #e0d9cc;
+    --akl-window-dot: #a99f91;
+    --akl-window-label: #857f74;
+    --akl-preview-bg: #e8e2d6;
+    --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
+    --akl-prompt-bg: #f2ede4;
+    --akl-prompt-text: #403c36;
+    --akl-hero-note-link: #6c665e;
+    --akl-hero-note-border: #c6c0b6;
   }
 
   .akl-page a {
@@ -306,7 +424,6 @@ const landingCss = `
     text-decoration: none;
   }
 
-  /* Offset anchor targets so fixed header does not cover section headings. */
   .akl-page section[id] {
     scroll-margin-top: var(--akl-anchor-offset);
   }
@@ -325,7 +442,7 @@ const landingCss = `
     right: 0;
     left: 0;
     z-index: 50;
-    background: color-mix(in srgb, var(--akl-bg) 92%, transparent);
+    background: var(--akl-header-bg);
     backdrop-filter: saturate(140%) blur(10px);
     -webkit-backdrop-filter: saturate(140%) blur(10px);
     border-bottom: 0.5px solid var(--akl-border-subtle);
@@ -364,7 +481,7 @@ const landingCss = `
   .akl-header-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: nowrap;
   }
 
@@ -408,7 +525,47 @@ const landingCss = `
     transform: scaleX(1);
   }
 
-  /* Subtle "Main site" return link — visually below product nav. */
+  /* Language + theme toggles — quiet mono buttons */
+  .akl-lang-toggle,
+  .akl-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    border: 0.5px solid var(--akl-border-subtle);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--akl-text-muted);
+    font-family: var(--app-font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+  }
+
+  .akl-lang-toggle:hover,
+  .akl-lang-toggle:focus-visible,
+  .akl-theme-toggle:hover,
+  .akl-theme-toggle:focus-visible {
+    color: var(--akl-accent);
+    border-color: var(--akl-accent);
+  }
+
+  .akl-theme-toggle svg {
+    display: none;
+  }
+
+  [data-landing-theme="dark"] .akl-theme-icon-dark {
+    display: block;
+  }
+
+  [data-landing-theme="light"] .akl-theme-icon-light {
+    display: block;
+  }
+
+  /* Subtle "Main site" return link */
   .akl-main-site-link {
     color: var(--akl-text-subtle);
     font-family: var(--app-font-mono);
@@ -435,7 +592,9 @@ const landingCss = `
   .akl-mobile-nav a:focus-visible,
   .akl-hero-github:focus-visible,
   .akl-get-started-link:focus-visible,
-  .akl-faq summary:focus-visible {
+  .akl-faq summary:focus-visible,
+  .akl-lang-toggle:focus-visible,
+  .akl-theme-toggle:focus-visible {
     outline: 0.5px solid var(--akl-accent);
     outline-offset: 4px;
   }
@@ -519,7 +678,7 @@ const landingCss = `
     gap: 0;
     padding: 8px 18px 20px;
     border-bottom: 0.5px solid var(--akl-border);
-    background: color-mix(in srgb, var(--akl-bg) 96%, transparent);
+    background: var(--akl-mobile-nav-bg);
     backdrop-filter: saturate(140%) blur(10px);
     -webkit-backdrop-filter: saturate(140%) blur(10px);
   }
@@ -531,7 +690,7 @@ const landingCss = `
     min-height: 2.4rem;
     padding: 0.5rem 0;
     border-bottom: 0.5px solid var(--akl-border-subtle);
-    color: #c8c5be;
+    color: var(--akl-text-muted);
     font-family: var(--app-font-mono);
     font-size: 11px;
     font-weight: 600;
@@ -566,12 +725,12 @@ const landingCss = `
 
   .akl-page .akl-button-light {
     background: var(--akl-paper);
-    color: #161513;
+    color: var(--akl-paper-ink);
   }
 
   .akl-page .akl-button-light:hover,
   .akl-page .akl-button-light:focus-visible {
-    background: #fff;
+    background: color-mix(in srgb, var(--akl-paper) 85%, var(--akl-accent));
   }
 
   .akl-page .akl-button-dark {
@@ -658,10 +817,9 @@ const landingCss = `
     display: inline-flex;
     align-items: center;
     min-height: 42px;
-    border: 0.5px solid transparent;
-    border-color: color-mix(in srgb, var(--akl-accent) 45%, transparent);
+    border: 0.5px solid color-mix(in srgb, var(--akl-accent) 45%, transparent);
     border-radius: 2px;
-    background: color-mix(in srgb, var(--akl-accent) 6%, transparent);
+    background: transparent;
     color: var(--akl-text);
     padding: 0 18px;
     font-family: var(--app-font-mono);
@@ -672,15 +830,13 @@ const landingCss = `
     white-space: nowrap;
     transition:
       color 180ms ease,
-      border-color 180ms ease,
-      background 180ms ease;
+      border-color 180ms ease;
   }
 
   .akl-hero-copy-prompt:hover,
   .akl-hero-copy-prompt:focus-visible {
     color: var(--akl-accent);
     border-color: var(--akl-accent);
-    background: color-mix(in srgb, var(--akl-accent) 10%, transparent);
   }
 
   .akl-hero-chips {
@@ -726,8 +882,8 @@ const landingCss = `
   }
 
   .akl-hero-note a {
-    border-bottom: 0.5px solid #4a463d;
-    color: #aaa49b;
+    border-bottom: 0.5px solid var(--akl-hero-note-border);
+    color: var(--akl-hero-note-link);
     transition:
       color 180ms ease,
       border-color 180ms ease;
@@ -770,7 +926,7 @@ const landingCss = `
     overflow: hidden;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
-    background: #171615;
+    background: var(--akl-product-bg);
   }
 
   .akl-window-top {
@@ -780,19 +936,19 @@ const landingCss = `
     gap: 10px;
     padding: 0 18px;
     border-bottom: 0.5px solid var(--akl-border);
-    background: #25231f;
+    background: var(--akl-window-bg);
   }
 
   .akl-window-top span {
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: #70695e;
+    background: var(--akl-window-dot);
   }
 
   .akl-window-top b {
     margin-left: auto;
-    color: #8b847a;
+    color: var(--akl-window-label);
     font-family: var(--app-font-mono);
     font-size: 10px;
     font-weight: 700;
@@ -879,12 +1035,7 @@ const landingCss = `
     display: flex;
     gap: 0;
     overflow-x: auto;
-    scrollbar-width: none;
     border-bottom: 0.5px solid var(--akl-border-subtle);
-  }
-
-  .akl-surface-tablist::-webkit-scrollbar {
-    display: none;
   }
 
   .akl-surface-tab {
@@ -925,7 +1076,6 @@ const landingCss = `
     color: var(--akl-accent);
   }
 
-  /* Selected tab — accent underline + bright text. */
   .akl-surface-tab[data-selected] {
     color: var(--akl-text);
   }
@@ -937,14 +1087,12 @@ const landingCss = `
 
   .akl-surface-stage {
     margin-top: 44px;
-    --akl-surface-media-ratio: 16 / 9;
   }
 
   .akl-surface-panel[hidden] {
     display: none;
   }
 
-  /* Layout per surface kind. */
   .akl-surface-kind-wide {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
@@ -956,7 +1104,7 @@ const landingCss = `
     display: grid;
     grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
     gap: 64px;
-    align-items: center;
+    align-items: start;
   }
 
   .akl-surface-kind-strip {
@@ -973,23 +1121,45 @@ const landingCss = `
     align-items: start;
   }
 
-  .akl-surface-gallery {
-    position: relative;
-    display: block;
-  }
-
-  .akl-gallery-viewport {
-    position: relative;
-    width: 100%;
-  }
-
   .akl-surface-preview,
   .akl-gallery-viewport {
     overflow: hidden;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
-    background: #151413;
+    background: var(--akl-preview-bg);
     aspect-ratio: var(--akl-surface-media-ratio);
+  }
+
+  .akl-surface-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .akl-surface-kind-wide .akl-surface-preview img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .akl-surface-kind-tall .akl-surface-preview img {
+    aspect-ratio: 470 / 760;
+  }
+
+  .akl-surface-kind-tall .akl-surface-preview {
+    max-width: 340px;
+  }
+
+  .akl-surface-kind-strip .akl-surface-preview img {
+    aspect-ratio: 1856 / 180;
+  }
+
+  .akl-surface-gallery {
+    display: block;
+    position: relative;
+  }
+
+  .akl-gallery-viewport {
+    position: relative;
   }
 
   .akl-gallery-viewport:focus-visible {
@@ -1024,7 +1194,7 @@ const landingCss = `
     bottom: 0;
     margin: 0;
     padding: 4px 8px;
-    background: color-mix(in srgb, #1a1a1a 85%, transparent);
+    background: var(--akl-gallery-label-bg);
     color: var(--akl-text-subtle);
     font-family: var(--app-font-mono);
     font-size: 10px;
@@ -1037,8 +1207,8 @@ const landingCss = `
   .akl-gallery-arrow {
     position: absolute;
     top: 50%;
-    z-index: 2;
     transform: translateY(-50%);
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1055,11 +1225,11 @@ const landingCss = `
   }
 
   .akl-gallery-prev {
-    left: 12px;
+    left: 8px;
   }
 
   .akl-gallery-next {
-    right: 12px;
+    right: 8px;
   }
 
   .akl-gallery-arrow:hover,
@@ -1086,7 +1256,7 @@ const landingCss = `
     align-items: baseline;
     gap: 2px;
     padding: 4px 8px;
-    background: color-mix(in srgb, #1a1a1a 85%, transparent);
+    background: var(--akl-gallery-label-bg);
     color: var(--akl-text-subtle);
     font-family: var(--app-font-mono);
     font-size: 10px;
@@ -1103,13 +1273,6 @@ const landingCss = `
     opacity: 0.5;
   }
 
-  .akl-surface-preview img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
   .akl-surface-copy h3 {
     margin: 14px 0 0;
     color: var(--akl-text);
@@ -1121,7 +1284,7 @@ const landingCss = `
 
   .akl-surface-copy p:not(.akl-eyebrow) {
     margin: 18px 0 0;
-    color: #aaa49b;
+    color: var(--akl-text-muted);
     font-size: 18px;
     line-height: 1.6;
   }
@@ -1136,7 +1299,7 @@ const landingCss = `
   .akl-surface-copy li {
     padding: 16px 0;
     border-bottom: 0.5px solid var(--akl-border-subtle);
-    color: #d8d0c4;
+    color: var(--akl-text-muted);
     font-size: 16px;
     line-height: 1.35;
   }
@@ -1242,7 +1405,7 @@ const landingCss = `
   .akl-agent-safety li {
     padding: 18px 0;
     border-bottom: 0.5px solid var(--akl-border-subtle);
-    color: #d8d0c4;
+    color: var(--akl-text-muted);
     font-size: 15px;
     line-height: 1.5;
   }
@@ -1342,8 +1505,6 @@ const landingCss = `
     padding: 24px;
   }
 
-  /* Agent mode — task chips + prompt block */
-
   .akl-handoff-tasks {
     display: flex;
     flex-wrap: wrap;
@@ -1395,8 +1556,8 @@ const landingCss = `
     padding: 16px;
     border: 0.5px solid var(--akl-border-subtle);
     border-radius: 2px;
-    background: #151413;
-    color: #d8d0c4;
+    background: var(--akl-prompt-bg);
+    color: var(--akl-prompt-text);
     font-family: var(--app-font-mono);
     font-size: 13px;
     line-height: 1.65;
@@ -1429,7 +1590,7 @@ const landingCss = `
 
   .akl-handoff-copy:hover,
   .akl-handoff-copy:focus-visible {
-    background: #fff;
+    background: color-mix(in srgb, var(--akl-paper) 85%, var(--akl-accent));
   }
 
   .akl-handoff-copy:focus-visible {
@@ -1449,8 +1610,6 @@ const landingCss = `
     border-color: #e07070;
     font-size: 12px;
   }
-
-  /* Human mode — checklist */
 
   .akl-handoff-checklist {
     margin: 0;
@@ -1492,11 +1651,10 @@ const landingCss = `
     color: var(--akl-text);
   }
 
-  /* Shared get-started link (used in human panel footer) */
   .akl-get-started-link {
     display: inline-block;
     margin-top: 18px;
-    color: #aaa49b;
+    color: var(--akl-text-muted);
     font-family: var(--app-font-mono);
     font-size: 12px;
     font-weight: 600;
@@ -1525,7 +1683,7 @@ const landingCss = `
 
   .akl-faq-mark {
     margin: 0;
-    color: #d8d0c4;
+    color: var(--akl-text-muted);
     font-family: var(--app-font-serif);
     font-size: 56px;
     line-height: 1;
@@ -1563,7 +1721,6 @@ const landingCss = `
     flex: 1 1 auto;
   }
 
-  /* Stable +/- indicator using grid, not float — no misalignment on long questions. */
   .akl-faq-indicator {
     flex: 0 0 auto;
     position: relative;
@@ -1580,12 +1737,11 @@ const landingCss = `
     left: 50%;
     width: 12px;
     height: 1.5px;
-    background: #8b847a;
+    background: var(--akl-text-subtle);
     transform: translate(-50%, -50%);
     transition: transform 180ms ease, opacity 180ms ease;
   }
 
-  /* Horizontal bar is always present; vertical bar becomes the +. */
   .akl-faq-indicator::after {
     width: 1.5px;
     height: 12px;
@@ -1720,7 +1876,7 @@ const landingCss = `
     }
 
     .akl-header-actions {
-      gap: 12px;
+      gap: 8px;
     }
 
     .akl-hero {
@@ -1728,8 +1884,8 @@ const landingCss = `
     }
 
     .akl-hero h1 {
-      font-size: 34px;
-      line-height: 1.08;
+      font-size: 32px;
+      line-height: 1.12;
     }
 
     .akl-hero-lede {
