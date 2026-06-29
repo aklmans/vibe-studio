@@ -1,0 +1,150 @@
+/* Base layout, sections, buttons, and shared focus-visible. */
+
+.akl-page {
+  min-height: 100vh;
+  padding-top: var(--akl-fixed-header-height);
+  background: var(--akl-bg);
+  color: var(--akl-page-color);
+  font-family: var(--app-font-sans);
+}
+
+.akl-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.akl-page section[id] {
+  scroll-margin-top: var(--akl-anchor-offset);
+}
+
+.akl-shell {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding-inline: 32px;
+}
+
+.akl-eyebrow {
+  margin: 0;
+  color: var(--akl-accent);
+  font-family: var(--app-font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.akl-hero h1,
+.akl-section h2,
+.akl-get-started-copy h2,
+.akl-faq h2 {
+  margin: 0;
+  color: var(--akl-text);
+  font-family: var(--app-font-serif);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.akl-section {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 96px 32px;
+}
+
+.akl-split-section {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 72px;
+  align-items: start;
+}
+
+.akl-section h2,
+.akl-get-started-copy h2,
+.akl-faq h2 {
+  margin-top: 16px;
+  font-size: 48px;
+  line-height: 1.05;
+}
+
+.akl-feature-list {
+  border-top: 0.5px solid var(--akl-border-subtle);
+}
+
+.akl-feature-list article {
+  padding: 26px 0;
+  border-bottom: 0.5px solid var(--akl-border-subtle);
+}
+
+.akl-feature-list h3 {
+  margin: 0;
+  color: var(--akl-text);
+  font-family: var(--app-font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.akl-feature-list p,
+.akl-get-started-copy p,
+.akl-faq details p {
+  margin: 10px 0 0;
+  color: var(--akl-text-muted);
+  font-size: 16px;
+  line-height: 1.62;
+}
+
+.akl-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 2px;
+  padding: 0 18px;
+  font-family: var(--app-font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.akl-page .akl-button-light {
+  background: var(--akl-paper);
+  color: var(--akl-paper-ink);
+}
+
+.akl-page .akl-button-light:hover,
+.akl-page .akl-button-light:focus-visible {
+  background: color-mix(in srgb, var(--akl-paper) 85%, var(--akl-accent));
+}
+
+.akl-page .akl-button-dark {
+  border: 0.5px solid var(--akl-border);
+  background: var(--akl-surface);
+  color: var(--akl-text);
+}
+
+.akl-page .akl-button-dark:hover,
+.akl-page .akl-button-dark:focus-visible {
+  border-color: var(--akl-accent);
+  color: var(--akl-accent);
+}
+
+/* Focus-visible — warm accent outline, never blue default. */
+.akl-site-nav a:focus-visible,
+.akl-main-site-link:focus-visible,
+.akl-brand:focus-visible,
+.akl-button:focus-visible,
+.akl-gallery-button:focus-visible,
+.akl-surface-tab:focus-visible,
+.akl-mobile-toggle:focus-visible,
+.akl-mobile-nav a:focus-visible,
+.akl-hero-github:focus-visible,
+.akl-get-started-link:focus-visible,
+.akl-faq summary:focus-visible,
+.akl-lang-toggle:focus-visible,
+.akl-theme-toggle:focus-visible {
+  outline: 0.5px solid var(--akl-accent);
+  outline-offset: 4px;
+}

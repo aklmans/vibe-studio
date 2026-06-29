@@ -138,8 +138,7 @@ export interface LandingContent {
   mainSiteLabel: string;
   menuLabel: string;
   langToggleLabel: string;
-  themeToggleToLightLabel: string;
-  themeToggleToDarkLabel: string;
+  themeToggleLabel: string;
 
   // Hero
   wordmark: string;
@@ -176,11 +175,6 @@ export interface LandingContent {
   galleryPrevLabel: string;
   galleryNextLabel: string;
 
-  // Workflow
-  workflowEyebrow: string;
-  workflowTitle: string;
-  workflow: ReadonlyArray<{ title: string; copy: string }>;
-
   // Agent section
   agentEyebrow: string;
   agentTitle: string;
@@ -215,28 +209,29 @@ export interface LandingContent {
 const enContent: LandingContent = {
   brand: "Aklman",
   nav: [
-    { label: "Product", href: "#product" },
-    { label: "Surfaces", href: "#surfaces" },
-    { label: "Workflow", href: "#workflow" },
+    { label: "Features", href: "#features" },
+    { label: "Studio system", href: "#surfaces" },
+    { label: "Agent", href: "#agent" },
+    { label: "Get started", href: "#get-started" },
     { label: "GitHub", href: GITHUB_URL },
   ],
   mobileNav: [
-    { label: "Product", href: "#product" },
-    { label: "Surfaces", href: "#surfaces" },
-    { label: "Workflow", href: "#workflow" },
+    { label: "Features", href: "#features" },
+    { label: "Studio system", href: "#surfaces" },
+    { label: "Agent", href: "#agent" },
+    { label: "Get started", href: "#get-started" },
     { label: "GitHub", href: GITHUB_URL },
     { label: "Main site", href: MAIN_SITE_URL },
   ],
   mainSiteLabel: "Main site",
   menuLabel: "Menu",
   langToggleLabel: "中文",
-  themeToggleToLightLabel: "Switch to light theme",
-  themeToggleToDarkLabel: "Switch to dark theme",
+  themeToggleLabel: "Light theme",
 
   wordmark: "Vibe Coding Live",
   eyebrow: "Editorial broadcast workbench",
   h1: "AI-prepared broadcast graphics for coding streams",
-  lede: "Describe the session. Review the config. Let OBS own the real capture while Vibe Coding Live renders the editorial frame and export kit.",
+  lede: "A calm, editorial workbench for coding livestreams. AI prepares the session config, you review it, OBS keeps the real capture.",
   tryDemo: "Try Demo",
   openStudio: "Open Studio",
   copyAgentPrompt: "Copy Agent Setup Prompt",
@@ -256,7 +251,7 @@ const enContent: LandingContent = {
   showcaseLabel: "overlay · 1920×1080",
 
   featuresEyebrow: "Features",
-  featuresTitle: "What could you do with Vibe Coding Live?",
+  featuresTitle: "Three pillars of a Vibe Studio session",
   features: [
     {
       title: "Live Overlay Builder",
@@ -274,7 +269,7 @@ const enContent: LandingContent = {
 
   surfacesEyebrow: "Studio system",
   surfacesTitle: "From one idea to a broadcast-ready live studio",
-  surfacesIntro: "Describe the session once. Review the AI proposal. Let OBS own the real capture while Vibe Coding Live renders the editorial frame, metadata and export kit.",
+  surfacesIntro: "One session config flows through every layer: the agent draft, the JSON review, the OBS browser sources, and the export kit.",
   surfacesAriaLabel: "Live studio system",
   surfacePanelEyebrow: "Studio layer",
   surfaceCards: [
@@ -349,27 +344,6 @@ const enContent: LandingContent = {
   galleryControlsLabel: "Export asset controls",
   galleryPrevLabel: "Previous export asset",
   galleryNextLabel: "Next export asset",
-
-  workflowEyebrow: "Workflow",
-  workflowTitle: "From session prep to OBS, in four steps",
-  workflow: [
-    {
-      title: "Describe the session",
-      copy: "Write a short brief or ask the agent to draft one. The agent proposes a config; nothing is applied yet.",
-    },
-    {
-      title: "Review the config",
-      copy: "Open the proposal in the JSON review drawer. Inspect the diff, then Apply — or discard. You stay in control.",
-    },
-    {
-      title: "Connect OBS sources",
-      copy: "Add overlay, sidebar and bottom bar as browser sources. OBS or Livehime keeps the real screen capture underneath.",
-    },
-    {
-      title: "Export the kit",
-      copy: "Export the overlay, cover, poster and wallpaper set. Run Export All for the public kit from one state.",
-    },
-  ],
 
   agentEyebrow: "Agent-assisted session prep",
   agentTitle: "AI prepares. You review. OBS renders.",
@@ -526,28 +500,29 @@ Keep it under 300 words.`,
 const zhContent: LandingContent = {
   brand: "Aklman",
   nav: [
-    { label: "产品", href: "#product" },
-    { label: "能力", href: "#surfaces" },
-    { label: "流程", href: "#workflow" },
+    { label: "功能", href: "#features" },
+    { label: "工作室系统", href: "#surfaces" },
+    { label: "Agent", href: "#agent" },
+    { label: "开始使用", href: "#get-started" },
     { label: "GitHub", href: GITHUB_URL },
   ],
   mobileNav: [
-    { label: "产品", href: "#product" },
-    { label: "能力", href: "#surfaces" },
-    { label: "流程", href: "#workflow" },
+    { label: "功能", href: "#features" },
+    { label: "工作室系统", href: "#surfaces" },
+    { label: "Agent", href: "#agent" },
+    { label: "开始使用", href: "#get-started" },
     { label: "GitHub", href: GITHUB_URL },
     { label: "主站", href: MAIN_SITE_URL },
   ],
   mainSiteLabel: "主站",
   menuLabel: "菜单",
   langToggleLabel: "EN",
-  themeToggleToLightLabel: "切换到浅色主题",
-  themeToggleToDarkLabel: "切换到深色主题",
+  themeToggleLabel: "浅色主题",
 
   wordmark: "Vibe Coding Live",
   eyebrow: "编辑式直播图形工作台",
   h1: "面向编程直播的 AI 直播图形",
-  lede: "描述直播内容，审阅配置，让 OBS 掌控真实画面，Vibe Coding Live 负责编辑式框架与导出套装。",
+  lede: "一个面向编程直播的安静编辑式工作台。AI 准备 session 配置，你审阅，OBS 掌控真实画面。",
   tryDemo: "体验 Demo",
   openStudio: "打开 Studio",
   copyAgentPrompt: "复制 Agent 配置提示词",
@@ -567,7 +542,7 @@ const zhContent: LandingContent = {
   showcaseLabel: "合成画面 · 1920×1080",
 
   featuresEyebrow: "功能",
-  featuresTitle: "用 Vibe Coding Live 能做什么？",
+  featuresTitle: "Vibe Studio 直播场次的三块基石",
   features: [
     {
       title: "直播合成画面构建器",
@@ -585,7 +560,7 @@ const zhContent: LandingContent = {
 
   surfacesEyebrow: "工作室系统",
   surfacesTitle: "从一句话到可直播的完整工作台",
-  surfacesIntro: "描述直播内容，审阅 AI 提案，让 OBS 掌控真实画面，Vibe Coding Live 渲染编辑式框架、元数据与导出套装。",
+  surfacesIntro: "一份 session config 贯穿每一层：Agent 草稿、JSON 审阅、OBS 浏览器源、导出套装。",
   surfacesAriaLabel: "直播工作室系统",
   surfacePanelEyebrow: "工作台层级",
   surfaceCards: [
@@ -660,27 +635,6 @@ const zhContent: LandingContent = {
   galleryControlsLabel: "导出资产控制",
   galleryPrevLabel: "上一张导出资产",
   galleryNextLabel: "下一张导出资产",
-
-  workflowEyebrow: "流程",
-  workflowTitle: "从准备到 OBS，四步完成",
-  workflow: [
-    {
-      title: "描述直播",
-      copy: "写一段简短描述，或让 Agent 起草。Agent 提出配置，此时不应用任何内容。",
-    },
-    {
-      title: "审阅配置",
-      copy: "在 JSON 审阅抽屉中打开提案，检查 diff，然后 Apply 或丢弃。你始终掌控。",
-    },
-    {
-      title: "连接 OBS",
-      copy: "将合成画面、侧栏与底栏添加为浏览器源。OBS 或直播姬保留底层真实屏幕捕获。",
-    },
-    {
-      title: "导出套装",
-      copy: "导出合成画面、封面、海报与壁纸。Export All 从同一状态导出完整公开套装。",
-    },
-  ],
 
   agentEyebrow: "Agent 辅助直播准备",
   agentTitle: "AI 准备 · 人工审阅 · OBS 渲染",

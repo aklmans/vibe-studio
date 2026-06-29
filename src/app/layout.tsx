@@ -16,9 +16,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL;
  * Studio CSS only responds to `data-appearance`.
  *
  * The locale boot script also sets <html lang> so screen readers and search
- * engines see the correct language immediately. LandingProvider renders the
- * same default content as the server for hydration safety, then reconciles
- * these boot attributes in an effect.
+ * engines see the correct language immediately. The server component
+ * (page.tsx) reads the `vibe-landing-locale` cookie for SSR so the React tree
+ * is rendered in the correct locale from the start — no English flash for zh
+ * users. LandingProvider initialises locale from that server-provided prop,
+ * then reconciles the boot-script-set attribute in an effect for the rare
+ * case where cookie and localStorage disagree.
  */
 function getLandingBootScript(): string {
   const themeKey = JSON.stringify(LANDING_THEME_KEY);

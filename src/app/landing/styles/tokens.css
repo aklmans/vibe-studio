@@ -1,0 +1,90 @@
+/* Landing page design tokens — dark (default) + light theme overrides.
+   The boot script in layout.tsx sets data-landing-theme on <html> before
+   hydration so the correct palette is applied with no flash. React also
+   mirrors the attribute on <main class="akl-page"> via LandingProvider. */
+
+.akl-page {
+  --akl-fixed-header-height: 88px;
+  --akl-anchor-offset: calc(var(--akl-fixed-header-height) + 16px);
+  --akl-surface-media-ratio: 16 / 9;
+
+  /* Dark theme (default) */
+  --akl-border: #3a3832;
+  --akl-border-subtle: #2f2d29;
+  --akl-bg: #1a1a1a;
+  --akl-surface: #20201e;
+  --akl-text: #fafafa;
+  --akl-text-muted: #9b958d;
+  --akl-text-subtle: #7e776e;
+  --akl-accent: #e8835b;
+  --akl-paper: #f4efe6;
+  --akl-paper-ink: #161513;
+  --akl-page-color: #f4efe6;
+  --akl-header-bg: color-mix(in srgb, #1a1a1a 92%, transparent);
+  --akl-mobile-nav-bg: color-mix(in srgb, #1a1a1a 96%, transparent);
+  --akl-product-bg: #171615;
+  --akl-window-bg: #25231f;
+  --akl-window-dot: #70695e;
+  --akl-window-label: #8b847a;
+  --akl-preview-bg: #151413;
+  --akl-gallery-label-bg: color-mix(in srgb, #1a1a1a 85%, transparent);
+  --akl-prompt-bg: #151413;
+  --akl-prompt-text: #d8d0c4;
+  --akl-hero-note-link: #aaa49b;
+  --akl-hero-note-border: #4a463d;
+}
+
+/* Light theme */
+.akl-page[data-landing-theme="light"],
+[data-landing-theme="light"] .akl-page {
+  --akl-border: #c6c0b6;
+  --akl-border-subtle: #d8d2c8;
+  --akl-bg: #f7f4ee;
+  --akl-surface: #eee8dd;
+  --akl-text: #1a1a1a;
+  --akl-text-muted: #55514b;
+  --akl-text-subtle: #857f74;
+  --akl-accent: #c95f3d;
+  --akl-paper: #1a1a1a;
+  --akl-paper-ink: #f7f4ee;
+  --akl-page-color: #1a1a1a;
+  --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
+  --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
+  --akl-product-bg: #e8e2d6;
+  --akl-window-bg: #e0d9cc;
+  --akl-window-dot: #a99f91;
+  --akl-window-label: #857f74;
+  --akl-preview-bg: #e8e2d6;
+  --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
+  --akl-prompt-bg: #f2ede4;
+  --akl-prompt-text: #403c36;
+  --akl-hero-note-link: #6c665e;
+  --akl-hero-note-border: #c6c0b6;
+}
+
+/* Fallback: when data-landing-theme is set on <html>, not .akl-page */
+[data-landing-theme="light"] {
+  --akl-border: #c6c0b6;
+  --akl-border-subtle: #d8d2c8;
+  --akl-bg: #f7f4ee;
+  --akl-surface: #eee8dd;
+  --akl-text: #1a1a1a;
+  --akl-text-muted: #55514b;
+  --akl-text-subtle: #857f74;
+  --akl-accent: #c95f3d;
+  --akl-paper: #1a1a1a;
+  --akl-paper-ink: #f7f4ee;
+  --akl-page-color: #1a1a1a;
+  --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
+  --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
+  --akl-product-bg: #e8e2d6;
+  --akl-window-bg: #e0d9cc;
+  --akl-window-dot: #a99f91;
+  --akl-window-label: #857f74;
+  --akl-preview-bg: #e8e2d6;
+  --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
+  --akl-prompt-bg: #f2ede4;
+  --akl-prompt-text: #403c36;
+  --akl-hero-note-link: #6c665e;
+  --akl-hero-note-border: #c6c0b6;
+}

@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { Locale } from "../../lib/i18n";
 import {
-  DEFAULT_LOCALE,
   getLandingContent,
   LANDING_LOCALE_KEY,
   LANDING_THEME_KEY,
@@ -28,42 +27,48 @@ export function useLanding(): LandingContextValue {
 }
 
 interface LandingProviderProps {
+  initialLocale: Locale;
   children: (value: LandingContextValue) => React.ReactNode;
 }
 
 /**
  * Manages landing page locale (zh/en) and theme (dark/light) state.
  *
- * Persistence:
- * - `vibe-landing-locale` in localStorage — "zh" or "en"
- * - `vibe-landing-theme` in localStorage — "dark" or "light"
+ * Locale is initialised from a server-read cookie (via page.tsx) so that the
+ * SSR HTML matches the user's preferred language — no English flash for zh
+ * users on refresh. After hydration, the boot-script-set `data-landing-locale`
+ * attribute (from localStorage) is checked as a fallback for the rare case
+ * where cookie and localStorage disagree. When the user toggles locale, both
+ * localStorage and a cookie are written so the next SSR render is correct.
  *
- * These keys are deliberately separate from the Studio's `vibe-overlay-state`
- * key. Landing preferences never leak into OverlayState, and Studio settings
- * never affect the landing page. If the user switches theme in the Studio, the
- * landing page keeps its own preference.
+ * Theme is initialised from the default "dark" and reconciled with the
+ * boot-script-set `data-landing-theme` attribute in an effect. Theme does not
+ * need a cookie because CSS variables are applied by the browser immediately
+ * from the `<html data-landing-theme>` attribute set before hydration — there
+ * is no visual flash for theme.
  *
- * Theme is applied via `data-landing-theme` on `<html>`. Locale is applied via
- * `data-landing-locale` + `<html lang>`. A boot script in layout.tsx sets
- * both before hydration for CSS / language metadata. The provider deliberately
- * hydrates from the same defaults as the server, then reconciles those boot
- * attributes in an effect; reading document in the first client render would
- * make persisted zh/light sessions mismatch the server-rendered tree.
+ * Persistence keys are deliberately separate from the Studio's
+ * `vibe-overlay-state` key so landing preferences never leak into OverlayState.
  */
-export default function LandingProvider({ children }: LandingProviderProps) {
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+export default function LandingProvider({ children, initialLocale }: LandingProviderProps) {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
   const [theme, setTheme] = useState<LandingTheme>("dark");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
-    const localeAttr = root.getAttribute("data-landing-locale");
     const themeAttr = root.getAttribute("data-landing-theme");
-
-    if (localeAttr === "zh" || localeAttr === "en") setLocale(localeAttr);
     if (themeAttr === "dark" || themeAttr === "light") setTheme(themeAttr);
+
+    // Check if localStorage locale (via boot script) differs from the cookie
+    // value used for SSR. In the normal case they agree and no update fires.
+    const localeAttr = root.getAttribute("data-landing-locale");
+    if ((localeAttr === "zh" || localeAttr === "en") && localeAttr !== initialLocale) {
+      setLocale(localeAttr);
+    }
+
     setHydrated(true);
-  }, []);
+  }, [initialLocale]);
 
   // Sync theme to <html data-landing-theme> + persist.
   useEffect(() => {
@@ -77,7 +82,7 @@ export default function LandingProvider({ children }: LandingProviderProps) {
     }
   }, [theme, hydrated]);
 
-  // Sync locale to <html lang> + <html data-landing-locale> + persist.
+  // Sync locale to <html lang> + <html data-landing-locale> + localStorage + cookie.
   useEffect(() => {
     if (!hydrated) return;
     const root = document.documentElement;
@@ -88,6 +93,9 @@ export default function LandingProvider({ children }: LandingProviderProps) {
     } catch {
       // ignore
     }
+    // Write a cookie so the server component (page.tsx) can read the locale
+    // on the next request and render the correct language in SSR HTML.
+    document.cookie = `${LANDING_LOCALE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
   }, [locale, hydrated]);
 
   const toggleLocale = useCallback(() => {

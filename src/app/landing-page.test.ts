@@ -5,11 +5,13 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import Page from "./page";
+import LandingPageClient from "./landing/LandingPageClient";
 import { getLandingContent, imageSrcForTheme } from "./landing/content";
+import type { Locale } from "../lib/i18n";
 import type { SurfaceGalleryImage } from "./landing/content";
 
 const PAGE_SRC = readFileSync(resolve("src/app/page.tsx"), "utf8");
+const CLIENT_SRC = readFileSync(resolve("src/app/landing/LandingPageClient.tsx"), "utf8");
 const CONTENT_SRC = readFileSync(resolve("src/app/landing/content.ts"), "utf8");
 const PROVIDER_SRC = readFileSync(resolve("src/app/landing/LandingProvider.tsx"), "utf8");
 const SURFACES_TABS_SRC = readFileSync(resolve("src/app/landing/SurfacesTabs.tsx"), "utf8");
@@ -19,6 +21,22 @@ const CLIENT_PAGE_SRC = readFileSync(resolve("src/app/client-page.tsx"), "utf8")
 const DEMO_PAGE_PATH = resolve("src/app/demo/page.tsx");
 const STUDIO_PAGE_PATH = resolve("src/app/studio/page.tsx");
 const SKILL_MD_PATH = resolve("public/skill.md");
+
+// CSS files — landing styles are split into per-section files under styles/.
+const LANDING_CSS_DIR = "src/app/landing/styles";
+const TOKENS_CSS = readFileSync(resolve(LANDING_CSS_DIR, "tokens.css"), "utf8");
+const BASE_CSS = readFileSync(resolve(LANDING_CSS_DIR, "base.css"), "utf8");
+const HEADER_CSS = readFileSync(resolve(LANDING_CSS_DIR, "header.css"), "utf8");
+const SURFACES_CSS = readFileSync(resolve(LANDING_CSS_DIR, "surfaces.css"), "utf8");
+const FAQ_CSS = readFileSync(resolve(LANDING_CSS_DIR, "faq.css"), "utf8");
+const RESPONSIVE_CSS = readFileSync(resolve(LANDING_CSS_DIR, "responsive.css"), "utf8");
+const LANDING_CSS_ENTRY = readFileSync(resolve(LANDING_CSS_DIR, "landing.css"), "utf8");
+
+function renderLanding(locale: Locale = "en"): string {
+  return renderToStaticMarkup(
+    React.createElement(LandingPageClient, { initialLocale: locale }),
+  );
+}
 const PRODUCT_ASSETS = [
   "public/product/vibe-coding-overlay-dark.png",
   "public/product/vibe-coding-overlay-light.png",
@@ -37,7 +55,7 @@ const PRODUCT_ASSETS = [
 ];
 
 test("root route is a product landing page with public navigation and real export imagery", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /data-testid="landing-page"/);
   assert.match(html, /data-testid="landing-site-header"/);
@@ -46,13 +64,15 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /Aklman/);
   assert.match(html, /Vibe Coding Live/);
 
-  // Desktop nav stays light: product anchors + GitHub only.
+  // Desktop nav: section anchors + GitHub, no Workflow.
   assert.match(html, /data-testid="landing-desktop-nav"/);
-  assert.match(html, /href="#product"/);
+  assert.match(html, /href="#features"/);
   assert.match(html, /href="#surfaces"/);
-  assert.match(html, /href="#workflow"/);
+  assert.match(html, /href="#agent"/);
+  assert.match(html, /href="#get-started"/);
   assert.match(html, /href="https:\/\/github\.com\/aklmans\/vibe-studio"/);
   assert.match(html, /Main site/);
+  assert.doesNotMatch(html, /href="#workflow"/);
   assert.doesNotMatch(html, /https:\/\/github\.com\/aklmans\/Vibe-Coding-Live/);
 
   // Main-site entries must not carry main-site blog nav labels.
@@ -110,31 +130,43 @@ test("root route is a product landing page with public navigation and real expor
   // link is the sole aklman.com exit).
   assert.match(html, /class="akl-brand"[^>]*href="\/"/);
 
-  // Theme toggle exposes current state via aria-pressed and a directional
-  // aria-label so screen readers know which way the toggle will go.
+  // Theme toggle uses stable aria-label + aria-pressed (standard toggle
+  // button semantics). Screen readers announce "Light theme, toggle button,
+  // pressed/not pressed".
   assert.match(html, /aria-pressed=/);
-  assert.match(PAGE_SRC, /aria-pressed=\{theme === "light"\}/);
-  assert.match(PAGE_SRC, /themeToggleToLightLabel/);
-  assert.match(PAGE_SRC, /themeToggleToDarkLabel/);
+  assert.match(CLIENT_SRC, /aria-pressed=\{theme === "light"\}/);
+  assert.match(CLIENT_SRC, /themeToggleLabel/);
 
   // Mobile menu is present.
   assert.match(html, /data-testid="landing-mobile-menu"/);
   assert.match(html, /akl-mobile-nav/);
 
-  // Header is fixed, nav has underline hover.
-  assert.match(PAGE_SRC, /\.akl-site-header\s*{[^}]*position: fixed/s);
-  assert.match(PAGE_SRC, /\.akl-site-nav a::after/);
+  // Header is fixed, nav has underline hover — CSS is in header.css.
+  assert.match(HEADER_CSS, /\.akl-site-header\s*{[^}]*position: fixed/s);
+  assert.match(HEADER_CSS, /\.akl-site-nav a::after/);
 
   // Anchor offset prevents fixed header from covering section headings.
-  assert.match(PAGE_SRC, /scroll-margin-top/);
+  assert.match(BASE_CSS, /scroll-margin-top/);
 
-  // Surface tabs use one consistent media frame.
-  assert.match(PAGE_SRC, /--akl-surface-media-ratio: 16 \/ 9/);
+  // Surface tabs use one consistent media frame — tokens in tokens.css.
+  assert.match(TOKENS_CSS, /--akl-surface-media-ratio: 16 \/ 9/);
 
-  // Landing is now a client component (uses LandingProvider), but must not
-  // import the Studio builder (ClientPage / OverlayBuilderApp).
-  assert.doesNotMatch(PAGE_SRC, /import.*ClientPage/);
-  assert.doesNotMatch(PAGE_SRC, /import.*OverlayBuilderApp/);
+  // CSS is imported from external files in the server component, not inline
+  // in the client component.
+  assert.match(PAGE_SRC, /import.*styles\/landing\.css/);
+  assert.doesNotMatch(CLIENT_SRC, /<style/);
+  assert.doesNotMatch(CLIENT_SRC, /landingCss/);
+
+  // page.tsx is a server component that reads the locale cookie and passes
+  // it to the client component. It must not contain JSX markup.
+  assert.match(PAGE_SRC, /import.*cookies.*from.*next\/headers/);
+  assert.match(PAGE_SRC, /LANDING_LOCALE_KEY/);
+  assert.match(PAGE_SRC, /initialLocale/);
+  assert.match(PAGE_SRC, /LandingPageClient/);
+
+  // Landing must not import the Studio builder (ClientPage / OverlayBuilderApp).
+  assert.doesNotMatch(CLIENT_SRC, /import.*ClientPage/);
+  assert.doesNotMatch(CLIENT_SRC, /import.*OverlayBuilderApp/);
 });
 
 test("landing page has bilingual zh/en content source", () => {
@@ -150,19 +182,20 @@ test("landing page has bilingual zh/en content source", () => {
   // Chinese content has a proper Chinese hero, not a machine translation.
   assert.match(CONTENT_SRC, /面向编程直播的 AI 直播图形/);
 
-  // Both locales have the full set of sections.
+  // Both locales have the full set of sections (Workflow section removed).
   assert.match(CONTENT_SRC, /featuresEyebrow/);
   assert.match(CONTENT_SRC, /surfacesEyebrow/);
-  assert.match(CONTENT_SRC, /workflowEyebrow/);
   assert.match(CONTENT_SRC, /agentEyebrow/);
   assert.match(CONTENT_SRC, /getStartedEyebrow/);
   assert.match(CONTENT_SRC, /faqTitle/);
   assert.match(CONTENT_SRC, /footerBrand/);
+  assert.doesNotMatch(CONTENT_SRC, /workflowEyebrow/);
+  assert.doesNotMatch(CONTENT_SRC, /workflowTitle/);
 
   // Chinese nav labels are proper Chinese, not English.
-  assert.match(CONTENT_SRC, /产品/);
-  assert.match(CONTENT_SRC, /能力/);
-  assert.match(CONTENT_SRC, /流程/);
+  assert.match(CONTENT_SRC, /功能/);
+  assert.match(CONTENT_SRC, /工作室系统/);
+  assert.match(CONTENT_SRC, /开始使用/);
 
   // Chinese FAQ has real questions in Chinese.
   assert.match(CONTENT_SRC, /Vibe Studio 是什么/);
@@ -196,11 +229,12 @@ test("landing page has bilingual zh/en content source", () => {
   assert.match(CONTENT_SRC, /上一张导出资产/);
   assert.match(CONTENT_SRC, /下一张导出资产/);
 
-  // Theme toggle labels are bilingual and directional.
-  assert.match(CONTENT_SRC, /Switch to light theme/);
-  assert.match(CONTENT_SRC, /Switch to dark theme/);
-  assert.match(CONTENT_SRC, /切换到浅色主题/);
-  assert.match(CONTENT_SRC, /切换到深色主题/);
+  // Theme toggle uses a stable label (not directional) + aria-pressed.
+  assert.match(CONTENT_SRC, /themeToggleLabel/);
+  assert.match(CONTENT_SRC, /Light theme/);
+  assert.match(CONTENT_SRC, /浅色主题/);
+  assert.doesNotMatch(CONTENT_SRC, /themeToggleToLightLabel/);
+  assert.doesNotMatch(CONTENT_SRC, /themeToggleToDarkLabel/);
 
   // Chinese showcase label is in Chinese, not English "overlay".
   assert.match(CONTENT_SRC, /showcaseLabel: "合成画面 · 1920×1080"/);
@@ -258,7 +292,7 @@ test("landing product imagery switches between dark and light screenshots", () =
   );
 });
 
-test("LandingProvider manages locale and theme with localStorage persistence", () => {
+test("LandingProvider manages locale and theme with localStorage + cookie persistence", () => {
   // Provider is a client component.
   assert.match(PROVIDER_SRC, /^['"]use client['"]/m);
 
@@ -267,8 +301,11 @@ test("LandingProvider manages locale and theme with localStorage persistence", (
   assert.match(PROVIDER_SRC, /export default function LandingProvider/);
 
   // Persistence keys are separate from Studio's overlay-state.
-  assert.match(PROVIDER_SRC, /vibe-landing-locale/);
-  assert.match(PROVIDER_SRC, /vibe-landing-theme/);
+  // The literal strings live in content.ts; LandingProvider imports the constants.
+  assert.match(CONTENT_SRC, /vibe-landing-locale/);
+  assert.match(CONTENT_SRC, /vibe-landing-theme/);
+  assert.match(PROVIDER_SRC, /LANDING_LOCALE_KEY/);
+  assert.match(PROVIDER_SRC, /LANDING_THEME_KEY/);
 
   // Toggle functions exist.
   assert.match(PROVIDER_SRC, /toggleLocale/);
@@ -281,15 +318,20 @@ test("LandingProvider manages locale and theme with localStorage persistence", (
   assert.match(PROVIDER_SRC, /setAttribute\("lang"/);
   assert.match(PROVIDER_SRC, /data-landing-locale/);
 
-  // Provider hydrates from the same defaults as the server, then reconciles
-  // boot-script-set attributes after hydration. Reading document in a lazy
-  // useState initializer would make persisted zh/light pages mismatch SSR.
-  assert.match(PROVIDER_SRC, /useState<Locale>\(DEFAULT_LOCALE\)/);
-  assert.match(PROVIDER_SRC, /useState<LandingTheme>\("dark"\)/);
+  // Provider accepts initialLocale from the server component (cookie-based
+  // SSR) and uses it as the initial state — no English flash for zh users.
+  assert.match(PROVIDER_SRC, /initialLocale/);
+  assert.match(PROVIDER_SRC, /useState<Locale>\(initialLocale\)/);
+
+  // Provider writes a cookie on locale change so the next SSR render is
+  // correct. This is the key mechanism that prevents the locale flash.
+  assert.match(PROVIDER_SRC, /document\.cookie/);
+  assert.match(PROVIDER_SRC, /LANDING_LOCALE_KEY/);
+
+  // Provider still reads boot-script-set attributes after hydration for the
+  // rare case where cookie and localStorage disagree.
   assert.match(PROVIDER_SRC, /getAttribute\("data-landing-locale"\)/);
   assert.match(PROVIDER_SRC, /getAttribute\("data-landing-theme"\)/);
-  assert.doesNotMatch(PROVIDER_SRC, /useState<Locale>\(\(\) =>/);
-  assert.doesNotMatch(PROVIDER_SRC, /useState<LandingTheme>\(\(\) =>/);
 
   // The provider renders children via a render prop (so page.tsx can access
   // the context value without wrapping each section in a consumer).
@@ -297,14 +339,20 @@ test("LandingProvider manages locale and theme with localStorage persistence", (
 });
 
 test("landing CSS supports dark and light themes via data-landing-theme", () => {
-  // Dark theme tokens are the default.
-  assert.match(PAGE_SRC, /--akl-bg: #1a1a1a/);
-  assert.match(PAGE_SRC, /--akl-accent: #e8835b/);
+  // Dark theme tokens are the default — in tokens.css.
+  assert.match(TOKENS_CSS, /--akl-bg: #1a1a1a/);
+  assert.match(TOKENS_CSS, /--akl-accent: #e8835b/);
 
   // Light theme tokens are defined under data-landing-theme="light".
-  assert.match(PAGE_SRC, /\[data-landing-theme="light"\]/);
-  assert.match(PAGE_SRC, /--akl-bg: #f7f4ee/);
-  assert.match(PAGE_SRC, /--akl-accent: #c95f3d/);
+  assert.match(TOKENS_CSS, /\[data-landing-theme="light"\]/);
+  assert.match(TOKENS_CSS, /--akl-bg: #f7f4ee/);
+  assert.match(TOKENS_CSS, /--akl-accent: #c95f3d/);
+
+  // CSS is split into per-section files, aggregated by landing.css.
+  assert.match(LANDING_CSS_ENTRY, /@import "\.\/tokens\.css"/);
+  assert.match(LANDING_CSS_ENTRY, /@import "\.\/header\.css"/);
+  assert.match(LANDING_CSS_ENTRY, /@import "\.\/surfaces\.css"/);
+  assert.match(LANDING_CSS_ENTRY, /@import "\.\/responsive\.css"/);
 
   // Layout.tsx has a boot script that sets data-landing-theme AND
   // data-landing-locale before hydration to prevent theme/locale flash.
@@ -318,7 +366,7 @@ test("landing CSS supports dark and light themes via data-landing-theme", () => 
 });
 
 test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /role="tablist"/);
   assert.match(html, /role="tab"/);
@@ -356,11 +404,10 @@ test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
 });
 
 test("Surfaces section tells the broadcast workflow story, not an asset list", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /From one idea to a broadcast-ready live studio/);
-  assert.match(html, /Describe the session once/);
-  assert.match(html, /Let OBS own the real capture/);
+  assert.match(html, /One session config flows through every layer/);
   assert.match(html, /Studio system/);
 
   assert.match(html, /Prepare with Agent/);
@@ -401,11 +448,11 @@ test("Surfaces section tells the broadcast workflow story, not an asset list", (
   assert.match(html, /Cover · 1280×720/);
   assert.match(html, /Poster · 1920×1080/);
   assert.match(html, /Wallpaper · 3840×2160/);
-  assert.match(PAGE_SRC, /\.akl-surface-preview-gallery\s*\{[^}]*overflow:\s*visible;[^}]*aspect-ratio:\s*auto;/s);
+  assert.match(SURFACES_CSS, /\.akl-surface-preview-gallery\s*\{[^}]*overflow:\s*visible;[^}]*aspect-ratio:\s*auto;/s);
 });
 
 test("landing images have width, height, loading, and decoding attributes", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(
     html,
@@ -421,14 +468,14 @@ test("landing images have width, height, loading, and decoding attributes", () =
 });
 
 test("reduced-motion and focus-visible CSS are present", () => {
-  assert.match(PAGE_SRC, /prefers-reduced-motion:\s*reduce/);
-  assert.match(PAGE_SRC, /\.akl-faq summary:focus-visible/);
-  assert.match(PAGE_SRC, /\.akl-faq-indicator/);
-  assert.doesNotMatch(PAGE_SRC, /float:\s*right/);
+  assert.match(RESPONSIVE_CSS, /prefers-reduced-motion:\s*reduce/);
+  assert.match(FAQ_CSS, /\.akl-faq summary:focus-visible/);
+  assert.match(FAQ_CSS, /\.akl-faq-indicator/);
+  assert.doesNotMatch(BASE_CSS, /float:\s*right/);
 });
 
 test("the AI / Agent section tells the three-step product story and safety claims", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /id="agent"/);
   assert.match(html, /data-testid="landing-agent-flow"/);
@@ -442,18 +489,12 @@ test("the AI / Agent section tells the three-step product story and safety claim
   assert.match(html, /never auto-applied/i);
   assert.match(html, /API key stays on the server/i);
 
-  assert.match(html, /Describe the session/);
-  assert.match(html, /Review the config/);
-  assert.match(html, /Connect OBS sources/);
-  assert.match(html, /Export the kit/);
   assert.match(html, /review.*Apply/i);
   assert.match(html, /browser sources/i);
-
-  assert.match(html, /From session prep to OBS, in four steps/);
 });
 
 test("Get Started is an agent-ready handoff with dual-mode panel", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /Start with an agent-ready handoff\./i);
   assert.match(html, /id="get-started"/);
@@ -552,12 +593,12 @@ test("Agent handoff prompts route agents through /skill.md and keep secrets serv
   // Hero copy button is handled entirely by React (closure + clipboard API).
   // No inline <script>, no dangerouslySetInnerHTML, and no dead data-*
   // attributes that used to feed the old inline script.
-  assert.match(PAGE_SRC, /onClick=\{copyHeroPrompt\}/);
-  assert.doesNotMatch(PAGE_SRC, /data-prompt=/);
-  assert.doesNotMatch(PAGE_SRC, /data-copied-label=/);
-  assert.doesNotMatch(PAGE_SRC, /data-failed-label=/);
-  assert.doesNotMatch(PAGE_SRC, /<script/);
-  assert.doesNotMatch(PAGE_SRC, /dangerouslySetInnerHTML/);
+  assert.match(CLIENT_SRC, /onClick=\{copyHeroPrompt\}/);
+  assert.doesNotMatch(CLIENT_SRC, /data-prompt=/);
+  assert.doesNotMatch(CLIENT_SRC, /data-copied-label=/);
+  assert.doesNotMatch(CLIENT_SRC, /data-failed-label=/);
+  assert.doesNotMatch(CLIENT_SRC, /<script/);
+  assert.doesNotMatch(CLIENT_SRC, /dangerouslySetInnerHTML/);
   assert.match(HANDOFF_SRC, /currentPrompt/);
   assert.match(CONTENT_SRC, /Copy Agent Setup Prompt/);
   assert.match(CONTENT_SRC, /Read \/skill\.md first\./);
@@ -571,7 +612,7 @@ test("Agent handoff prompts route agents through /skill.md and keep secrets serv
 });
 
 test("FAQ covers AI auto-apply safety plus demo / studio / OBS / export", () => {
-  const html = renderToStaticMarkup(React.createElement(Page));
+  const html = renderLanding("en");
 
   assert.match(html, /What is Vibe Studio\?/i);
   assert.match(html, /Does the AI agent ever auto-apply changes\?/i);

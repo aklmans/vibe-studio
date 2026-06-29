@@ -1,0 +1,86 @@
+/* FAQ section — native <details> accordion. */
+
+.akl-faq {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 88px 32px 112px;
+  text-align: center;
+}
+
+.akl-faq-mark {
+  margin: 0;
+  color: var(--akl-text-muted);
+  font-family: var(--app-font-serif);
+  font-size: 56px;
+  line-height: 1;
+}
+
+.akl-faq-list {
+  margin-top: 52px;
+  border-top: 0.5px solid var(--akl-border-subtle);
+  text-align: left;
+}
+
+.akl-faq details {
+  border-bottom: 0.5px solid var(--akl-border-subtle);
+  padding: 22px 0;
+}
+
+.akl-faq summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  color: var(--akl-text);
+  font-family: var(--app-font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.akl-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.akl-faq-question {
+  flex: 1 1 auto;
+}
+
+.akl-faq-indicator {
+  flex: 0 0 auto;
+  position: relative;
+  width: 14px;
+  height: 14px;
+  margin-top: 4px;
+}
+
+.akl-faq-indicator::before,
+.akl-faq-indicator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1.5px;
+  background: var(--akl-text-subtle);
+  transform: translate(-50%, -50%);
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.akl-faq-indicator::after {
+  width: 1.5px;
+  height: 12px;
+}
+
+.akl-faq details[open] .akl-faq-indicator::after {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.akl-faq summary:hover .akl-faq-indicator::before,
+.akl-faq summary:hover .akl-faq-indicator::after,
+.akl-faq summary:focus-visible .akl-faq-indicator::before,
+.akl-faq summary:focus-visible .akl-faq-indicator::after {
+  background: var(--akl-accent);
+}

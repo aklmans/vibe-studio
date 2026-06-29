@@ -1,0 +1,149 @@
+/* Responsive breakpoints and reduced-motion. */
+
+@media (max-width: 980px) {
+  .akl-site-nav {
+    display: none;
+  }
+
+  .akl-main-site-link {
+    display: none;
+  }
+
+  .akl-mobile-menu {
+    display: block;
+  }
+
+  .akl-hero h1 {
+    font-size: 44px;
+  }
+
+  .akl-split-section,
+  .akl-get-started {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .akl-agent-step {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .akl-surface-kind-wide {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .akl-surface-kind-gallery {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .akl-surface-kind-tall {
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+
+@media (max-width: 720px) {
+  .akl-page {
+    --akl-fixed-header-height: 72px;
+  }
+
+  .akl-shell {
+    padding-inline: 18px;
+  }
+
+  .akl-header-row {
+    min-height: 72px;
+    gap: 12px;
+  }
+
+  .akl-brand {
+    font-size: 24px;
+  }
+
+  .akl-header-actions {
+    gap: 8px;
+  }
+
+  .akl-hero {
+    padding: 56px 18px 44px;
+  }
+
+  .akl-hero h1 {
+    font-size: 32px;
+    line-height: 1.12;
+  }
+
+  .akl-hero-lede {
+    font-size: 17px;
+  }
+
+  .akl-showcase,
+  .akl-section,
+  .akl-faq {
+    padding-inline: 18px;
+  }
+
+  .akl-surface-tablist {
+    width: 100%;
+  }
+
+  .akl-surface-tab {
+    min-height: 42px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  .akl-surface-kind-tall {
+    grid-template-columns: 1fr;
+  }
+
+  .akl-surface-kind-tall .akl-surface-preview {
+    max-width: 240px;
+  }
+
+  .akl-gallery-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .akl-section h2,
+  .akl-get-started-copy h2,
+  .akl-faq h2 {
+    font-size: 32px;
+  }
+
+  .akl-agent-step {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .akl-handoff-prompt-text {
+    font-size: 12px;
+  }
+
+  .akl-handoff-checklist li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .akl-footer-row {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akl-page *,
+  .akl-page *::before,
+  .akl-page *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

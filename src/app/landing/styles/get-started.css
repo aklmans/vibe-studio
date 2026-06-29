@@ -1,0 +1,238 @@
+/* Get started section — agent/human handoff panel. */
+
+.akl-get-started {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 72px;
+  align-items: start;
+}
+
+.akl-handoff {
+  border: 0.5px solid var(--akl-border);
+  border-radius: 2px;
+  background: var(--akl-surface);
+  overflow: hidden;
+}
+
+.akl-handoff-segmented {
+  display: flex;
+  border-bottom: 0.5px solid var(--akl-border-subtle);
+}
+
+.akl-handoff-seg {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--akl-text-muted);
+  font-family: var(--app-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 160ms ease;
+  position: relative;
+}
+
+.akl-handoff-seg[data-selected] {
+  color: var(--akl-text);
+}
+
+.akl-handoff-seg[data-selected]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1.5px;
+  background: var(--akl-accent);
+}
+
+.akl-handoff-seg:hover,
+.akl-handoff-seg:focus-visible {
+  color: var(--akl-accent);
+}
+
+.akl-handoff-seg:focus-visible {
+  outline: 0.5px solid var(--akl-accent);
+  outline-offset: -2px;
+}
+
+.akl-handoff-panel[hidden] {
+  display: none;
+}
+
+.akl-handoff-panel {
+  padding: 24px;
+}
+
+.akl-handoff-tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.akl-handoff-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border: 0.5px solid var(--akl-border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--akl-text-muted);
+  font-family: var(--app-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.akl-handoff-chip[data-selected] {
+  color: var(--akl-text);
+  border-color: var(--akl-accent);
+}
+
+.akl-handoff-chip:hover,
+.akl-handoff-chip:focus-visible {
+  color: var(--akl-accent);
+  border-color: var(--akl-accent);
+}
+
+.akl-handoff-chip:focus-visible {
+  outline: 0.5px solid var(--akl-accent);
+  outline-offset: 2px;
+}
+
+.akl-handoff-prompt {
+  position: relative;
+}
+
+.akl-handoff-prompt-text {
+  margin: 0;
+  padding: 16px;
+  border: 0.5px solid var(--akl-border-subtle);
+  border-radius: 2px;
+  background: var(--akl-prompt-bg);
+  color: var(--akl-prompt-text);
+  font-family: var(--app-font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.akl-handoff-copy {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 0.5px solid var(--akl-border);
+  border-radius: 2px;
+  background: var(--akl-paper);
+  color: var(--akl-paper-ink);
+  font-family: var(--app-font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.akl-handoff-copy:hover,
+.akl-handoff-copy:focus-visible {
+  background: color-mix(in srgb, var(--akl-paper) 85%, var(--akl-accent));
+}
+
+.akl-handoff-copy:focus-visible {
+  outline: 0.5px solid var(--akl-accent);
+  outline-offset: 2px;
+}
+
+.akl-handoff-copy[data-state="copied"] {
+  background: transparent;
+  color: var(--akl-accent);
+  border-color: var(--akl-accent);
+}
+
+.akl-handoff-copy[data-state="failed"] {
+  background: transparent;
+  color: #e07070;
+  border-color: #e07070;
+  font-size: 12px;
+}
+
+.akl-handoff-checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 0.5px solid var(--akl-border-subtle);
+}
+
+.akl-handoff-checklist li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--akl-border-subtle);
+}
+
+.akl-handoff-checklist-label {
+  color: var(--akl-text-muted);
+  font-family: var(--app-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.akl-handoff-checklist-value {
+  color: var(--akl-accent);
+  font-family: var(--app-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+a.akl-handoff-checklist-value:hover,
+a.akl-handoff-checklist-value:focus-visible {
+  color: var(--akl-text);
+}
+
+.akl-get-started-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--akl-text-muted);
+  font-family: var(--app-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border-bottom: 0.5px solid var(--akl-border);
+  padding-bottom: 1px;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.akl-get-started-link:hover,
+.akl-get-started-link:focus-visible {
+  color: var(--akl-accent);
+  border-bottom-color: var(--akl-accent);
+}
