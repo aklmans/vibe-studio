@@ -138,7 +138,8 @@ export interface LandingContent {
   mainSiteLabel: string;
   menuLabel: string;
   langToggleLabel: string;
-  themeToggleLabel: string;
+  themeToggleToLightLabel: string;
+  themeToggleToDarkLabel: string;
 
   // Hero
   wordmark: string;
@@ -170,6 +171,10 @@ export interface LandingContent {
   surfacesAriaLabel: string;
   surfacePanelEyebrow: string;
   surfaceCards: ReadonlyArray<SurfaceCard>;
+  galleryCarouselLabel: string;
+  galleryControlsLabel: string;
+  galleryPrevLabel: string;
+  galleryNextLabel: string;
 
   // Workflow
   workflowEyebrow: string;
@@ -225,7 +230,8 @@ const enContent: LandingContent = {
   mainSiteLabel: "Main site",
   menuLabel: "Menu",
   langToggleLabel: "中文",
-  themeToggleLabel: "Theme",
+  themeToggleToLightLabel: "Switch to light theme",
+  themeToggleToDarkLabel: "Switch to dark theme",
 
   wordmark: "Vibe Coding Live",
   eyebrow: "Editorial broadcast workbench",
@@ -234,7 +240,7 @@ const enContent: LandingContent = {
   tryDemo: "Try Demo",
   openStudio: "Open Studio",
   copyAgentPrompt: "Copy Agent Setup Prompt",
-  heroChips: ["No auto-apply", "Transparent OBS frame", "Overlay / cover / poster / wallpapers"],
+  heroChips: ["AI-prepared", "Human-reviewed", "OBS-rendered"],
   heroNote: "Demo mode is local-only. Private studio at",
   heroStudioLink: "/studio",
   viewGithub: "View on GitHub",
@@ -339,6 +345,10 @@ const enContent: LandingContent = {
       gallery: galleryImagesForLocale("en"),
     },
   ],
+  galleryCarouselLabel: "Export asset carousel",
+  galleryControlsLabel: "Export asset controls",
+  galleryPrevLabel: "Previous export asset",
+  galleryNextLabel: "Next export asset",
 
   workflowEyebrow: "Workflow",
   workflowTitle: "From session prep to OBS, in four steps",
@@ -498,7 +508,7 @@ Keep it under 300 words.`,
     },
     {
       question: "Can I export the whole broadcast kit?",
-      answer: "Yes. The app exports overlay, cover, poster and desktop/mobile wallpaper assets from the same state. Sidebar and bottom-bar sources remain available for OBS workflows, but the public kit focuses on the higher-value shareable assets.",
+      answer: "Yes. Export overlay, cover, poster and desktop/mobile wallpapers from one state. Export All does the whole package in one action.",
     },
     {
       question: "Where is the repo?",
@@ -531,7 +541,8 @@ const zhContent: LandingContent = {
   mainSiteLabel: "主站",
   menuLabel: "菜单",
   langToggleLabel: "EN",
-  themeToggleLabel: "主题",
+  themeToggleToLightLabel: "切换到浅色主题",
+  themeToggleToDarkLabel: "切换到深色主题",
 
   wordmark: "Vibe Coding Live",
   eyebrow: "编辑式直播图形工作台",
@@ -540,7 +551,7 @@ const zhContent: LandingContent = {
   tryDemo: "体验 Demo",
   openStudio: "打开 Studio",
   copyAgentPrompt: "复制 Agent 配置提示词",
-  heroChips: ["不自动应用", "透明 OBS 框架", "合成画面 / 封面 / 海报 / 壁纸"],
+  heroChips: ["AI 准备", "人工审阅", "OBS 渲染"],
   heroNote: "Demo 模式仅限本地。私有工作台地址",
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
@@ -553,7 +564,7 @@ const zhContent: LandingContent = {
     height: 1080,
   },
   showcaseAlt: "Vibe Coding Live 合成画面导出",
-  showcaseLabel: "overlay · 1920×1080",
+  showcaseLabel: "合成画面 · 1920×1080",
 
   featuresEyebrow: "功能",
   featuresTitle: "用 Vibe Coding Live 能做什么？",
@@ -645,6 +656,10 @@ const zhContent: LandingContent = {
       gallery: galleryImagesForLocale("zh"),
     },
   ],
+  galleryCarouselLabel: "导出资产轮播",
+  galleryControlsLabel: "导出资产控制",
+  galleryPrevLabel: "上一张导出资产",
+  galleryNextLabel: "下一张导出资产",
 
   workflowEyebrow: "流程",
   workflowTitle: "从准备到 OBS，四步完成",
@@ -804,7 +819,7 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
     },
     {
       question: "可以导出整套直播套装吗？",
-      answer: "可以。应用从同一状态导出合成画面、封面、海报与桌面/手机壁纸。侧栏与底栏源仍可用于 OBS 流程，但公开套装聚焦更高价值的可分享资产。",
+      answer: "可以。一份状态可导出合成画面、封面、海报以及桌面 / 手机壁纸。Export All 会一次生成整套公开视觉资产。",
     },
     {
       question: "仓库在哪里？",

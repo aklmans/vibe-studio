@@ -9,6 +9,10 @@ interface SurfacesTabsProps {
   tablistLabel: string;
   panelEyebrow: string;
   theme: LandingTheme;
+  galleryCarouselLabel: string;
+  galleryControlsLabel: string;
+  galleryPrevLabel: string;
+  galleryNextLabel: string;
 }
 
 /**
@@ -23,7 +27,16 @@ interface SurfacesTabsProps {
  * Only this component is a client component; the rest of the landing page
  * stays server-rendered.
  */
-export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow, theme }: SurfacesTabsProps) {
+export default function SurfacesTabs({
+  cards,
+  tablistLabel,
+  panelEyebrow,
+  theme,
+  galleryCarouselLabel,
+  galleryControlsLabel,
+  galleryPrevLabel,
+  galleryNextLabel,
+}: SurfacesTabsProps) {
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const baseId = useId();
@@ -111,7 +124,15 @@ export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow, theme 
             >
               <div className={`akl-surface-preview${card.gallery ? " akl-surface-preview-gallery" : ""}`}>
                 {card.gallery ? (
-                  <GalleryCarousel images={card.gallery} baseId={`${baseId}-gallery-${card.id}`} theme={theme} />
+                  <GalleryCarousel
+                    images={card.gallery}
+                    baseId={`${baseId}-gallery-${card.id}`}
+                    theme={theme}
+                    carouselLabel={galleryCarouselLabel}
+                    controlsLabel={galleryControlsLabel}
+                    prevLabel={galleryPrevLabel}
+                    nextLabel={galleryNextLabel}
+                  />
                 ) : card.image ? (
                   <img
                     src={imageSrcForTheme(card.image, theme)}
@@ -145,6 +166,10 @@ interface GalleryCarouselProps {
   images: ReadonlyArray<SurfaceGalleryImage>;
   baseId: string;
   theme: LandingTheme;
+  carouselLabel: string;
+  controlsLabel: string;
+  prevLabel: string;
+  nextLabel: string;
 }
 
 /**
@@ -160,7 +185,7 @@ interface GalleryCarouselProps {
  * - Home/End jump to first/last.
  * - Buttons are real <button> elements with visible focus rings.
  */
-function GalleryCarousel({ images, baseId, theme }: GalleryCarouselProps) {
+function GalleryCarousel({ images, baseId, theme, carouselLabel, controlsLabel, prevLabel, nextLabel }: GalleryCarouselProps) {
   const [current, setCurrent] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const count = images.length;
@@ -211,7 +236,7 @@ function GalleryCarousel({ images, baseId, theme }: GalleryCarouselProps) {
           ref={viewportRef}
           className="akl-gallery-viewport"
           tabIndex={0}
-          aria-label="Export asset carousel"
+          aria-label={carouselLabel}
           onKeyDown={onKeyDown}
         >
           {images.map((img, index) => {
@@ -241,12 +266,12 @@ function GalleryCarousel({ images, baseId, theme }: GalleryCarouselProps) {
           {activeImage.label}
         </p>
       </div>
-      <div className="akl-gallery-controls" aria-label="Export asset controls">
+      <div className="akl-gallery-controls" aria-label={controlsLabel}>
         <button
           type="button"
           id={prevId}
           className="akl-gallery-button akl-gallery-prev"
-          aria-label="Previous export asset"
+          aria-label={prevLabel}
           aria-controls={viewportId}
           onClick={() => goTo(current - 1)}
           disabled={count <= 1}
@@ -262,7 +287,7 @@ function GalleryCarousel({ images, baseId, theme }: GalleryCarouselProps) {
           type="button"
           id={nextId}
           className="akl-gallery-button akl-gallery-next"
-          aria-label="Next export asset"
+          aria-label={nextLabel}
           aria-controls={viewportId}
           onClick={() => goTo(current + 1)}
           disabled={count <= 1}

@@ -213,7 +213,7 @@ SESSION_AGENT_USER_AGENT=Vibe-Studio/SessionConfigAgent
 
 Current example dimensions:
 
-- Cover screen: `1920x1080`
+- Cover screen: `1280x720`
 - Poster: `1920x1080`
 - Full overlay: `1920x1080`
 - Sidebar: `470x760`

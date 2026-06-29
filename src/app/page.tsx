@@ -69,7 +69,7 @@ function LandingPageContent() {
     <>
       <header data-testid="landing-site-header" className="akl-site-header">
         <div className="akl-shell akl-header-row">
-          <a className="akl-brand" href={MAIN_SITE_URL} aria-label={c.mainSiteLabel}>
+          <a className="akl-brand" href="/" aria-label={c.brand}>
             {c.brand}
           </a>
           <nav
@@ -98,7 +98,8 @@ function LandingPageContent() {
               className="akl-theme-toggle"
               data-testid="landing-theme-toggle"
               onClick={toggleTheme}
-              aria-label={c.themeToggleLabel}
+              aria-pressed={theme === "light"}
+              aria-label={theme === "dark" ? c.themeToggleToLightLabel : c.themeToggleToDarkLabel}
             >
               <svg
                 className="akl-theme-icon-dark"
@@ -170,9 +171,6 @@ function LandingPageContent() {
             type="button"
             className="akl-hero-copy-prompt"
             data-testid="landing-hero-copy-prompt"
-            data-prompt={c.agentSetupPrompt}
-            data-copied-label={c.copiedLabel}
-            data-failed-label={c.copyFailedLabel}
             onClick={copyHeroPrompt}
           >
             {copyPromptLabel ?? c.copyAgentPrompt}
@@ -234,6 +232,10 @@ function LandingPageContent() {
           tablistLabel={c.surfacesAriaLabel}
           panelEyebrow={c.surfacePanelEyebrow}
           theme={theme}
+          galleryCarouselLabel={c.galleryCarouselLabel}
+          galleryControlsLabel={c.galleryControlsLabel}
+          galleryPrevLabel={c.galleryPrevLabel}
+          galleryNextLabel={c.galleryNextLabel}
         />
       </section>
 

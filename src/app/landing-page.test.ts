@@ -69,11 +69,11 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /href="\/studio"/);
   assert.match(html, /Copy Agent Setup Prompt/);
   assert.match(html, /data-testid="landing-hero-copy-prompt"/);
-  // Hero proof chips.
+  // Hero proof chips — three-step product claim.
   assert.match(html, /data-testid="landing-hero-chips"/);
-  assert.match(html, /No auto-apply/);
-  assert.match(html, /Transparent OBS frame/);
-  assert.match(html, /Overlay \/ cover \/ poster \/ wallpapers/);
+  assert.match(html, /AI-prepared/);
+  assert.match(html, /Human-reviewed/);
+  assert.match(html, /OBS-rendered/);
 
   // Language and theme toggles exist.
   assert.match(html, /data-testid="landing-lang-toggle"/);
@@ -105,6 +105,17 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /data-surface-kind="wide"/);
   assert.match(html, /akl-surface-kind-gallery/);
   assert.match(html, /data-surface-kind="gallery"/);
+
+  // Brand links back to the landing root, not to the main site (Main site
+  // link is the sole aklman.com exit).
+  assert.match(html, /class="akl-brand"[^>]*href="\/"/);
+
+  // Theme toggle exposes current state via aria-pressed and a directional
+  // aria-label so screen readers know which way the toggle will go.
+  assert.match(html, /aria-pressed=/);
+  assert.match(PAGE_SRC, /aria-pressed=\{theme === "light"\}/);
+  assert.match(PAGE_SRC, /themeToggleToLightLabel/);
+  assert.match(PAGE_SRC, /themeToggleToDarkLabel/);
 
   // Mobile menu is present.
   assert.match(html, /data-testid="landing-mobile-menu"/);
@@ -172,6 +183,32 @@ test("landing page has bilingual zh/en content source", () => {
   assert.match(CONTENT_SRC, /合成画面 · 1920×1080/);
   assert.match(CONTENT_SRC, /封面 · 1280×720/);
   assert.match(CONTENT_SRC, /Vibe Studio 合成画面导出/);
+
+  // Gallery carousel aria-labels are bilingual (en + zh).
+  assert.match(CONTENT_SRC, /galleryCarouselLabel/);
+  assert.match(CONTENT_SRC, /galleryControlsLabel/);
+  assert.match(CONTENT_SRC, /galleryPrevLabel/);
+  assert.match(CONTENT_SRC, /galleryNextLabel/);
+  assert.match(CONTENT_SRC, /Export asset carousel/);
+  assert.match(CONTENT_SRC, /Previous export asset/);
+  assert.match(CONTENT_SRC, /Next export asset/);
+  assert.match(CONTENT_SRC, /导出资产轮播/);
+  assert.match(CONTENT_SRC, /上一张导出资产/);
+  assert.match(CONTENT_SRC, /下一张导出资产/);
+
+  // Theme toggle labels are bilingual and directional.
+  assert.match(CONTENT_SRC, /Switch to light theme/);
+  assert.match(CONTENT_SRC, /Switch to dark theme/);
+  assert.match(CONTENT_SRC, /切换到浅色主题/);
+  assert.match(CONTENT_SRC, /切换到深色主题/);
+
+  // Chinese showcase label is in Chinese, not English "overlay".
+  assert.match(CONTENT_SRC, /showcaseLabel: "合成画面 · 1920×1080"/);
+
+  // FAQ export-kit answer is product-facing, not internal-implementation.
+  assert.match(CONTENT_SRC, /Export All does the whole package in one action/);
+  assert.match(CONTENT_SRC, /Export All 会一次生成整套公开视觉资产/);
+  assert.doesNotMatch(CONTENT_SRC, /Sidebar and bottom-bar sources remain available/);
 });
 
 test("landing product imagery switches between dark and light screenshots", () => {
@@ -303,6 +340,19 @@ test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
   assert.match(SURFACES_TABS_SRC, /tablistLabel/);
   assert.match(SURFACES_TABS_SRC, /panelEyebrow/);
   assert.match(SURFACES_TABS_SRC, /theme/);
+
+  // Gallery carousel aria-labels are passed via props, not hardcoded.
+  assert.match(SURFACES_TABS_SRC, /galleryCarouselLabel/);
+  assert.match(SURFACES_TABS_SRC, /galleryControlsLabel/);
+  assert.match(SURFACES_TABS_SRC, /galleryPrevLabel/);
+  assert.match(SURFACES_TABS_SRC, /galleryNextLabel/);
+  assert.match(SURFACES_TABS_SRC, /carouselLabel/);
+  assert.match(SURFACES_TABS_SRC, /controlsLabel/);
+  assert.match(SURFACES_TABS_SRC, /prevLabel/);
+  assert.match(SURFACES_TABS_SRC, /nextLabel/);
+  assert.doesNotMatch(SURFACES_TABS_SRC, /"Export asset carousel"/);
+  assert.doesNotMatch(SURFACES_TABS_SRC, /"Previous export asset"/);
+  assert.doesNotMatch(SURFACES_TABS_SRC, /"Next export asset"/);
 });
 
 test("Surfaces section tells the broadcast workflow story, not an asset list", () => {
@@ -499,13 +549,13 @@ test("Get Started handoff copy logic is honest about success and failure", () =>
 });
 
 test("Agent handoff prompts route agents through /skill.md and keep secrets server-side", () => {
-  assert.match(PAGE_SRC, /data-prompt=\{.*agentSetupPrompt/);
-  // Hero copy button is handled by React, not by a <script> tag inside a
-  // client component. That avoids Next's "script tag while rendering React"
-  // warning and keeps the feedback labels locale-aware.
+  // Hero copy button is handled entirely by React (closure + clipboard API).
+  // No inline <script>, no dangerouslySetInnerHTML, and no dead data-*
+  // attributes that used to feed the old inline script.
   assert.match(PAGE_SRC, /onClick=\{copyHeroPrompt\}/);
-  assert.match(PAGE_SRC, /data-copied-label=\{c\.copiedLabel\}/);
-  assert.match(PAGE_SRC, /data-failed-label=\{c\.copyFailedLabel\}/);
+  assert.doesNotMatch(PAGE_SRC, /data-prompt=/);
+  assert.doesNotMatch(PAGE_SRC, /data-copied-label=/);
+  assert.doesNotMatch(PAGE_SRC, /data-failed-label=/);
   assert.doesNotMatch(PAGE_SRC, /<script/);
   assert.doesNotMatch(PAGE_SRC, /dangerouslySetInnerHTML/);
   assert.match(HANDOFF_SRC, /currentPrompt/);
