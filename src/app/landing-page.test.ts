@@ -6,6 +6,8 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import Page from "./page";
+import { getLandingContent, imageSrcForTheme } from "./landing/content";
+import type { SurfaceGalleryImage } from "./landing/content";
 
 const PAGE_SRC = readFileSync(resolve("src/app/page.tsx"), "utf8");
 const CONTENT_SRC = readFileSync(resolve("src/app/landing/content.ts"), "utf8");
@@ -18,11 +20,20 @@ const DEMO_PAGE_PATH = resolve("src/app/demo/page.tsx");
 const STUDIO_PAGE_PATH = resolve("src/app/studio/page.tsx");
 const SKILL_MD_PATH = resolve("public/skill.md");
 const PRODUCT_ASSETS = [
-  "public/product/vibe-coding-overlay.png",
+  "public/product/vibe-coding-overlay-dark.png",
+  "public/product/vibe-coding-overlay-light.png",
   "public/product/agent-proposal-dark.png",
+  "public/product/agent-proposal-light.png",
   "public/product/json-drawer-review-dark.png",
+  "public/product/json-drawer-review-light.png",
   "public/product/obs-main-screen-dark.png",
-  "public/product/broadcast-kit-dark.png",
+  "public/product/obs-main-screen-light.png",
+  "public/product/vibe-coding-cover-dark.png",
+  "public/product/vibe-coding-cover-light.png",
+  "public/product/vibe-coding-poster-dark.png",
+  "public/product/vibe-coding-poster-light.png",
+  "public/product/vibe-coding-wallpaper-desktop-4k-dark.png",
+  "public/product/vibe-coding-wallpaper-desktop-4k-light.png",
 ];
 
 test("root route is a product landing page with public navigation and real export imagery", () => {
@@ -74,7 +85,7 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /OBS-ready browser sources/);
 
   // Product images.
-  assert.match(html, /src="\/product\/vibe-coding-overlay\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"/);
   assert.match(html, /src="\/product\/agent-proposal-dark\.png"/);
   assert.match(html, /src="\/product\/json-drawer-review-dark\.png"/);
   assert.match(html, /src="\/product\/obs-main-screen-dark\.png"/);
@@ -156,9 +167,58 @@ test("landing page has bilingual zh/en content source", () => {
   assert.match(CONTENT_SRC, /galleryImagesForLocale/);
   assert.match(CONTENT_SRC, /galleryImagesForLocale\("en"\)/);
   assert.match(CONTENT_SRC, /galleryImagesForLocale\("zh"\)/);
+  assert.match(CONTENT_SRC, /darkSrc/);
+  assert.match(CONTENT_SRC, /lightSrc/);
   assert.match(CONTENT_SRC, /合成画面 · 1920×1080/);
   assert.match(CONTENT_SRC, /封面 · 1280×720/);
-  assert.match(CONTENT_SRC, /Vibe Studio 合成画面导出（深色主题）/);
+  assert.match(CONTENT_SRC, /Vibe Studio 合成画面导出/);
+});
+
+test("landing product imagery switches between dark and light screenshots", () => {
+  const content = getLandingContent("en");
+
+  assert.equal(imageSrcForTheme(content.showcaseImage, "dark"), "/product/vibe-coding-overlay-dark.png");
+  assert.equal(imageSrcForTheme(content.showcaseImage, "light"), "/product/vibe-coding-overlay-light.png");
+
+  const cardsWithImages = content.surfaceCards.filter((card) => card.image);
+  assert.equal(cardsWithImages.length, 3);
+  assert.deepEqual(
+    cardsWithImages.map((card) => imageSrcForTheme(card.image!, "dark")),
+    [
+      "/product/agent-proposal-dark.png",
+      "/product/json-drawer-review-dark.png",
+      "/product/obs-main-screen-dark.png",
+    ],
+  );
+  assert.deepEqual(
+    cardsWithImages.map((card) => imageSrcForTheme(card.image!, "light")),
+    [
+      "/product/agent-proposal-light.png",
+      "/product/json-drawer-review-light.png",
+      "/product/obs-main-screen-light.png",
+    ],
+  );
+
+  const galleryCard = content.surfaceCards.find((card) => card.id === "export");
+  assert.ok(galleryCard?.gallery);
+  assert.deepEqual(
+    galleryCard.gallery.map((img: SurfaceGalleryImage) => imageSrcForTheme(img, "dark")),
+    [
+      "/product/vibe-coding-overlay-dark.png",
+      "/product/vibe-coding-cover-dark.png",
+      "/product/vibe-coding-poster-dark.png",
+      "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
+    ],
+  );
+  assert.deepEqual(
+    galleryCard.gallery.map((img: SurfaceGalleryImage) => imageSrcForTheme(img, "light")),
+    [
+      "/product/vibe-coding-overlay-light.png",
+      "/product/vibe-coding-cover-light.png",
+      "/product/vibe-coding-poster-light.png",
+      "/product/vibe-coding-wallpaper-desktop-4k-light.png",
+    ],
+  );
 });
 
 test("LandingProvider manages locale and theme with localStorage persistence", () => {
@@ -184,10 +244,15 @@ test("LandingProvider manages locale and theme with localStorage persistence", (
   assert.match(PROVIDER_SRC, /setAttribute\("lang"/);
   assert.match(PROVIDER_SRC, /data-landing-locale/);
 
-  // Provider reads boot-script-set attributes as lazy useState initializers
-  // (prevents English-flash on refresh).
+  // Provider hydrates from the same defaults as the server, then reconciles
+  // boot-script-set attributes after hydration. Reading document in a lazy
+  // useState initializer would make persisted zh/light pages mismatch SSR.
+  assert.match(PROVIDER_SRC, /useState<Locale>\(DEFAULT_LOCALE\)/);
+  assert.match(PROVIDER_SRC, /useState<LandingTheme>\("dark"\)/);
   assert.match(PROVIDER_SRC, /getAttribute\("data-landing-locale"\)/);
   assert.match(PROVIDER_SRC, /getAttribute\("data-landing-theme"\)/);
+  assert.doesNotMatch(PROVIDER_SRC, /useState<Locale>\(\(\) =>/);
+  assert.doesNotMatch(PROVIDER_SRC, /useState<LandingTheme>\(\(\) =>/);
 
   // The provider renders children via a render prop (so page.tsx can access
   // the context value without wrapping each section in a consumer).
@@ -237,6 +302,7 @@ test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
   // SurfacesTabs now accepts i18n labels via props.
   assert.match(SURFACES_TABS_SRC, /tablistLabel/);
   assert.match(SURFACES_TABS_SRC, /panelEyebrow/);
+  assert.match(SURFACES_TABS_SRC, /theme/);
 });
 
 test("Surfaces section tells the broadcast workflow story, not an asset list", () => {
@@ -270,14 +336,22 @@ test("Surfaces section tells the broadcast workflow story, not an asset list", (
   assert.match(html, /Export All for the whole package before you go live/);
 
   assert.match(html, /class="akl-surface-gallery"/);
+  assert.match(html, /akl-surface-preview akl-surface-preview-gallery/);
+  assert.match(html, /class="akl-gallery-stage"/);
   assert.match(html, /class="akl-gallery-viewport"/);
-  assert.match(html, /class="akl-gallery-arrow akl-gallery-prev"/);
-  assert.match(html, /class="akl-gallery-arrow akl-gallery-next"/);
+  assert.match(html, /class="akl-gallery-meta"/);
+  assert.match(html, /class="akl-gallery-controls"/);
+  assert.match(html, /class="akl-gallery-button akl-gallery-prev"/);
+  assert.match(html, /class="akl-gallery-button akl-gallery-next"/);
+  assert.match(html, /class="akl-gallery-caption"/);
+  assert.doesNotMatch(SURFACES_TABS_SRC, /akl-gallery-arrow/);
+  assert.doesNotMatch(SURFACES_TABS_SRC, /akl-surface-gallery-label/);
   assert.match(html, /aria-roledescription="slide"/);
   assert.match(html, /Overlay · 1920×1080/);
   assert.match(html, /Cover · 1280×720/);
   assert.match(html, /Poster · 1920×1080/);
   assert.match(html, /Wallpaper · 3840×2160/);
+  assert.match(PAGE_SRC, /\.akl-surface-preview-gallery\s*\{[^}]*overflow:\s*visible;[^}]*aspect-ratio:\s*auto;/s);
 });
 
 test("landing images have width, height, loading, and decoding attributes", () => {
@@ -285,7 +359,7 @@ test("landing images have width, height, loading, and decoding attributes", () =
 
   assert.match(
     html,
-    /src="\/product\/vibe-coding-overlay\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/,
+    /src="\/product\/vibe-coding-overlay-dark\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/,
   );
   assert.match(html, /src="\/product\/agent-proposal-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
   assert.match(html, /src="\/product\/json-drawer-review-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
@@ -426,13 +500,14 @@ test("Get Started handoff copy logic is honest about success and failure", () =>
 
 test("Agent handoff prompts route agents through /skill.md and keep secrets server-side", () => {
   assert.match(PAGE_SRC, /data-prompt=\{.*agentSetupPrompt/);
-  // Hero copy button carries locale-aware labels as data attributes so the
-  // inline script can show the correct copied/failed text per language.
+  // Hero copy button is handled by React, not by a <script> tag inside a
+  // client component. That avoids Next's "script tag while rendering React"
+  // warning and keeps the feedback labels locale-aware.
+  assert.match(PAGE_SRC, /onClick=\{copyHeroPrompt\}/);
   assert.match(PAGE_SRC, /data-copied-label=\{c\.copiedLabel\}/);
   assert.match(PAGE_SRC, /data-failed-label=\{c\.copyFailedLabel\}/);
-  // The inline script reads those attributes instead of hardcoding English.
-  assert.match(PAGE_SRC, /data-copied-label/);
-  assert.match(PAGE_SRC, /data-failed-label/);
+  assert.doesNotMatch(PAGE_SRC, /<script/);
+  assert.doesNotMatch(PAGE_SRC, /dangerouslySetInnerHTML/);
   assert.match(HANDOFF_SRC, /currentPrompt/);
   assert.match(CONTENT_SRC, /Copy Agent Setup Prompt/);
   assert.match(CONTENT_SRC, /Read \/skill\.md first\./);

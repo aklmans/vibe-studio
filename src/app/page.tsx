@@ -1,50 +1,17 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import LandingProvider, { useLanding } from "./landing/LandingProvider";
 import GetStartedHandoff from "./landing/GetStartedHandoff";
 import SurfacesTabs from "./landing/SurfacesTabs";
 import {
   GITHUB_PROFILE_URL,
   GITHUB_URL,
+  imageSrcForTheme,
   MAIN_SITE_URL,
   RSS_URL,
   X_URL,
 } from "./landing/content";
-
-const landingScript = `
-  (function () {
-    var menu = document.querySelector('[data-testid="landing-mobile-menu"]');
-    if (menu) {
-      menu.addEventListener('click', function (e) {
-        if (e.target instanceof Element && e.target.closest('a')) menu.open = false;
-      });
-    }
-    var copyBtn = document.querySelector('[data-testid="landing-hero-copy-prompt"]');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', function () {
-        var text = copyBtn.getAttribute('data-prompt') || '';
-        var original = copyBtn.textContent;
-        var copiedLabel = copyBtn.getAttribute('data-copied-label') || 'Copied';
-        var failedLabel = copyBtn.getAttribute('data-failed-label') || 'Copy failed — select manually';
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(
-            function () {
-              copyBtn.textContent = copiedLabel;
-              setTimeout(function () { copyBtn.textContent = original; }, 2500);
-            },
-            function () {
-              copyBtn.textContent = failedLabel;
-              setTimeout(function () { copyBtn.textContent = original; }, 3000);
-            }
-          );
-        } else {
-          copyBtn.textContent = failedLabel;
-          setTimeout(function () { copyBtn.textContent = original; }, 3000);
-        }
-      });
-    }
-  })();
-`;
 
 export default function LandingPage() {
   return (
@@ -53,7 +20,6 @@ export default function LandingPage() {
         <main data-testid="landing-page" className="akl-page" data-landing-theme={value.theme}>
           <style>{landingCss}</style>
           <LandingPageContent />
-          <script dangerouslySetInnerHTML={{ __html: landingScript }} />
         </main>
       )}
     </LandingProvider>
@@ -63,6 +29,41 @@ export default function LandingPage() {
 function LandingPageContent() {
   const { content, locale, theme, toggleLocale, toggleTheme } = useLanding();
   const c = content;
+  const mobileMenuRef = useRef<HTMLDetailsElement | null>(null);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [copyPromptLabel, setCopyPromptLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    };
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    if (mobileMenuRef.current) mobileMenuRef.current.open = false;
+  }, []);
+
+  const showCopyFeedback = useCallback((label: string, timeoutMs: number) => {
+    if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    setCopyPromptLabel(label);
+    copyResetRef.current = setTimeout(() => {
+      setCopyPromptLabel(null);
+      copyResetRef.current = null;
+    }, timeoutMs);
+  }, []);
+
+  const copyHeroPrompt = useCallback(() => {
+    const text = c.agentSetupPrompt;
+    if (navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText(text).then(
+        () => showCopyFeedback(c.copiedLabel, 2500),
+        () => showCopyFeedback(c.copyFailedLabel, 3000),
+      );
+      return;
+    }
+
+    showCopyFeedback(c.copyFailedLabel, 3000);
+  }, [c.agentSetupPrompt, c.copiedLabel, c.copyFailedLabel, showCopyFeedback]);
 
   return (
     <>
@@ -132,14 +133,18 @@ function LandingPageContent() {
             >
               {c.mainSiteLabel}
             </a>
-            <details className="akl-mobile-menu" data-testid="landing-mobile-menu">
+            <details
+              ref={mobileMenuRef}
+              className="akl-mobile-menu"
+              data-testid="landing-mobile-menu"
+            >
               <summary className="akl-mobile-toggle" aria-label={c.menuLabel}>
                 <span>{c.menuLabel}</span>
                 <i aria-hidden="true"></i>
               </summary>
               <nav className="akl-mobile-nav" aria-label={c.menuLabel}>
                 {c.mobileNav.map((item) => (
-                  <a key={item.label} href={item.href}>
+                  <a key={item.label} href={item.href} onClick={closeMobileMenu}>
                     {item.label}
                   </a>
                 ))}
@@ -168,8 +173,9 @@ function LandingPageContent() {
             data-prompt={c.agentSetupPrompt}
             data-copied-label={c.copiedLabel}
             data-failed-label={c.copyFailedLabel}
+            onClick={copyHeroPrompt}
           >
-            {c.copyAgentPrompt}
+            {copyPromptLabel ?? c.copyAgentPrompt}
           </button>
         </div>
         <ul className="akl-hero-chips" data-testid="landing-hero-chips">
@@ -193,11 +199,11 @@ function LandingPageContent() {
             <b>{c.showcaseLabel}</b>
           </div>
           <img
-            src="/product/vibe-coding-overlay.png"
-            alt={c.showcaseAlt}
+            src={imageSrcForTheme(c.showcaseImage, theme)}
+            alt={c.showcaseImage.alt}
             className="akl-overlay-img"
-            width={1920}
-            height={1080}
+            width={c.showcaseImage.width}
+            height={c.showcaseImage.height}
             loading="eager"
             decoding="async"
           />
@@ -227,6 +233,7 @@ function LandingPageContent() {
           cards={c.surfaceCards}
           tablistLabel={c.surfacesAriaLabel}
           panelEyebrow={c.surfacePanelEyebrow}
+          theme={theme}
         />
       </section>
 
@@ -587,6 +594,7 @@ const landingCss = `
   .akl-main-site-link:focus-visible,
   .akl-brand:focus-visible,
   .akl-button:focus-visible,
+  .akl-gallery-button:focus-visible,
   .akl-surface-tab:focus-visible,
   .akl-mobile-toggle:focus-visible,
   .akl-mobile-nav a:focus-visible,
@@ -1121,13 +1129,19 @@ const landingCss = `
     align-items: start;
   }
 
-  .akl-surface-preview,
-  .akl-gallery-viewport {
+  .akl-surface-preview {
     overflow: hidden;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
     background: var(--akl-preview-bg);
     aspect-ratio: var(--akl-surface-media-ratio);
+  }
+
+  .akl-surface-preview-gallery {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    aspect-ratio: auto;
   }
 
   .akl-surface-preview img {
@@ -1154,12 +1168,25 @@ const landingCss = `
   }
 
   .akl-surface-gallery {
-    display: block;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .akl-gallery-stage {
+    width: 100%;
+    overflow: hidden;
+    border: 0.5px solid var(--akl-border);
+    border-radius: 2px;
+    background: var(--akl-preview-bg);
   }
 
   .akl-gallery-viewport {
     position: relative;
+    overflow: hidden;
+    aspect-ratio: var(--akl-surface-media-ratio);
+    background: transparent;
   }
 
   .akl-gallery-viewport:focus-visible {
@@ -1185,38 +1212,40 @@ const landingCss = `
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
-  .akl-surface-gallery-label {
-    position: absolute;
-    left: 0;
-    bottom: 0;
+  .akl-gallery-meta {
     margin: 0;
-    padding: 4px 8px;
-    background: var(--akl-gallery-label-bg);
+    padding: 18px 20px;
+    border-top: 0.5px solid var(--akl-border-subtle);
     color: var(--akl-text-subtle);
     font-family: var(--app-font-mono);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.22em;
     line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
     white-space: nowrap;
   }
 
-  .akl-gallery-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 2;
+  .akl-gallery-controls {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    gap: 26px;
+  }
+
+  .akl-gallery-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
     border: 0.5px solid var(--akl-border);
     border-radius: 2px;
-    background: var(--akl-surface);
+    background: transparent;
     color: var(--akl-text-muted);
     cursor: pointer;
     transition:
@@ -1224,53 +1253,46 @@ const landingCss = `
       border-color 160ms ease;
   }
 
-  .akl-gallery-prev {
-    left: 8px;
-  }
-
-  .akl-gallery-next {
-    right: 8px;
-  }
-
-  .akl-gallery-arrow:hover,
-  .akl-gallery-arrow:focus-visible {
+  .akl-gallery-button:hover,
+  .akl-gallery-button:focus-visible {
     color: var(--akl-accent);
     border-color: var(--akl-accent);
   }
 
-  .akl-gallery-arrow:focus-visible {
+  .akl-gallery-button:focus-visible {
     outline: 0.5px solid var(--akl-accent);
     outline-offset: 2px;
   }
 
-  .akl-gallery-arrow:disabled {
+  .akl-gallery-button:disabled {
     opacity: 0.35;
     cursor: default;
   }
 
-  .akl-gallery-counter {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
+  .akl-gallery-position {
+    margin: 0;
     display: flex;
     align-items: baseline;
-    gap: 2px;
-    padding: 4px 8px;
-    background: var(--akl-gallery-label-bg);
-    color: var(--akl-text-subtle);
+    min-width: 72px;
+    justify-content: center;
+    color: var(--akl-text-muted);
     font-family: var(--app-font-mono);
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.18em;
     line-height: 1;
   }
 
-  .akl-gallery-counter-current {
-    color: var(--akl-text);
-  }
-
-  .akl-gallery-counter-sep {
-    opacity: 0.5;
+  .akl-gallery-caption {
+    margin: -6px 0 0;
+    color: var(--akl-text-subtle);
+    font-family: var(--app-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    line-height: 1.6;
+    text-align: center;
+    text-transform: uppercase;
   }
 
   .akl-surface-copy h3 {
@@ -1916,7 +1938,7 @@ const landingCss = `
       max-width: 240px;
     }
 
-    .akl-gallery-arrow {
+    .akl-gallery-button {
       width: 32px;
       height: 32px;
     }

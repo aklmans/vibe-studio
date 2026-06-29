@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import type { SurfaceCard, SurfaceGalleryImage } from "./content";
+import { imageSrcForTheme } from "./content";
+import type { LandingTheme, SurfaceCard, SurfaceGalleryImage } from "./content";
 
 interface SurfacesTabsProps {
   cards: ReadonlyArray<SurfaceCard>;
   tablistLabel: string;
   panelEyebrow: string;
+  theme: LandingTheme;
 }
 
 /**
@@ -21,7 +23,7 @@ interface SurfacesTabsProps {
  * Only this component is a client component; the rest of the landing page
  * stays server-rendered.
  */
-export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow }: SurfacesTabsProps) {
+export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow, theme }: SurfacesTabsProps) {
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const baseId = useId();
@@ -107,19 +109,19 @@ export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow }: Surf
               className={`akl-surface-panel akl-surface-panel-${card.id} akl-surface-kind-${card.kind}`}
               data-surface-kind={card.kind}
             >
-              <div className="akl-surface-preview">
+              <div className={`akl-surface-preview${card.gallery ? " akl-surface-preview-gallery" : ""}`}>
                 {card.gallery ? (
-                  <GalleryCarousel images={card.gallery} baseId={`${baseId}-gallery-${card.id}`} />
-                ) : (
+                  <GalleryCarousel images={card.gallery} baseId={`${baseId}-gallery-${card.id}`} theme={theme} />
+                ) : card.image ? (
                   <img
-                    src={card.src}
-                    alt={card.alt}
-                    width={card.width}
-                    height={card.height}
+                    src={imageSrcForTheme(card.image, theme)}
+                    alt={card.image.alt}
+                    width={card.image.width}
+                    height={card.image.height}
                     loading="lazy"
                     decoding="async"
                   />
-                )}
+                ) : null}
               </div>
               <div className="akl-surface-copy">
                 <p className="akl-eyebrow">{panelEyebrow}</p>
@@ -142,11 +144,12 @@ export default function SurfacesTabs({ cards, tablistLabel, panelEyebrow }: Surf
 interface GalleryCarouselProps {
   images: ReadonlyArray<SurfaceGalleryImage>;
   baseId: string;
+  theme: LandingTheme;
 }
 
 /**
- * A lightweight carousel for the Export-the-kit gallery. Shows one image at a
- * time with prev/next buttons positioned on the left and right edges.
+ * A lightweight carousel for the Export-the-kit gallery. Keeps the image stage
+ * clean: slide metadata sits in a bottom rail and controls live below the image.
  *
  * Accessibility:
  * - The viewport is a group with aria-label.
@@ -157,7 +160,7 @@ interface GalleryCarouselProps {
  * - Home/End jump to first/last.
  * - Buttons are real <button> elements with visible focus rings.
  */
-function GalleryCarousel({ images, baseId }: GalleryCarouselProps) {
+function GalleryCarousel({ images, baseId, theme }: GalleryCarouselProps) {
   const [current, setCurrent] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const count = images.length;
@@ -197,72 +200,79 @@ function GalleryCarousel({ images, baseId }: GalleryCarouselProps) {
   const prevId = `${baseId}-prev`;
   const nextId = `${baseId}-next`;
   const viewportId = `${baseId}-viewport`;
+  const activeImage = images[current];
+  const positionLabel = `${String(current + 1).padStart(2, "0")} / ${String(count).padStart(2, "0")}`;
 
   return (
     <div className="akl-surface-gallery">
-      <button
-        type="button"
-        id={prevId}
-        className="akl-gallery-arrow akl-gallery-prev"
-        aria-label="Previous export asset"
-        aria-controls={viewportId}
-        onClick={() => goTo(current - 1)}
-        disabled={count <= 1}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-          <path d="M9 2L4 7l5 5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <div
-        id={viewportId}
-        ref={viewportRef}
-        className="akl-gallery-viewport"
-        tabIndex={0}
-        aria-label="Export asset carousel"
-        onKeyDown={onKeyDown}
-      >
-        {images.map((img, index) => {
-          const isActive = index === current;
-          return (
-            <figure
-              key={img.src}
-              className="akl-surface-gallery-item"
-              data-active={isActive || undefined}
-              aria-hidden={!isActive || undefined}
-              aria-roledescription="slide"
-              aria-label={`${index + 1} of ${count}: ${img.label}`}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                width={img.width}
-                height={img.height}
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-              />
-              <figcaption className="akl-surface-gallery-label">{img.label}</figcaption>
-            </figure>
-          );
-        })}
-        <div className="akl-gallery-counter" aria-hidden="true">
-          <span className="akl-gallery-counter-current">{current + 1}</span>
-          <span className="akl-gallery-counter-sep">/</span>
-          <span>{count}</span>
+      <div className="akl-gallery-stage">
+        <div
+          id={viewportId}
+          ref={viewportRef}
+          className="akl-gallery-viewport"
+          tabIndex={0}
+          aria-label="Export asset carousel"
+          onKeyDown={onKeyDown}
+        >
+          {images.map((img, index) => {
+            const isActive = index === current;
+            return (
+              <figure
+                key={img.darkSrc}
+                className="akl-surface-gallery-item"
+                data-active={isActive || undefined}
+                aria-hidden={!isActive || undefined}
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${count}: ${img.label}`}
+              >
+                <img
+                  src={imageSrcForTheme(img, theme)}
+                  alt={img.alt}
+                  width={img.width}
+                  height={img.height}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              </figure>
+            );
+          })}
         </div>
+        <p className="akl-gallery-meta" aria-live="polite">
+          {activeImage.label}
+        </p>
       </div>
-      <button
-        type="button"
-        id={nextId}
-        className="akl-gallery-arrow akl-gallery-next"
-        aria-label="Next export asset"
-        aria-controls={viewportId}
-        onClick={() => goTo(current + 1)}
-        disabled={count <= 1}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-          <path d="M5 2l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      <div className="akl-gallery-controls" aria-label="Export asset controls">
+        <button
+          type="button"
+          id={prevId}
+          className="akl-gallery-button akl-gallery-prev"
+          aria-label="Previous export asset"
+          aria-controls={viewportId}
+          onClick={() => goTo(current - 1)}
+          disabled={count <= 1}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M9 2L4 7l5 5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <p className="akl-gallery-position" aria-live="polite">
+          <span>{positionLabel}</span>
+        </p>
+        <button
+          type="button"
+          id={nextId}
+          className="akl-gallery-button akl-gallery-next"
+          aria-label="Next export asset"
+          aria-controls={viewportId}
+          onClick={() => goTo(current + 1)}
+          disabled={count <= 1}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M5 2l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+      <p className="akl-gallery-caption">{images.map((img) => img.label.split(" · ")[0]).join(" → ")}</p>
     </div>
   );
 }

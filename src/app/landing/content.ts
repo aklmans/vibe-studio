@@ -18,11 +18,18 @@ export type LandingTheme = "dark" | "light";
 
 export type SurfaceKind = "wide" | "tall" | "strip" | "gallery";
 
-export interface SurfaceGalleryImage {
-  src: string;
+export interface ThemedImageSource {
+  darkSrc: string;
+  lightSrc: string;
+}
+
+export interface ProductImageSource extends ThemedImageSource {
   alt: string;
   width: number;
   height: number;
+}
+
+export interface SurfaceGalleryImage extends ProductImageSource {
   label: string;
 }
 
@@ -30,12 +37,9 @@ export interface SurfaceCard {
   id: string;
   kind: SurfaceKind;
   title: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
   summary: string;
   points: string[];
+  image?: ProductImageSource;
   gallery?: ReadonlyArray<SurfaceGalleryImage>;
 }
 
@@ -45,35 +49,43 @@ export interface AgentTask {
   prompt: string;
 }
 
+export function imageSrcForTheme(image: ThemedImageSource, theme: LandingTheme): string {
+  return theme === "light" ? image.lightSrc : image.darkSrc;
+}
+
 // Gallery images are locale-aware: alt text and labels differ between zh/en.
 // The numeric dimensions stay the same.
 function galleryImagesForLocale(locale: Locale): ReadonlyArray<SurfaceGalleryImage> {
   if (locale === "zh") {
     return [
       {
-        src: "/product/vibe-coding-overlay-dark.png",
-        alt: "Vibe Studio 合成画面导出（深色主题）",
+        darkSrc: "/product/vibe-coding-overlay-dark.png",
+        lightSrc: "/product/vibe-coding-overlay-light.png",
+        alt: "Vibe Studio 合成画面导出",
         width: 1920,
         height: 1080,
         label: "合成画面 · 1920×1080",
       },
       {
-        src: "/product/vibe-coding-cover-dark.png",
-        alt: "Vibe Studio 封面导出（深色主题）",
+        darkSrc: "/product/vibe-coding-cover-dark.png",
+        lightSrc: "/product/vibe-coding-cover-light.png",
+        alt: "Vibe Studio 封面导出",
         width: 1280,
         height: 720,
         label: "封面 · 1280×720",
       },
       {
-        src: "/product/vibe-coding-poster-dark.png",
-        alt: "Vibe Studio 海报导出（深色主题）",
+        darkSrc: "/product/vibe-coding-poster-dark.png",
+        lightSrc: "/product/vibe-coding-poster-light.png",
+        alt: "Vibe Studio 海报导出",
         width: 1920,
         height: 1080,
         label: "海报 · 1920×1080",
       },
       {
-        src: "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
-        alt: "Vibe Studio 桌面壁纸导出（深色主题，4K）",
+        darkSrc: "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
+        lightSrc: "/product/vibe-coding-wallpaper-desktop-4k-light.png",
+        alt: "Vibe Studio 桌面壁纸导出（4K）",
         width: 3840,
         height: 2160,
         label: "壁纸 · 3840×2160",
@@ -82,29 +94,33 @@ function galleryImagesForLocale(locale: Locale): ReadonlyArray<SurfaceGalleryIma
   }
   return [
     {
-      src: "/product/vibe-coding-overlay-dark.png",
-      alt: "Vibe Studio overlay export (dark theme)",
+      darkSrc: "/product/vibe-coding-overlay-dark.png",
+      lightSrc: "/product/vibe-coding-overlay-light.png",
+      alt: "Vibe Studio overlay export",
       width: 1920,
       height: 1080,
       label: "Overlay · 1920×1080",
     },
     {
-      src: "/product/vibe-coding-cover-dark.png",
-      alt: "Vibe Studio cover export (dark theme)",
+      darkSrc: "/product/vibe-coding-cover-dark.png",
+      lightSrc: "/product/vibe-coding-cover-light.png",
+      alt: "Vibe Studio cover export",
       width: 1280,
       height: 720,
       label: "Cover · 1280×720",
     },
     {
-      src: "/product/vibe-coding-poster-dark.png",
-      alt: "Vibe Studio poster export (dark theme)",
+      darkSrc: "/product/vibe-coding-poster-dark.png",
+      lightSrc: "/product/vibe-coding-poster-light.png",
+      alt: "Vibe Studio poster export",
       width: 1920,
       height: 1080,
       label: "Poster · 1920×1080",
     },
     {
-      src: "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
-      alt: "Vibe Studio desktop wallpaper export (dark theme, 4K)",
+      darkSrc: "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
+      lightSrc: "/product/vibe-coding-wallpaper-desktop-4k-light.png",
+      alt: "Vibe Studio desktop wallpaper export (4K)",
       width: 3840,
       height: 2160,
       label: "Wallpaper · 3840×2160",
@@ -138,6 +154,7 @@ export interface LandingContent {
   viewGithub: string;
 
   // Showcase
+  showcaseImage: ProductImageSource;
   showcaseAlt: string;
   showcaseLabel: string;
 
@@ -222,6 +239,13 @@ const enContent: LandingContent = {
   heroStudioLink: "/studio",
   viewGithub: "View on GitHub",
 
+  showcaseImage: {
+    darkSrc: "/product/vibe-coding-overlay-dark.png",
+    lightSrc: "/product/vibe-coding-overlay-light.png",
+    alt: "Vibe Coding Live overlay export",
+    width: 1920,
+    height: 1080,
+  },
   showcaseAlt: "Vibe Coding Live overlay export",
   showcaseLabel: "overlay · 1920×1080",
 
@@ -252,10 +276,13 @@ const enContent: LandingContent = {
       id: "prepare",
       kind: "wide",
       title: "Prepare with Agent",
-      src: "/product/agent-proposal-dark.png",
-      alt: "Vibe Studio Session Config agent returning a reviewed proposal",
-      width: 3960,
-      height: 2128,
+      image: {
+        darkSrc: "/product/agent-proposal-dark.png",
+        lightSrc: "/product/agent-proposal-light.png",
+        alt: "Vibe Studio Session Config agent returning a reviewed proposal",
+        width: 3960,
+        height: 2128,
+      },
       summary: "Describe the stream in plain language. The Session Config Agent drafts title, sections, stack, socials and bottom bar — no manual form filling.",
       points: [
         "Natural-language brief becomes a structured config",
@@ -267,10 +294,13 @@ const enContent: LandingContent = {
       id: "review",
       kind: "wide",
       title: "Review safely",
-      src: "/product/json-drawer-review-dark.png",
-      alt: "Vibe Studio JSON review drawer with a proposal staged for manual apply",
-      width: 3960,
-      height: 2128,
+      image: {
+        darkSrc: "/product/json-drawer-review-dark.png",
+        lightSrc: "/product/json-drawer-review-light.png",
+        alt: "Vibe Studio JSON review drawer with a proposal staged for manual apply",
+        width: 3960,
+        height: 2128,
+      },
       summary: "AI output is never auto-applied. The proposal opens in a JSON review drawer with a field-level diff. You inspect, then Apply — or discard.",
       points: [
         "Proposal enters a review drawer, never live state",
@@ -282,10 +312,13 @@ const enContent: LandingContent = {
       id: "compose",
       kind: "wide",
       title: "Compose in OBS",
-      src: "/product/obs-main-screen-dark.png",
-      alt: "OBS-style broadcast composition with the real capture under the Vibe Studio frame",
-      width: 1174,
-      height: 660,
+      image: {
+        darkSrc: "/product/obs-main-screen-dark.png",
+        lightSrc: "/product/obs-main-screen-light.png",
+        alt: "OBS-style broadcast composition with the real capture under the Vibe Studio frame",
+        width: 1174,
+        height: 660,
+      },
       summary: "Vibe Coding Live owns only the transparent editorial frame. Real screen capture, camera and windows stay free underneath in OBS or Livehime.",
       points: [
         "Overlay is a transparent UI frame, not a locked layout",
@@ -297,10 +330,6 @@ const enContent: LandingContent = {
       id: "export",
       kind: "gallery",
       title: "Export the kit",
-      src: "/product/broadcast-kit-dark.png",
-      alt: "Vibe Studio broadcast kit exported from one session config",
-      width: 2400,
-      height: 1350,
       summary: "One session config drives the high-value public assets: overlay, cover, poster and desktop/mobile wallpapers. Export All keeps the whole package visually aligned.",
       points: [
         "Overlay, cover, poster and wallpapers from one state",
@@ -516,6 +545,13 @@ const zhContent: LandingContent = {
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
 
+  showcaseImage: {
+    darkSrc: "/product/vibe-coding-overlay-dark.png",
+    lightSrc: "/product/vibe-coding-overlay-light.png",
+    alt: "Vibe Coding Live 合成画面导出",
+    width: 1920,
+    height: 1080,
+  },
   showcaseAlt: "Vibe Coding Live 合成画面导出",
   showcaseLabel: "overlay · 1920×1080",
 
@@ -546,10 +582,13 @@ const zhContent: LandingContent = {
       id: "prepare",
       kind: "wide",
       title: "Agent 准备",
-      src: "/product/agent-proposal-dark.png",
-      alt: "Vibe Studio Session Config Agent 返回审阅提案",
-      width: 3960,
-      height: 2128,
+      image: {
+        darkSrc: "/product/agent-proposal-dark.png",
+        lightSrc: "/product/agent-proposal-light.png",
+        alt: "Vibe Studio Session Config Agent 返回审阅提案",
+        width: 3960,
+        height: 2128,
+      },
       summary: "用自然语言描述直播，Session Config Agent 生成标题、段落、工具栈、社交链接与底栏——无需手工填表。",
       points: [
         "自然语言描述转为结构化配置",
@@ -561,10 +600,13 @@ const zhContent: LandingContent = {
       id: "review",
       kind: "wide",
       title: "安全审阅",
-      src: "/product/json-drawer-review-dark.png",
-      alt: "Vibe Studio JSON 审阅抽屉，提案等待手动应用",
-      width: 3960,
-      height: 2128,
+      image: {
+        darkSrc: "/product/json-drawer-review-dark.png",
+        lightSrc: "/product/json-drawer-review-light.png",
+        alt: "Vibe Studio JSON 审阅抽屉，提案等待手动应用",
+        width: 3960,
+        height: 2128,
+      },
       summary: "AI 输出不会自动应用。提案进入 JSON 审阅抽屉，显示字段级 diff，你检查后 Apply 或丢弃。",
       points: [
         "提案进入审阅抽屉，不直接改直播状态",
@@ -576,10 +618,13 @@ const zhContent: LandingContent = {
       id: "compose",
       kind: "wide",
       title: "OBS 合成",
-      src: "/product/obs-main-screen-dark.png",
-      alt: "OBS 式直播合成，真实捕获在 Vibe Studio 框架之下",
-      width: 1174,
-      height: 660,
+      image: {
+        darkSrc: "/product/obs-main-screen-dark.png",
+        lightSrc: "/product/obs-main-screen-light.png",
+        alt: "OBS 式直播合成，真实捕获在 Vibe Studio 框架之下",
+        width: 1174,
+        height: 660,
+      },
       summary: "Vibe Coding Live 只负责透明编辑式框架，真实屏幕捕获、摄像头与窗口保留在 OBS 或直播姬底层自由摆放。",
       points: [
         "合成画面是透明 UI 框架，不锁定布局",
@@ -591,10 +636,6 @@ const zhContent: LandingContent = {
       id: "export",
       kind: "gallery",
       title: "导出套装",
-      src: "/product/broadcast-kit-dark.png",
-      alt: "Vibe Studio 从一份配置导出的直播套装",
-      width: 2400,
-      height: 1350,
       summary: "一份 session config 驱动高价值公开资产：合成画面、封面、海报与桌面/手机壁纸。Export All 保持整套视觉一致。",
       points: [
         "合成画面、封面、海报、壁纸来自同一状态",

@@ -45,30 +45,29 @@ interface LandingProviderProps {
  *
  * Theme is applied via `data-landing-theme` on `<html>`. Locale is applied via
  * `data-landing-locale` + `<html lang>`. A boot script in layout.tsx sets
- * both before hydration to prevent flash. The provider reads them as lazy
- * useState initializers (no English-flash on refresh), then keeps them in sync.
+ * both before hydration for CSS / language metadata. The provider deliberately
+ * hydrates from the same defaults as the server, then reconciles those boot
+ * attributes in an effect; reading document in the first client render would
+ * make persisted zh/light sessions mismatch the server-rendered tree.
  */
 export default function LandingProvider({ children }: LandingProviderProps) {
-  // Read boot-script-set attributes as initial state — prevents locale/theme
-  // flash on refresh. The boot script in layout.tsx runs before hydration and
-  // sets data-landing-locale / data-landing-theme from localStorage.
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof document !== "undefined") {
-      const attr = document.documentElement.getAttribute("data-landing-locale");
-      if (attr === "zh" || attr === "en") return attr;
-    }
-    return DEFAULT_LOCALE;
-  });
-  const [theme, setTheme] = useState<LandingTheme>(() => {
-    if (typeof document !== "undefined") {
-      const attr = document.documentElement.getAttribute("data-landing-theme");
-      if (attr === "dark" || attr === "light") return attr;
-    }
-    return "dark";
-  });
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const [theme, setTheme] = useState<LandingTheme>("dark");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const localeAttr = root.getAttribute("data-landing-locale");
+    const themeAttr = root.getAttribute("data-landing-theme");
+
+    if (localeAttr === "zh" || localeAttr === "en") setLocale(localeAttr);
+    if (themeAttr === "dark" || themeAttr === "light") setTheme(themeAttr);
+    setHydrated(true);
+  }, []);
 
   // Sync theme to <html data-landing-theme> + persist.
   useEffect(() => {
+    if (!hydrated) return;
     const root = document.documentElement;
     root.setAttribute("data-landing-theme", theme);
     try {
@@ -76,10 +75,11 @@ export default function LandingProvider({ children }: LandingProviderProps) {
     } catch {
       // ignore
     }
-  }, [theme]);
+  }, [theme, hydrated]);
 
   // Sync locale to <html lang> + <html data-landing-locale> + persist.
   useEffect(() => {
+    if (!hydrated) return;
     const root = document.documentElement;
     root.setAttribute("data-landing-locale", locale);
     root.setAttribute("lang", locale === "zh" ? "zh-CN" : "en");
@@ -88,7 +88,7 @@ export default function LandingProvider({ children }: LandingProviderProps) {
     } catch {
       // ignore
     }
-  }, [locale]);
+  }, [locale, hydrated]);
 
   const toggleLocale = useCallback(() => {
     setLocale((prev) => (prev === "en" ? "zh" : "en"));

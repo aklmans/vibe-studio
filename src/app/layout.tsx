@@ -16,8 +16,9 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL;
  * Studio CSS only responds to `data-appearance`.
  *
  * The locale boot script also sets <html lang> so screen readers and search
- * engines see the correct language immediately. LandingProvider reads
- * `data-landing-locale` as its initial state (see lazy useState init).
+ * engines see the correct language immediately. LandingProvider renders the
+ * same default content as the server for hydration safety, then reconciles
+ * these boot attributes in an effect.
  */
 function getLandingBootScript(): string {
   const themeKey = JSON.stringify(LANDING_THEME_KEY);
