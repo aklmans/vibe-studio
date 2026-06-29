@@ -53,8 +53,9 @@
     padding-inline: 18px;
   }
 
+  /* header-row min-height follows --akl-fixed-header-height automatically,
+     no separate override needed here. */
   .akl-header-row {
-    min-height: 72px;
     gap: 12px;
   }
 

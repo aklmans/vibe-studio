@@ -1,5 +1,7 @@
 /* Landing page CSS — aggregate entry.
-   Imported by LandingPageClient.tsx.
+   Imported by src/app/page.tsx (server component) so that the CSS is
+   bundled at build time without requiring the client component to handle
+   .css imports (which the Node test runner cannot resolve).
    Order matters: tokens must load before any rule that references
    the custom properties they define. */
 

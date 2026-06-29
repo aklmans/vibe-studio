@@ -7,21 +7,25 @@ const DEFAULT_SITE_URL = "https://vibe-studio.aklman.com";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL;
 
 /**
- * Boot script for the landing page theme and locale. Reads
- * `vibe-landing-theme` and `vibe-landing-locale` from localStorage and sets
- * `data-landing-theme` + `data-landing-locale` on <html> before hydration to
- * prevent theme/locale flash. This is separate from the Studio's
- * `data-appearance` system (which uses `vibe-overlay-state`). The attributes
- * coexist on <html>; landing CSS only responds to `data-landing-theme`,
- * Studio CSS only responds to `data-appearance`.
+ * Root layout for all routes (/, /demo, /studio, /obs/*, /api/*).
  *
- * The locale boot script also sets <html lang> so screen readers and search
- * engines see the correct language immediately. The server component
- * (page.tsx) reads the `vibe-landing-locale` cookie for SSR so the React tree
- * is rendered in the correct locale from the start — no English flash for zh
- * users. LandingProvider initialises locale from that server-provided prop,
- * then reconciles the boot-script-set attribute in an effect for the rare
- * case where cookie and localStorage disagree.
+ * Locale / <html lang> boundary:
+ * - The landing route (/) is dynamic and reads `vibe-landing-locale` from
+ *   cookies in page.tsx so SSR renders the correct language — no English
+ *   flash for zh users.
+ * - This root layout is shared by ALL routes and must NOT call cookies()
+ *   or headers(). Doing so would make /demo, /studio, /obs/*, and /api/*
+ *   request-dynamic, breaking static prerendering and CDN caching.
+ * - Therefore <html lang="en"> is hardcoded in SSR. The boot script
+ *   (getLandingBootScript) corrects <html lang> + data-landing-locale from
+ *   localStorage before hydration. This means:
+ *   • Users with JS: see correct <html lang> immediately after boot script.
+ *   • Crawlers without JS: see lang="en" — acceptable because the landing
+ *     page's <meta> description and OG tags are in English, and /demo and
+ *     /studio render the Studio builder which has its own locale system.
+ * - If future work needs SSR-correct <html lang> for all routes, consider
+ *   middleware-based locale detection that sets a cookie and rewrites, but
+ *   do NOT add cookies()/headers() to this layout.
  */
 function getLandingBootScript(): string {
   const themeKey = JSON.stringify(LANDING_THEME_KEY);

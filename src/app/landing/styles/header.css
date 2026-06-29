@@ -13,7 +13,7 @@
 }
 
 .akl-header-row {
-  min-height: 84px;
+  min-height: var(--akl-fixed-header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;

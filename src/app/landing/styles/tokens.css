@@ -1,7 +1,13 @@
 /* Landing page design tokens — dark (default) + light theme overrides.
    The boot script in layout.tsx sets data-landing-theme on <html> before
    hydration so the correct palette is applied with no flash. React also
-   mirrors the attribute on <main class="akl-page"> via LandingProvider. */
+   mirrors the attribute on <main class="akl-page"> via LandingProvider.
+
+   Light tokens are defined once in a single selector list that covers both
+   pre-hydration (attribute on <html>, ancestor of .akl-page) and
+   post-hydration (attribute on .akl-page itself). Do not add a separate
+   standalone [data-landing-theme="light"] block — all landing elements are
+   inside .akl-page and inherit from it. */
 
 .akl-page {
   --akl-fixed-header-height: 88px;
@@ -34,36 +40,11 @@
   --akl-hero-note-border: #4a463d;
 }
 
-/* Light theme */
+/* Light theme — single source of truth.
+   .akl-page[data-landing-theme="light"]  → React sets attr on <main> (post-hydration)
+   [data-landing-theme="light"] .akl-page  → boot script sets attr on <html> (pre-hydration) */
 .akl-page[data-landing-theme="light"],
 [data-landing-theme="light"] .akl-page {
-  --akl-border: #c6c0b6;
-  --akl-border-subtle: #d8d2c8;
-  --akl-bg: #f7f4ee;
-  --akl-surface: #eee8dd;
-  --akl-text: #1a1a1a;
-  --akl-text-muted: #55514b;
-  --akl-text-subtle: #857f74;
-  --akl-accent: #c95f3d;
-  --akl-paper: #1a1a1a;
-  --akl-paper-ink: #f7f4ee;
-  --akl-page-color: #1a1a1a;
-  --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
-  --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
-  --akl-product-bg: #e8e2d6;
-  --akl-window-bg: #e0d9cc;
-  --akl-window-dot: #a99f91;
-  --akl-window-label: #857f74;
-  --akl-preview-bg: #e8e2d6;
-  --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
-  --akl-prompt-bg: #f2ede4;
-  --akl-prompt-text: #403c36;
-  --akl-hero-note-link: #6c665e;
-  --akl-hero-note-border: #c6c0b6;
-}
-
-/* Fallback: when data-landing-theme is set on <html>, not .akl-page */
-[data-landing-theme="light"] {
   --akl-border: #c6c0b6;
   --akl-border-subtle: #d8d2c8;
   --akl-bg: #f7f4ee;

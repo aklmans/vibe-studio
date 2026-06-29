@@ -348,21 +348,112 @@ test("landing CSS supports dark and light themes via data-landing-theme", () => 
   assert.match(TOKENS_CSS, /--akl-bg: #f7f4ee/);
   assert.match(TOKENS_CSS, /--akl-accent: #c95f3d/);
 
+  // Light tokens have a single source — the combined selector list. No
+  // standalone [data-landing-theme="light"] fallback block (which was a
+  // duplicate that could drift).
+  const lightTokenBlocks = TOKENS_CSS.match(/--akl-bg: #f7f4ee/g);
+  assert.equal(lightTokenBlocks?.length, 1, "light --akl-bg should appear exactly once");
+
   // CSS is split into per-section files, aggregated by landing.css.
   assert.match(LANDING_CSS_ENTRY, /@import "\.\/tokens\.css"/);
   assert.match(LANDING_CSS_ENTRY, /@import "\.\/header\.css"/);
   assert.match(LANDING_CSS_ENTRY, /@import "\.\/surfaces\.css"/);
   assert.match(LANDING_CSS_ENTRY, /@import "\.\/responsive\.css"/);
 
+  // landing.css comment correctly says it's imported by page.tsx, not
+  // LandingPageClient.tsx.
+  assert.match(LANDING_CSS_ENTRY, /page\.tsx/);
+  assert.doesNotMatch(LANDING_CSS_ENTRY, /LandingPageClient/);
+
   // Layout.tsx has a boot script that sets data-landing-theme AND
   // data-landing-locale before hydration to prevent theme/locale flash.
   assert.match(LAYOUT_SRC, /data-landing-theme/);
   assert.match(LAYOUT_SRC, /data-landing-locale/);
-  assert.match(LAYOUT_SRC, /vibe-landing-theme/);
-  assert.match(LAYOUT_SRC, /vibe-landing-locale/);
+  // The boot script uses the shared constants (not hardcoded string literals).
+  assert.match(LAYOUT_SRC, /LANDING_THEME_KEY/);
+  assert.match(LAYOUT_SRC, /LANDING_LOCALE_KEY/);
   assert.match(LAYOUT_SRC, /getLandingBootScript/);
   // The boot script sets <html lang> so screen readers see the right language.
   assert.match(LAYOUT_SRC, /setAttribute\("lang"/);
+});
+
+test("header height has a single source of truth via CSS variable", () => {
+  // tokens.css defines --akl-fixed-header-height.
+  assert.match(TOKENS_CSS, /--akl-fixed-header-height: 88px/);
+  // header.css uses the variable, not a hardcoded pixel value.
+  assert.match(HEADER_CSS, /min-height: var\(--akl-fixed-header-height\)/);
+  assert.doesNotMatch(HEADER_CSS, /min-height: 84px/);
+  assert.doesNotMatch(HEADER_CSS, /min-height: 88px/);
+  // responsive.css overrides the variable for mobile, not the min-height.
+  assert.match(RESPONSIVE_CSS, /--akl-fixed-header-height: 72px/);
+  assert.doesNotMatch(RESPONSIVE_CSS, /\.akl-header-row\s*\{[^}]*min-height:\s*72px/);
+  // anchor offset derives from the same variable.
+  assert.match(TOKENS_CSS, /--akl-anchor-offset: calc\(var\(--akl-fixed-header-height\) \+ 16px\)/);
+  // body padding-top uses the same variable.
+  assert.match(BASE_CSS, /padding-top: var\(--akl-fixed-header-height\)/);
+  // scroll-margin-top uses the anchor offset.
+  assert.match(BASE_CSS, /scroll-margin-top: var\(--akl-anchor-offset\)/);
+});
+
+test("root layout must not read cookies/headers to protect static routes", () => {
+  // layout.tsx must NOT import cookies() or headers() from next/headers.
+  // Doing so would make /demo, /studio, /obs/*, and /api/* request-dynamic.
+  // The locale boundary is: page.tsx (landing only) reads cookies for SSR
+  // locale; layout.tsx stays static; boot script fixes <html lang>.
+  assert.doesNotMatch(LAYOUT_SRC, /import.*cookies.*from.*next\/headers/);
+  assert.doesNotMatch(LAYOUT_SRC, /import.*headers.*from.*next\/headers/);
+  // layout.tsx must document this boundary so future maintainers don't
+  // accidentally add cookies() here.
+  assert.match(LAYOUT_SRC, /must NOT call cookies/);
+  assert.match(LAYOUT_SRC, /request-dynamic/);
+});
+
+test("all landing images use theme-aware src (dark/light)", () => {
+  // Verify every <img> in the rendered landing HTML references a product
+  // screenshot with a -dark or -light suffix. This catches regressions
+  // where a hardcoded dark src survives in a light-theme context.
+  const html = renderLanding("en");
+  const imgSrcs = [...html.matchAll(/src="(\/product\/[^"]+)"/g)].map((m) => m[1]);
+  assert.ok(imgSrcs.length > 0, "landing should render at least one product image");
+  for (const src of imgSrcs) {
+    assert.ok(
+      src.includes("-dark") || src.includes("-light"),
+      `image src "${src}" should be theme-specific (-dark or -light)`,
+    );
+  }
+
+  // Verify content.ts has dark/light pairs for every themed image.
+  const content = getLandingContent("en");
+  assert.equal(imageSrcForTheme(content.showcaseImage, "dark"), "/product/vibe-coding-overlay-dark.png");
+  assert.equal(imageSrcForTheme(content.showcaseImage, "light"), "/product/vibe-coding-overlay-light.png");
+
+  // Every surface card image and gallery image must have both dark + light.
+  for (const card of content.surfaceCards) {
+    if (card.image) {
+      assert.ok(card.image.darkSrc, `card "${card.id}" image must have darkSrc`);
+      assert.ok(card.image.lightSrc, `card "${card.id}" image must have lightSrc`);
+    }
+    if (card.gallery) {
+      for (const img of card.gallery) {
+        assert.ok(img.darkSrc, `gallery image in card "${card.id}" must have darkSrc`);
+        assert.ok(img.lightSrc, `gallery image in card "${card.id}" must have lightSrc`);
+      }
+    }
+  }
+});
+
+test("hero copy prompt feedback uses current locale labels", () => {
+  // The copy handler reads c.copiedLabel / c.copyFailedLabel from the
+  // current locale's content — not hardcoded English.
+  const enContent = getLandingContent("en");
+  const zhContent = getLandingContent("zh");
+  assert.equal(enContent.copiedLabel, "Copied");
+  assert.equal(enContent.copyFailedLabel, "Copy failed — select the prompt manually.");
+  assert.equal(zhContent.copiedLabel, "已复制");
+  assert.equal(zhContent.copyFailedLabel, "复制失败——请手动选择提示词。");
+  // The client component uses these labels via closure, not DOM attributes.
+  assert.match(CLIENT_SRC, /c\.copiedLabel/);
+  assert.match(CLIENT_SRC, /c\.copyFailedLabel/);
 });
 
 test("Surfaces tabs use real ARIA tabs, not hidden radio + CSS :has()", () => {
