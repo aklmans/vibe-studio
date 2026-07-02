@@ -68,6 +68,8 @@ export interface SessionAgentRunResponse {
   configText?: string | null;
   /** Error summary (error mode) — sanitized, never contains the key. */
   error?: string;
+  /** Set when a run was blocked by the public-showcase rate limit. */
+  rateLimited?: boolean;
 }
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -99,6 +101,39 @@ export function readSessionAgentConfig(
     apiKey,
     model: clean(env.SESSION_AGENT_MODEL, DEFAULTS.model),
     userAgent: clean(env.SESSION_AGENT_USER_AGENT, DEFAULTS.userAgent),
+  };
+}
+
+/**
+ * Abuse guardrails applied only on the public showcase deploy (VIBE_SHOWCASE=1),
+ * so anonymous visitors can experience the agent without the deploy's key being
+ * an open cost/DoS surface. A local/private Studio (app mode) reads nothing here
+ * and runs uncapped with the operator's own key. These are non-secret and never
+ * reach the client. `rateLimitPerHour: 0` disables runs entirely; a large
+ * `maxTokens` only bounds pathological outputs (a full config is well under it).
+ */
+export interface ShowcaseGuardrails {
+  rateLimitPerHour: number;
+  maxTokens: number;
+}
+
+const GUARDRAIL_DEFAULTS: ShowcaseGuardrails = {
+  rateLimitPerHour: 10,
+  maxTokens: 4096,
+};
+
+export function readShowcaseGuardrails(
+  env: Record<string, string | undefined>,
+): ShowcaseGuardrails {
+  const nonNegInt = (value: string | undefined, fallback: number) => {
+    const trimmed = (value ?? "").trim();
+    if (!trimmed) return fallback;
+    const parsed = Number.parseInt(trimmed, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  };
+  return {
+    rateLimitPerHour: nonNegInt(env.SESSION_AGENT_RATE_LIMIT, GUARDRAIL_DEFAULTS.rateLimitPerHour),
+    maxTokens: nonNegInt(env.SESSION_AGENT_MAX_TOKENS, GUARDRAIL_DEFAULTS.maxTokens),
   };
 }
 
@@ -200,6 +235,7 @@ export async function callOpenAICompatibleChat(
   messages: ChatMessage[],
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal,
+  maxTokens?: number,
 ): Promise<ChatCompletionResult> {
   const response = await fetchImpl(`${config.baseUrl}/chat/completions`, {
     method: "POST",
@@ -208,7 +244,12 @@ export async function callOpenAICompatibleChat(
       Authorization: `Bearer ${config.apiKey}`,
       "User-Agent": config.userAgent,
     },
-    body: JSON.stringify({ model: config.model, messages, stream: false }),
+    body: JSON.stringify({
+      model: config.model,
+      messages,
+      stream: false,
+      ...(maxTokens && maxTokens > 0 ? { max_tokens: maxTokens } : {}),
+    }),
     signal,
   });
 

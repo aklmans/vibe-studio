@@ -90,6 +90,8 @@ pnpm dev
 
 Open `http://localhost:3000`. If that port is occupied, Next.js will choose the next available port and print it in the terminal.
 
+By default (self-hosted / local), `/` redirects to `/studio` — the marketing landing is not the entry. The bilingual landing page is served at `/` only on the public showcase deploy, which sets `VIBE_SHOWCASE=1` (see `.env.example`). Either way, the app lives at `/studio` (full workspace) and `/demo` (browser-local), with OBS sources under `/obs/*`.
+
 ### AI Agent setup guide
 
 The public site serves a compact AI-Agent handoff at `/skill.md`. After deployment,
@@ -203,6 +205,7 @@ SESSION_AGENT_USER_AGENT=Vibe-Studio/SessionConfigAgent
 - **No key configured → fallback to local handoff** (Copy handoff). No provider request is made.
 - AI output is **never auto-applied**: a returned config opens in the JSON drawer for review + Apply, exactly like Import.
 - Public/demo deployments do not collect API keys and cannot push into your local OBS. OBS automation is for the local/private Studio you run and configure.
+- On a hosted **showcase** (`VIBE_SHOWCASE=1`) that has a provider configured, `/demo` can run the agent against that provider so visitors can try it live — rate-limited per IP (`SESSION_AGENT_RATE_LIMIT`, default 10/hour) and output-capped (`SESSION_AGENT_MAX_TOKENS`, default 4096). It still never persists to a database, publishes OBS state, or collects a visitor key. A local/private Studio ignores these limits and runs with your own key. Set a spending cap on the provider account as the real backstop.
 
 ## Export Workflow
 

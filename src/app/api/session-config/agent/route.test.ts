@@ -1,17 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { GET, POST } from "./route";
+import { resetShowcaseRunLimiterForTest } from "../../../../lib/showcase-rate-limit";
 
 const KEY = "sk-route-secret-999";
 const PRIVATE_ROUTE_SOCIAL = "private-route-social";
 const DEFAULT_USER_AGENT = "Vibe-Studio/SessionConfigAgent";
 
+// VIBE_SHOWCASE + guardrail knobs are included so withEnv clears them before
+// every test (default = app mode: no rate limit, no token cap) and restores
+// them after, keeping the showcase cases from leaking into the others.
 const AGENT_ENV_KEYS = [
   "SESSION_AGENT_API_KEY",
   "SESSION_AGENT_PROVIDER",
   "SESSION_AGENT_BASE_URL",
   "SESSION_AGENT_MODEL",
   "SESSION_AGENT_USER_AGENT",
+  "SESSION_AGENT_RATE_LIMIT",
+  "SESSION_AGENT_MAX_TOKENS",
+  "VIBE_SHOWCASE",
 ] as const;
 
 function withEnv(
@@ -150,4 +157,55 @@ test("GET reports key-free configured status", async () => {
     assert.equal(data.provider, "deepseek");
     assert.equal(JSON.stringify(data).includes(KEY), false);
   });
+});
+
+test("showcase mode rate-limits agent runs, then 429s without calling the provider", async () => {
+  let providerCalls = 0;
+  const fetchImpl = (async () => {
+    providerCalls += 1;
+    return new Response(JSON.stringify({ choices: [{ message: { content: "ok" } }] }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  await withEnv(
+    { SESSION_AGENT_API_KEY: KEY, VIBE_SHOWCASE: "1", SESSION_AGENT_RATE_LIMIT: "1" },
+    fetchImpl,
+    async () => {
+      resetShowcaseRunLimiterForTest();
+      const first = await POST(postRequest({ brief: "a", task: "", configText: "{}", locale: "en" }));
+      assert.equal(first.status, 200);
+      assert.equal((await first.json()).mode, "ai");
+
+      const second = await POST(postRequest({ brief: "b", task: "", configText: "{}", locale: "en" }));
+      assert.equal(second.status, 429);
+      const data = await second.json();
+      assert.equal(data.mode, "error");
+      assert.equal(data.rateLimited, true);
+      assert.equal(providerCalls, 1); // the blocked request never reached the provider
+    },
+  );
+  resetShowcaseRunLimiterForTest();
+});
+
+test("showcase caps output tokens; app mode leaves runs uncapped", async () => {
+  const bodies: Array<Record<string, unknown>> = [];
+  const fetchImpl = (async (_url: string, init: RequestInit) => {
+    bodies.push(JSON.parse(init.body as string));
+    return new Response(JSON.stringify({ choices: [{ message: { content: "ok" } }] }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  await withEnv(
+    { SESSION_AGENT_API_KEY: KEY, VIBE_SHOWCASE: "1", SESSION_AGENT_MAX_TOKENS: "1234" },
+    fetchImpl,
+    async () => {
+      resetShowcaseRunLimiterForTest();
+      await POST(postRequest({ brief: "a", task: "", configText: "{}", locale: "en" }));
+      assert.equal(bodies[0].max_tokens, 1234);
+    },
+  );
+
+  await withEnv({ SESSION_AGENT_API_KEY: KEY }, fetchImpl, async () => {
+    await POST(postRequest({ brief: "a", task: "", configText: "{}", locale: "en" }));
+    assert.equal("max_tokens" in bodies[1], false);
+  });
+  resetShowcaseRunLimiterForTest();
 });

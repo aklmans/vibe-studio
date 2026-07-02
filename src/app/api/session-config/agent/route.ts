@@ -4,6 +4,7 @@ import {
   extractConfigJson,
   publicAgentStatus,
   readSessionAgentConfig,
+  readShowcaseGuardrails,
   redactKey,
   restorePrivateSocialValuesInConfigText,
   testAgentConnection,
@@ -11,9 +12,22 @@ import {
   type SessionAgentRunResponse,
   type SessionAgentTestResponse,
 } from "../../../../lib/session-agent";
+import { isShowcase } from "../../../../lib/site-mode";
+import { showcaseRunLimiter } from "../../../../lib/showcase-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Best-effort client IP from proxy headers; one bucket for header-less callers. */
+function clientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  const real = request.headers.get("x-real-ip")?.trim();
+  return real || "unknown";
+}
 
 /** Key-free status so the client can show "Connected" vs "Local prep". */
 export function GET() {
@@ -54,8 +68,35 @@ export async function POST(request: Request) {
     return Response.json(fallback);
   }
 
+  // Public-showcase abuse guard: rate-limit real provider runs by IP and cap
+  // output tokens. A local/private Studio (app mode) is uncapped — it is the
+  // operator's own key and machine.
+  const showcase = isShowcase();
+  if (showcase) {
+    const decision = showcaseRunLimiter().check(clientIp(request));
+    if (!decision.allowed) {
+      const limited: SessionAgentRunResponse = {
+        mode: "error",
+        configured: true,
+        provider: config.provider,
+        model: config.model,
+        rateLimited: true,
+        error: "rate limit exceeded",
+      };
+      const retryAfter = Math.max(1, Math.ceil((decision.resetAt - Date.now()) / 1000));
+      return Response.json(limited, { status: 429, headers: { "Retry-After": String(retryAfter) } });
+    }
+  }
+
   try {
-    const { content } = await callOpenAICompatibleChat(config, buildChatMessages(agentRequest));
+    const maxTokens = showcase ? readShowcaseGuardrails(process.env).maxTokens : undefined;
+    const { content } = await callOpenAICompatibleChat(
+      config,
+      buildChatMessages(agentRequest),
+      undefined,
+      undefined,
+      maxTokens,
+    );
     const extractedConfig = extractConfigJson(content);
     const result: SessionAgentRunResponse = {
       mode: "ai",

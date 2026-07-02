@@ -237,7 +237,7 @@ const enContent: LandingContent = {
   openStudio: "Open Studio",
   copyAgentPrompt: "Copy agent prompt",
   heroChips: ["Agent-prepared", "Human-reviewed", "Local-first"],
-  heroNote: "Demo mode is local-only. Private studio at",
+  heroNote: "The demo runs in your browser. Private studio at",
   heroStudioLink: "/studio",
   viewGithub: "View on GitHub",
 
@@ -402,7 +402,7 @@ Keep OBS, database, runtime state and localStorage unchanged unless I explicitly
       prompt: `Read /skill.md first.
 Then help me run the Vibe Studio local demo from https://github.com/aklmans/vibe-studio.
 Use pnpm. Check AGENTS.md and README.md for install and dev commands.
-The public demo is at /demo — it runs browser-local with no provider calls, no database writes, and no OBS control.
+The public demo is at /demo — browser-local state, no database writes, no OBS control.
 Start the dev server and open /demo to confirm it loads.`,
     },
     {
@@ -464,7 +464,7 @@ Keep it under 300 words.`,
     },
     {
       question: "Is the public demo connected to my private stream?",
-      answer: "No. Demo mode uses browser-local storage and avoids real provider calls, database writes and OBS live-state publishing. It cannot control your OBS.",
+      answer: "No. The demo keeps its state in your browser and never writes to a database, publishes OBS live-state, or collects your API key — it can't touch your stream. On the hosted showcase it can run the agent against the site's own configured provider (rate-limited), never yours.",
     },
     {
       question: "Does the AI agent ever auto-apply changes?",
@@ -533,7 +533,7 @@ const zhContent: LandingContent = {
   openStudio: "打开 Studio",
   copyAgentPrompt: "复制 Agent 提示词",
   heroChips: ["Agent 准备", "人工确认", "本地优先"],
-  heroNote: "Demo 模式仅限本地。私有工作台地址",
+  heroNote: "Demo 在你的浏览器中运行。私有工作台地址",
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
 
@@ -698,7 +698,7 @@ https://github.com/aklmans/vibe-studio
       prompt: `先读 /skill.md。
 然后帮我从 https://github.com/aklmans/vibe-studio 运行 Vibe Studio 本地 Demo。
 用 pnpm。查 AGENTS.md 和 README.md 的安装和 dev 命令。
-公开 Demo 在 /demo——浏览器本地运行，无 provider 调用、无数据库写入、无 OBS 控制。
+公开 Demo 在 /demo——浏览器本地状态、无数据库写入、无 OBS 控制。
 启动 dev server 并打开 /demo 确认加载。`,
     },
     {
@@ -760,7 +760,7 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
     },
     {
       question: "公开 Demo 连着我的私有直播吗？",
-      answer: "不。Demo 模式使用浏览器本地存储，不触发真实 provider 调用、数据库写入或 OBS 实时状态发布，也不能控制你的 OBS。",
+      answer: "不。Demo 把状态存在你的浏览器里，不写数据库、不发布 OBS 实时状态、也不索取你的 API key —— 碰不到你的直播。在托管展示站上，它用的是站点自己配置的 provider（有限流），永远不是你的。",
     },
     {
       question: "AI Agent 会自动修改直播状态吗？",

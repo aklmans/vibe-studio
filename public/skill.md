@@ -38,11 +38,13 @@ Use pnpm only.
 
 ## Safe Demo vs Studio
 
-- `/demo` is local-only: no provider calls, no database writes, no OBS side
-  effects.
+- `/demo` never writes to a database, publishes OBS state, or collects a visitor
+  API key. On a hosted showcase (`VIBE_SHOWCASE=1`) that configured a provider it
+  can run the agent against that provider, rate-limited by IP and token-capped;
+  with none it falls back to the local handoff. Turns are never persisted.
 - `/studio` is the private workspace. When run locally or in your own private
-  deployment, it can use AI provider env, optional database persistence, and
-  local OBS automation.
+  deployment, it can use AI provider env (uncapped), optional database
+  persistence, and local OBS automation.
 - A public hosted demo cannot push into a viewer's local OBS.
 
 ## Agent Boundary

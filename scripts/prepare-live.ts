@@ -95,7 +95,7 @@ async function prepareLive(): Promise<void> {
 
   console.log("");
   console.log("Ready for the manual steps:");
-  console.log(`1. Fill stream title/tasks in http://localhost:${PORT}`);
+  console.log(`1. Fill stream title/tasks in http://localhost:${PORT}/studio`);
   console.log("2. In Bilibili Livehime, confirm category and microphone.");
   console.log("3. Check the preview, then click 开始直播 manually.");
 }
@@ -441,8 +441,8 @@ async function stopObsVirtualCamera(): Promise<void> {
 }
 
 async function openWebApp(): Promise<void> {
-  console.log(`Opening web app: http://localhost:${PORT}`);
-  await run("open", [`http://localhost:${PORT}`]);
+  console.log(`Opening web app: http://localhost:${PORT}/studio`);
+  await run("open", [`http://localhost:${PORT}/studio`]);
 }
 
 async function openBilibiliLivehime(): Promise<void> {

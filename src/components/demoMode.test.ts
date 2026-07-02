@@ -18,12 +18,15 @@ test("demo mode disables production side effects while keeping the builder usabl
   assert.match(APP_SRC, /<LiveDataManager[\s\S]*demoMode=\{demoMode\}/);
 });
 
-test("Session Config passes demo mode through to Agent and suppresses real provider calls", () => {
+test("demo reflects real provider status and can run the agent, but never writes to the database", () => {
   assert.match(MANAGER_SRC, /demoMode\?: boolean/);
   assert.match(MANAGER_SRC, /<AgentView[\s\S]*demoMode=\{demoMode\}/);
   assert.match(AGENT_SRC, /demoMode\?: boolean/);
-  assert.match(AGENT_SRC, /if \(demoMode\) \{\s*setStatus\(\{ configured: false/);
+  // DB-backed conversation history and turn persistence stay off in demo.
   assert.match(AGENT_SRC, /if \(demoMode\) \{\s*setConversationAvailable\(false\)/);
-  assert.match(AGENT_SRC, /if \(demoMode\) \{\s*recordLocalTurn\(false\)/);
   assert.match(AGENT_SRC, /if \(demoMode\) return;\s*if \(!conversationId\) return/);
+  // Demo no longer forces "not configured" status nor the local handoff — it
+  // experiences the real, rate-limited provider when the deploy configured one.
+  assert.doesNotMatch(AGENT_SRC, /if \(demoMode\) \{\s*setStatus\(\{ configured: false/);
+  assert.doesNotMatch(AGENT_SRC, /if \(demoMode\) \{\s*recordLocalTurn\(false\)/);
 });

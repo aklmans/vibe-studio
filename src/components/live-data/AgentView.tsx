@@ -260,11 +260,9 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
   }, []);
 
   useEffect(() => {
-    if (demoMode) {
-      setStatus({ configured: false });
-      return;
-    }
-
+    // The demo reflects the deploy's real provider status too: a showcase that
+    // configured a key can run the (rate-limited) agent; with none it falls back
+    // to the local handoff. The status GET is key-free.
     let active = true;
     void fetchAgentStatus().then((next) => {
       if (active) setStatus(next);
@@ -272,7 +270,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
     return () => {
       active = false;
     };
-  }, [demoMode]);
+  }, []);
 
   useEffect(() => {
     if (demoMode) {
@@ -424,10 +422,9 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
 
   const runWithAi = () => {
     if (running) return;
-    if (demoMode) {
-      recordLocalTurn(false);
-      return;
-    }
+    // The demo runs the real agent too when the deploy is configured (this path
+    // is only reached while connected). Nothing is persisted: persistTurnPair
+    // stays demo-guarded, so the turn lives only in local state.
     const configText = projectConfigText(state);
     const id = nextTurnId.current++;
     const baseTurn = {
@@ -468,7 +465,8 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
           patchTurn(id, patch);
           persistTurnPair({ ...baseTurn, ...patch } as AiTurn);
         } else {
-          const patch = { status: "error", message: result.error ?? t("agent.aiError"), configText: null } satisfies Partial<AiTurn>;
+          const message = result.rateLimited ? t("agent.rateLimited") : result.error ?? t("agent.aiError");
+          const patch = { status: "error", message, configText: null } satisfies Partial<AiTurn>;
           patchTurn(id, patch);
           persistTurnPair({ ...baseTurn, ...patch } as AiTurn);
         }

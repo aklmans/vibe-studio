@@ -42,6 +42,15 @@ localStorage / logs — the client only ever sees `configured` / `not set`) or
 falls back to a local copy-handoff; it never edits settings via chat and never
 bypasses the JSON review/apply path.
 
+Demo semantics: `/demo` reflects the deploy's real provider status and, when a
+provider is configured, can run the agent — so a public showcase can let
+visitors try it live. On the showcase (`VIBE_SHOWCASE=1`) those runs are
+rate-limited by IP and token-capped (`readShowcaseGuardrails` +
+`src/lib/showcase-rate-limit.ts`); a local/private Studio runs uncapped. In every
+mode the demo still never persists turns/sessions to the database, controls OBS,
+or collects a visitor key — the demo/studio line is DB persistence, not AI
+access. Do not re-add a blanket "demo never calls the provider" guard.
+
 Public setup note: deployed builds serve `public/skill.md` at `/skill.md`.
 That file is the concise AI-Agent handoff for installing, running, configuring
 server-side provider env, and wiring OBS routes. Keep it short and consistent
@@ -130,7 +139,7 @@ Important: do not reintroduce OBS's `--startvirtualcam` launch argument. On macO
 ### Application entry
 
 - `src/app/layout.tsx` defines the root document and metadata.
-- `src/app/page.tsx` renders the page.
+- `src/app/page.tsx` owns `/`. It is deployment-mode gated (`src/lib/site-mode.ts`): with `VIBE_SHOWCASE=1` it renders the marketing landing; unset (the default, i.e. any self-hosted / forked instance) it `redirect()`s to `/studio` so the app, not the owner-branded promo page, is the entry. `/demo`, `/studio`, and `/obs/*` are unaffected.
 - `src/app/client-page.tsx` mounts the client-only builder and locale provider.
 - `src/components/OverlayBuilderApp.tsx` contains the main editor shell, top bar, inspectors, previews, export nodes, and modal/drawer state.
 
