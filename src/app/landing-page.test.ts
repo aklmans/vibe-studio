@@ -106,11 +106,11 @@ test("root route is a product landing page with public navigation and real expor
     false,
     "copy prompt should not be inside the primary CTA group",
   );
-  // Hero proof chips — three-step product claim.
+  // Hero proof chips — the draft → review → apply control story.
   assert.match(html, /data-testid="landing-hero-chips"/);
-  assert.match(html, /Agent-prepared/);
-  assert.match(html, /Human-reviewed/);
-  assert.match(html, /Local-first/);
+  assert.match(html, /Agent drafts/);
+  assert.match(html, /You review/);
+  assert.match(html, /You apply/);
 
   // Language and theme toggles exist.
   assert.match(html, /data-testid="landing-lang-toggle"/);
@@ -934,7 +934,7 @@ test("FAQ covers AI auto-apply safety plus demo / studio / OBS / export", () => 
   assert.match(html, /\/skill\.md/);
 
   assert.match(html, /Is the public demo connected to my private stream\?/i);
-  assert.match(html, /cannot control your OBS/i);
+  assert.match(html, /touch your OBS or database/i);
   assert.match(html, /Can I still use this as a private studio\?/i);
   assert.match(html, /public hosted demo cannot push to your OBS/i);
   assert.match(html, /Where is the real screen capture\?/i);

@@ -236,8 +236,8 @@ const enContent: LandingContent = {
   tryDemo: "Try Demo",
   openStudio: "Open Studio",
   copyAgentPrompt: "Copy agent prompt",
-  heroChips: ["Agent-prepared", "Human-reviewed", "Local-first"],
-  heroNote: "The demo runs in your browser. Private studio at",
+  heroChips: ["Agent drafts", "You review", "You apply"],
+  heroNote: "Try the live agent in the demo — nothing applies until you review it. Private studio at",
   heroStudioLink: "/studio",
   viewGithub: "View on GitHub",
 
@@ -252,7 +252,7 @@ const enContent: LandingContent = {
   showcaseLabel: "OBS composition · main screen",
 
   featuresEyebrow: "Features",
-  featuresTitle: "Two reasons to stop hand-building live scenes",
+  featuresTitle: "Three reasons to stop hand-building live scenes",
   features: [
     {
       title: "Designed live-room frame",
@@ -264,7 +264,7 @@ const enContent: LandingContent = {
     },
     {
       title: "Local-first Studio",
-      copy: "The public demo is safe. The private Studio runs locally or in your own deployment, with your env API key and local OBS automation only where you configure it.",
+      copy: "Try the agent live in the public demo — it drafts, you review and apply, and it never touches a database or your OBS. Run the private Studio locally or self-hosted, with your own env API key and OBS automation.",
     },
   ],
 
@@ -369,7 +369,7 @@ const enContent: LandingContent = {
   ],
   agentSafety: [
     "AI output is never auto-applied. A returned config opens in the JSON review drawer, exactly like Import.",
-    "The API key belongs in your local/private Studio env. The public demo never asks for it and cannot control your OBS.",
+    "Try the agent live in the demo: the key stays on the server, the demo never asks for yours, and it can't touch your OBS or database.",
   ],
   agentProviders: "Works with any OpenAI-compatible provider — DeepSeek, OpenAI, Kimi, z.ai and others — configured in your local/private Studio env. No key configured? The agent falls back to a local copy handoff.",
 
@@ -532,8 +532,8 @@ const zhContent: LandingContent = {
   tryDemo: "体验 Demo",
   openStudio: "打开 Studio",
   copyAgentPrompt: "复制 Agent 提示词",
-  heroChips: ["Agent 准备", "人工确认", "本地优先"],
-  heroNote: "Demo 在你的浏览器中运行。私有工作台地址",
+  heroChips: ["Agent 起草", "你来审阅", "你来应用"],
+  heroNote: "在 Demo 里试用实时 Agent —— 你确认前不会生效。私有工作台地址",
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
 
@@ -560,7 +560,7 @@ const zhContent: LandingContent = {
     },
     {
       title: "本地优先的 Studio",
-      copy: "公开 Demo 是安全体验；私有 Studio 在本地或你自己的部署中运行，API key、数据库和 OBS 自动化只在你配置的环境里生效。",
+      copy: "在公开 Demo 里就能试用实时 Agent——它起草、你审阅、你应用，全程不写数据库、也不碰你的 OBS。私有 Studio 在本地或你自己的部署中运行，用你自己的 API key 和 OBS 自动化。",
     },
   ],
 
@@ -665,7 +665,7 @@ const zhContent: LandingContent = {
   ],
   agentSafety: [
     "AI 不直接修改直播状态。生成的配置需要进入 JSON 审阅抽屉人工确认，与 Import 完全一致。",
-    "API key 属于你的本地/私有 Studio 环境。公开 Demo 不会索要 key，也不能控制你的 OBS。",
+    "在 Demo 里就能试用实时 Agent：key 只在服务器端，Demo 不会索要你的 key，也碰不到你的 OBS 或数据库。",
   ],
   agentProviders: "兼容任何 OpenAI 兼容 provider——DeepSeek、OpenAI、Kimi、z.ai 等——通过本地/私有 Studio 环境变量配置。未配置 key？Agent 回退到本地复制交接。生成的配置需人工确认后生效。",
 
