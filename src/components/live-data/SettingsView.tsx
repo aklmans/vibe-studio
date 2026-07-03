@@ -16,6 +16,7 @@ import { TextInput, WorkbenchButton } from "../shared/Field";
 import { LineSegmented, RuleNote } from "../inspector/EditorRow";
 import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceControls";
 import AIProviderSettings from "./AIProviderSettings";
+import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import {
@@ -27,6 +28,8 @@ interface SettingsViewProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
   onReset: () => void;
+  /** Public demo: hide local-only OBS composition control in the Broadcast group. */
+  demoMode?: boolean;
   /** Open the JSON drawer — an advanced power-tool, not a per-field requirement. */
   onOpenJson: (key?: string) => void;
   /** A one-shot deep-link request to reveal a settings group (e.g. appearance). */
@@ -65,23 +68,23 @@ interface FieldEntry {
   terms: string[];
 }
 
+// Search index over the 5 boundary-aligned groups. Session carries the whole
+// v1 portable core; Broadcast the runtime on-screen controls; Data the
+// lifecycle + JSON. Each entry anchors at settings-row-{id} for scroll-to.
 const FIELD_INDEX: FieldEntry[] = [
-  { id: "studioProfile", group: "profile", labelKey: "settingsGroup.profile", descKey: "settingsGroup.profileHint", terms: ["studio profile", "profile defaults", "主播资料", "默认身份"] },
-  { id: "profileAuthor", group: "profile", labelKey: "settingsRow.profileAuthorTitle", descKey: "settingsRow.profileAuthorDesc", terms: ["host", "author", "byline", "主播", "署名"] },
-  { id: "profileAvatar", group: "profile", labelKey: "settingsRow.profileAvatarTitle", descKey: "settingsRow.profileAvatarDesc", terms: ["avatar", "profile image", "头像"] },
-  { id: "profileSocials", group: "profile", labelKey: "settingsRow.profileSocialsTitle", descKey: "settingsRow.profileSocialsDesc", terms: ["socials", "social links", "社交", "账号"] },
   { id: "language", group: "session", labelKey: "settingsRow.languageTitle", descKey: "settingsRow.languageDesc", terms: ["language", "语言", "locale", "中英"] },
   { id: "title", group: "session", labelKey: "label.title", descKey: "settingsRow.titleDesc", terms: ["title", "标题", "headline"] },
   { id: "subtitle", group: "session", labelKey: "label.subtitle", descKey: "settingsRow.subtitleDesc", terms: ["subtitle", "topic", "副标题", "话题"] },
-  { id: "author", group: "session", labelKey: "settingsRow.authorTitle", descKey: "settingsRow.authorDesc", terms: ["author", "byline", "作者"] },
-  { id: "profile", group: "content", labelKey: "settingsRow.profileTitle", descKey: "settingsRow.profileDesc", terms: ["profile", "avatar", "头像"] },
-  { id: "cover", group: "content", labelKey: "cover.visual.label", descKey: "settingsRow.coverDesc", terms: ["cover", "visual", "封面"] },
-  { id: "sections", group: "content", labelKey: "settingsField.sections", descKey: "settingsRow.sectionsDesc", terms: ["sections", "章节", "run of show", "流程"] },
-  { id: "stack", group: "content", labelKey: "group.stack", descKey: "group.stack.hint", terms: ["stack", "技术栈", "tools"] },
-  { id: "badges", group: "content", labelKey: "label.badge", descKey: "settingsRow.badgesDesc", terms: ["badges", "badge", "徽标"] },
-  { id: "socials", group: "content", labelKey: "label.social", descKey: "settingsRow.socialsDesc", terms: ["socials", "social", "社交"] },
-  { id: "bottomBar", group: "display", labelKey: "group.bottomBarSegments", terms: ["bottom bar", "底栏", "status bar"] },
-  { id: "liveTimer", group: "display", labelKey: "group.liveSession", descKey: "settingsRow.onAirDesc", terms: ["live timer", "timer", "计时", "on-air", "on air"] },
+  { id: "author", group: "session", labelKey: "settingsRow.authorTitle", descKey: "settingsRow.authorDesc", terms: ["author", "host", "byline", "作者", "主播", "署名"] },
+  { id: "profile", group: "session", labelKey: "settingsRow.profileTitle", descKey: "settingsRow.profileDesc", terms: ["profile", "avatar", "头像"] },
+  { id: "studioProfile", group: "session", labelKey: "settingsGroup.profile", descKey: "settingsGroup.profileHint", terms: ["studio profile", "profile defaults", "save default", "默认身份", "存为默认"] },
+  { id: "cover", group: "session", labelKey: "cover.visual.label", descKey: "settingsRow.coverDesc", terms: ["cover", "visual", "封面"] },
+  { id: "sections", group: "session", labelKey: "settingsField.sections", descKey: "settingsRow.sectionsDesc", terms: ["sections", "章节", "run of show", "流程"] },
+  { id: "stack", group: "session", labelKey: "group.stack", descKey: "group.stack.hint", terms: ["stack", "技术栈", "tools"] },
+  { id: "badges", group: "session", labelKey: "label.badge", descKey: "settingsRow.badgesDesc", terms: ["badges", "badge", "徽标"] },
+  { id: "socials", group: "session", labelKey: "label.social", descKey: "settingsRow.socialsDesc", terms: ["socials", "social", "社交"] },
+  { id: "composition", group: "broadcast", labelKey: "group.composition", descKey: "group.composition.hint", terms: ["obs", "composition", "camera", "screen", "合成", "摄像头", "第二屏", "swap"] },
+  { id: "bottomBar", group: "broadcast", labelKey: "group.bottomBarSegments", terms: ["bottom bar", "底栏", "status bar"] },
   { id: "theme", group: "appearance", labelKey: "settings.theme", descKey: "settings.themeHint", terms: ["theme", "主题", "light", "dark"] },
   { id: "colors", group: "appearance", labelKey: "settingsField.colors", terms: ["colors", "color", "颜色", "palette"] },
   { id: "reset", group: "appearance", labelKey: "reset.button", terms: ["reset", "重置", "defaults"] },
@@ -91,6 +94,7 @@ const FIELD_INDEX: FieldEntry[] = [
   { id: "userAgent", group: "provider", labelKey: "aiProvider.userAgent", terms: ["user-agent", "useragent", "user agent"] },
   { id: "apiKey", group: "provider", labelKey: "aiProvider.apiKey", terms: ["api key", "apikey", "key", "密钥"] },
   { id: "test", group: "provider", labelKey: "aiProvider.test", terms: ["test connection", "测试", "connection"] },
+  { id: "liveTimer", group: "data", labelKey: "group.liveSession", descKey: "settingsRow.onAirDesc", terms: ["live timer", "timer", "计时", "on-air", "on air", "start", "end", "开播"] },
   { id: "status", group: "data", labelKey: "settingsGroup.data", terms: ["local draft", "db", "database", "obs", "数据库", "sync"] },
   { id: "json", group: "data", labelKey: "drawer.openJson", terms: ["json", "import", "export", "导入", "导出"] },
   { id: "file", group: "data", labelKey: "settingsField.file", terms: ["file", "binding", "config file", "文件"] },
@@ -112,6 +116,7 @@ export default function SettingsView({
   state,
   onChange,
   onReset,
+  demoMode = false,
   onOpenJson,
   focus,
   dateKey,
@@ -142,11 +147,6 @@ export default function SettingsView({
   const activeSection = state.sidebar.sections[activeSectionIndex];
   const writeCover = (patch: Partial<OverlayState["cover"]>) =>
     onChange(patchSection(state, "cover", patch));
-  const currentProfile = profileFromState(state);
-  const writeProfileAuthor = (author: string) => {
-    const normalized = author.replace(/^with\s+/i, "").trim();
-    writeCover({ hookText: normalized ? `with ${normalized}` : "" });
-  };
 
   // Field search — a settings-fields search, honest about its scope. A hit
   // switches groups and scrolls to the anchored row (or the group panel).
@@ -237,73 +237,13 @@ export default function SettingsView({
 
   const tabs: TabDef[] = [
     {
-      id: "profile",
-      titleKey: "settingsGroup.profile",
-      hintKey: "settingsGroup.profileHint",
-      render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <RuleNote>
-            {studioProfile ? t("studioProfile.saved") : t("studioProfile.demo")}
-          </RuleNote>
-          <SettingRow rowId="profileAuthor" title={t("settingsRow.profileAuthorTitle")} description={t("settingsRow.profileAuthorDesc")}>
-            <TextInput
-              testId="field-studio-profile-author"
-              value={currentProfile.author}
-              onChange={writeProfileAuthor}
-              placeholder={t("settingsRow.profileAuthorPlaceholder")}
-            />
-          </SettingRow>
-          <AssetRow rowId="profileAvatar" label={t("settingsRow.profileAvatarTitle")} description={t("settingsRow.profileAvatarDesc")}>
-            <AvatarUploader
-              url={state.cover.avatarUrl}
-              visible={state.cover.avatarVisible}
-              onUrlChange={(v) => writeCover({ avatarUrl: v })}
-              onVisibleChange={(v) => writeCover({ avatarVisible: v })}
-              showToggle
-              clearValue="/avatar.png"
-              testIdPrefix="field-studio-profile-avatar"
-            />
-          </AssetRow>
-          <AssetRow rowId="profileSocials" label={t("settingsRow.profileSocialsTitle")} description={t("settingsRow.profileSocialsDesc")} summary={socialsSummary}>
-            <SocialsEditor state={state} onChange={onChange} testIdPrefix="studio-profile-social" />
-          </AssetRow>
-          <div
-            id="settings-row-studioProfile"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-              paddingTop: 14,
-              borderTop: `1px solid ${UI_COLORS.border}`,
-            }}
-          >
-            <WorkbenchButton
-              testId="studio-profile-save"
-              tone="accent"
-              onClick={() => onSaveStudioProfile(profileFromState(state))}
-              style={{ height: 32, padding: "0 12px" }}
-            >
-              {t("studioProfile.save")}
-            </WorkbenchButton>
-            <WorkbenchButton
-              testId="studio-profile-clear"
-              tone="danger"
-              onClick={onClearStudioProfile}
-              style={{ height: 32, padding: "0 12px" }}
-            >
-              {t("studioProfile.clear")}
-            </WorkbenchButton>
-          </div>
-        </div>
-      ),
-    },
-    {
+      // Session — the whole v1 portable core in one place, mirroring the JSON,
+      // with a save/load "studio default" action instead of a duplicate group.
       id: "session",
       titleKey: "settingsGroup.session",
       hintKey: "settingsGroup.sessionHint",
       render: () => (
-        <>
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <SettingRow rowId="language" title={t("settingsRow.languageTitle")} description={t("settingsRow.languageDesc")}>
             <SettingsSelector
               options={[
@@ -323,15 +263,6 @@ export default function SettingsView({
           <SettingRow rowId="author" title={t("settingsRow.authorTitle")} description={t("settingsRow.authorDesc")}>
             <TextInput testId="field-author" value={state.cover.hookText} onChange={(v) => writeCover({ hookText: v })} placeholder={t("settingsRow.authorPlaceholder")} />
           </SettingRow>
-        </>
-      ),
-    },
-    {
-      id: "content",
-      titleKey: "settingsGroup.content",
-      hintKey: "settingsGroup.contentHint",
-      render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <AssetRow rowId="profile" label={t("settingsRow.profileTitle")} description={t("settingsRow.profileDesc")}>
             <AvatarUploader
               url={state.cover.avatarUrl}
@@ -343,10 +274,35 @@ export default function SettingsView({
               testIdPrefix="field-profile-avatar"
             />
           </AssetRow>
+          {/* Studio default — snapshot the identity above for reuse across streams. */}
+          <div
+            id="settings-row-studioProfile"
+            style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", paddingTop: 4 }}
+          >
+            <span style={{ ...summaryStyle, marginRight: "auto", marginTop: 0 }}>
+              {studioProfile ? t("studioProfile.saved") : t("studioProfile.demo")}
+            </span>
+            <WorkbenchButton
+              testId="studio-profile-save"
+              tone="accent"
+              onClick={() => onSaveStudioProfile(profileFromState(state))}
+              style={{ height: 30, padding: "0 12px" }}
+            >
+              {t("studioProfile.save")}
+            </WorkbenchButton>
+            <WorkbenchButton
+              testId="studio-profile-clear"
+              tone="danger"
+              onClick={onClearStudioProfile}
+              style={{ height: 30, padding: "0 12px" }}
+            >
+              {t("studioProfile.clear")}
+            </WorkbenchButton>
+          </div>
           <AssetRow rowId="cover" label={t("cover.visual.label")} description={t("settingsRow.coverDesc")}>
             <CoverVisualEditor state={state} onChange={onChange} />
           </AssetRow>
-          <AssetRow rowId="sections" label={t("label.section") + "s"} description={t("settingsRow.sectionsDesc")} summary={sectionsSummary}>
+          <AssetRow rowId="sections" label={`${t("label.section")}s`} description={t("settingsRow.sectionsDesc")} summary={sectionsSummary}>
             <div data-testid="live-data-sections" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <LineSegmented
                 testId="live-data-section-tabs"
@@ -381,11 +337,18 @@ export default function SettingsView({
       ),
     },
     {
-      id: "display",
-      titleKey: "settingsGroup.display",
-      hintKey: "settingsGroup.displayHint",
+      // Broadcast — runtime on-screen controls (not in the config file). OBS
+      // composition is local-only, so the demo hides it (its route 404s anyway).
+      id: "broadcast",
+      titleKey: "settingsGroup.broadcast",
+      hintKey: "settingsGroup.broadcastHint",
       render: () => (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {!demoMode && (
+            <AssetRow rowId="composition" label={t("group.composition")} description={t("group.composition.hint")}>
+              <ObsCompositionControls state={state} onChange={onChange} />
+            </AssetRow>
+          )}
           <div id="settings-row-bottomBar" data-testid="live-data-bottom-bar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={fieldLabel}>{t("group.bottomBarSegments")}</span>
@@ -397,12 +360,6 @@ export default function SettingsView({
               </SettingRow>
             ))}
           </div>
-          <SettingRow rowId="liveTimer" title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
-            <div data-testid="live-data-live-session">
-              <LiveSessionEditor state={state} onChange={onChange} />
-            </div>
-          </SettingRow>
-          <RuleNote>{t("settingsRow.displayNote")}</RuleNote>
         </div>
       ),
     },
@@ -421,6 +378,8 @@ export default function SettingsView({
       render: () => <AIProviderSettings />,
     },
     {
+      // Data & Sync — session lifecycle (start/end + on-air timer, unified here),
+      // persistence + OBS-sync status, and the JSON power tool.
       id: "data",
       titleKey: "settingsGroup.data",
       hintKey: "settingsGroup.dataHint",
@@ -435,6 +394,11 @@ export default function SettingsView({
             onEndSession={onEndSession}
             onOpenJson={() => onOpenJson()}
           />
+          <SettingRow rowId="liveTimer" title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
+            <div data-testid="live-data-live-session">
+              <LiveSessionEditor state={state} onChange={onChange} />
+            </div>
+          </SettingRow>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "0 2px" }}>
             <RuleNote>{t("settingsRow.persistenceNote")}</RuleNote>
             <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>

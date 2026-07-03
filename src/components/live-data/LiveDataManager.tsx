@@ -236,6 +236,7 @@ export default function LiveDataManager({
               state={state}
               onChange={onChange}
               onReset={onReset}
+              demoMode={demoMode}
               onOpenJson={openJson}
               focus={localFocus ?? focus}
               dateKey={dateKey}

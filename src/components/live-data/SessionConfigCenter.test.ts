@@ -119,7 +119,7 @@ test("Settings is a tabbed panel — left vertical menu + panels + field search"
   assert.match(html, /data-testid="settings-view"/);
   assert.match(html, /data-testid="settings-tab-bar"[^>]*role="tablist"/);
   assert.match(html, /aria-orientation="vertical"/); // a left rail, not wide top tabs
-  for (const id of ["profile", "session", "content", "display", "appearance", "provider", "data"]) {
+  for (const id of ["session", "broadcast", "appearance", "provider", "data"]) {
     assert.match(html, new RegExp(`data-testid="settings-tab-${id}"`));
     assert.match(html, new RegExp(`data-testid="settings-panel-${id}"`));
     assert.match(html, new RegExp(`id="settings-tab-${id}"[^>]*aria-controls="settings-panel-${id}"`));
@@ -171,13 +171,15 @@ test("Settings edits the v1 portable-core fields directly", () => {
 
 test("Studio Profile persists reusable identity separately from stream config", () => {
   const html = renderCenter();
-  assert.match(html, /data-testid="settings-tab-profile"/);
-  assert.match(html, /data-testid="settings-panel-profile"/);
-  assert.match(html, /data-testid="field-studio-profile-author"/);
-  assert.match(html, /data-testid="field-studio-profile-avatar-visible"/);
-  assert.match(html, /data-testid="studio-profile-social-0-label"/);
+  // Studio Profile is a save/load action inside the unified Session group now,
+  // not a separate tab — it snapshots the same identity fields (no duplicates).
+  assert.doesNotMatch(html, /data-testid="settings-tab-profile"/);
+  assert.match(html, /data-testid="settings-tab-session"/);
+  assert.match(html, /data-testid="field-author"/);
+  assert.match(html, /data-testid="field-profile-avatar-visible"/);
   assert.match(html, /data-testid="studio-profile-save"/);
   assert.match(html, /data-testid="studio-profile-clear"/);
+  assert.doesNotMatch(html, /data-testid="field-studio-profile-author"/);
 
   assert.match(APP_SRC, /loadStudioProfile/);
   assert.match(APP_SRC, /applyStudioProfileToState\(DEFAULT_STATE_BY_LOCALE\[loadLocale\(\)\]/);
@@ -731,8 +733,8 @@ test("switching Manual tabs only swaps the visible panel (state preserved)", () 
   // toggled via hidden), so the v1 fields + JSON drift never unmount on switch.
   assert.match(SETTINGS_SRC, /role="tabpanel"/);
   assert.match(SETTINGS_SRC, /hidden=\{tab\.id !== activeTab\}/);
-  // All six panels are present in the markup even though one is active.
-  for (const id of ["session", "content", "display", "appearance", "provider", "data"]) {
+  // All five panels are present in the markup even though one is active.
+  for (const id of ["session", "broadcast", "appearance", "provider", "data"]) {
     assert.match(html, new RegExp(`data-testid="settings-panel-${id}"`));
   }
 });

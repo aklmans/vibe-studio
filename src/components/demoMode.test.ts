@@ -36,6 +36,15 @@ test("demo hides the OBS composition controls; the studio inspector wires them i
     OVERLAY_INSPECTOR_SRC,
     /\{!demoMode && \(\s*<InspectorGroup[\s\S]{0,120}group\.composition/,
   );
+
+  // The Session Config Broadcast group hosts the same control and gates it too.
+  const SETTINGS_SRC = readFileSync(
+    resolve("src/components/live-data/SettingsView.tsx"),
+    "utf8",
+  );
+  assert.match(MANAGER_SRC, /<SettingsView[\s\S]*?demoMode=\{demoMode\}/);
+  assert.match(SETTINGS_SRC, /demoMode\?: boolean/);
+  assert.match(SETTINGS_SRC, /\{!demoMode && \(\s*<AssetRow[\s\S]{0,120}group\.composition/);
 });
 
 test("demo reflects real provider status and can run the agent, but never writes to the database", () => {
