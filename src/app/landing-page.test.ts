@@ -542,7 +542,7 @@ test("Surfaces section tells the designed live-room workflow story, not an asset
 
   assert.match(html, /Studio layer/);
 
-  assert.match(html, /Natural-language brief becomes a structured live config/);
+  assert.match(html, /Natural-language brief becomes structured stream content/);
   assert.match(html, /Proposal enters a review drawer, never live state/);
   assert.match(html, /Overlay is a transparent UI frame, not a locked scene layout/);
   assert.match(html, /Overlay, cover, poster and wallpapers from one state/);

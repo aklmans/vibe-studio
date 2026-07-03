@@ -76,8 +76,7 @@
 }
 
 .akl-agent-skill-note {
-  margin: -12px auto 32px;
-  text-align: center;
+  margin: 16px 0 0;
   font-family: var(--app-font-mono);
   font-size: 13px;
   color: var(--akl-text-muted);

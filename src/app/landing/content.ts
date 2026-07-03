@@ -260,7 +260,7 @@ const enContent: LandingContent = {
     },
     {
       title: "Session Config Agent",
-      copy: "Describe today's stream. The Agent drafts titles, sections, on-screen copy and useful metadata so setup starts from a reviewed proposal, not a blank form.",
+      copy: "Describe today's stream. The Agent drafts the title, subtitle, sections, stack and topic badges so setup starts from a reviewed proposal, not a blank form.",
     },
     {
       title: "Local-first Studio",
@@ -285,11 +285,11 @@ const enContent: LandingContent = {
         width: 3960,
         height: 2128,
       },
-      summary: "Describe a study session, coding hangout, game stream or chat show in plain language. The Agent drafts title, sections, stack, socials and bottom bar — no manual form filling.",
+      summary: "Describe a study session, coding hangout, game stream or chat show in plain language. The Agent drafts the title, subtitle, sections, stack and topic badges — no manual form filling.",
       points: [
-        "Natural-language brief becomes a structured live config",
-        "Title, sections, metadata and social copy proposed in one pass",
-        "Faster prep than editing every field by hand",
+        "Natural-language brief becomes structured stream content",
+        "Title, subtitle, sections, stack and badges proposed in one pass",
+        "Your brand — avatar, socials, theme — stays fixed; the agent only drafts content",
       ],
     },
     {
@@ -354,7 +354,7 @@ const enContent: LandingContent = {
     {
       step: "01",
       title: "Agent drafts a session config",
-      copy: "Describe the stream. The agent returns a proposed config — title, sections, metadata, stack, socials — as JSON you can read.",
+      copy: "Describe the stream. The agent returns proposed content — title, subtitle, sections, stack, badges — as JSON you can read.",
     },
     {
       step: "02",
@@ -556,7 +556,7 @@ const zhContent: LandingContent = {
     },
     {
       title: "Session Config Agent",
-      copy: "描述今天要直播什么，Agent 帮你草拟标题、段落、画面文案和关键元数据，从可审阅提案开始，而不是从空表单开始。",
+      copy: "描述今天要直播什么，Agent 帮你草拟标题、副标题、章节、工具栈与话题徽标，从可审阅提案开始，而不是从空表单开始。",
     },
     {
       title: "本地优先的 Studio",
@@ -581,11 +581,11 @@ const zhContent: LandingContent = {
         width: 3960,
         height: 2128,
       },
-      summary: "用自然语言描述一场共学、编程、游戏或聊天直播，Session Config Agent 生成标题、段落、工具栈、社交链接与底栏——无需手工填表。",
+      summary: "用自然语言描述一场共学、编程、游戏或聊天直播，Session Config Agent 生成标题、副标题、章节、工具栈与话题徽标——无需手工填表。",
       points: [
-        "自然语言描述转为结构化直播配置",
-        "标题、段落、元数据和社交文案一次生成",
-        "比逐字段手填更快的准备方式",
+        "自然语言描述转为结构化直播内容",
+        "标题、副标题、章节、工具栈与徽标一次生成",
+        "品牌(头像、社交、主题)保持不变，Agent 只草拟内容",
       ],
     },
     {
@@ -650,7 +650,7 @@ const zhContent: LandingContent = {
     {
       step: "01",
       title: "Agent 生成直播配置",
-      copy: "描述直播内容，Agent 返回提案配置——标题、段落、元数据、工具栈、社交链接——以 JSON 格式呈现。",
+      copy: "描述直播内容，Agent 返回提案内容——标题、副标题、章节、工具栈、徽标——以 JSON 格式呈现。",
     },
     {
       step: "02",
