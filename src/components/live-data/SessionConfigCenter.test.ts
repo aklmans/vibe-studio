@@ -111,7 +111,7 @@ test("Session Config opens over the previous workbench tab instead of replacing 
   assert.match(APP_SRC, /const previewState = isLiveDataTab \? \{ \.\.\.state, activeTab: previewTab \} : state/);
   assert.match(APP_SRC, /\{isLiveDataTab && \(\s*<LiveDataManager/);
   assert.doesNotMatch(APP_SRC, /\{isLiveDataTab \? \(\s*<LiveDataManager/);
-  assert.match(APP_SRC, /<Inspector state=\{previewState\} onChange=\{setState\} \/>/);
+  assert.match(APP_SRC, /<Inspector state=\{previewState\} onChange=\{setState\} demoMode=\{demoMode\} \/>/);
 });
 
 test("Settings is a tabbed panel — left vertical menu + panels + field search", () => {

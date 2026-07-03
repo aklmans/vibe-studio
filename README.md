@@ -153,6 +153,8 @@ The script:
 
 The script never clicks Bilibili's start-live button. Confirm the title, category, microphone, preview, and final start action manually in Livehime.
 
+While live, the Overlay inspector's **Composition · OBS** group (local/private Studio only) can switch what sits in the camera slot — webcam, a second monitor, or the avatar theme — and swap it with the main screen, driving your local OBS over obs-websocket. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
+
 `pnpm live:stop` intentionally leaves Bilibili Livehime open because closing it can interrupt an active stream. Close Livehime manually after ending the livestream.
 
 Important OBS note: do not start OBS with `--startvirtualcam`. On macOS this can trigger OBS's "The virtual camera is not installed" dialog before the camera system extension has finished loading. `pnpm live:prepare` intentionally starts OBS first, enables obs-websocket, then calls `StartVirtualCam` through WebSocket after OBS is ready.

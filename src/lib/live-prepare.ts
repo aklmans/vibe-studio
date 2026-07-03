@@ -50,29 +50,47 @@ interface PrepareObsWebSocketConfigResult {
   changes: string[];
 }
 
-const DEFAULT_SCENE_NAME = "Vibe Live Overlay";
-const EMPTY_FRAME_SOURCE = "Vibe Overlay Empty Frame";
-const AVATAR_FRAME_SOURCE = "Vibe Overlay Avatar Frame";
-const CAMERA_SOURCE = "Vibe Camera Capture";
-const MAIN_DISPLAY_SOURCE = "Vibe Main Display Capture";
-const MAIN_APP_SOURCE = "Vibe Main App Capture";
+// Single registry of OBS scene/source names and slot geometry. The prepare
+// script (offline scene-JSON edit) and the runtime composition route
+// (obs-websocket) must agree on these; AGENTS.md documents the name contract.
+export const DEFAULT_SCENE_NAME = "Vibe Live Overlay";
+export const EMPTY_FRAME_SOURCE = "Vibe Overlay Empty Frame";
+export const AVATAR_FRAME_SOURCE = "Vibe Overlay Avatar Frame";
+export const CAMERA_SOURCE = "Vibe Camera Capture";
+export const MAIN_DISPLAY_SOURCE = "Vibe Main Display Capture";
+export const MAIN_APP_SOURCE = "Vibe Main App Capture";
+/** Optional display capture of a second monitor. Created manually in OBS once
+ * (macOS Screen Capture named exactly this, pointed at display 2); prepare and
+ * the composition route tolerate its absence. */
+export const SECOND_SCREEN_SOURCE = "Vibe Second Screen Capture";
 
-const DEFAULT_SCENE_ORDER = [
+export const DEFAULT_SCENE_ORDER = [
   MAIN_DISPLAY_SOURCE,
   MAIN_APP_SOURCE,
   CAMERA_SOURCE,
+  SECOND_SCREEN_SOURCE,
   AVATAR_FRAME_SOURCE,
   EMPTY_FRAME_SOURCE,
 ] as const;
-const MAIN_SCREEN_FRAME = {
+export const MAIN_SCREEN_FRAME = {
   left: 24,
   top: 24,
   width: 1440,
   height: 810,
 } as const;
-const OBS_BOUNDS_SCALE_INNER = 2;
-const OBS_ALIGN_CENTER = 5;
-const OBS_BOUNDS_ALIGN_CENTER = 0;
+/** The transparent camera cutout in the 1920×1080 overlay. Must match
+ * OBS_CAMERA_SLOT in OverlayCanvas.tsx (pinned by obs-composition.test.ts). */
+export const CAMERA_SLOT_FRAME = {
+  left: 1498,
+  top: 786,
+  width: 400,
+  height: 272,
+} as const;
+export const OBS_BOUNDS_SCALE_INNER = 2;
+export const OBS_BOUNDS_SCALE_OUTER = 3;
+// OBS alignment bitmask: LEFT(1) | TOP(4) — positions are top-left anchored.
+export const OBS_ALIGN_TOP_LEFT = 5;
+export const OBS_BOUNDS_ALIGN_CENTER = 0;
 
 export function buildObsOverlayUrl(
   port: number,
@@ -114,6 +132,14 @@ export function prepareObsSceneConfig(
   setSceneItemVisibility(scene.settings.items, CAMERA_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, MAIN_DISPLAY_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, MAIN_APP_SOURCE, true, changes);
+
+  // The second-screen capture is optional (created manually in OBS). When
+  // present, park it in the camera slot and keep it hidden — the runtime
+  // composition route then only toggles visibility, never re-derives geometry.
+  if (scene.settings.items.some((item) => item.name === SECOND_SCREEN_SOURCE)) {
+    setCameraSlotFrame(scene.settings.items, SECOND_SCREEN_SOURCE, changes);
+    setSceneItemVisibility(scene.settings.items, SECOND_SCREEN_SOURCE, false, changes);
+  }
 
   return { config, changes };
 }
@@ -192,7 +218,7 @@ function setMainScreenFrame(
   item.bounds_type = OBS_BOUNDS_SCALE_INNER;
   item.bounds_crop = false;
   item.bounds_align = OBS_BOUNDS_ALIGN_CENTER;
-  item.align = OBS_ALIGN_CENTER;
+  item.align = OBS_ALIGN_TOP_LEFT;
   item.rot = 0;
   item.scale = { x: 1, y: 1 };
   item.crop_left = 0;
@@ -200,4 +226,32 @@ function setMainScreenFrame(
   item.crop_right = 0;
   item.crop_bottom = 0;
   changes.push(`Set ${sourceName} to main screen frame`);
+}
+
+// Park a capture in the camera cutout: fill the 400×272 slot (SCALE_OUTER) and
+// crop the 16:9 overflow to the bounds (≈8–9% off each side), so a second
+// monitor reads as a clean window inside the overlay's camera chrome.
+function setCameraSlotFrame(
+  items: ObsSceneItem[],
+  sourceName: string,
+  changes: string[],
+): void {
+  const item = items.find((candidate) => candidate.name === sourceName);
+  if (!item) {
+    throw new Error(`OBS scene item "${sourceName}" was not found.`);
+  }
+
+  item.pos = { x: CAMERA_SLOT_FRAME.left, y: CAMERA_SLOT_FRAME.top };
+  item.bounds = { x: CAMERA_SLOT_FRAME.width, y: CAMERA_SLOT_FRAME.height };
+  item.bounds_type = OBS_BOUNDS_SCALE_OUTER;
+  item.bounds_crop = true;
+  item.bounds_align = OBS_BOUNDS_ALIGN_CENTER;
+  item.align = OBS_ALIGN_TOP_LEFT;
+  item.rot = 0;
+  item.scale = { x: 1, y: 1 };
+  item.crop_left = 0;
+  item.crop_top = 0;
+  item.crop_right = 0;
+  item.crop_bottom = 0;
+  changes.push(`Set ${sourceName} to camera slot frame`);
 }

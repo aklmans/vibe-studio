@@ -163,7 +163,8 @@ Important: do not reintroduce OBS's `--startvirtualcam` launch argument. On macO
 
 - `scripts/prepare-live.ts` owns the OBS/Bilibili setup flow.
 - The script may edit files under `~/Library/Application Support/obs-studio/` and must write timestamped backups before modifying OBS config.
-- Keep OBS source names in sync with the configured scene collection: `Vibe Live Overlay`, `Vibe Overlay Empty Frame`, `Vibe Overlay Avatar Frame`, `Vibe Camera Capture`, `Vibe Main Display Capture`, and `Vibe Main App Capture`.
+- Keep OBS source names in sync with the configured scene collection: `Vibe Live Overlay`, `Vibe Overlay Empty Frame`, `Vibe Overlay Avatar Frame`, `Vibe Camera Capture`, `Vibe Main Display Capture`, `Vibe Main App Capture`, and (optional) `Vibe Second Screen Capture`. The names and slot geometry live in `src/lib/live-prepare.ts` — the prepare script and the runtime composition route both read them from there.
+- Runtime OBS composition: the Overlay inspector's "Composition · OBS" group (local/private Studio only, hidden in demo) posts a declarative state to `/api/obs/composition`, which drives the local OBS over obs-websocket (`src/lib/obs-ws.ts` + `src/lib/obs-composition*.ts`): webcam / second screen in the camera slot, the avatar-theme frame switch, and a main⇄slot swap. The route 404s on the public showcase; the OBS password stays server-side. `Vibe Second Screen Capture` is created manually in OBS once (macOS Screen Capture, display 2); prepare parks it in the camera slot when present.
 - If OBS Virtual Camera fails, verify `System Settings -> General -> Login Items & Extensions -> Camera Extensions -> OBS Virtual Camera` and `systemextensionsctl list` before changing code.
 
 ### Styling

@@ -18,6 +18,26 @@ test("demo mode disables production side effects while keeping the builder usabl
   assert.match(APP_SRC, /<LiveDataManager[\s\S]*demoMode=\{demoMode\}/);
 });
 
+test("demo hides the OBS composition controls; the studio inspector wires them in", () => {
+  const INSPECTOR_SRC = readFileSync(
+    resolve("src/components/inspector/Inspector.tsx"),
+    "utf8",
+  );
+  const OVERLAY_INSPECTOR_SRC = readFileSync(
+    resolve("src/components/inspector/groups/OverlayInspector.tsx"),
+    "utf8",
+  );
+  // demoMode threads App → Inspector → OverlayInspector, and the composition
+  // group only renders outside demo — a public demo must never control OBS.
+  assert.match(APP_SRC, /<Inspector [^>]*demoMode=\{demoMode\}/);
+  assert.match(INSPECTOR_SRC, /demoMode\?: boolean/);
+  assert.match(INSPECTOR_SRC, /<OverlayInspector [^>]*demoMode=\{demoMode\}/);
+  assert.match(
+    OVERLAY_INSPECTOR_SRC,
+    /\{!demoMode && \(\s*<InspectorGroup[\s\S]{0,120}group\.composition/,
+  );
+});
+
 test("demo reflects real provider status and can run the agent, but never writes to the database", () => {
   assert.match(MANAGER_SRC, /demoMode\?: boolean/);
   assert.match(MANAGER_SRC, /<AgentView[\s\S]*demoMode=\{demoMode\}/);

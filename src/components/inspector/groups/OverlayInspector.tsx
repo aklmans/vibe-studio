@@ -11,16 +11,20 @@ import SidebarSectionEditor from "../../SidebarSectionEditor";
 import LiveSessionEditor from "../../LiveSessionEditor";
 import StackEditor from "../../StackEditor";
 import BottomBarSegmentEditor from "../../BottomBarSegmentEditor";
+import ObsCompositionControls from "../ObsCompositionControls";
 import { useLocale } from "../../../hooks/useLocale";
 
 interface OverlayInspectorProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
+  /** Public demo: no OBS control surface (the demo never touches anyone's OBS). */
+  demoMode?: boolean;
 }
 
 export default function OverlayInspector({
   state,
   onChange,
+  demoMode = false,
 }: OverlayInspectorProps) {
   const { t } = useLocale();
   const lastSectionIndex = Math.max(state.sidebar.sections.length - 1, 0);
@@ -78,6 +82,16 @@ export default function OverlayInspector({
           testId="toggle-bottom-bar"
         />
       </InspectorGroup>
+
+      {!demoMode && (
+        <InspectorGroup
+          title={t("group.composition")}
+          hint={t("group.composition.hint")}
+          testId="group-overlay-composition"
+        >
+          <ObsCompositionControls state={state} onChange={onChange} />
+        </InspectorGroup>
+      )}
 
       <InspectorGroup
         title={t("group.sections")}

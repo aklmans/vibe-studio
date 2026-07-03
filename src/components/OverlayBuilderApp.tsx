@@ -794,7 +794,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
             </PreviewFrame>
           </div>
 
-          <Inspector state={previewState} onChange={setState} />
+          <Inspector state={previewState} onChange={setState} demoMode={demoMode} />
         </div>
 
         {isLiveDataTab && (

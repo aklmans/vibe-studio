@@ -9,6 +9,8 @@ import WallpaperInspector from "./groups/WallpaperInspector";
 interface InspectorProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
+  /** Public demo: hides local-only control surfaces (OBS composition). */
+  demoMode?: boolean;
 }
 
 /**
@@ -16,7 +18,7 @@ interface InspectorProps {
  * stack of context-aware accordion groups for the current tab. Container
  * width is owned by App.tsx.
  */
-export default function Inspector({ state, onChange }: InspectorProps) {
+export default function Inspector({ state, onChange, demoMode = false }: InspectorProps) {
   const { t } = useLocale();
   return (
     <aside
@@ -70,7 +72,7 @@ export default function Inspector({ state, onChange }: InspectorProps) {
         }}
       >
         {state.activeTab === "overlay" && (
-          <OverlayInspector state={state} onChange={onChange} />
+          <OverlayInspector state={state} onChange={onChange} demoMode={demoMode} />
         )}
         {state.activeTab === "cover" && (
           <CoverInspector state={state} onChange={onChange} />

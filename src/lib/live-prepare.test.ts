@@ -147,6 +147,48 @@ test("prepareObsSceneConfig aligns main captures to a 16:9 screen frame", () => 
   }
 });
 
+test("prepareObsSceneConfig parks an optional second-screen capture in the camera slot", () => {
+  // Absent: tolerated silently — the fixture scene has no second-screen item.
+  const withoutSecond = prepareObsSceneConfig(makeObsSceneConfig(), { port: 3000 });
+  assert(
+    !withoutSecond.changes.some((change) => change.includes("Vibe Second Screen Capture")),
+    "absence should not produce changes",
+  );
+
+  // Present: positioned at the camera slot (fill + crop-to-bounds), hidden by default.
+  const input = makeObsSceneConfig();
+  const items = input.sources[0].settings.items as ObsSceneItem[];
+  items.push({ name: "Vibe Second Screen Capture", visible: true });
+
+  const { config, changes } = prepareObsSceneConfig(input, { port: 3000 });
+  const scene = config.sources.find((source) => source.name === "Vibe Live Overlay");
+  const sceneItems = scene?.settings.items as ObsSceneItem[] | undefined;
+  assert(sceneItems);
+
+  const second = sceneItems.find((item) => item.name === "Vibe Second Screen Capture");
+  assert(second);
+  equal(second.visible, false);
+  deepStrictEqual(second.pos, { x: 1498, y: 786 });
+  deepStrictEqual(second.bounds, { x: 400, y: 272 });
+  equal(second.bounds_type, 3); // SCALE_OUTER — fill the slot
+  equal(second.bounds_crop, true); // crop the 16:9 overflow to the slot
+  assert(changes.includes("Set Vibe Second Screen Capture to camera slot frame"));
+  assert(changes.includes("Set Vibe Second Screen Capture hidden"));
+
+  // Ordered between the camera capture and the overlay frames.
+  deepStrictEqual(
+    sceneItems.map((item) => item.name),
+    [
+      "Vibe Main Display Capture",
+      "Vibe Main App Capture",
+      "Vibe Camera Capture",
+      "Vibe Second Screen Capture",
+      "Vibe Overlay Avatar Frame",
+      "Vibe Overlay Empty Frame",
+    ],
+  );
+});
+
 test("prepareObsWebSocketConfig enables automation without changing authentication", () => {
   const { config, changes } = prepareObsWebSocketConfig({
     alerts_enabled: true,
