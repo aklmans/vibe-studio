@@ -857,7 +857,7 @@ test("Agent shows the active task intent and the handoff reflects the brief", ()
   const html = renderCenter();
   assert.match(html, /data-testid="agent-task-intent"/);
   // The default task (generate) intent is visible without expanding the handoff.
-  assert.match(html, /Generate a complete config/);
+  assert.match(html, /Generate this stream/);
 
   // The handoff varies with the user brief, not just the task chip.
   const a = buildAgentPrompt(DEFAULT_STATE, "rebuild the intro", "Task: x");

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_STATE_BY_LOCALE } from "../types";
+import type { ColorTokens } from "./theme";
 import {
   STUDIO_PROFILE_STORAGE_KEY,
   applyStudioProfileToState,
@@ -28,6 +29,20 @@ class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem
 
 const DEMO_DEFAULT = DEFAULT_STATE_BY_LOCALE.en;
 
+// A distinctive custom palette so a round-trip proves colors are carried, not
+// silently swapped for a preset.
+const BRAND_COLORS: ColorTokens = {
+  bgDark: "#101014",
+  bgPanel: "#1b1b22",
+  textColor: "#f5f5f7",
+  mutedText: "#a0a0aa",
+  subtleText: "#6c6c78",
+  borderColor: "#33333d",
+  cyanAccent: "#7fd1c0",
+  pinkAccent: "#e07aa0",
+  warmAccent: "#e8c07a",
+};
+
 test("studio profile load falls back to null for missing, invalid, or malformed data", () => {
   const storage = new MemoryStorage();
   assert.equal(loadStudioProfile(storage), null);
@@ -39,10 +54,10 @@ test("studio profile load falls back to null for missing, invalid, or malformed 
   assert.equal(loadStudioProfile(storage), null);
 });
 
-test("studio profile persists a normalized host profile separate from overlay state", () => {
+test("studio profile persists a normalized brand profile (identity + palette) separate from overlay state", () => {
   const storage = new MemoryStorage();
   const profile = {
-    version: 1 as const,
+    version: 2 as const,
     author: "Private Host",
     avatarUrl: "/private-avatar.png",
     avatarVisible: true,
@@ -50,6 +65,8 @@ test("studio profile persists a normalized host profile separate from overlay st
     socials: [
       { visible: true, iconKey: "github" as const, iconMode: "mono" as const, label: "GitHub", value: "private-handle", customColor: "" },
     ],
+    theme: "light" as const,
+    colors: BRAND_COLORS,
   };
 
   saveStudioProfile(profile, storage);
@@ -64,9 +81,29 @@ test("studio profile persists a normalized host profile separate from overlay st
   assert.equal(loadStudioProfile(storage), null);
 });
 
-test("studio profile applies over demo defaults without changing stream content", () => {
+test("a legacy v1 profile (identity only) still loads, normalized to v2 without a palette", () => {
+  const storage = new MemoryStorage();
+  storage.setItem(
+    STUDIO_PROFILE_STORAGE_KEY,
+    JSON.stringify({
+      version: 1,
+      author: "Legacy Host",
+      avatarUrl: "/legacy.png",
+      avatarVisible: true,
+      socialVisible: false,
+      socials: [],
+    }),
+  );
+  const loaded = loadStudioProfile(storage);
+  assert.equal(loaded?.version, 2);
+  assert.equal(loaded?.author, "Legacy Host");
+  assert.equal("theme" in (loaded ?? {}), false);
+  assert.equal("colors" in (loaded ?? {}), false);
+});
+
+test("studio profile applies brand palette + identity over defaults without changing stream content", () => {
   const profiled = applyStudioProfileToState(DEMO_DEFAULT, {
-    version: 1,
+    version: 2,
     author: "Private Host",
     avatarUrl: "/private-avatar.png",
     avatarVisible: true,
@@ -74,28 +111,52 @@ test("studio profile applies over demo defaults without changing stream content"
     socials: [
       { visible: true, iconKey: "website", iconMode: "mono", label: "Website", value: "private.example", customColor: "" },
     ],
+    theme: "light",
+    colors: BRAND_COLORS,
   });
 
+  // Identity.
   assert.equal(profiled.cover.hookText, "with Private Host");
   assert.equal(profiled.cover.avatarUrl, "/private-avatar.png");
-  assert.equal(profiled.cover.avatarVisible, true);
-  assert.equal(profiled.wallpaper.avatarVisible, true);
   assert.deepEqual(profiled.cover.socials.map((s) => s.value), ["private.example"]);
+  // Brand palette.
+  assert.equal(profiled.theme, "light");
+  assert.deepEqual(profiled.colors, BRAND_COLORS);
+  // Stream content untouched.
   assert.equal(profiled.cover.title, DEMO_DEFAULT.cover.title);
   assert.deepEqual(profiled.sidebar.sections, DEMO_DEFAULT.sidebar.sections);
 });
 
-test("profileFromState extracts only reusable studio profile fields", () => {
-  const state = applyStudioProfileToState(DEMO_DEFAULT, {
-    version: 1,
-    author: "Private Host",
-    avatarUrl: "/private-avatar.png",
-    avatarVisible: false,
-    socialVisible: false,
-    socials: [
-      { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "private-handle", customColor: "" },
-    ],
+test("a palette-less profile leaves the current theme/colors untouched on apply", () => {
+  const themed = { ...DEMO_DEFAULT, theme: "light" as const, colors: BRAND_COLORS };
+  const profiled = applyStudioProfileToState(themed, {
+    version: 2,
+    author: "Host",
+    avatarUrl: "/a.png",
+    avatarVisible: true,
+    socialVisible: true,
+    socials: [],
+    // no theme/colors
   });
+  assert.equal(profiled.theme, "light");
+  assert.deepEqual(profiled.colors, BRAND_COLORS);
+});
+
+test("profileFromState extracts identity + the current brand palette", () => {
+  const state = {
+    ...applyStudioProfileToState(DEMO_DEFAULT, {
+      version: 2,
+      author: "Private Host",
+      avatarUrl: "/private-avatar.png",
+      avatarVisible: false,
+      socialVisible: false,
+      socials: [
+        { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "private-handle", customColor: "" },
+      ],
+    }),
+    theme: "dark" as const,
+    colors: BRAND_COLORS,
+  };
 
   const profile = profileFromState({
     ...state,
@@ -103,7 +164,7 @@ test("profileFromState extracts only reusable studio profile fields", () => {
   });
 
   assert.deepEqual(profile, {
-    version: 1,
+    version: 2,
     author: "Private Host",
     avatarUrl: "/private-avatar.png",
     avatarVisible: false,
@@ -111,5 +172,7 @@ test("profileFromState extracts only reusable studio profile fields", () => {
     socials: [
       { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "private-handle", customColor: "" },
     ],
+    theme: "dark",
+    colors: BRAND_COLORS,
   });
 });

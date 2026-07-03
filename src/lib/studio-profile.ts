@@ -1,15 +1,43 @@
 import type { OverlayState } from "../types";
 import type { SocialConfig } from "./socials";
+import { DARK_PRESET, type ColorTokens, type ThemeMode } from "./theme";
 
 export const STUDIO_PROFILE_STORAGE_KEY = "vibe-studio-profile";
 
+/**
+ * The reusable **Brand layer** — the identity + look a host sets once and reuses
+ * every stream: author, avatar, socials, and (v2+) the theme + color palette.
+ * It is persisted separately from per-stream content, re-applied on load/reset,
+ * and never touched by the AI agent. Write once, use many; cleared only on an
+ * explicit reset.
+ */
 export interface StudioProfile {
-  version: 1;
+  /** v1 = identity only; v2 adds the brand palette (theme + colors). */
+  version: 1 | 2;
   author: string;
   avatarUrl: string;
   avatarVisible: boolean;
   socialVisible: boolean;
   socials: SocialConfig[];
+  /** Brand palette (v2+). Optional so legacy v1 profiles still load. */
+  theme?: ThemeMode;
+  colors?: ColorTokens;
+}
+
+const COLOR_TOKEN_KEYS = Object.keys(DARK_PRESET) as (keyof ColorTokens)[];
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === "dark" || value === "light";
+}
+
+function isColorTokens(value: unknown): value is ColorTokens {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return COLOR_TOKEN_KEYS.every((key) => typeof record[key] === "string");
+}
+
+function cloneColors(colors: ColorTokens): ColorTokens {
+  return { ...colors };
 }
 
 type ProfileStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -47,20 +75,25 @@ function isSocialConfig(value: unknown): value is SocialConfig {
 function normalizeProfile(value: unknown): StudioProfile | null {
   if (!value || typeof value !== "object") return null;
   const profile = value as Partial<StudioProfile>;
-  if (profile.version !== 1) return null;
+  if (profile.version !== 1 && profile.version !== 2) return null;
   if (typeof profile.author !== "string") return null;
   if (typeof profile.avatarUrl !== "string") return null;
   if (typeof profile.avatarVisible !== "boolean") return null;
   if (typeof profile.socialVisible !== "boolean") return null;
   if (!Array.isArray(profile.socials) || !profile.socials.every(isSocialConfig)) return null;
-  return {
-    version: 1,
+  // Always normalize forward to v2; the palette is included only when a saved
+  // profile actually carries a valid one (legacy v1 profiles simply omit it).
+  const normalized: StudioProfile = {
+    version: 2,
     author: profile.author,
     avatarUrl: profile.avatarUrl,
     avatarVisible: profile.avatarVisible,
     socialVisible: profile.socialVisible,
     socials: profile.socials.map(cloneSocial),
   };
+  if (isThemeMode(profile.theme)) normalized.theme = profile.theme;
+  if (isColorTokens(profile.colors)) normalized.colors = cloneColors(profile.colors);
+  return normalized;
 }
 
 export function loadStudioProfile(storage?: ProfileStorage): StudioProfile | null {
@@ -98,12 +131,14 @@ function hookTextFromAuthor(author: string): string {
 
 export function profileFromState(state: OverlayState): StudioProfile {
   return {
-    version: 1,
+    version: 2,
     author: authorFromHookText(state.cover.hookText),
     avatarUrl: state.cover.avatarUrl,
     avatarVisible: state.cover.avatarVisible,
     socialVisible: state.cover.socialVisible,
     socials: state.cover.socials.map(cloneSocial),
+    theme: state.theme,
+    colors: cloneColors(state.colors),
   };
 }
 
@@ -116,6 +151,10 @@ export function applyStudioProfileToState(
   if (!normalized) return state;
   return {
     ...state,
+    // Brand palette (v2+) — applied only when the profile carries one, so a
+    // legacy identity-only profile leaves the current theme/colors untouched.
+    ...(normalized.theme ? { theme: normalized.theme } : {}),
+    ...(normalized.colors ? { colors: cloneColors(normalized.colors) } : {}),
     cover: {
       ...state.cover,
       avatarUrl: normalized.avatarUrl,

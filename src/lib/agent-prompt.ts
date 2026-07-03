@@ -4,12 +4,14 @@ import { sanitizeConfigTextForProvider } from "./config-privacy";
 import { projectConfigText } from "./session-config-drift";
 
 /*
- * Compose a copy-paste prompt that hands the current config off to an external
- * AI tool, asking it to return an updated v1 `live-session.config.json`.
+ * Compose a copy-paste prompt that hands the current stream *content* off to an
+ * external AI tool, asking it to return updated content for the v1
+ * `live-session.config.json`.
  *
  * This is pure string composition — no network, no LLM call, no dependency.
  * The user copies the result, runs it in their own AI tool, then imports the
- * returned JSON via the JSON drawer (which never auto-applies).
+ * returned JSON via the JSON drawer (which never auto-applies; identity + brand
+ * are preserved from current state on apply).
  *
  * `task` is an optional focused instruction (driven by the AI Prepare task
  * chips, e.g. "update only the sections"); `brief` is the user's plain-language
@@ -23,21 +25,19 @@ export function buildAgentPrompt(
   const config = sanitizeConfigTextForProvider(projectConfigText(state)).trim();
   const trimmedBrief = brief.trim() || "(none)";
   const taskLine =
-    task.trim() || "Task: prepare or update the config from the brief below.";
+    task.trim() || "Task: prepare or update the stream content from the brief below.";
   return [
-    "You are preparing live-session.config.json (v1) for a livestream config center.",
-    "Return ONLY valid JSON matching this shape:",
-    "{ version: 1, title, subtitle, author?, profile { avatarUrl, avatarVisible },",
-    "  cover { visual, portraitUrl, sceneUrl }, badges: string[], stack: string[],",
-    "  socials: [{ icon?, label, value, color? }], sections: [{ title, bullets: string[] }] }",
+    "You are preparing the per-stream content of live-session.config.json (v1) for a livestream config center.",
+    "Return ONLY valid JSON with this shape (content only):",
+    "{ version: 1, title, subtitle, badges: string[], stack: string[],",
+    "  sections: [{ title, bullets: string[] }] }",
     CONFIG_BADGE_PROMPT_RULE,
-    "For privacy, social values may be redacted as __PRIVATE_SOCIAL_VALUE_n__ and uploaded images as __PRIVATE_IMAGE_xxx__; keep those placeholders unchanged unless the user explicitly provides replacements.",
-    "Do NOT include runtime fields: bottomBar, liveSession.startedAt, activeSection, sectionsDone.",
+    "Identity and brand (author, avatar, socials, cover, theme, fonts) are fixed and not shown — never add them.",
     "",
     taskLine,
     `Brief: ${trimmedBrief}`,
     "",
-    "Current config (edit this, keep version: 1):",
+    "Current content (edit this, keep version: 1):",
     config,
   ].join("\n");
 }

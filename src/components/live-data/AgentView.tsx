@@ -54,11 +54,11 @@ interface AgentTask {
 }
 
 const TASKS: AgentTask[] = [
-  { id: "generate", labelKey: "agentTask.generate", descKey: "agentTask.generateDesc", line: "Task: generate the full config for this stream." },
+  { id: "generate", labelKey: "agentTask.generate", descKey: "agentTask.generateDesc", line: "Task: generate the stream content (title, subtitle, sections, stack, badges). Keep identity and brand as-is." },
   { id: "sections", labelKey: "agentTask.sections", descKey: "agentTask.sectionsDesc", line: "Task: update only the sections (titles + bullets); keep everything else." },
-  { id: "titleCover", labelKey: "agentTask.titleCover", descKey: "agentTask.titleCoverDesc", line: "Task: update the title, subtitle, author and cover copy; keep everything else." },
-  { id: "assets", labelKey: "agentTask.assets", descKey: "agentTask.assetsDesc", line: "Task: update the stack, optional topic-matched badges, and socials; keep everything else." },
-  { id: "check", labelKey: "agentTask.check", descKey: "agentTask.checkDesc", line: "Task: review the current config for issues and return a corrected version." },
+  { id: "titleCover", labelKey: "agentTask.titleCover", descKey: "agentTask.titleCoverDesc", line: "Task: update the title and subtitle (today's topic); keep everything else." },
+  { id: "assets", labelKey: "agentTask.assets", descKey: "agentTask.assetsDesc", line: "Task: update the stack and optional topic-matched badges; keep everything else." },
+  { id: "check", labelKey: "agentTask.check", descKey: "agentTask.checkDesc", line: "Task: review the current stream content for issues and return a corrected version." },
 ];
 
 const CONTEXT: { id: string; labelKey: TranslationKey }[] = [
@@ -89,11 +89,11 @@ const CHANGE_LABEL: Record<ConfigChange["field"], TranslationKey> = {
 const SLASH_COMMANDS: { cmd: string; task?: string; group?: string; json?: boolean }[] = [
   { cmd: "generate", task: "generate" },
   { cmd: "sections", task: "sections" },
-  { cmd: "cover", task: "titleCover" },
-  { cmd: "socials", task: "assets" },
+  { cmd: "title", task: "titleCover" },
+  { cmd: "stack", task: "assets" },
   { cmd: "check", task: "check" },
   { cmd: "json", json: true },
-  { cmd: "display", group: "display" },
+  { cmd: "broadcast", group: "broadcast" },
   { cmd: "provider", group: "provider" },
   { cmd: "settings", group: "session" },
 ];

@@ -64,7 +64,8 @@ test("POST without an API key falls back to local handoff, never calls a provide
   });
 });
 
-test("POST with a configured provider redacts social values in provider context and restores placeholders", async () => {
+test("POST sends content only to the provider and locks identity/brand in the reply", async () => {
+  const AVATAR_URI = "data:image/png;base64,ROUTEPHOTOBYTES==";
   let captured: { url: string; init: RequestInit } | null = null;
   const fetchImpl = (async (url: string, init: RequestInit) => {
     captured = { url, init };
@@ -76,10 +77,14 @@ test("POST with a configured provider redacts social values in provider context 
               content: [
                 "Updated:",
                 "```json",
+                // The model returns new content and — against instructions — also
+                // tries to change identity. The route must ignore the identity edit.
                 JSON.stringify({
                   version: 1,
                   title: "AI Title",
-                  socials: [{ icon: "github", label: "GitHub", value: "__PRIVATE_SOCIAL_VALUE_0__" }],
+                  subtitle: "AI Topic",
+                  author: "IMPOSTER",
+                  socials: [{ icon: "github", label: "GitHub", value: "hijacked" }],
                 }),
                 "```",
               ].join("\n"),
@@ -106,8 +111,11 @@ test("POST with a configured provider redacts social values in provider context 
           task: "Task: t",
           configText: JSON.stringify({
             version: 1,
-            title: "PROJECTION",
+            title: "CONTENT_MARKER",
+            author: "Host",
+            profile: { avatarUrl: AVATAR_URI, avatarVisible: true },
             socials: [{ icon: "github", label: "GitHub", value: PRIVATE_ROUTE_SOCIAL }],
+            obs: { password: "obs-secret" },
           }),
           locale: "en",
         }),
@@ -115,80 +123,28 @@ test("POST with a configured provider redacts social values in provider context 
       const data = await res.json();
       assert.equal(data.mode, "ai");
       assert.equal(data.provider, "deepseek");
-      assert.equal(data.model, "deepseek-chat");
-      const returnedConfig = JSON.parse(data.configText);
-      assert.equal(returnedConfig.title, "AI Title");
-      assert.equal(returnedConfig.socials[0].value, PRIVATE_ROUTE_SOCIAL);
 
-      // Request construction.
+      // What crossed the wire: content only. No author, no social value, no
+      // avatar bytes, no non-portable OBS block.
       assert.equal(captured!.url, "https://api.deepseek.com/chat/completions");
       const headers = captured!.init.headers as Record<string, string>;
       assert.equal(headers.Authorization, `Bearer ${KEY}`);
-      assert.equal(headers["User-Agent"], DEFAULT_USER_AGENT);
-      const body = JSON.parse(captured!.init.body as string);
-      assert.equal(body.model, "deepseek-chat");
-      assert.match(JSON.stringify(body.messages), /PROJECTION/); // current config sent
-      assert.match(JSON.stringify(body.messages), /__PRIVATE_SOCIAL_VALUE_0__/);
-      assert.equal(JSON.stringify(body.messages).includes(PRIVATE_ROUTE_SOCIAL), false);
+      const sent = JSON.stringify(JSON.parse(captured!.init.body as string).messages);
+      assert.match(sent, /CONTENT_MARKER/); // content is sent
+      assert.equal(sent.includes("Host"), false);
+      assert.equal(sent.includes(PRIVATE_ROUTE_SOCIAL), false);
+      assert.equal(sent.includes(AVATAR_URI), false);
+      assert.equal(sent.includes("obs-secret"), false);
+
+      // What came back: AI content applied, identity/brand locked to the host's.
+      const returned = JSON.parse(data.configText);
+      assert.equal(returned.title, "AI Title");
+      assert.equal(returned.subtitle, "AI Topic");
+      assert.equal(returned.author, "Host"); // not "IMPOSTER"
+      assert.equal(returned.profile.avatarUrl, AVATAR_URI); // real avatar preserved
+      assert.equal(returned.socials[0].value, PRIVATE_ROUTE_SOCIAL); // not "hijacked"
     },
   );
-});
-
-test("POST never sends uploaded images or non-portable fields to the provider, and restores the image", async () => {
-  const AVATAR_URI = "data:image/png;base64,ROUTEPHOTOBYTES==";
-  let captured: { init: RequestInit } | null = null;
-  const fetchImpl = (async (_url: string, init: RequestInit) => {
-    captured = { init };
-    return new Response(
-      JSON.stringify({
-        choices: [
-          {
-            message: {
-              content: [
-                "```json",
-                // The model echoes the redaction placeholder back, as instructed.
-                JSON.stringify({
-                  version: 1,
-                  title: "AI Title",
-                  profile: { avatarUrl: "__PRIVATE_IMAGE_avatar__" },
-                }),
-                "```",
-              ].join("\n"),
-            },
-          },
-        ],
-      }),
-      { status: 200 },
-    );
-  }) as unknown as typeof fetch;
-
-  await withEnv({ SESSION_AGENT_API_KEY: KEY }, fetchImpl, async () => {
-    const res = await POST(
-      postRequest({
-        brief: "b",
-        task: "Task: t",
-        configText: JSON.stringify({
-          version: 1,
-          title: "PROJECTION",
-          profile: { avatarUrl: AVATAR_URI, avatarVisible: true },
-          obs: { password: "obs-secret" },
-        }),
-        locale: "en",
-      }),
-    );
-    const data = await res.json();
-    assert.equal(data.mode, "ai");
-
-    // What crossed the wire to the provider: no photo bytes, no non-portable block.
-    const sent = JSON.stringify((captured!.init.body && JSON.parse(captured!.init.body as string)).messages);
-    assert.equal(sent.includes(AVATAR_URI), false);
-    assert.equal(sent.includes("obs-secret"), false);
-    assert.match(sent, /__PRIVATE_IMAGE_avatar__/);
-
-    // What came back to the client: the real avatar restored from the original.
-    const returned = JSON.parse(data.configText);
-    assert.equal(returned.profile.avatarUrl, AVATAR_URI);
-  });
 });
 
 test("POST surfaces provider errors without leaking the key", async () => {

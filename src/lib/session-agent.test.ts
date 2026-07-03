@@ -7,7 +7,6 @@ import {
   publicAgentStatus,
   readSessionAgentConfig,
   redactKey,
-  restorePrivateValuesInConfigText,
   testAgentConnection,
   type SessionAgentConfig,
 } from "./session-agent";
@@ -104,21 +103,21 @@ test("buildChatMessages includes the current config projection + task + brief", 
   });
   assert.equal(messages[0].role, "system");
   assert.match(messages[0].content, /json/i);
-  assert.match(messages[0].content, /NOT part of this config/i); // runtime/studio excluded
+  assert.match(messages[0].content, /Identity and brand are fixed/i); // AI edits content only
   const user = messages[1].content;
   assert.match(user, /Task: update the sections/);
   assert.match(user, /Brief: rebuild the intro/);
   assert.match(user, /Marker Title/); // the projection is sent
 });
 
-test("buildChatMessages redacts social values, uploaded images, and non-portable fields before sending to a provider", () => {
+test("buildChatMessages sends content only — identity, brand, and non-portable fields never reach the provider", () => {
   const messages = buildChatMessages({
-    brief: "keep social links private",
+    brief: "keep identity private",
     task: "Task: update the sections",
     configText: JSON.stringify({
       version: 1,
       title: "Private Stream",
-      subtitle: "Do not leak handles",
+      subtitle: "TopicMarker",
       author: "Aklman",
       profile: { avatarUrl: PRIVATE_AVATAR_URI, avatarVisible: true },
       badges: [],
@@ -135,48 +134,17 @@ test("buildChatMessages redacts social values, uploaded images, and non-portable
   });
   const payload = JSON.stringify(messages);
 
+  // Content is sent.
   assert.match(payload, /Private Stream/);
-  assert.match(payload, /Aklman/);
-  assert.match(payload, /__PRIVATE_SOCIAL_VALUE_0__/);
-  assert.match(payload, /__PRIVATE_SOCIAL_VALUE_1__/);
-  assert.match(payload, /__PRIVATE_IMAGE_avatar__/);
+  assert.match(payload, /TopicMarker/);
+  // Identity + brand + non-portable state are structurally absent — not even the
+  // author name, social label, avatar, or OBS block crosses the boundary.
+  assert.equal(payload.includes("Aklman"), false);
+  assert.equal(payload.includes("GitHub"), false);
   assert.equal(payload.includes(PRIVATE_GITHUB_VALUE), false);
   assert.equal(payload.includes(PRIVATE_WEBSITE_VALUE), false);
-  // The uploaded photo bytes and the non-portable OBS block never leave.
   assert.equal(payload.includes(PRIVATE_AVATAR_URI), false);
   assert.equal(payload.includes("obs-secret"), false);
-});
-
-test("private social placeholders are restored before config apply", () => {
-  const current = JSON.stringify({
-    version: 1,
-    title: "Current",
-    subtitle: "Current",
-    badges: [],
-    stack: [],
-    socials: [
-      { icon: "github", label: "GitHub", value: PRIVATE_GITHUB_VALUE },
-      { icon: "website", label: "Website", value: PRIVATE_WEBSITE_VALUE },
-    ],
-    sections: [],
-  });
-  const proposed = JSON.stringify({
-    version: 1,
-    title: "Updated",
-    subtitle: "Updated",
-    badges: [],
-    stack: [],
-    socials: [
-      { icon: "github", label: "GitHub", value: "__PRIVATE_SOCIAL_VALUE_0__" },
-      { icon: "website", label: "Website", value: "__PRIVATE_SOCIAL_VALUE_1__" },
-    ],
-    sections: [],
-  });
-
-  const restored = restorePrivateValuesInConfigText(proposed, current);
-  const parsed = JSON.parse(restored);
-  assert.equal(parsed.socials[0].value, PRIVATE_GITHUB_VALUE);
-  assert.equal(parsed.socials[1].value, PRIVATE_WEBSITE_VALUE);
 });
 
 test("buildChatMessages constrains badges to supported LobeHub-backed icon keys", () => {

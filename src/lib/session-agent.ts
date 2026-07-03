@@ -14,12 +14,7 @@
  */
 
 import { CONFIG_BADGE_PROMPT_RULE } from "./badges";
-import {
-  restorePrivateValuesInConfigText,
-  sanitizeConfigTextForProvider,
-} from "./config-privacy";
-
-export { restorePrivateValuesInConfigText };
+import { sanitizeConfigTextForProvider } from "./config-privacy";
 
 export interface SessionAgentConfig {
   provider: string;
@@ -190,12 +185,11 @@ export async function testAgentConnection(
 /** Compose the chat messages: a JSON-output system prompt + the user context. */
 export function buildChatMessages(request: SessionAgentRequest): ChatMessage[] {
   const system = [
-    "You are a configuration assistant for a livestream studio app.",
-    "You edit live-session.config.json (v1): version, title, subtitle, author?, profile { avatarUrl, avatarVisible }, cover { visual, portraitUrl, sceneUrl }, badges: string[], stack: string[], socials: [{ icon?, label, value, color? }], sections: [{ title, bullets: string[] }].",
+    "You are a stream-content assistant for a livestream studio app.",
+    "You edit ONLY the per-stream content of live-session.config.json (v1): version, title, subtitle, badges: string[], stack: string[], sections: [{ title, bullets: string[] }].",
     CONFIG_BADGE_PROMPT_RULE,
-    "For privacy, current social values may be redacted as __PRIVATE_SOCIAL_VALUE_n__ and uploaded images (avatar, cover) as __PRIVATE_IMAGE_xxx__. Keep those placeholders unchanged unless the user explicitly provides a replacement.",
-    "Runtime/display state (bottomBar, liveSession.startedAt, activeSection, sectionsDone) and studio appearance (theme, colors) are NOT part of this config — never add them.",
-    "When changing the config, reply with one fenced ```json block containing the FULL updated config (keep version: 1, no comments), then a short plain explanation.",
+    "Identity and brand are fixed and NOT shown to you — author, avatar, socials, cover, theme and fonts. Never add or change them; never include author, profile, socials or cover in your output.",
+    "When changing content, reply with one fenced ```json block containing the full content object (version, title, subtitle, badges, stack, sections; keep version: 1, no comments), then a short plain explanation.",
     "If the user only asks a question, answer in plain text without a JSON block.",
   ].join(" ");
 
@@ -203,7 +197,7 @@ export function buildChatMessages(request: SessionAgentRequest): ChatMessage[] {
     request.task ? `Task: ${request.task}` : "",
     request.brief ? `Brief: ${request.brief}` : "Brief: (none)",
     `Locale: ${request.locale}`,
-    "Current live-session.config.json:",
+    "Current stream content:",
     "```json",
     sanitizeConfigTextForProvider(request.configText).trim(),
     "```",

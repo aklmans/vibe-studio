@@ -43,15 +43,20 @@ localStorage / logs — the client only ever sees `configured` / `not set`) or
 falls back to a local copy-handoff; it never edits settings via chat and never
 bypasses the JSON review/apply path.
 
+Config layering: identity + brand — author, avatar, socials, cover, and the studio
+theme/colors — is set once by the host (the **Brand layer**, `src/lib/studio-profile.ts`,
+persisted as `vibe-studio-profile` and re-applied on load/reset) and never by the AI.
+Per-stream content (title, subtitle, sections, stack, badges) is the only slice the
+agent touches.
+
 Privacy boundary: everything provider-bound — the online call and the copy-handoff
 prompt — passes through `sanitizeConfigTextForProvider` (`src/lib/config-privacy.ts`),
-which keeps only the portable v1 top-level keys and redacts social values +
-uploaded images (data: URIs) to `__PRIVATE_SOCIAL_VALUE_n__` / `__PRIVATE_IMAGE_*__`
-placeholders. Redaction is enforced server-side (`buildChatMessages`), not trusted
-from the client; placeholders are restored on the way back (route text-restore, or
-`configToOverlayState` from current state on apply). Uploaded images are also
-downscaled/size-capped client-side (`src/lib/image-downscale.ts`) so a photo never
-overflows the localStorage quota or a provider payload.
+which projects the config down to the content keys, so identity + brand are
+structurally absent (not merely redacted) from every provider payload. On the way
+back, `mergeAgentContentIntoConfig` folds the model's content onto the host's current
+config — a reply can never change identity/brand, and the review diff shows only
+content. Uploaded images are downscaled + size-capped client-side
+(`src/lib/image-downscale.ts`) so a photo never overflows the localStorage quota.
 
 Demo semantics: `/demo` reflects the deploy's real provider status and, when a
 provider is configured, can run the agent — so a public showcase can let

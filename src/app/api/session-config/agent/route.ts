@@ -6,12 +6,12 @@ import {
   readSessionAgentConfig,
   readShowcaseGuardrails,
   redactKey,
-  restorePrivateValuesInConfigText,
   testAgentConnection,
   type SessionAgentRequest,
   type SessionAgentRunResponse,
   type SessionAgentTestResponse,
 } from "../../../../lib/session-agent";
+import { mergeAgentContentIntoConfig } from "../../../../lib/config-privacy";
 import { isShowcase } from "../../../../lib/site-mode";
 import { showcaseRunLimiter } from "../../../../lib/showcase-rate-limit";
 
@@ -104,8 +104,10 @@ export async function POST(request: Request) {
       provider: config.provider,
       model: config.model,
       message: content,
+      // Fold the model's content onto the host's current config so identity +
+      // brand come from the host, never the model. Locks avatar/socials/theme.
       configText: extractedConfig
-        ? restorePrivateValuesInConfigText(extractedConfig, agentRequest.configText)
+        ? mergeAgentContentIntoConfig(agentRequest.configText, extractedConfig)
         : null,
     };
     return Response.json(result);
