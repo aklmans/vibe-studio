@@ -1,6 +1,6 @@
 # Vibe Studio
 
-A Next.js app for designing livestream graphics for Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat, co-working, and other "with me" stream formats. It gives creators a designed visual frame without hand-building every scene in OBS or Livehime, uses an optional Agent to draft session copy/config, and exports broadcast-ready overlay, cover, poster, and wallpaper assets.
+A Next.js app for designing livestream graphics for Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat, co-working, and other "with me" stream formats. It gives creators a designed visual frame without hand-building every scene in OBS or Livehime, uses an optional Agent to draft session content, and exports broadcast-ready overlay, cover, poster, and wallpaper assets.
 
 Repository: https://github.com/aklmans/vibe-studio
 
@@ -90,6 +90,8 @@ Open `http://localhost:3000`. If that port is occupied, Next.js will choose the 
 
 By default (self-hosted / local), `/` redirects to `/studio` — the marketing landing is not the entry. The bilingual landing page is served at `/` only on the public showcase deploy, which sets `VIBE_SHOWCASE=1` (see `.env.example`). Either way, the app lives at `/studio` (full workspace) and `/demo` (browser-local), with OBS sources under `/obs/*`.
 
+To preview the marketing landing locally, run `pnpm dev:showcase` (it sets `VIBE_SHOWCASE=1`) and open `/`.
+
 ### AI Agent setup guide
 
 The public site serves a compact AI-Agent handoff at `/skill.md`. After deployment,
@@ -153,7 +155,7 @@ The script:
 
 The script never clicks Bilibili's start-live button. Confirm the title, category, microphone, preview, and final start action manually in Livehime.
 
-While live, the Overlay inspector's **Composition · OBS** group (local/private Studio only) can switch what sits in the camera slot — webcam, a second monitor, or the avatar theme — and swap it with the main screen, driving your local OBS over obs-websocket. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
+While live, the **Composition · OBS** controls (local/private Studio only — in the Overlay inspector and mirrored in **Session Config → Broadcast**) pick the source for each region: the main screen can show display 1, display 2, or the app window; the camera slot can show the webcam, a second monitor, the avatar theme, or nothing. You can swap two display regions and recall whole compositions from saved presets — all driving your local OBS over obs-websocket. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
 
 `pnpm live:stop` intentionally leaves Bilibili Livehime open because closing it can interrupt an active stream. Close Livehime manually after ending the livestream.
 
@@ -190,7 +192,7 @@ The schema lives in `src/db/schema.ts`, with a checked-in SQL migration at `driz
 
 ## Session Config Agent (optional AI)
 
-The **Session Config → Agent** tab can call a real model to draft a config, or stay fully local. It is configured by local/private Studio env vars (see `.env.example`):
+The **Session Config → Agent** tab can call a real model to draft the stream **content**, or stay fully local. It is configured by local/private Studio env vars (see `.env.example`):
 
 ```bash
 SESSION_AGENT_PROVIDER=deepseek
@@ -202,6 +204,8 @@ SESSION_AGENT_USER_AGENT=Vibe-Studio/SessionConfigAgent
 
 - The adapter is **OpenAI-compatible Chat Completions**, so DeepSeek, OpenAI, Kimi and z.ai all work by setting `BASE_URL` + `MODEL`. Example provider: [DeepSeek](https://api-docs.deepseek.com/) (`https://api.deepseek.com`, endpoint `/chat/completions`).
 - The **API key stays in your local/private Studio server env** (the route `/api/session-config/agent`); it is never in the client bundle, never in `localStorage`, and never logged. The client only learns the provider/model name.
+- **The agent edits stream content only** — title, subtitle, sections, stack and topic badges. Identity and brand (author, avatar, socials, theme/colors) are the **Brand layer**: set once, reused every stream, and never changed by the AI. A reply's content is merged back onto your current config, so a model reply cannot touch identity or brand.
+- **Nothing personal reaches the provider.** Before every call (online *and* the copy-handoff prompt) the config is projected down to those content keys, so identity + brand are structurally absent from the payload; uploaded avatar/cover images are downscaled locally and never sent.
 - **No key configured → fallback to local handoff** (Copy handoff). No provider request is made.
 - AI output is **never auto-applied**: a returned config opens in the JSON drawer for review + Apply, exactly like Import.
 - Public/demo deployments do not collect API keys and cannot push into your local OBS. OBS automation is for the local/private Studio you run and configure.
@@ -254,6 +258,7 @@ drizzle/            SQL migrations for live data persistence
 - Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
 - Config boundary: [`live-session.config.json`](docs/live-session.config.md) is the per-session content portable core (v1); a future [`studio.config.json`](docs/studio.config.md) is for studio-level settings (draft only); runtime state stays in `OverlayState`/`localStorage`. The split is pinned in `src/lib/session-config-boundary.ts`. Configs move by manual import/export, not a watched file.
+- Brand layer: the reusable identity + look — author, avatar, socials, theme, colors — persists separately as a Studio Profile (`src/lib/studio-profile.ts`), re-applied on load/reset (write once, reuse each stream). It is set by hand in **Session Config**, never by the AI agent, which only drafts per-stream content.
 - `state.theme` is the app-wide light/dark appearance. App shell UI reads `APP_THEME_TOKENS` and CSS vars, while `state.colors` is the broadcast/export asset palette users can override. Switching Light/Dark currently loads the matching asset preset as a product default; if the app ever needs light UI with dark exports, add a separate `assetPalette` control instead of overloading `theme`.
 - The live-data persistence layer (behind the Session Config tab) persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
