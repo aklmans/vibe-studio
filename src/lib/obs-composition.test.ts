@@ -6,12 +6,17 @@ import test from "node:test";
 
 import { CAMERA_SLOT_FRAME, MAIN_SCREEN_FRAME } from "./live-prepare";
 import {
-  canSwapLayout,
+  canSwap,
   compositionOps,
+  hasSourceConflict,
   inferCompositionState,
-  isCameraSlotChoice,
-  isCompositionLayout,
+  isCameraSource,
+  isMainSource,
+  normalizeComposition,
   slotTransform,
+  swapRegions,
+  type CameraSource,
+  type CompositionState,
 } from "./obs-composition";
 
 function enabledMap(ops: ReturnType<typeof compositionOps>): Record<string, boolean> {
@@ -32,157 +37,183 @@ test("camera slot geometry matches the overlay canvas OBS cutout", () => {
   );
   assert(match, "OverlayCanvas.tsx should define OBS_CAMERA_SLOT");
   deepStrictEqual(
-    {
-      left: Number(match[1]),
-      top: Number(match[2]),
-      width: Number(match[3]),
-      height: Number(match[4]),
-    },
+    { left: +match[1], top: +match[2], width: +match[3], height: +match[4] },
     CAMERA_SLOT_FRAME,
   );
 });
 
-test("standard camera composition: webcam fills the slot, display fits the main frame", () => {
-  const ops = compositionOps({ cameraSlot: "camera", layout: "standard" });
+test("default composition: display-1 fills the main frame, webcam fills the slot", () => {
+  const ops = compositionOps({ main: "display-1", camera: "camera" });
 
   deepStrictEqual(enabledMap(ops), {
-    "Vibe Overlay Empty Frame": true,
     "Vibe Overlay Avatar Frame": false,
-    "Vibe Camera Capture": true,
-    "Vibe Second Screen Capture": false,
+    "Vibe Overlay Empty Frame": true,
     "Vibe Main Display Capture": true,
+    "Vibe Second Screen Capture": false,
+    "Vibe Main App Capture": false,
+    "Vibe Camera Capture": true,
   });
 
   const display = transformFor(ops, "Vibe Main Display Capture");
   const camera = transformFor(ops, "Vibe Camera Capture");
   assert(display && camera);
   equal(display.positionX, MAIN_SCREEN_FRAME.left);
-  // obs-websocket wants the string enum, not the scene-JSON integer.
-  equal(display.boundsType, "OBS_BOUNDS_SCALE_INNER"); // 16:9 into 16:9, no crop
+  equal(display.boundsType, "OBS_BOUNDS_SCALE_INNER"); // 16:9 into 16:9
   equal(display.cropToBounds, false);
   equal(camera.positionX, CAMERA_SLOT_FRAME.left);
-  equal(camera.positionY, CAMERA_SLOT_FRAME.top);
-  equal(camera.boundsType, "OBS_BOUNDS_SCALE_OUTER"); // fill the 400×272 slot
+  equal(camera.boundsType, "OBS_BOUNDS_SCALE_OUTER"); // fill 400×272
   equal(camera.cropToBounds, true);
 });
 
-test("second-screen composition enables only the second capture in the slot", () => {
-  const ops = compositionOps({ cameraSlot: "second-screen", layout: "standard" });
+test("per-region selection routes each capture independently", () => {
+  // Main = the app window; camera = the second screen.
+  const ops = compositionOps({ main: "app", camera: "display-2" });
   const enabled = enabledMap(ops);
+  equal(enabled["Vibe Main App Capture"], true);
   equal(enabled["Vibe Second Screen Capture"], true);
+  equal(enabled["Vibe Main Display Capture"], false);
   equal(enabled["Vibe Camera Capture"], false);
-  equal(enabled["Vibe Overlay Empty Frame"], true);
 
+  const app = transformFor(ops, "Vibe Main App Capture");
   const second = transformFor(ops, "Vibe Second Screen Capture");
-  assert(second);
-  deepStrictEqual(
-    { x: second.positionX, y: second.positionY, w: second.boundsWidth, h: second.boundsHeight },
-    {
-      x: CAMERA_SLOT_FRAME.left,
-      y: CAMERA_SLOT_FRAME.top,
-      w: CAMERA_SLOT_FRAME.width,
-      h: CAMERA_SLOT_FRAME.height,
-    },
-  );
+  assert(app && second);
+  equal(app.positionY, MAIN_SCREEN_FRAME.top);
+  equal(second.positionY, CAMERA_SLOT_FRAME.top);
+  equal(second.boundsType, "OBS_BOUNDS_SCALE_OUTER");
 });
 
-test("swapped layout puts the capture in the main frame and the display in the slot", () => {
-  const ops = compositionOps({ cameraSlot: "second-screen", layout: "swapped" });
-  const second = transformFor(ops, "Vibe Second Screen Capture");
-  const display = transformFor(ops, "Vibe Main Display Capture");
-  assert(second && display);
-  equal(second.positionX, MAIN_SCREEN_FRAME.left);
-  equal(second.boundsType, "OBS_BOUNDS_SCALE_INNER"); // 16:9 fits the main frame exactly
-  equal(display.positionX, CAMERA_SLOT_FRAME.left);
-  equal(display.boundsType, "OBS_BOUNDS_SCALE_OUTER");
-  equal(display.cropToBounds, true);
-});
-
-test("avatar theme swaps the frame sources and disables both captures", () => {
-  const ops = compositionOps({ cameraSlot: "avatar", layout: "standard" });
+test("avatar theme swaps the frame sources and disables every capture", () => {
+  const ops = compositionOps({ main: "display-1", camera: "avatar" });
   const enabled = enabledMap(ops);
   equal(enabled["Vibe Overlay Avatar Frame"], true);
   equal(enabled["Vibe Overlay Empty Frame"], false);
   equal(enabled["Vibe Camera Capture"], false);
   equal(enabled["Vibe Second Screen Capture"], false);
-  // No capture to swap: the display stays in the main frame even if "swapped" leaks in.
-  const swappedOps = compositionOps({ cameraSlot: "avatar", layout: "swapped" });
-  equal(transformFor(swappedOps, "Vibe Main Display Capture")?.positionX, MAIN_SCREEN_FRAME.left);
-  equal(swappedOps.transforms.length, 1);
-  equal(canSwapLayout("avatar"), false);
-  equal(canSwapLayout("second-screen"), true);
+  // Main capture stays on (avatar only governs the camera cutout).
+  equal(enabled["Vibe Main Display Capture"], true);
+  // Only the main transform — no camera capture to place.
+  equal(ops.transforms.length, 1);
 });
 
-test("slotTransform pins the shared transform contract", () => {
-  deepStrictEqual(slotTransform({ left: 24, top: 24, width: 1440, height: 810 }, "contain"), {
-    positionX: 24,
-    positionY: 24,
-    boundsType: "OBS_BOUNDS_SCALE_INNER",
-    boundsWidth: 1440,
-    boundsHeight: 810,
-    boundsAlignment: 0,
-    alignment: 5,
-    rotation: 0,
-    cropLeft: 0,
-    cropRight: 0,
-    cropTop: 0,
-    cropBottom: 0,
-    cropToBounds: false,
+test("camera 'off' leaves the empty frame (focus card) with no camera capture", () => {
+  const ops = compositionOps({ main: "display-1", camera: "off" });
+  const enabled = enabledMap(ops);
+  equal(enabled["Vibe Overlay Empty Frame"], true);
+  equal(enabled["Vibe Overlay Avatar Frame"], false);
+  equal(enabled["Vibe Camera Capture"], false);
+  equal(enabled["Vibe Second Screen Capture"], false);
+  equal(ops.transforms.length, 1);
+});
+
+test("swap exchanges two display regions and is a no-op otherwise", () => {
+  equal(canSwap({ main: "display-1", camera: "display-2" }), true);
+  deepStrictEqual(swapRegions({ main: "display-1", camera: "display-2" }), {
+    main: "display-2",
+    camera: "display-1",
   });
-  equal(
-    typeof slotTransform({ left: 0, top: 0, width: 1, height: 1 }, "cover").boundsType,
-    "string",
-    "boundsType must be a string over obs-websocket",
+  // App / webcam / avatar / off are not swappable into or out of the main frame.
+  for (const state of [
+    { main: "app", camera: "display-2" },
+    { main: "display-1", camera: "camera" },
+    { main: "display-1", camera: "avatar" },
+    { main: "display-1", camera: "off" },
+  ] as CompositionState[]) {
+    equal(canSwap(state), false, JSON.stringify(state));
+    deepStrictEqual(swapRegions(state), state);
+  }
+});
+
+test("conflict detection + normalization keep one capture per region", () => {
+  equal(hasSourceConflict({ main: "display-1", camera: "display-1" }), true);
+  equal(hasSourceConflict({ main: "display-1", camera: "display-2" }), false);
+  equal(hasSourceConflict({ main: "display-1", camera: "avatar" }), false);
+
+  // User just set main → camera yields.
+  deepStrictEqual(
+    normalizeComposition({ main: "display-2", camera: "display-2" }, "main"),
+    { main: "display-2", camera: "camera" },
+  );
+  // User just set camera → main moves to the other display.
+  deepStrictEqual(
+    normalizeComposition({ main: "display-1", camera: "display-1" }, "camera"),
+    { main: "display-2", camera: "display-1" },
+  );
+  // No conflict → untouched.
+  deepStrictEqual(
+    normalizeComposition({ main: "app", camera: "camera" }, "camera"),
+    { main: "app", camera: "camera" },
   );
 });
 
-test("inferCompositionState reconstructs choice and layout from OBS flags", () => {
+test("inferCompositionState reconstructs regions from OBS positions", () => {
+  const off = { enabled: false, positionY: null };
+  // display-1 in the main frame, webcam in the slot.
   deepStrictEqual(
     inferCompositionState({
-      cameraEnabled: true,
-      secondScreenEnabled: false,
       avatarFrameEnabled: false,
-      mainDisplayPositionY: 24,
+      captures: {
+        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-2": off,
+        app: off,
+        camera: { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
+      },
     }),
-    { cameraSlot: "camera", layout: "standard" },
+    { main: "display-1", camera: "camera" },
   );
+  // Swapped displays: display-2 up top, display-1 in the slot.
   deepStrictEqual(
     inferCompositionState({
-      cameraEnabled: false,
-      secondScreenEnabled: true,
       avatarFrameEnabled: false,
-      mainDisplayPositionY: 786,
+      captures: {
+        "display-1": { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
+        "display-2": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        app: off,
+        camera: off,
+      },
     }),
-    { cameraSlot: "second-screen", layout: "swapped" },
+    { main: "display-2", camera: "display-1" },
   );
-  // Avatar wins over stale capture flags and never reports swapped.
+  // Avatar wins; camera capture flags ignored.
   deepStrictEqual(
     inferCompositionState({
-      cameraEnabled: true,
-      secondScreenEnabled: false,
       avatarFrameEnabled: true,
-      mainDisplayPositionY: 786,
+      captures: {
+        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-2": off,
+        app: off,
+        camera: { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
+      },
     }),
-    { cameraSlot: "avatar", layout: "standard" },
+    { main: "display-1", camera: "avatar" },
   );
-  // Unreadable transform defaults to standard.
+  // Nothing in the slot, no avatar → off.
   deepStrictEqual(
     inferCompositionState({
-      cameraEnabled: true,
-      secondScreenEnabled: false,
       avatarFrameEnabled: false,
-      mainDisplayPositionY: null,
+      captures: {
+        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-2": off,
+        app: off,
+        camera: off,
+      },
     }),
-    { cameraSlot: "camera", layout: "standard" },
+    { main: "display-1", camera: "off" },
   );
+});
+
+test("slotTransform sends boundsType as a string enum, not the scene-JSON integer", () => {
+  const t = slotTransform({ left: 24, top: 24, width: 1440, height: 810 }, "contain");
+  equal(t.boundsType, "OBS_BOUNDS_SCALE_INNER");
+  equal(typeof t.boundsType, "string");
+  equal(slotTransform({ left: 0, top: 0, width: 1, height: 1 }, "cover").boundsType, "OBS_BOUNDS_SCALE_OUTER");
 });
 
 test("type guards accept exactly the wire values", () => {
-  for (const value of ["camera", "second-screen", "avatar"]) {
-    equal(isCameraSlotChoice(value), true, value);
+  for (const value of ["display-1", "display-2", "app"]) equal(isMainSource(value), true, value);
+  equal(isMainSource("camera"), false);
+  equal(isMainSource("avatar"), false);
+  for (const value of ["display-1", "display-2", "camera", "avatar", "off"] as CameraSource[]) {
+    equal(isCameraSource(value), true, value);
   }
-  equal(isCameraSlotChoice("screen"), false);
-  equal(isCompositionLayout("standard"), true);
-  equal(isCompositionLayout("swapped"), true);
-  equal(isCompositionLayout("swap"), false);
+  equal(isCameraSource("app"), false);
 });

@@ -1,18 +1,17 @@
 /*
- * Declarative camera-slot composition for the local/private Studio.
+ * Declarative composition for the local/private Studio.
  *
- * The overlay is a transparent frame; OBS owns the real captures underneath.
- * These helpers translate a small composition state — what occupies the camera
- * slot (webcam / second screen / avatar theme) and whether the main and slot
- * captures are swapped — into declarative obs-websocket operations (source
- * enables + scene-item transforms). Every apply sends the FULL desired state,
- * so the route is idempotent and never depends on what OBS currently shows.
+ * The overlay is a transparent frame; OBS owns the real captures underneath. A
+ * composition assigns a source to each of the two regions — the main 16:9 frame
+ * and the camera cutout — and these helpers translate that into declarative
+ * obs-websocket ops (source enables + scene-item transforms). Every apply sends
+ * the FULL desired state, so the route is idempotent and never depends on what
+ * OBS currently shows.
  *
- * Pure and client-safe (no node imports): the Inspector imports the types and
- * defaults; the server route (src/app/api/obs/composition/route.ts) executes
- * the ops. MAIN_APP_SOURCE is intentionally unmanaged in Phase 1 — the main
- * slot always carries MAIN_DISPLAY_SOURCE; a main-slot source selector is a
- * Phase 2 concern.
+ * "Display selection" is by pre-created source, not dynamic monitor poking:
+ * display-1 = Vibe Main Display Capture, display-2 = Vibe Second Screen
+ * Capture. The operator points each at a monitor once in OBS; this layer only
+ * routes sources between regions. Pure and client-safe (no node imports).
  */
 
 import {
@@ -20,6 +19,7 @@ import {
   CAMERA_SLOT_FRAME,
   CAMERA_SOURCE,
   EMPTY_FRAME_SOURCE,
+  MAIN_APP_SOURCE,
   MAIN_DISPLAY_SOURCE,
   MAIN_SCREEN_FRAME,
   OBS_ALIGN_TOP_LEFT,
@@ -34,32 +34,100 @@ import {
 const WS_BOUNDS_SCALE_INNER = "OBS_BOUNDS_SCALE_INNER";
 const WS_BOUNDS_SCALE_OUTER = "OBS_BOUNDS_SCALE_OUTER";
 
-export type CameraSlotChoice = "camera" | "second-screen" | "avatar";
-export type CompositionLayout = "standard" | "swapped";
+// A capture that can occupy a region.
+export type CaptureChoice = "display-1" | "display-2" | "app" | "camera";
+// The main 16:9 frame carries a capture (never the avatar theme).
+export type MainSource = "display-1" | "display-2" | "app";
+// The camera cutout carries a capture, the avatar theme, or nothing.
+export type CameraSource = "display-1" | "display-2" | "camera" | "avatar" | "off";
 
 export interface CompositionState {
-  /** What occupies the camera cutout (or the avatar-frame theme). */
-  cameraSlot: CameraSlotChoice;
-  /** "swapped" puts the slot capture in the main frame and the main display in the slot. */
-  layout: CompositionLayout;
+  main: MainSource;
+  camera: CameraSource;
 }
 
 export const DEFAULT_COMPOSITION: CompositionState = {
-  cameraSlot: "camera",
-  layout: "standard",
+  main: "display-1",
+  camera: "camera",
 };
 
-export function isCameraSlotChoice(value: unknown): value is CameraSlotChoice {
-  return value === "camera" || value === "second-screen" || value === "avatar";
+/** Choice → OBS source name. The single crossing between abstract regions and
+ * OBS's named scene items; live-prepare.ts owns the names. */
+export const CAPTURE_SOURCE_NAME: Record<CaptureChoice, string> = {
+  "display-1": MAIN_DISPLAY_SOURCE,
+  "display-2": SECOND_SCREEN_SOURCE,
+  app: MAIN_APP_SOURCE,
+  camera: CAMERA_SOURCE,
+};
+
+/** Every capture this layer manages (enable + transform); frames are separate. */
+export const MANAGED_CAPTURES: readonly CaptureChoice[] = [
+  "display-1",
+  "display-2",
+  "app",
+  "camera",
+];
+
+const MAIN_SOURCES: readonly MainSource[] = ["display-1", "display-2", "app"];
+const CAMERA_SOURCES: readonly CameraSource[] = [
+  "display-1",
+  "display-2",
+  "camera",
+  "avatar",
+  "off",
+];
+
+export function isMainSource(value: unknown): value is MainSource {
+  return typeof value === "string" && (MAIN_SOURCES as readonly string[]).includes(value);
 }
 
-export function isCompositionLayout(value: unknown): value is CompositionLayout {
-  return value === "standard" || value === "swapped";
+export function isCameraSource(value: unknown): value is CameraSource {
+  return typeof value === "string" && (CAMERA_SOURCES as readonly string[]).includes(value);
 }
 
-/** The avatar theme is a full-frame browser source — there is no capture to swap. */
-export function canSwapLayout(cameraSlot: CameraSlotChoice): boolean {
-  return cameraSlot !== "avatar";
+/** The camera value when it names a capture (not the avatar theme or off). */
+function cameraCapture(camera: CameraSource): CaptureChoice | null {
+  return camera === "avatar" || camera === "off" ? null : camera;
+}
+
+/** Only display captures can be swapped or collide across regions. */
+function isDisplay(choice: string): boolean {
+  return choice === "display-1" || choice === "display-2";
+}
+
+/** OBS can't show one capture in two regions — reject main === camera capture. */
+export function hasSourceConflict(state: CompositionState): boolean {
+  const cam = cameraCapture(state.camera);
+  return cam !== null && cam === state.main;
+}
+
+/** Swap is meaningful only when both regions hold a display capture. */
+export function canSwap(state: CompositionState): boolean {
+  return isDisplay(state.main) && isDisplay(state.camera);
+}
+
+export function swapRegions(state: CompositionState): CompositionState {
+  if (!canSwap(state)) return state;
+  return { main: state.camera as MainSource, camera: state.main as CameraSource };
+}
+
+/**
+ * Resolve a would-be selection so the regions never claim the same capture.
+ * When `changed` names the region the user just touched, the OTHER region
+ * yields; the touched pick always wins. Used by the UI so posted state is
+ * always conflict-free, and as a safety net in inference.
+ */
+export function normalizeComposition(
+  state: CompositionState,
+  changed: "main" | "camera" = "camera",
+): CompositionState {
+  if (!hasSourceConflict(state)) return state;
+  if (changed === "main") {
+    // Free the camera: fall back to the webcam, or off if none makes sense.
+    return { ...state, camera: "camera" };
+  }
+  // The user set the camera → move main off the shared display to the other one.
+  return { ...state, main: state.main === "display-1" ? "display-2" : "display-1" };
 }
 
 interface SlotRect {
@@ -113,70 +181,76 @@ export interface CompositionOps {
 }
 
 export function compositionOps(state: CompositionState): CompositionOps {
-  const capture =
-    state.cameraSlot === "second-screen"
-      ? SECOND_SCREEN_SOURCE
-      : state.cameraSlot === "camera"
-        ? CAMERA_SOURCE
-        : null;
-  const swapped = state.layout === "swapped" && capture !== null;
+  const mainSourceName = CAPTURE_SOURCE_NAME[state.main];
+  const camChoice = cameraCapture(state.camera);
+  const camSourceName = camChoice ? CAPTURE_SOURCE_NAME[camChoice] : null;
+
+  // A capture is enabled iff it is assigned to a region.
+  const assigned = new Set<string>([mainSourceName]);
+  if (camSourceName) assigned.add(camSourceName);
 
   const enables: SourceEnableOp[] = [
     // Theme: exactly one overlay frame browser source is visible.
-    { source: EMPTY_FRAME_SOURCE, enabled: state.cameraSlot !== "avatar" },
-    { source: AVATAR_FRAME_SOURCE, enabled: state.cameraSlot === "avatar" },
-    // Captures: only the selected slot capture is on; the main display always is.
-    { source: CAMERA_SOURCE, enabled: state.cameraSlot === "camera" },
-    { source: SECOND_SCREEN_SOURCE, enabled: state.cameraSlot === "second-screen" },
-    { source: MAIN_DISPLAY_SOURCE, enabled: true },
+    { source: AVATAR_FRAME_SOURCE, enabled: state.camera === "avatar" },
+    { source: EMPTY_FRAME_SOURCE, enabled: state.camera !== "avatar" },
+    // Captures.
+    ...MANAGED_CAPTURES.map((choice) => {
+      const source = CAPTURE_SOURCE_NAME[choice];
+      return { source, enabled: assigned.has(source) };
+    }),
   ];
 
   const transforms: SourceTransformOp[] = [
-    {
-      source: MAIN_DISPLAY_SOURCE,
-      transform: swapped
-        ? slotTransform(CAMERA_SLOT_FRAME, "cover")
-        : slotTransform(MAIN_SCREEN_FRAME, "contain"),
-    },
+    { source: mainSourceName, transform: slotTransform(MAIN_SCREEN_FRAME, "contain") },
   ];
-  if (capture) {
+  // camSourceName === mainSourceName would be a conflict; guard defensively.
+  if (camSourceName && camSourceName !== mainSourceName) {
     transforms.push({
-      source: capture,
-      transform: swapped
-        ? slotTransform(MAIN_SCREEN_FRAME, "contain")
-        : slotTransform(CAMERA_SLOT_FRAME, "cover"),
+      source: camSourceName,
+      transform: slotTransform(CAMERA_SLOT_FRAME, "cover"),
     });
   }
 
   return { enables, transforms };
 }
 
-/** What the status GET reads from OBS to reconstruct the current state. */
+/** Per-capture flags the status GET reads from OBS to reconstruct the state. */
+export interface CaptureProbe {
+  enabled: boolean;
+  /** Scene-item positionY, or null when unreadable. */
+  positionY: number | null;
+}
+
 export interface CompositionProbe {
-  cameraEnabled: boolean;
-  secondScreenEnabled: boolean;
+  captures: Record<CaptureChoice, CaptureProbe>;
   avatarFrameEnabled: boolean;
-  /** Scene-item positionY of the main display capture, when readable. */
-  mainDisplayPositionY: number | null;
 }
 
 /**
- * Reconstruct the composition from live OBS flags so the Inspector reflects
- * reality on mount instead of assuming defaults. The layout heuristic: the
- * main display parked below the midpoint between the two slots means swapped.
+ * Reconstruct {main, camera} from live OBS so the Inspector reflects reality on
+ * mount. A capture parked above the midpoint between the two slots is in the
+ * main frame; below it, the camera cutout.
  */
 export function inferCompositionState(probe: CompositionProbe): CompositionState {
-  const cameraSlot: CameraSlotChoice = probe.avatarFrameEnabled
-    ? "avatar"
-    : probe.secondScreenEnabled
-      ? "second-screen"
-      : "camera";
   const midpointY = (MAIN_SCREEN_FRAME.top + CAMERA_SLOT_FRAME.top) / 2;
-  const swapped =
-    typeof probe.mainDisplayPositionY === "number" &&
-    probe.mainDisplayPositionY > midpointY;
-  return {
-    cameraSlot,
-    layout: swapped && canSwapLayout(cameraSlot) ? "swapped" : "standard",
-  };
+  let main: MainSource = "display-1";
+  let cameraCap: CaptureChoice | null = null;
+
+  for (const choice of MANAGED_CAPTURES) {
+    const capture = probe.captures[choice];
+    if (!capture.enabled || capture.positionY === null) continue;
+    if (capture.positionY < midpointY) {
+      if (isMainSource(choice)) main = choice;
+    } else {
+      cameraCap = choice;
+    }
+  }
+
+  const camera: CameraSource = probe.avatarFrameEnabled
+    ? "avatar"
+    : cameraCap && isCameraSource(cameraCap)
+      ? cameraCap
+      : "off";
+
+  return normalizeComposition({ main, camera }, "main");
 }

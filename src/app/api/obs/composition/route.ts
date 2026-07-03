@@ -8,8 +8,9 @@
  */
 
 import {
-  isCameraSlotChoice,
-  isCompositionLayout,
+  hasSourceConflict,
+  isCameraSource,
+  isMainSource,
   type CompositionState,
 } from "../../../../lib/obs-composition";
 import {
@@ -64,13 +65,19 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | Partial<CompositionState>
     | null;
-  if (!body || !isCameraSlotChoice(body.cameraSlot) || !isCompositionLayout(body.layout)) {
+  if (!body || !isMainSource(body.main) || !isCameraSource(body.camera)) {
     return Response.json(
-      { ok: false, error: "cameraSlot and layout are required" },
+      { ok: false, error: "main and camera are required" },
       { status: 400 },
     );
   }
-  const state: CompositionState = { cameraSlot: body.cameraSlot, layout: body.layout };
+  const state: CompositionState = { main: body.main, camera: body.camera };
+  if (hasSourceConflict(state)) {
+    return Response.json(
+      { ok: false, error: "the same capture cannot occupy both regions" },
+      { status: 400 },
+    );
+  }
 
   const opened = await openConnection();
   if ("error" in opened) {

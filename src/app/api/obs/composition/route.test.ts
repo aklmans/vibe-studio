@@ -32,21 +32,23 @@ test("the composition route does not exist on the public showcase", async () => 
   await withShowcase(async () => {
     equal((await GET()).status, 404);
     equal(
-      (await POST(postRequest({ cameraSlot: "camera", layout: "standard" }))).status,
+      (await POST(postRequest({ main: "display-1", camera: "camera" }))).status,
       404,
     );
   });
 });
 
-test("POST rejects an invalid composition body before touching OBS", async () => {
+test("POST rejects an invalid or conflicting composition body before touching OBS", async () => {
   const saved = process.env.VIBE_SHOWCASE;
   delete process.env.VIBE_SHOWCASE;
   try {
     for (const body of [
       {},
-      { cameraSlot: "screen", layout: "standard" },
-      { cameraSlot: "camera", layout: "swap" },
-      { cameraSlot: "camera" },
+      { main: "screen", camera: "camera" },
+      { main: "display-1", camera: "nope" },
+      { main: "display-1" },
+      { main: "camera", camera: "camera" }, // webcam is not a valid main source
+      { main: "display-1", camera: "display-1" }, // same capture in both regions
     ]) {
       const response = await POST(postRequest(body));
       equal(response.status, 400, JSON.stringify(body));

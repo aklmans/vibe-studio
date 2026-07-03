@@ -1,42 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
 import { patchSection } from "../../lib/state";
 import { SECOND_SCREEN_SOURCE } from "../../lib/live-prepare";
 import {
-  canSwapLayout,
+  canSwap,
+  CAPTURE_SOURCE_NAME,
   DEFAULT_COMPOSITION,
-  type CameraSlotChoice,
-  type CompositionLayout,
+  normalizeComposition,
+  swapRegions,
+  type CameraSource,
   type CompositionState,
+  type MainSource,
 } from "../../lib/obs-composition";
 import {
   applyObsComposition,
   fetchObsCompositionStatus,
 } from "../../lib/obs-composition-client";
-import { WorkbenchButton, WorkbenchLabel } from "../shared/Field";
-import { LineSegmented } from "./EditorRow";
+import { WorkbenchButton } from "../shared/Field";
+import ObsCompositionPresets from "./ObsCompositionPresets";
 
 const mono = "var(--app-font-mono)";
+const CAMERA_SLOT_SOURCE = CAPTURE_SOURCE_NAME.camera;
+
+type ConnectionState = "checking" | "connected" | "disconnected";
 
 interface ObsCompositionControlsProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
 }
 
-type ConnectionState = "checking" | "connected" | "disconnected";
-
 /**
- * Camera-slot composition controls — local/private Studio only (the parent
- * hides this in demo mode, and the route 404s on the public showcase).
- *
- * Selecting a slot content or layout sends the FULL desired state to
- * /api/obs/composition, which drives the operator's local OBS over
- * obs-websocket: webcam / second screen in the camera cutout, avatar theme via
- * the frame browser sources, and a main⇄slot swap. Optimistic UI, reverted
- * when OBS refuses. The overlay content itself keeps flowing through
- * live-state; this panel only manages the captures underneath.
+ * Per-region composition controls — local/private Studio only (the parent hides
+ * this in demo, and the route 404s on the public showcase). Each region (main
+ * 16:9 frame, camera cutout) picks a source; a display can't sit in both. The
+ * overlay content keeps flowing through live-state; this panel only routes the
+ * OBS captures underneath, over obs-websocket.
  */
 export default function ObsCompositionControls({
   state,
@@ -77,54 +77,83 @@ export default function ObsCompositionControls({
     }, 3000);
   };
 
-  const apply = (next: CompositionState) => {
-    if (applying) return;
-    const previous = composition;
-    setComposition(next);
-    setApplying(true);
-    // The slot content renders inside the overlay's camera panel — turn the
-    // panel on so the selection is actually visible in the broadcast frame.
-    if (!state.mainScreen.cameraVisible) {
-      onChange(patchSection(state, "mainScreen", { cameraVisible: true }));
-    }
-    void applyObsComposition(next)
-      .then((result) => {
-        if (result.ok) {
-          if (result.missingSources) setMissingSources(result.missingSources);
-          showNotice("ok", t("composition.applied"));
-          return;
-        }
-        setComposition(previous);
-        if (result.missingRequired?.length) {
-          showNotice(
-            "error",
-            `${t("composition.missingSource")}${result.missingRequired.join(", ")}`,
-          );
-        } else if (result.connected === false) {
-          setConnection("disconnected");
-          setReason(result.reason ?? null);
-          showNotice("error", t("composition.applyFailed"));
-        } else {
-          showNotice(
-            "error",
-            result.error
-              ? `${t("composition.applyFailed")} · ${result.error}`
-              : t("composition.applyFailed"),
-          );
-        }
-      })
-      .finally(() => setApplying(false));
-  };
+  const apply = useCallback(
+    (next: CompositionState) => {
+      if (applying) return;
+      const previous = composition;
+      setComposition(next);
+      setApplying(true);
+      // The camera slot renders inside the overlay's camera panel: "off" wants
+      // the focus card (cameraVisible=false), any content wants the panel on.
+      const cameraVisible = next.camera !== "off";
+      if (state.mainScreen.cameraVisible !== cameraVisible) {
+        onChange(patchSection(state, "mainScreen", { cameraVisible }));
+      }
+      void applyObsComposition(next)
+        .then((result) => {
+          if (result.ok) {
+            if (result.missingSources) setMissingSources(result.missingSources);
+            showNotice("ok", t("composition.applied"));
+            return;
+          }
+          setComposition(previous);
+          if (result.missingRequired?.length) {
+            showNotice("error", `${t("composition.missingSource")}${result.missingRequired.join(", ")}`);
+          } else if (result.connected === false) {
+            setConnection("disconnected");
+            setReason(result.reason ?? null);
+            showNotice("error", t("composition.applyFailed"));
+          } else {
+            showNotice(
+              "error",
+              result.error ? `${t("composition.applyFailed")} · ${result.error}` : t("composition.applyFailed"),
+            );
+          }
+        })
+        .finally(() => setApplying(false));
+    },
+    [applying, composition, onChange, state, t],
+  );
 
-  const selectChoice = (choice: CameraSlotChoice) =>
-    apply({
-      cameraSlot: choice,
-      layout: canSwapLayout(choice) ? composition.layout : "standard",
-    });
+  const selectMain = (main: MainSource) =>
+    apply(normalizeComposition({ ...composition, main }, "main"));
+  const selectCamera = (camera: CameraSource) =>
+    apply(normalizeComposition({ ...composition, camera }, "camera"));
 
-  const selectLayout = (layout: CompositionLayout) =>
-    apply({ ...composition, layout });
+  const sourceMissing = useCallback(
+    (source: string) => missingSources.includes(source),
+    [missingSources],
+  );
 
+  const mainOptions = useMemo(
+    (): RegionOption<MainSource>[] => [
+      { value: "display-1", label: t("composition.source.screen1"), disabled: sourceMissing(CAPTURE_SOURCE_NAME["display-1"]) },
+      { value: "display-2", label: t("composition.source.screen2"), disabled: sourceMissing(CAPTURE_SOURCE_NAME["display-2"]) },
+      { value: "app", label: t("composition.source.app"), disabled: sourceMissing(CAPTURE_SOURCE_NAME.app) },
+    ],
+    [sourceMissing, t],
+  );
+
+  const cameraOptions = useMemo(
+    (): RegionOption<CameraSource>[] => [
+      {
+        value: "display-1",
+        label: t("composition.source.screen1"),
+        disabled: sourceMissing(CAPTURE_SOURCE_NAME["display-1"]) || composition.main === "display-1",
+      },
+      {
+        value: "display-2",
+        label: t("composition.source.screen2"),
+        disabled: sourceMissing(CAPTURE_SOURCE_NAME["display-2"]) || composition.main === "display-2",
+      },
+      { value: "camera", label: t("composition.source.camera"), disabled: sourceMissing(CAMERA_SLOT_SOURCE) },
+      { value: "avatar", label: t("composition.source.avatar"), disabled: false },
+      { value: "off", label: t("composition.source.off"), disabled: false },
+    ],
+    [composition.main, sourceMissing, t],
+  );
+
+  const controlsActive = connection === "connected";
   const statusText =
     connection === "checking"
       ? t("composition.status.checking")
@@ -138,14 +167,8 @@ export default function ObsCompositionControls({
             ? t("composition.status.unreachable")
             : t("composition.status.error");
 
-  const controlsActive = connection === "connected";
-
   return (
-    <div
-      data-testid="obs-composition"
-      style={{ display: "flex", flexDirection: "column", gap: 12 }}
-    >
-      {/* Status line — mono metadata with a semantic dot, no pill chrome. */}
+    <div data-testid="obs-composition" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div
         data-testid="obs-composition-status"
         style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 22 }}
@@ -157,8 +180,7 @@ export default function ObsCompositionControls({
             height: 5,
             borderRadius: "50%",
             flexShrink: 0,
-            background:
-              connection === "connected" ? UI_COLORS.success : UI_COLORS.textSubtle,
+            background: connection === "connected" ? UI_COLORS.success : UI_COLORS.textSubtle,
           }}
         />
         <span
@@ -184,58 +206,45 @@ export default function ObsCompositionControls({
       </div>
 
       <div
-        style={
-          controlsActive
-            ? { display: "flex", flexDirection: "column", gap: 12 }
-            : {
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                opacity: 0.45,
-                pointerEvents: "none",
-              }
-        }
         aria-disabled={!controlsActive}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          ...(controlsActive ? {} : { opacity: 0.45, pointerEvents: "none" }),
+        }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <WorkbenchLabel>{t("composition.slotLabel")}</WorkbenchLabel>
-          <LineSegmented
-            testId="composition-slot"
-            active={composition.cameraSlot}
-            onSelect={(value) => selectChoice(value as CameraSlotChoice)}
-            options={[
-              { value: "camera", label: t("composition.choice.camera"), testId: "composition-slot-camera" },
-              { value: "second-screen", label: t("composition.choice.secondScreen"), testId: "composition-slot-second-screen" },
-              { value: "avatar", label: t("composition.choice.avatar"), testId: "composition-slot-avatar" },
-            ]}
-          />
-        </div>
+        <RegionSelect
+          label={t("composition.mainLabel")}
+          testId="composition-main"
+          options={mainOptions}
+          value={composition.main}
+          onSelect={selectMain}
+          columns={3}
+        />
+        <RegionSelect
+          label={t("composition.cameraLabel")}
+          testId="composition-camera"
+          options={cameraOptions}
+          value={composition.camera}
+          onSelect={selectCamera}
+          columns={3}
+        />
 
-        {canSwapLayout(composition.cameraSlot) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <WorkbenchLabel>{t("composition.layoutLabel")}</WorkbenchLabel>
-            <LineSegmented
-              testId="composition-layout"
-              active={composition.layout}
-              onSelect={(value) => selectLayout(value as CompositionLayout)}
-              options={[
-                { value: "standard", label: t("composition.layout.standard"), testId: "composition-layout-standard" },
-                { value: "swapped", label: t("composition.layout.swapped"), testId: "composition-layout-swapped" },
-              ]}
-            />
-          </div>
-        )}
+        <WorkbenchButton
+          data-testid="composition-swap"
+          onClick={() => apply(swapRegions(composition))}
+          disabled={!canSwap(composition)}
+          style={{ height: 30, justifyContent: "center" }}
+        >
+          ⇄ {t("composition.swap")}
+        </WorkbenchButton>
       </div>
 
       {controlsActive && missingSources.includes(SECOND_SCREEN_SOURCE) && (
         <p
           data-testid="obs-composition-second-screen-hint"
-          style={{
-            margin: 0,
-            fontSize: 11,
-            lineHeight: 1.55,
-            color: UI_COLORS.textMuted,
-          }}
+          style={{ margin: 0, fontSize: 11, lineHeight: 1.55, color: UI_COLORS.textMuted }}
         >
           {t("composition.secondScreenHint")}
         </p>
@@ -254,6 +263,92 @@ export default function ObsCompositionControls({
           {notice.text}
         </span>
       )}
+
+      {controlsActive && (
+        <ObsCompositionPresets current={composition} onApply={apply} />
+      )}
     </div>
   );
+}
+
+interface RegionOption<T extends string> {
+  value: T;
+  label: string;
+  disabled: boolean;
+}
+
+/** A labeled grid of option buttons: active = accent underline, disabled dimmed. */
+function RegionSelect<T extends string>({
+  label,
+  testId,
+  options,
+  value,
+  onSelect,
+  columns,
+}: {
+  label: string;
+  testId: string;
+  options: RegionOption<T>[];
+  value: T;
+  onSelect: (value: T) => void;
+  columns: number;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span
+        style={{
+          fontFamily: mono,
+          fontSize: 10,
+          fontWeight: 600,
+          color: UI_COLORS.textMuted,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+      <div
+        data-testid={testId}
+        style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 4 }}
+      >
+        {options.map((option) => {
+          const active = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              data-testid={`${testId}-${option.value}`}
+              data-selected={active || undefined}
+              disabled={option.disabled}
+              onClick={() => onSelect(option.value)}
+              style={optionStyle(active, option.disabled)}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function optionStyle(active: boolean, disabled: boolean): CSSProperties {
+  return {
+    appearance: "none",
+    minHeight: 28,
+    padding: "0 6px",
+    borderRadius: 4,
+    border: `1px solid ${active ? UI_COLORS.accent : UI_COLORS.controlBorder}`,
+    background: active ? UI_COLORS.hoverSurface : "transparent",
+    color: disabled ? UI_COLORS.textSubtle : active ? UI_COLORS.text : UI_COLORS.textSoft,
+    fontFamily: mono,
+    fontSize: 11,
+    fontWeight: active ? 600 : 500,
+    cursor: disabled ? "default" : "pointer",
+    opacity: disabled ? 0.4 : 1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    transition: "color 120ms ease, border-color 120ms ease",
+  };
 }

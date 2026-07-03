@@ -7,15 +7,17 @@
 
 import {
   AVATAR_FRAME_SOURCE,
-  CAMERA_SOURCE,
   DEFAULT_SCENE_NAME,
   EMPTY_FRAME_SOURCE,
-  MAIN_DISPLAY_SOURCE,
   SECOND_SCREEN_SOURCE,
 } from "./live-prepare";
 import {
+  CAPTURE_SOURCE_NAME,
   compositionOps,
   inferCompositionState,
+  MANAGED_CAPTURES,
+  type CaptureProbe,
+  type CaptureChoice,
   type CompositionState,
 } from "./obs-composition";
 import {
@@ -54,54 +56,59 @@ async function getSceneItemEnabled(
   return data.sceneItemEnabled === true;
 }
 
+async function getSceneItemPositionY(
+  connection: ObsConnection,
+  sceneItemId: number,
+): Promise<number | null> {
+  const data = await connection.request("GetSceneItemTransform", {
+    sceneName: DEFAULT_SCENE_NAME,
+    sceneItemId,
+  });
+  const transform =
+    data.sceneItemTransform && typeof data.sceneItemTransform === "object"
+      ? (data.sceneItemTransform as Record<string, unknown>)
+      : null;
+  return typeof transform?.positionY === "number" ? transform.positionY : null;
+}
+
 export interface CompositionProbeResult {
   current: CompositionState;
-  /** Managed sources absent from the scene (e.g. the optional second screen). */
+  /** Managed sources absent from the scene (so the UI can annotate/disable). */
   missingSources: string[];
 }
 
 export async function probeComposition(
   connection: ObsConnection,
 ): Promise<CompositionProbeResult> {
-  const managed = [
-    CAMERA_SOURCE,
-    SECOND_SCREEN_SOURCE,
-    AVATAR_FRAME_SOURCE,
-    EMPTY_FRAME_SOURCE,
-    MAIN_DISPLAY_SOURCE,
-  ];
+  const captureSources = MANAGED_CAPTURES.map((choice) => CAPTURE_SOURCE_NAME[choice]);
   const ids = new Map<string, number | null>();
-  for (const source of managed) {
+  for (const source of [...captureSources, AVATAR_FRAME_SOURCE, EMPTY_FRAME_SOURCE]) {
     ids.set(source, await getSceneItemId(connection, source));
   }
-  const missingSources = managed.filter((source) => ids.get(source) === null);
+  const missingSources = [...captureSources, EMPTY_FRAME_SOURCE].filter(
+    (source) => ids.get(source) === null,
+  );
 
   const enabledOf = async (source: string): Promise<boolean> => {
     const id = ids.get(source);
     return typeof id === "number" ? getSceneItemEnabled(connection, id) : false;
   };
 
-  let mainDisplayPositionY: number | null = null;
-  const mainId = ids.get(MAIN_DISPLAY_SOURCE);
-  if (typeof mainId === "number") {
-    const data = await connection.request("GetSceneItemTransform", {
-      sceneName: DEFAULT_SCENE_NAME,
-      sceneItemId: mainId,
-    });
-    const transform =
-      data.sceneItemTransform && typeof data.sceneItemTransform === "object"
-        ? (data.sceneItemTransform as Record<string, unknown>)
-        : null;
-    mainDisplayPositionY =
-      typeof transform?.positionY === "number" ? transform.positionY : null;
+  const captures = {} as Record<CaptureChoice, CaptureProbe>;
+  for (const choice of MANAGED_CAPTURES) {
+    const source = CAPTURE_SOURCE_NAME[choice];
+    const enabled = await enabledOf(source);
+    // Position only matters for the enabled capture that occupies a region.
+    const id = ids.get(source);
+    const positionY =
+      enabled && typeof id === "number" ? await getSceneItemPositionY(connection, id) : null;
+    captures[choice] = { enabled, positionY };
   }
 
   return {
     current: inferCompositionState({
-      cameraEnabled: await enabledOf(CAMERA_SOURCE),
-      secondScreenEnabled: await enabledOf(SECOND_SCREEN_SOURCE),
+      captures,
       avatarFrameEnabled: await enabledOf(AVATAR_FRAME_SOURCE),
-      mainDisplayPositionY,
     }),
     missingSources,
   };
@@ -160,9 +167,10 @@ export async function applyComposition(
 }
 
 /**
- * A manually-added second-screen source lands on top of the scene — above the
- * overlay frames — which would cover the chrome. One targeted index fix tucks
- * it directly below the empty frame; the full order stays prepare's job.
+ * The second-screen capture is the one source created by hand in OBS, so it
+ * lands on top of the scene — above the overlay frames — which would cover the
+ * chrome. One targeted index fix tucks it directly below the empty frame; the
+ * prepare-created captures keep the order prepare gives them.
  */
 async function ensureSecondScreenBelowFrames(
   connection: ObsConnection,
