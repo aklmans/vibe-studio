@@ -1,4 +1,6 @@
-/* Fixed header, desktop nav, toggles, and mobile menu. */
+/* Fixed header, desktop nav, toggles, and mobile menu.
+   Transparent over the hero; the blur + hairline border fade in on scroll
+   (LandingPageContent toggles .is-scrolled), matching the personal site. */
 
 .akl-site-header {
   position: fixed;
@@ -6,10 +8,27 @@
   right: 0;
   left: 0;
   z-index: 50;
+  background: transparent;
+  border-bottom: 0.5px solid transparent;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    backdrop-filter 200ms ease;
+}
+
+.akl-site-header.is-scrolled {
   background: var(--akl-header-bg);
-  backdrop-filter: saturate(140%) blur(10px);
-  -webkit-backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 0.5px solid var(--akl-border-subtle);
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+  border-bottom-color: var(--akl-border-subtle);
+}
+
+/* The mobile menu needs a legible backdrop even before scroll. */
+.akl-site-header:has(.akl-mobile-menu[open]) {
+  background: var(--akl-header-bg);
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+  border-bottom-color: var(--akl-border-subtle);
 }
 
 .akl-header-row {
@@ -23,7 +42,7 @@
 .akl-brand {
   color: var(--akl-text);
   font-family: var(--app-font-serif);
-  font-size: 28px;
+  font-size: 19px;
   font-weight: 500;
   line-height: 1;
   transition: color 180ms ease;
@@ -38,7 +57,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 28px;
   margin-left: auto;
 }
 
@@ -51,11 +70,11 @@
 
 .akl-site-nav a {
   position: relative;
-  color: var(--akl-text-muted);
-  font-family: var(--app-font-mono);
+  color: var(--akl-text-subtle);
+  font-family: var(--app-font-sans);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.25em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -131,10 +150,10 @@
 /* Subtle "Main site" return link */
 .akl-main-site-link {
   color: var(--akl-text-subtle);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
   white-space: nowrap;
   transition: color 180ms ease;

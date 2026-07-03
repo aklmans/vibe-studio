@@ -46,7 +46,7 @@
 
 @media (max-width: 720px) {
   .akl-page {
-    --akl-fixed-header-height: 72px;
+    --akl-fixed-header-height: 60px;
   }
 
   .akl-shell {
@@ -60,7 +60,7 @@
   }
 
   .akl-brand {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .akl-header-actions {

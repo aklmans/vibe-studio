@@ -18,7 +18,7 @@
 }
 
 .akl-shell {
-  width: min(100%, 1180px);
+  width: min(100%, 1080px);
   margin: 0 auto;
   padding-inline: 32px;
 }
@@ -45,7 +45,7 @@
 }
 
 .akl-section {
-  width: min(100%, 1180px);
+  width: min(100%, 1080px);
   margin: 0 auto;
   padding: 96px 32px;
 }

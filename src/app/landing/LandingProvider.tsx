@@ -41,8 +41,9 @@ interface LandingProviderProps {
  * where cookie and localStorage disagree. When the user toggles locale, both
  * localStorage and a cookie are written so the next SSR render is correct.
  *
- * Theme is initialised from the default "dark" and reconciled with the
- * boot-script-set `data-landing-theme` attribute in an effect. Theme does not
+ * Theme is initialised from the default "light" (matching the personal site)
+ * and reconciled with the boot-script-set `data-landing-theme` attribute in an
+ * effect — a stored preference still wins. Theme does not
  * need a cookie because CSS variables are applied by the browser immediately
  * from the `<html data-landing-theme>` attribute set before hydration — there
  * is no visual flash for theme.
@@ -52,7 +53,7 @@ interface LandingProviderProps {
  */
 export default function LandingProvider({ children, initialLocale }: LandingProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
-  const [theme, setTheme] = useState<LandingTheme>("dark");
+  const [theme, setTheme] = useState<LandingTheme>("light");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {

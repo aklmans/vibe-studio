@@ -16,6 +16,9 @@ import {
 
 interface LandingPageClientProps {
   initialLocale: Locale;
+  /** next/font `.variable` class for the bundled site serif — loaded in the
+   *  server page so this client module stays free of the build-time font API. */
+  fontClassName?: string;
 }
 
 // ─── FAQ answer linkification ─────────────────────────────────────────────
@@ -48,11 +51,15 @@ function renderFaqAnswer(answer: string): ReactNode[] {
   });
 }
 
-export default function LandingPageClient({ initialLocale }: LandingPageClientProps) {
+export default function LandingPageClient({ initialLocale, fontClassName = "" }: LandingPageClientProps) {
   return (
     <LandingProvider initialLocale={initialLocale}>
       {(value) => (
-        <main data-testid="landing-page" className="akl-page" data-landing-theme={value.theme}>
+        <main
+          data-testid="landing-page"
+          className={`akl-page ${fontClassName}`.trim()}
+          data-landing-theme={value.theme}
+        >
           <LandingPageContent />
         </main>
       )}
@@ -66,11 +73,21 @@ function LandingPageContent() {
   const mobileMenuRef = useRef<HTMLDetailsElement | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copyPromptLabel, setCopyPromptLabel] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     return () => {
       if (copyResetRef.current) clearTimeout(copyResetRef.current);
     };
+  }, []);
+
+  // The header is transparent over the hero and only gains its blur + hairline
+  // border once the page scrolls — matching the personal site's header.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const closeMobileMenu = useCallback(() => {
@@ -101,7 +118,10 @@ function LandingPageContent() {
 
   return (
     <>
-      <header data-testid="landing-site-header" className="akl-site-header">
+      <header
+        data-testid="landing-site-header"
+        className={`akl-site-header${scrolled ? " is-scrolled" : ""}`}
+      >
         <div className="akl-shell akl-header-row">
           <a className="akl-brand" href="/" aria-label={c.brand}>
             {c.brand}

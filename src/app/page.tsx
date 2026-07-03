@@ -4,6 +4,7 @@ import type { Locale } from "../lib/i18n";
 import { isShowcase } from "../lib/site-mode";
 import { LANDING_LOCALE_KEY } from "./landing/content";
 import LandingPageClient from "./landing/LandingPageClient";
+import { tsangerSerif } from "./landing/landing-fonts";
 import "./landing/styles/landing.css";
 
 // "/" is deployment-mode gated (VIBE_SHOWCASE); keep it dynamic so the flag
@@ -24,5 +25,5 @@ export default async function RootPage() {
   const localeCookie = cookieStore.get(LANDING_LOCALE_KEY);
   const initialLocale: Locale =
     localeCookie?.value === "zh" ? "zh" : "en";
-  return <LandingPageClient initialLocale={initialLocale} />;
+  return <LandingPageClient initialLocale={initialLocale} fontClassName={tsangerSerif.variable} />;
 }

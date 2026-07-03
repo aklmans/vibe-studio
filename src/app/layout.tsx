@@ -33,10 +33,10 @@ function getLandingBootScript(): string {
   return `(function(){
   try {
     var t = localStorage.getItem(${themeKey});
-    var theme = (t === "light" || t === "dark") ? t : "dark";
+    var theme = (t === "light" || t === "dark") ? t : "light";
     document.documentElement.setAttribute("data-landing-theme", theme);
   } catch (e) {
-    document.documentElement.setAttribute("data-landing-theme", "dark");
+    document.documentElement.setAttribute("data-landing-theme", "light");
   }
   try {
     var l = localStorage.getItem(${localeKey});

@@ -125,15 +125,16 @@ test("root route is a product landing page with public navigation and real expor
   assert.match(html, /Session Config Agent/);
   assert.match(html, /Local-first Studio/);
 
-  // Product images.
-  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"/);
-  assert.match(html, /src="\/product\/agent-proposal-dark\.png"/);
-  assert.match(html, /src="\/product\/json-drawer-review-dark\.png"/);
-  assert.match(html, /src="\/product\/obs-main-screen-dark\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-cover-dark\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-poster-dark\.png"/);
-  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-dark\.png"/);
+  // Product images — the landing now defaults to the light theme (matching the
+  // personal site), so SSR serves the light variants.
+  assert.match(html, /src="\/product\/vibe-coding-overlay-light\.png"/);
+  assert.match(html, /src="\/product\/agent-proposal-light\.png"/);
+  assert.match(html, /src="\/product\/json-drawer-review-light\.png"/);
+  assert.match(html, /src="\/product\/obs-main-screen-light\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-overlay-light\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-cover-light\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-poster-light\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-light\.png"/);
   assert.match(html, /From one stream idea to a designed live room/);
   assert.match(html, /class="akl-surface-tablist"/);
   assert.match(html, /FAQ/);
@@ -362,20 +363,21 @@ test("LandingProvider manages locale and theme with localStorage + cookie persis
 });
 
 test("landing CSS supports dark and light themes via data-landing-theme", () => {
-  // Dark theme tokens are the default — in tokens.css.
+  // Light theme tokens are the default — the base .akl-page block, aligned to
+  // the personal site (#fafafa bg, #c95f3d accent).
+  assert.match(TOKENS_CSS, /--akl-bg: #fafafa/);
+  assert.match(TOKENS_CSS, /--akl-accent: #c95f3d/);
+
+  // Dark theme tokens are defined under data-landing-theme="dark".
+  assert.match(TOKENS_CSS, /\[data-landing-theme="dark"\]/);
   assert.match(TOKENS_CSS, /--akl-bg: #1a1a1a/);
   assert.match(TOKENS_CSS, /--akl-accent: #e8835b/);
 
-  // Light theme tokens are defined under data-landing-theme="light".
-  assert.match(TOKENS_CSS, /\[data-landing-theme="light"\]/);
-  assert.match(TOKENS_CSS, /--akl-bg: #f7f4ee/);
-  assert.match(TOKENS_CSS, /--akl-accent: #c95f3d/);
-
-  // Light tokens have a single source — the combined selector list. No
-  // standalone [data-landing-theme="light"] fallback block (which was a
+  // Dark tokens have a single source — the combined selector list. No
+  // standalone [data-landing-theme="dark"] fallback block (which was a
   // duplicate that could drift).
-  const lightTokenBlocks = TOKENS_CSS.match(/--akl-bg: #f7f4ee/g);
-  assert.equal(lightTokenBlocks?.length, 1, "light --akl-bg should appear exactly once");
+  const darkTokenBlocks = TOKENS_CSS.match(/--akl-bg: #1a1a1a/g);
+  assert.equal(darkTokenBlocks?.length, 1, "dark --akl-bg should appear exactly once");
 
   // CSS is split into per-section files, aggregated by landing.css.
   assert.match(LANDING_CSS_ENTRY, /@import "\.\/tokens\.css"/);
@@ -402,14 +404,14 @@ test("landing CSS supports dark and light themes via data-landing-theme", () => 
 
 test("header height has a single source of truth via CSS variable", () => {
   // tokens.css defines --akl-fixed-header-height.
-  assert.match(TOKENS_CSS, /--akl-fixed-header-height: 88px/);
+  assert.match(TOKENS_CSS, /--akl-fixed-header-height: 66px/);
   // header.css uses the variable, not a hardcoded pixel value.
   assert.match(HEADER_CSS, /min-height: var\(--akl-fixed-header-height\)/);
   assert.doesNotMatch(HEADER_CSS, /min-height: 84px/);
   assert.doesNotMatch(HEADER_CSS, /min-height: 88px/);
   // responsive.css overrides the variable for mobile, not the min-height.
-  assert.match(RESPONSIVE_CSS, /--akl-fixed-header-height: 72px/);
-  assert.doesNotMatch(RESPONSIVE_CSS, /\.akl-header-row\s*\{[^}]*min-height:\s*72px/);
+  assert.match(RESPONSIVE_CSS, /--akl-fixed-header-height: 60px/);
+  assert.doesNotMatch(RESPONSIVE_CSS, /\.akl-header-row\s*\{[^}]*min-height:\s*60px/);
   // anchor offset derives from the same variable.
   assert.match(TOKENS_CSS, /--akl-anchor-offset: calc\(var\(--akl-fixed-header-height\) \+ 16px\)/);
   // body padding-top uses the same variable.
@@ -570,15 +572,15 @@ test("landing images have width, height, loading, and decoding attributes", () =
 
   assert.match(
     html,
-    /src="\/product\/obs-main-screen-dark\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/,
+    /src="\/product\/obs-main-screen-light\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/,
   );
-  assert.match(html, /src="\/product\/agent-proposal-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/json-drawer-review-dark\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/obs-main-screen-dark\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-cover-dark\.png"[^>]*width="1280"[^>]*height="720"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-poster-dark\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-dark\.png"[^>]*width="3840"[^>]*height="2160"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/agent-proposal-light\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/json-drawer-review-light\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/obs-main-screen-light\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-overlay-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-cover-light\.png"[^>]*width="1280"[^>]*height="720"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-poster-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="lazy"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/vibe-coding-wallpaper-desktop-4k-light\.png"[^>]*width="3840"[^>]*height="2160"[^>]*loading="lazy"[^>]*decoding="async"/);
 });
 
 test("landing images use <picture> with AVIF and WebP sources for format negotiation", () => {
@@ -604,7 +606,7 @@ test("landing images use <picture> with AVIF and WebP sources for format negotia
   }
 
   // The <img> fallback still has the PNG src (not the AVIF/WebP src).
-  assert.match(html, /src="\/product\/vibe-coding-overlay-dark\.png"/);
+  assert.match(html, /src="\/product\/vibe-coding-overlay-light\.png"/);
 
   // ThemedPicture component exists and derives format paths from the PNG path.
   assert.match(THEMED_PICTURE_SRC, /<picture>/);
@@ -620,13 +622,13 @@ test("hero showcase image has fetchPriority=high for LCP optimization", () => {
   // The hero (first above-the-fold) image should have fetchPriority=high.
   // React renderToStaticMarkup renders the prop name as fetchPriority (camelCase).
   const heroImgMatch = html.match(
-    /src="\/product\/obs-main-screen-dark\.png"[^>]*fetchPriority="high"/,
+    /src="\/product\/obs-main-screen-light\.png"[^>]*fetchPriority="high"/,
   );
   assert.ok(heroImgMatch, "hero showcase image should have fetchPriority=high");
 
   // Non-hero images should NOT have fetchPriority=high.
   const surfaceImgMatch = html.match(
-    /src="\/product\/agent-proposal-dark\.png"[^>]*fetchPriority="high"/,
+    /src="\/product\/agent-proposal-light\.png"[^>]*fetchPriority="high"/,
   );
   assert.equal(surfaceImgMatch, null,
     "surface images should not have fetchPriority=high");

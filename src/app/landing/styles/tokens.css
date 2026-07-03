@@ -1,32 +1,68 @@
-/* Landing page design tokens — dark (default) + light theme overrides.
-   The boot script in layout.tsx sets data-landing-theme on <html> before
-   hydration so the correct palette is applied with no flash. React also
-   mirrors the attribute on <main class="akl-page"> via LandingProvider.
+/* Landing page design tokens — light (default) + dark theme overrides, aligned
+   to the personal site (Zhaphar) palette so the landing reads as the same brand.
 
-   Light tokens are defined once in a single selector list that covers both
-   pre-hydration (attribute on <html>, ancestor of .akl-page) and
-   post-hydration (attribute on .akl-page itself). Do not add a separate
-   standalone [data-landing-theme="light"] block — all landing elements are
-   inside .akl-page and inherit from it. */
+   The boot script in layout.tsx sets data-landing-theme on <html> before
+   hydration so the correct palette is applied with no flash. React also mirrors
+   the attribute on <main class="akl-page"> via LandingProvider.
+
+   Dark tokens are defined once in a single selector list that covers both
+   pre-hydration (attribute on <html>, ancestor of .akl-page) and post-hydration
+   (attribute on .akl-page itself). Do not add a separate standalone
+   [data-landing-theme="dark"] block — all landing elements are inside .akl-page
+   and inherit from it. */
 
 .akl-page {
-  --akl-fixed-header-height: 88px;
+  --akl-fixed-header-height: 66px;
   --akl-anchor-offset: calc(var(--akl-fixed-header-height) + 16px);
   --akl-surface-media-ratio: 16 / 9;
 
-  /* Dark theme (default) */
-  --akl-border: #3a3832;
-  --akl-border-subtle: #2f2d29;
+  /* The site serif (仓耳今楷), loaded + subset in landing-fonts.ts. Scoped to the
+     landing so the Studio app's own --app-font-serif is untouched. */
+  --app-font-serif: var(--font-landing-serif), "Source Serif 4", "Noto Serif SC", Georgia, "Songti SC", serif;
+
+  /* Light theme (default) */
+  --akl-border: #c0bfba;
+  --akl-border-subtle: #c0bfba;
+  --akl-bg: #fafafa;
+  --akl-surface: #f0efeb;
+  --akl-text: #1a1a1a;
+  --akl-text-muted: #3a3a3a;
+  --akl-text-subtle: #6b6b6b;
+  --akl-accent: #c95f3d;
+  --akl-paper: #1a1a1a;
+  --akl-paper-ink: #fafafa;
+  --akl-page-color: #1a1a1a;
+  --akl-header-bg: color-mix(in srgb, #fafafa 88%, transparent);
+  --akl-mobile-nav-bg: color-mix(in srgb, #fafafa 96%, transparent);
+  --akl-product-bg: #f0efeb;
+  --akl-window-bg: #eee8dd;
+  --akl-window-dot: #a99f91;
+  --akl-window-label: #857f74;
+  --akl-preview-bg: #eee8dd;
+  --akl-gallery-label-bg: color-mix(in srgb, #fafafa 85%, transparent);
+  --akl-prompt-bg: #f0efeb;
+  --akl-prompt-text: #3a3a3a;
+  --akl-hero-note-link: #6b6b6b;
+  --akl-hero-note-border: #c0bfba;
+}
+
+/* Dark theme — single source of truth.
+   .akl-page[data-landing-theme="dark"]  → React sets attr on <main> (post-hydration)
+   [data-landing-theme="dark"] .akl-page  → boot script sets attr on <html> (pre-hydration) */
+.akl-page[data-landing-theme="dark"],
+[data-landing-theme="dark"] .akl-page {
+  --akl-border: #3a3a3a;
+  --akl-border-subtle: #3a3a3a;
   --akl-bg: #1a1a1a;
-  --akl-surface: #20201e;
+  --akl-surface: #232323;
   --akl-text: #fafafa;
-  --akl-text-muted: #9b958d;
-  --akl-text-subtle: #7e776e;
+  --akl-text-muted: #b8b8b8;
+  --akl-text-subtle: #8a8a8a;
   --akl-accent: #e8835b;
-  --akl-paper: #f4efe6;
-  --akl-paper-ink: #161513;
-  --akl-page-color: #f4efe6;
-  --akl-header-bg: color-mix(in srgb, #1a1a1a 92%, transparent);
+  --akl-paper: #fafafa;
+  --akl-paper-ink: #1a1a1a;
+  --akl-page-color: #fafafa;
+  --akl-header-bg: color-mix(in srgb, #1a1a1a 88%, transparent);
   --akl-mobile-nav-bg: color-mix(in srgb, #1a1a1a 96%, transparent);
   --akl-product-bg: #171615;
   --akl-window-bg: #25231f;
@@ -36,36 +72,6 @@
   --akl-gallery-label-bg: color-mix(in srgb, #1a1a1a 85%, transparent);
   --akl-prompt-bg: #151413;
   --akl-prompt-text: #d8d0c4;
-  --akl-hero-note-link: #aaa49b;
-  --akl-hero-note-border: #4a463d;
-}
-
-/* Light theme — single source of truth.
-   .akl-page[data-landing-theme="light"]  → React sets attr on <main> (post-hydration)
-   [data-landing-theme="light"] .akl-page  → boot script sets attr on <html> (pre-hydration) */
-.akl-page[data-landing-theme="light"],
-[data-landing-theme="light"] .akl-page {
-  --akl-border: #c6c0b6;
-  --akl-border-subtle: #d8d2c8;
-  --akl-bg: #f7f4ee;
-  --akl-surface: #eee8dd;
-  --akl-text: #1a1a1a;
-  --akl-text-muted: #55514b;
-  --akl-text-subtle: #857f74;
-  --akl-accent: #c95f3d;
-  --akl-paper: #1a1a1a;
-  --akl-paper-ink: #f7f4ee;
-  --akl-page-color: #1a1a1a;
-  --akl-header-bg: color-mix(in srgb, #f7f4ee 92%, transparent);
-  --akl-mobile-nav-bg: color-mix(in srgb, #f7f4ee 96%, transparent);
-  --akl-product-bg: #e8e2d6;
-  --akl-window-bg: #e0d9cc;
-  --akl-window-dot: #a99f91;
-  --akl-window-label: #857f74;
-  --akl-preview-bg: #e8e2d6;
-  --akl-gallery-label-bg: color-mix(in srgb, #f7f4ee 85%, transparent);
-  --akl-prompt-bg: #f2ede4;
-  --akl-prompt-text: #403c36;
-  --akl-hero-note-link: #6c665e;
-  --akl-hero-note-border: #c6c0b6;
+  --akl-hero-note-link: #b8b8b8;
+  --akl-hero-note-border: #3a3a3a;
 }
