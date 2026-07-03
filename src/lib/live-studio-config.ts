@@ -12,7 +12,7 @@ import {
   isBrandIconKey,
   type BrandIconKey,
 } from "./brand-icons";
-import { privateSocialValuePlaceholderIndex } from "./config-privacy";
+import { isPrivateImageValuePlaceholder, privateSocialValuePlaceholderIndex } from "./config-privacy";
 import { createStackItem } from "./stack";
 import type { SocialConfig } from "./socials";
 
@@ -301,6 +301,17 @@ export function parseLiveStudioConfigJson(input: string): LiveStudioConfig | nul
   }
 }
 
+/**
+ * Resolve an incoming config image against current state: an omitted or
+ * privacy-redacted (`__PRIVATE_IMAGE_*__`) value keeps the existing image, so a
+ * handoff round-trip that carries placeholders never wipes an uploaded photo.
+ */
+function resolveConfigImage(incoming: string | undefined, fallback: string): string {
+  if (incoming === undefined) return fallback;
+  if (isPrivateImageValuePlaceholder(incoming)) return fallback;
+  return incoming;
+}
+
 function authorToHook(author: string | undefined, fallback: string): string {
   if (!author) return fallback;
   const clean = author.trim();
@@ -363,11 +374,11 @@ export function configToOverlayState(
       title: config.title || state.cover.title,
       todayTopic: config.subtitle || state.cover.todayTopic,
       hookText: authorToHook(config.author, state.cover.hookText),
-      avatarUrl: config.profile?.avatarUrl ?? state.cover.avatarUrl,
+      avatarUrl: resolveConfigImage(config.profile?.avatarUrl, state.cover.avatarUrl),
       avatarVisible: typeof avatarVisible === "boolean" ? avatarVisible : state.cover.avatarVisible,
       visual: config.cover?.visual ?? state.cover.visual,
-      portraitUrl: config.cover?.portraitUrl ?? state.cover.portraitUrl,
-      sceneUrl: config.cover?.sceneUrl ?? state.cover.sceneUrl,
+      portraitUrl: resolveConfigImage(config.cover?.portraitUrl, state.cover.portraitUrl),
+      sceneUrl: resolveConfigImage(config.cover?.sceneUrl, state.cover.sceneUrl),
       badges: config.badges.map((key) => createBadge(key)),
       socials: config.socials.length > 0
         ? config.socials.map((social, index) => configSocialToState(social, state.cover.socials[index]))

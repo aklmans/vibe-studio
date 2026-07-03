@@ -6,7 +6,7 @@ import {
   readSessionAgentConfig,
   readShowcaseGuardrails,
   redactKey,
-  restorePrivateSocialValuesInConfigText,
+  restorePrivateValuesInConfigText,
   testAgentConnection,
   type SessionAgentRequest,
   type SessionAgentRunResponse,
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       model: config.model,
       message: content,
       configText: extractedConfig
-        ? restorePrivateSocialValuesInConfigText(extractedConfig, agentRequest.configText)
+        ? restorePrivateValuesInConfigText(extractedConfig, agentRequest.configText)
         : null,
     };
     return Response.json(result);

@@ -7,7 +7,7 @@ import {
   publicAgentStatus,
   readSessionAgentConfig,
   redactKey,
-  restorePrivateSocialValuesInConfigText,
+  restorePrivateValuesInConfigText,
   testAgentConnection,
   type SessionAgentConfig,
 } from "./session-agent";
@@ -16,6 +16,7 @@ import { testAgentConnection as clientTestAgentConnection } from "./session-agen
 const KEY = "sk-secret-key-123";
 const PRIVATE_GITHUB_VALUE = "private-github-handle";
 const PRIVATE_WEBSITE_VALUE = "private.example";
+const PRIVATE_AVATAR_URI = "data:image/png;base64,PRIVATEPHOTOBYTES==";
 const DEFAULT_USER_AGENT = "Vibe-Studio/SessionConfigAgent";
 const baseConfig: SessionAgentConfig = {
   provider: "deepseek",
@@ -110,7 +111,7 @@ test("buildChatMessages includes the current config projection + task + brief", 
   assert.match(user, /Marker Title/); // the projection is sent
 });
 
-test("buildChatMessages redacts social values before sending config to a provider", () => {
+test("buildChatMessages redacts social values, uploaded images, and non-portable fields before sending to a provider", () => {
   const messages = buildChatMessages({
     brief: "keep social links private",
     task: "Task: update the sections",
@@ -119,6 +120,7 @@ test("buildChatMessages redacts social values before sending config to a provide
       title: "Private Stream",
       subtitle: "Do not leak handles",
       author: "Aklman",
+      profile: { avatarUrl: PRIVATE_AVATAR_URI, avatarVisible: true },
       badges: [],
       stack: [],
       socials: [
@@ -126,6 +128,8 @@ test("buildChatMessages redacts social values before sending config to a provide
         { icon: "website", label: "Website", value: PRIVATE_WEBSITE_VALUE },
       ],
       sections: [],
+      // A tampered/legacy client sending non-portable state must not leak it.
+      obs: { host: "localhost", password: "obs-secret" },
     }),
     locale: "en",
   });
@@ -135,8 +139,12 @@ test("buildChatMessages redacts social values before sending config to a provide
   assert.match(payload, /Aklman/);
   assert.match(payload, /__PRIVATE_SOCIAL_VALUE_0__/);
   assert.match(payload, /__PRIVATE_SOCIAL_VALUE_1__/);
+  assert.match(payload, /__PRIVATE_IMAGE_avatar__/);
   assert.equal(payload.includes(PRIVATE_GITHUB_VALUE), false);
   assert.equal(payload.includes(PRIVATE_WEBSITE_VALUE), false);
+  // The uploaded photo bytes and the non-portable OBS block never leave.
+  assert.equal(payload.includes(PRIVATE_AVATAR_URI), false);
+  assert.equal(payload.includes("obs-secret"), false);
 });
 
 test("private social placeholders are restored before config apply", () => {
@@ -165,7 +173,7 @@ test("private social placeholders are restored before config apply", () => {
     sections: [],
   });
 
-  const restored = restorePrivateSocialValuesInConfigText(proposed, current);
+  const restored = restorePrivateValuesInConfigText(proposed, current);
   const parsed = JSON.parse(restored);
   assert.equal(parsed.socials[0].value, PRIVATE_GITHUB_VALUE);
   assert.equal(parsed.socials[1].value, PRIVATE_WEBSITE_VALUE);

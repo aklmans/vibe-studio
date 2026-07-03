@@ -605,6 +605,7 @@ export const dict = {
     "avatar.replacePhoto": "替换照片",
     "avatar.uploadPhoto": "上传照片",
     "avatar.uploaded": "照片已上传",
+    "avatar.uploadFailed": "无法读取该图片,请换一张。",
 
     // ─── Brand identity note ──────────────────────────────────────────
     "brandIdentity.note": "头像 · 标题 · 徽标 在 Cover · Poster · Wallpaper 之间共享，改一处三处都生效。",
@@ -1237,6 +1238,7 @@ export const dict = {
     "avatar.replacePhoto": "Replace Photo",
     "avatar.uploadPhoto": "Upload Photo",
     "avatar.uploaded": "Photo uploaded",
+    "avatar.uploadFailed": "Couldn't read that image — try another.",
 
     // ─── Brand identity note ──────────────────────────────────────────
     "brandIdentity.note": "Avatar · Title · Badges are shared across Cover · Poster · Wallpaper. Edit once, applied everywhere.",

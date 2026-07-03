@@ -22,3 +22,15 @@ test("buildAgentPrompt redacts social values in copy handoff prompts", () => {
   assert.match(prompt, /keep those placeholders/);
   assert.equal(prompt.includes("private-handoff-social"), false);
 });
+
+test("buildAgentPrompt redacts an uploaded avatar (data: URI) in the handoff prompt", () => {
+  const uploadedPhoto = "data:image/png;base64,HANDOFFPHOTOBYTES==";
+  const prompt = buildAgentPrompt(
+    { ...DEFAULT_STATE, cover: { ...DEFAULT_STATE.cover, avatarUrl: uploadedPhoto } },
+    "prepare a stream",
+    "",
+  );
+  // The base64 photo never appears in a prompt the user copies to an external tool.
+  assert.equal(prompt.includes(uploadedPhoto), false);
+  assert.match(prompt, /__PRIVATE_IMAGE_avatar__/);
+});

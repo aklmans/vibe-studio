@@ -57,6 +57,7 @@ export default function CoverVisualEditor({
           onUrlChange={(v) => writeCover({ portraitUrl: v })}
           showToggle={false}
           clearValue="/avatar.png"
+          maxDimension={1440}
           testIdPrefix="cover-portrait"
         />
       )}
@@ -67,6 +68,7 @@ export default function CoverVisualEditor({
           onUrlChange={(v) => writeCover({ sceneUrl: v })}
           showToggle={false}
           clearValue="/vibe-studio-bg.png"
+          maxDimension={1440}
           testIdPrefix="cover-scene"
         />
       )}

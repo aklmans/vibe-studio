@@ -33,14 +33,25 @@ For OBS/live-data behavior, also read:
 Naming note: **"Live Data" is the persistence / API layer** (DB repo, `live-data*`
 libs, `/api/sessions`, the OBS `live-state` bridge), not a page. The user-facing
 tab is **Session Config** (`src/components/live-data/` — `LiveDataManager` shell
-that opens **Agent-first**, with a **Settings** mode grouped Session / Content /
-Broadcast Display / Studio Appearance / AI Provider / Data & Sync, and a global
+that opens **Agent-first**, with a **Settings** mode grouped by the config
+boundary — Session (portable v1) / Broadcast (runtime OBS + bottom bar) / Studio
+Appearance / AI Provider / Data & Sync — plus a cross-group search and a global
 drift-safe JSON drawer). There is no Recipe / Brief flow and no `SessionRecipePanel`;
 those earlier stages were retired. The Agent calls a configured provider
 server-side (the API key stays in server env, never in the client bundle /
 localStorage / logs — the client only ever sees `configured` / `not set`) or
 falls back to a local copy-handoff; it never edits settings via chat and never
 bypasses the JSON review/apply path.
+
+Privacy boundary: everything provider-bound — the online call and the copy-handoff
+prompt — passes through `sanitizeConfigTextForProvider` (`src/lib/config-privacy.ts`),
+which keeps only the portable v1 top-level keys and redacts social values +
+uploaded images (data: URIs) to `__PRIVATE_SOCIAL_VALUE_n__` / `__PRIVATE_IMAGE_*__`
+placeholders. Redaction is enforced server-side (`buildChatMessages`), not trusted
+from the client; placeholders are restored on the way back (route text-restore, or
+`configToOverlayState` from current state on apply). Uploaded images are also
+downscaled/size-capped client-side (`src/lib/image-downscale.ts`) so a photo never
+overflows the localStorage quota or a provider payload.
 
 Demo semantics: `/demo` reflects the deploy's real provider status and, when a
 provider is configured, can run the agent — so a public showcase can let

@@ -134,6 +134,63 @@ test("POST with a configured provider redacts social values in provider context 
   );
 });
 
+test("POST never sends uploaded images or non-portable fields to the provider, and restores the image", async () => {
+  const AVATAR_URI = "data:image/png;base64,ROUTEPHOTOBYTES==";
+  let captured: { init: RequestInit } | null = null;
+  const fetchImpl = (async (_url: string, init: RequestInit) => {
+    captured = { init };
+    return new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: [
+                "```json",
+                // The model echoes the redaction placeholder back, as instructed.
+                JSON.stringify({
+                  version: 1,
+                  title: "AI Title",
+                  profile: { avatarUrl: "__PRIVATE_IMAGE_avatar__" },
+                }),
+                "```",
+              ].join("\n"),
+            },
+          },
+        ],
+      }),
+      { status: 200 },
+    );
+  }) as unknown as typeof fetch;
+
+  await withEnv({ SESSION_AGENT_API_KEY: KEY }, fetchImpl, async () => {
+    const res = await POST(
+      postRequest({
+        brief: "b",
+        task: "Task: t",
+        configText: JSON.stringify({
+          version: 1,
+          title: "PROJECTION",
+          profile: { avatarUrl: AVATAR_URI, avatarVisible: true },
+          obs: { password: "obs-secret" },
+        }),
+        locale: "en",
+      }),
+    );
+    const data = await res.json();
+    assert.equal(data.mode, "ai");
+
+    // What crossed the wire to the provider: no photo bytes, no non-portable block.
+    const sent = JSON.stringify((captured!.init.body && JSON.parse(captured!.init.body as string)).messages);
+    assert.equal(sent.includes(AVATAR_URI), false);
+    assert.equal(sent.includes("obs-secret"), false);
+    assert.match(sent, /__PRIVATE_IMAGE_avatar__/);
+
+    // What came back to the client: the real avatar restored from the original.
+    const returned = JSON.parse(data.configText);
+    assert.equal(returned.profile.avatarUrl, AVATAR_URI);
+  });
+});
+
 test("POST surfaces provider errors without leaking the key", async () => {
   const fetchImpl = (async () =>
     new Response(`unauthorized: ${KEY}`, { status: 401 })) as unknown as typeof fetch;

@@ -1,6 +1,7 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { useLocale } from "../../hooks/useLocale";
+import { downscaleImageToDataUrl } from "../../lib/image-downscale";
 import { ToggleButton, WorkbenchButton } from "./Field";
 
 interface AvatarUploaderProps {
@@ -13,6 +14,8 @@ interface AvatarUploaderProps {
   onVisibleChange?: (visible: boolean) => void;
   /** Value to restore when clearing. Empty string preserves the legacy remove behavior. */
   clearValue?: string;
+  /** Longest-edge cap for the stored image. Small for avatars, larger for covers. */
+  maxDimension?: number;
   testIdPrefix?: string;
 }
 
@@ -29,21 +32,27 @@ export default function AvatarUploader({
   visible = true,
   onVisibleChange,
   clearValue = "",
+  maxDimension = 512,
   testIdPrefix = "avatar",
 }: AvatarUploaderProps) {
   const { t } = useLocale();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState(false);
   const canClear = Boolean(url) && url !== clearValue;
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Downscale before storing so a large photo can't overflow the localStorage
+  // quota or bloat the export DOM. A decode failure surfaces instead of silently
+  // storing an unbounded blob.
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      onUrlChange((ev.target?.result as string) ?? "");
-    };
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    setError(false);
+    try {
+      onUrlChange(await downscaleImageToDataUrl(file, { maxDimension }));
+    } catch {
+      setError(true);
+    }
   };
 
   return (
@@ -87,6 +96,15 @@ export default function AvatarUploader({
           </WorkbenchButton>
         )}
       </div>
+
+      {error && (
+        <span
+          data-testid={`${testIdPrefix}-error`}
+          style={{ fontSize: 11, color: UI_COLORS.danger }}
+        >
+          {t("avatar.uploadFailed")}
+        </span>
+      )}
 
       {url && (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
