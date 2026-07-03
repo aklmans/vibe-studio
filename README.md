@@ -4,17 +4,15 @@ A Next.js app for designing livestream graphics for Study With Me, Coding With M
 
 Repository: https://github.com/aklmans/vibe-studio
 
-## Editorial Live Redesign
+## Design
 
-The `editorial-live` branch is a deliberate redesign pass. Its goal is to turn the builder and exported graphics into a quieter editorial live-studio system: warm surfaces, premium typography, mono metadata, thin hairlines, and restrained accent marks.
+Vibe Studio uses a warm, editorial live-studio design language: warm surfaces, premium typography, mono metadata, thin hairlines, and restrained accent marks — calm enough for long live sessions and readable on video. The full direction is documented in [`DESIGN_LANGUAGE.md`](DESIGN_LANGUAGE.md).
 
-This branch may change the visual appearance of the canvas exports. The stable contracts are the export dimensions, OBS routes, off-screen export architecture, state persistence, live-data APIs, and keyboard/export workflows.
-
-The branch-local design direction is documented in [`DESIGN_LANGUAGE.md`](DESIGN_LANGUAGE.md).
+Contracts that visuals must not break: export dimensions and filenames, OBS routes, the off-screen export architecture, state persistence, live-data APIs, and keyboard/export workflows.
 
 ## Preview
 
-The preview images below are checked-in exports from the overlay builder, stored in `docs/assets/`. On the `editorial-live` branch these are legacy reference images until the redesign exports are refreshed.
+The preview images below are checked-in example exports from the overlay builder, stored in `docs/assets/`.
 
 ### Cover screen
 
