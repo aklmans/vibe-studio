@@ -21,7 +21,7 @@ function enabledMap(ops: ReturnType<typeof compositionOps>): Record<string, bool
 function transformFor(
   ops: ReturnType<typeof compositionOps>,
   source: string,
-): Record<string, number | boolean> | undefined {
+): Record<string, string | number | boolean> | undefined {
   return ops.transforms.find((op) => op.source === source)?.transform;
 }
 
@@ -57,11 +57,12 @@ test("standard camera composition: webcam fills the slot, display fits the main 
   const camera = transformFor(ops, "Vibe Camera Capture");
   assert(display && camera);
   equal(display.positionX, MAIN_SCREEN_FRAME.left);
-  equal(display.boundsType, 2); // SCALE_INNER — 16:9 into 16:9, no crop
+  // obs-websocket wants the string enum, not the scene-JSON integer.
+  equal(display.boundsType, "OBS_BOUNDS_SCALE_INNER"); // 16:9 into 16:9, no crop
   equal(display.cropToBounds, false);
   equal(camera.positionX, CAMERA_SLOT_FRAME.left);
   equal(camera.positionY, CAMERA_SLOT_FRAME.top);
-  equal(camera.boundsType, 3); // SCALE_OUTER — fill the 400×272 slot
+  equal(camera.boundsType, "OBS_BOUNDS_SCALE_OUTER"); // fill the 400×272 slot
   equal(camera.cropToBounds, true);
 });
 
@@ -91,9 +92,9 @@ test("swapped layout puts the capture in the main frame and the display in the s
   const display = transformFor(ops, "Vibe Main Display Capture");
   assert(second && display);
   equal(second.positionX, MAIN_SCREEN_FRAME.left);
-  equal(second.boundsType, 2); // 16:9 screen fits the 16:9 main frame exactly
+  equal(second.boundsType, "OBS_BOUNDS_SCALE_INNER"); // 16:9 fits the main frame exactly
   equal(display.positionX, CAMERA_SLOT_FRAME.left);
-  equal(display.boundsType, 3);
+  equal(display.boundsType, "OBS_BOUNDS_SCALE_OUTER");
   equal(display.cropToBounds, true);
 });
 
@@ -116,7 +117,7 @@ test("slotTransform pins the shared transform contract", () => {
   deepStrictEqual(slotTransform({ left: 24, top: 24, width: 1440, height: 810 }, "contain"), {
     positionX: 24,
     positionY: 24,
-    boundsType: 2,
+    boundsType: "OBS_BOUNDS_SCALE_INNER",
     boundsWidth: 1440,
     boundsHeight: 810,
     boundsAlignment: 0,
@@ -128,6 +129,11 @@ test("slotTransform pins the shared transform contract", () => {
     cropBottom: 0,
     cropToBounds: false,
   });
+  equal(
+    typeof slotTransform({ left: 0, top: 0, width: 1, height: 1 }, "cover").boundsType,
+    "string",
+    "boundsType must be a string over obs-websocket",
+  );
 });
 
 test("inferCompositionState reconstructs choice and layout from OBS flags", () => {

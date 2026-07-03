@@ -24,10 +24,15 @@ import {
   MAIN_SCREEN_FRAME,
   OBS_ALIGN_TOP_LEFT,
   OBS_BOUNDS_ALIGN_CENTER,
-  OBS_BOUNDS_SCALE_INNER,
-  OBS_BOUNDS_SCALE_OUTER,
   SECOND_SCREEN_SOURCE,
 } from "./live-prepare";
+
+// obs-websocket v5 encodes the bounds-type enum as a STRING (the C enum name),
+// NOT the integer stored in the scene-collection JSON that live-prepare.ts
+// edits. Sending the integer yields obs-websocket 401 "boundsType must be a
+// string". alignment / boundsAlignment stay numeric bitmasks in both worlds.
+const WS_BOUNDS_SCALE_INNER = "OBS_BOUNDS_SCALE_INNER";
+const WS_BOUNDS_SCALE_OUTER = "OBS_BOUNDS_SCALE_OUTER";
 
 export type CameraSlotChoice = "camera" | "second-screen" | "avatar";
 export type CompositionLayout = "standard" | "swapped";
@@ -65,7 +70,7 @@ interface SlotRect {
 }
 
 /** obs-websocket v5 SetSceneItemTransform payload (partial transform). */
-export type SlotTransform = Record<string, number | boolean>;
+export type SlotTransform = Record<string, string | number | boolean>;
 
 /**
  * "contain" fits the source inside the slot (16:9 → 16:9 main frame, exact).
@@ -78,7 +83,7 @@ export function slotTransform(slot: SlotRect, fit: "contain" | "cover"): SlotTra
   return {
     positionX: slot.left,
     positionY: slot.top,
-    boundsType: fit === "cover" ? OBS_BOUNDS_SCALE_OUTER : OBS_BOUNDS_SCALE_INNER,
+    boundsType: fit === "cover" ? WS_BOUNDS_SCALE_OUTER : WS_BOUNDS_SCALE_INNER,
     boundsWidth: slot.width,
     boundsHeight: slot.height,
     boundsAlignment: OBS_BOUNDS_ALIGN_CENTER,
