@@ -1,5 +1,7 @@
 # Vibe Studio
 
+**English** · [简体中文](README.zh-CN.md)
+
 A Next.js app for designing livestream graphics for Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat, co-working, and other "with me" stream formats. It gives creators a designed visual frame without hand-building every scene in OBS or Livehime, uses an optional Agent to draft session content, and exports broadcast-ready overlay, cover, poster, and wallpaper assets.
 
 Repository: https://github.com/aklmans/vibe-studio
