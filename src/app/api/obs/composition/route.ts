@@ -22,6 +22,7 @@ import {
   readObsWebSocketConfig,
   type ObsConnection,
 } from "../../../../lib/obs-ws";
+import { DEFAULT_LAYOUT_ID, getLayout, isLayoutId } from "../../../../lib/overlay-layout";
 import { isShowcase } from "../../../../lib/site-mode";
 
 export const runtime = "nodejs";
@@ -42,15 +43,21 @@ async function openConnection(): Promise<OpenResult> {
   }
 }
 
-export async function GET() {
+/** The scene layout decides the region rects, so both probe and apply need it. */
+function layoutFrom(value: unknown) {
+  return getLayout(isLayoutId(value) ? value : DEFAULT_LAYOUT_ID);
+}
+
+export async function GET(request: Request) {
   if (isShowcase()) return new Response(null, { status: 404 });
 
+  const layout = layoutFrom(new URL(request.url).searchParams.get("layout"));
   const opened = await openConnection();
   if ("error" in opened) {
     return Response.json({ connected: false, reason: opened.error });
   }
   try {
-    const probe = await probeComposition(opened.connection);
+    const probe = await probeComposition(opened.connection, layout);
     return Response.json({ connected: true, ...probe });
   } catch {
     return Response.json({ connected: false, reason: "error" });
@@ -63,7 +70,7 @@ export async function POST(request: Request) {
   if (isShowcase()) return new Response(null, { status: 404 });
 
   const body = (await request.json().catch(() => null)) as
-    | Partial<CompositionState>
+    | (Partial<CompositionState> & { layout?: unknown })
     | null;
   if (!body || !isMainSource(body.main) || !isCameraSource(body.camera)) {
     return Response.json(
@@ -87,7 +94,7 @@ export async function POST(request: Request) {
     );
   }
   try {
-    const result = await applyComposition(opened.connection, state);
+    const result = await applyComposition(opened.connection, state, layoutFrom(body.layout));
     if (!result.ok) {
       return Response.json({ connected: true, ...result }, { status: 422 });
     }

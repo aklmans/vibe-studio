@@ -12,8 +12,8 @@ export const STUDIO_PROFILE_STORAGE_KEY = "vibe-studio-profile";
  * explicit reset.
  */
 export interface StudioProfile {
-  /** v1 = identity only; v2 adds the brand palette (theme + colors). */
-  version: 1 | 2;
+  /** v1 = identity; v2 adds the palette; v3 adds the lecture header + presenter. */
+  version: 1 | 2 | 3;
   author: string;
   avatarUrl: string;
   avatarVisible: boolean;
@@ -22,6 +22,10 @@ export interface StudioProfile {
   /** Brand palette (v2+). Optional so legacy v1 profiles still load. */
   theme?: ThemeMode;
   colors?: ColorTokens;
+  /** Lecture header + presenter card (v3+). Optional for v1/v2 profiles. */
+  logoUrl?: string;
+  seriesName?: string;
+  presenterLines?: string[];
 }
 
 const COLOR_TOKEN_KEYS = Object.keys(DARK_PRESET) as (keyof ColorTokens)[];
@@ -72,19 +76,23 @@ function isSocialConfig(value: unknown): value is SocialConfig {
   );
 }
 
+function isTextLines(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((line) => typeof line === "string");
+}
+
 function normalizeProfile(value: unknown): StudioProfile | null {
   if (!value || typeof value !== "object") return null;
   const profile = value as Partial<StudioProfile>;
-  if (profile.version !== 1 && profile.version !== 2) return null;
+  if (profile.version !== 1 && profile.version !== 2 && profile.version !== 3) return null;
   if (typeof profile.author !== "string") return null;
   if (typeof profile.avatarUrl !== "string") return null;
   if (typeof profile.avatarVisible !== "boolean") return null;
   if (typeof profile.socialVisible !== "boolean") return null;
   if (!Array.isArray(profile.socials) || !profile.socials.every(isSocialConfig)) return null;
-  // Always normalize forward to v2; the palette is included only when a saved
-  // profile actually carries a valid one (legacy v1 profiles simply omit it).
+  // Always normalize forward to v3. Optional groups are included only when a
+  // saved profile actually carries them, so legacy v1/v2 profiles simply omit.
   const normalized: StudioProfile = {
-    version: 2,
+    version: 3,
     author: profile.author,
     avatarUrl: profile.avatarUrl,
     avatarVisible: profile.avatarVisible,
@@ -93,6 +101,11 @@ function normalizeProfile(value: unknown): StudioProfile | null {
   };
   if (isThemeMode(profile.theme)) normalized.theme = profile.theme;
   if (isColorTokens(profile.colors)) normalized.colors = cloneColors(profile.colors);
+  if (typeof profile.logoUrl === "string") normalized.logoUrl = profile.logoUrl;
+  if (typeof profile.seriesName === "string") normalized.seriesName = profile.seriesName;
+  if (isTextLines(profile.presenterLines)) {
+    normalized.presenterLines = [...profile.presenterLines];
+  }
   return normalized;
 }
 
@@ -131,7 +144,7 @@ function hookTextFromAuthor(author: string): string {
 
 export function profileFromState(state: OverlayState): StudioProfile {
   return {
-    version: 2,
+    version: 3,
     author: authorFromHookText(state.cover.hookText),
     avatarUrl: state.cover.avatarUrl,
     avatarVisible: state.cover.avatarVisible,
@@ -139,6 +152,9 @@ export function profileFromState(state: OverlayState): StudioProfile {
     socials: state.cover.socials.map(cloneSocial),
     theme: state.theme,
     colors: cloneColors(state.colors),
+    logoUrl: state.brand.logoUrl,
+    seriesName: state.brand.seriesName,
+    presenterLines: [...state.brand.presenterLines],
   };
 }
 
@@ -151,10 +167,17 @@ export function applyStudioProfileToState(
   if (!normalized) return state;
   return {
     ...state,
-    // Brand palette (v2+) — applied only when the profile carries one, so a
-    // legacy identity-only profile leaves the current theme/colors untouched.
+    // Optional groups are applied only when the profile carries them, so a
+    // legacy identity-only profile leaves theme/colors and brand untouched.
     ...(normalized.theme ? { theme: normalized.theme } : {}),
     ...(normalized.colors ? { colors: cloneColors(normalized.colors) } : {}),
+    brand: {
+      logoUrl: normalized.logoUrl ?? state.brand.logoUrl,
+      seriesName: normalized.seriesName ?? state.brand.seriesName,
+      presenterLines: normalized.presenterLines
+        ? [...normalized.presenterLines]
+        : [...state.brand.presenterLines],
+    },
     cover: {
       ...state.cover,
       avatarUrl: normalized.avatarUrl,

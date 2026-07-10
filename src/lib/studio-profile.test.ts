@@ -54,10 +54,10 @@ test("studio profile load falls back to null for missing, invalid, or malformed 
   assert.equal(loadStudioProfile(storage), null);
 });
 
-test("studio profile persists a normalized brand profile (identity + palette) separate from overlay state", () => {
+test("studio profile persists a normalized brand profile (identity + palette + header) separate from overlay state", () => {
   const storage = new MemoryStorage();
   const profile = {
-    version: 2 as const,
+    version: 3 as const,
     author: "Private Host",
     avatarUrl: "/private-avatar.png",
     avatarVisible: true,
@@ -67,6 +67,9 @@ test("studio profile persists a normalized brand profile (identity + palette) se
     ],
     theme: "light" as const,
     colors: BRAND_COLORS,
+    logoUrl: "/private-logo.png",
+    seriesName: "Private Lecture Series",
+    presenterLines: ["Chair of Nothing", "Institute of Everything"],
   };
 
   saveStudioProfile(profile, storage);
@@ -81,7 +84,7 @@ test("studio profile persists a normalized brand profile (identity + palette) se
   assert.equal(loadStudioProfile(storage), null);
 });
 
-test("a legacy v1 profile (identity only) still loads, normalized to v2 without a palette", () => {
+test("a legacy v1 profile (identity only) still loads, normalized to v3 with no optional groups", () => {
   const storage = new MemoryStorage();
   storage.setItem(
     STUDIO_PROFILE_STORAGE_KEY,
@@ -95,10 +98,30 @@ test("a legacy v1 profile (identity only) still loads, normalized to v2 without 
     }),
   );
   const loaded = loadStudioProfile(storage);
-  assert.equal(loaded?.version, 2);
+  assert.equal(loaded?.version, 3);
   assert.equal(loaded?.author, "Legacy Host");
-  assert.equal("theme" in (loaded ?? {}), false);
-  assert.equal("colors" in (loaded ?? {}), false);
+  for (const key of ["theme", "colors", "logoUrl", "seriesName", "presenterLines"]) {
+    assert.equal(key in (loaded ?? {}), false, `${key} must stay absent`);
+  }
+});
+
+test("a legacy v2 profile keeps its palette but must not clear the brand header on apply", () => {
+  const before = {
+    ...DEMO_DEFAULT,
+    brand: { logoUrl: "/keep.png", seriesName: "Keep", presenterLines: ["Keep me"] },
+  };
+  const profiled = applyStudioProfileToState(before, {
+    version: 2,
+    author: "Host",
+    avatarUrl: "/a.png",
+    avatarVisible: true,
+    socialVisible: true,
+    socials: [],
+    theme: "light",
+    colors: BRAND_COLORS,
+  });
+  assert.equal(profiled.theme, "light");
+  assert.deepEqual(profiled.brand, before.brand);
 });
 
 test("studio profile applies brand palette + identity over defaults without changing stream content", () => {
@@ -142,7 +165,7 @@ test("a palette-less profile leaves the current theme/colors untouched on apply"
   assert.deepEqual(profiled.colors, BRAND_COLORS);
 });
 
-test("profileFromState extracts identity + the current brand palette", () => {
+test("profileFromState extracts identity + the current brand palette + the header", () => {
   const state = {
     ...applyStudioProfileToState(DEMO_DEFAULT, {
       version: 2,
@@ -156,6 +179,11 @@ test("profileFromState extracts identity + the current brand palette", () => {
     }),
     theme: "dark" as const,
     colors: BRAND_COLORS,
+    brand: {
+      logoUrl: "/private-logo.png",
+      seriesName: "Private Lecture Series",
+      presenterLines: ["Chair of Nothing"],
+    },
   };
 
   const profile = profileFromState({
@@ -164,7 +192,7 @@ test("profileFromState extracts identity + the current brand palette", () => {
   });
 
   assert.deepEqual(profile, {
-    version: 2,
+    version: 3,
     author: "Private Host",
     avatarUrl: "/private-avatar.png",
     avatarVisible: false,
@@ -174,5 +202,29 @@ test("profileFromState extracts identity + the current brand palette", () => {
     ],
     theme: "dark",
     colors: BRAND_COLORS,
+    logoUrl: "/private-logo.png",
+    seriesName: "Private Lecture Series",
+    presenterLines: ["Chair of Nothing"],
   });
+});
+
+test("a v3 profile restores the lecture header + presenter lines on apply", () => {
+  const profiled = applyStudioProfileToState(DEMO_DEFAULT, {
+    version: 3,
+    author: "Private Host",
+    avatarUrl: "/a.png",
+    avatarVisible: true,
+    socialVisible: true,
+    socials: [],
+    logoUrl: "/logo.png",
+    seriesName: "Frontiers of Public Policy",
+    presenterLines: ["School of Social Sciences", "Director, Digital Economy Centre"],
+  });
+  assert.deepEqual(profiled.brand, {
+    logoUrl: "/logo.png",
+    seriesName: "Frontiers of Public Policy",
+    presenterLines: ["School of Social Sciences", "Director, Digital Economy Centre"],
+  });
+  // Stream content is untouched.
+  assert.equal(profiled.cover.title, DEMO_DEFAULT.cover.title);
 });

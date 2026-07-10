@@ -30,7 +30,7 @@ function postRequest(body: unknown): Request {
 
 test("the composition route does not exist on the public showcase", async () => {
   await withShowcase(async () => {
-    equal((await GET()).status, 404);
+    equal((await GET(new Request("http://localhost/api/obs/composition"))).status, 404);
     equal(
       (await POST(postRequest({ main: "display-1", camera: "camera" }))).status,
       404,

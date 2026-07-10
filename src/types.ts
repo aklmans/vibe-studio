@@ -1,3 +1,4 @@
+import type { LayoutId } from "./lib/overlay-layout";
 import { DARK_PRESET, type ColorTokens, type ThemeMode } from "./lib/theme";
 import type { BadgeConfig } from "./lib/badges";
 import type { SocialConfig } from "./lib/socials";
@@ -45,6 +46,18 @@ export interface OverlayState {
     visible: boolean;
     cameraVisible: boolean;
   };
+  /**
+   * Reusable brand identity the lecture/mobile layouts render in their header
+   * and presenter card. Part of the Brand layer (see studio-profile.ts): set
+   * once, reused every stream, never written by the AI agent.
+   */
+  brand: {
+    logoUrl: string;
+    /** The recurring programme, e.g. a lecture series. Not the stream's title. */
+    seriesName: string;
+    /** The presenter's affiliation / role lines, shown under their name. */
+    presenterLines: string[];
+  };
   cover: {
     title: string;
     badges: BadgeConfig[];
@@ -86,6 +99,8 @@ export interface OverlayState {
   };
   colors: ColorTokens;
   theme: ThemeMode;
+  /** Scene layout. Studio-level presentation — never part of the v1 config. */
+  layout: LayoutId;
   activeTab: AppTab;
 }
 
@@ -137,6 +152,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     visible: true,
     cameraVisible: true,
   },
+  brand: {
+    logoUrl: "",
+    seriesName: "Vibe 直播讲堂",
+    presenterLines: ["独立开发者", "Vibe Studio 作者"],
+  },
   cover: {
     title: "Building With Agents",
     badges: [
@@ -186,6 +206,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     ...DARK_PRESET,
   },
   theme: "dark",
+  layout: "workbench",
     activeTab: "overlay",
   },
   en: {
@@ -234,6 +255,11 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     mainScreen: {
       visible: true,
       cameraVisible: true,
+    },
+    brand: {
+      logoUrl: "",
+      seriesName: "Vibe Live Sessions",
+      presenterLines: ["Indie developer", "Author of Vibe Studio"],
     },
     cover: {
       title: "Building With Agents",
@@ -284,6 +310,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       ...DARK_PRESET,
     },
     theme: "dark",
+    layout: "workbench",
     activeTab: "overlay",
   },
 };

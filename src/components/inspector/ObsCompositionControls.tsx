@@ -51,15 +51,17 @@ export default function ObsCompositionControls({
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Region rects come from the layout, so a layout change means re-probing.
+  const layoutId = state.layout;
   const refreshStatus = useCallback(() => {
     setConnection("checking");
-    void fetchObsCompositionStatus().then((status) => {
+    void fetchObsCompositionStatus(layoutId).then((status) => {
       setConnection(status.connected ? "connected" : "disconnected");
       setReason(status.reason ?? null);
       setMissingSources(status.missingSources ?? []);
       if (status.current) setComposition(status.current);
     });
-  }, []);
+  }, [layoutId]);
 
   useEffect(() => {
     refreshStatus();
@@ -89,7 +91,7 @@ export default function ObsCompositionControls({
       if (state.mainScreen.cameraVisible !== cameraVisible) {
         onChange(patchSection(state, "mainScreen", { cameraVisible }));
       }
-      void applyObsComposition(next)
+      void applyObsComposition(next, layoutId)
         .then((result) => {
           if (result.ok) {
             if (result.missingSources) setMissingSources(result.missingSources);

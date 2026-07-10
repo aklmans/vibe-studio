@@ -28,6 +28,11 @@ export const dict = {
     "inspector.wallpaper.hint": "品牌壁纸 — 4K · QHD · 手机",
 
     // ─── Inspector group titles & hints ───────────────────────────────
+    "group.layout": "场景布局",
+    "group.layout.hint": "决定有哪些画面分区、分别在哪 —— 同时驱动 OBS 槽位。",
+    "layout.workbench": "工作台",
+    "layout.lectureLeft": "讲座 · 左",
+    "layout.lectureRight": "讲座 · 右",
     "group.visibility": "显示",
     "group.visibility.hint": "切换主要画面区域",
     "group.composition": "画面合成 · OBS",
@@ -661,6 +666,11 @@ export const dict = {
     "inspector.wallpaper.hint": "Brand wallpapers — 4K · QHD · Mobile",
 
     // ─── Inspector group titles & hints ───────────────────────────────
+    "group.layout": "Scene layout",
+    "group.layout.hint": "Which regions exist and where — this also drives the OBS slots.",
+    "layout.workbench": "Workbench",
+    "layout.lectureLeft": "Lecture · left",
+    "layout.lectureRight": "Lecture · right",
     "group.visibility": "Visibility",
     "group.visibility.hint": "Toggle major surfaces",
     "group.composition": "Composition · OBS",

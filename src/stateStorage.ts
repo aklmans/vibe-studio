@@ -5,6 +5,7 @@ import {
   migrateThemeMode,
   type ThemeMode,
 } from "./lib/theme";
+import { isLayoutId } from "./lib/overlay-layout";
 import { OVERLAY_STATE_STORAGE_KEY } from "./lib/storage-keys";
 import {
   LEGACY_BADGE_KIND_TO_ICON_KEY,
@@ -79,6 +80,12 @@ function boolOrDefault(value: unknown, fallback: boolean): boolean {
 
 function stringOrDefault(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
+}
+
+/** A free list of text lines. A non-array is garbage; an empty array is a choice. */
+function normalizeTextLines(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return [...fallback];
+  return value.filter((line): line is string => typeof line === "string");
 }
 
 function normalizeCoverAvatarUrl(value: unknown, fallback: string): string {
@@ -413,6 +420,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
   const sidebar = record(source?.sidebar);
   const bottomBar = record(source?.bottomBar);
   const mainScreen = record(source?.mainScreen);
+  const brand = record(source?.brand);
   const cover = record(source?.cover);
   const liveSession = record(source?.liveSession);
   const stack = record(source?.stack);
@@ -460,6 +468,15 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
       cameraVisible: boolOrDefault(
         mainScreen?.cameraVisible,
         defaultValue.mainScreen.cameraVisible,
+      ),
+    },
+    // Added with the lecture layouts; state saved before then has no `brand`.
+    brand: {
+      logoUrl: stringOrDefault(brand?.logoUrl, defaultValue.brand.logoUrl),
+      seriesName: stringOrDefault(brand?.seriesName, defaultValue.brand.seriesName),
+      presenterLines: normalizeTextLines(
+        brand?.presenterLines,
+        defaultValue.brand.presenterLines,
       ),
     },
     cover: {
@@ -597,6 +614,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         ? normalizeLegacyColors(source?.colors, source.theme)
         : normalizeColors(source?.colors, defaultValue.colors),
     theme: normalizeTheme(source?.theme, defaultValue.theme),
+    layout: isLayoutId(source?.layout) ? source.layout : defaultValue.layout,
     activeTab: isAppTab(activeTab) ? activeTab : "overlay",
   };
 }

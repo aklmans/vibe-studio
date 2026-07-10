@@ -12,6 +12,8 @@ import LiveSessionEditor from "../../LiveSessionEditor";
 import StackEditor from "../../StackEditor";
 import BottomBarSegmentEditor from "../../BottomBarSegmentEditor";
 import ObsCompositionControls from "../ObsCompositionControls";
+import LayoutControls from "../LayoutControls";
+import { getLayout } from "../../../lib/overlay-layout";
 import { useLocale } from "../../../hooks/useLocale";
 
 interface OverlayInspectorProps {
@@ -33,9 +35,19 @@ export default function OverlayInspector({
     lastSectionIndex,
   );
   const activeSection = state.sidebar.sections[activeSectionIndex];
+  // Only offer toggles for surfaces the active layout actually has.
+  const panels = getLayout(state.layout).panels;
 
   return (
     <>
+      <InspectorGroup
+        title={t("group.layout")}
+        hint={t("group.layout.hint")}
+        testId="group-overlay-layout"
+      >
+        <LayoutControls state={state} onChange={onChange} />
+      </InspectorGroup>
+
       <InspectorGroup
         title={t("group.visibility")}
         hint={t("group.visibility.hint")}
@@ -49,38 +61,46 @@ export default function OverlayInspector({
           }
           testId="toggle-main-screen"
         />
-        <ToggleButton
-          label={t("toggle.cameraFrame")}
-          checked={state.mainScreen.cameraVisible}
-          onChange={(v) =>
-            onChange(patchSection(state, "mainScreen", { cameraVisible: v }))
-          }
-          testId="toggle-camera"
-        />
-        <ToggleButton
-          label={t("toggle.rightSidebar")}
-          checked={state.sidebar.visible}
-          onChange={(v) =>
-            onChange(patchSection(state, "sidebar", { visible: v }))
-          }
-          testId="toggle-sidebar"
-        />
-        <ToggleButton
-          label={t("toggle.sidebarSocial")}
-          checked={state.sidebar.socialVisible}
-          onChange={(v) =>
-            onChange(patchSection(state, "sidebar", { socialVisible: v }))
-          }
-          testId="toggle-sidebar-social"
-        />
-        <ToggleButton
-          label={t("toggle.bottomBar")}
-          checked={state.bottomBar.visible}
-          onChange={(v) =>
-            onChange(patchSection(state, "bottomBar", { visible: v }))
-          }
-          testId="toggle-bottom-bar"
-        />
+        {panels.cameraPanel && (
+          <ToggleButton
+            label={t("toggle.cameraFrame")}
+            checked={state.mainScreen.cameraVisible}
+            onChange={(v) =>
+              onChange(patchSection(state, "mainScreen", { cameraVisible: v }))
+            }
+            testId="toggle-camera"
+          />
+        )}
+        {panels.sidebar && (
+          <ToggleButton
+            label={t("toggle.rightSidebar")}
+            checked={state.sidebar.visible}
+            onChange={(v) =>
+              onChange(patchSection(state, "sidebar", { visible: v }))
+            }
+            testId="toggle-sidebar"
+          />
+        )}
+        {panels.sidebar && (
+          <ToggleButton
+            label={t("toggle.sidebarSocial")}
+            checked={state.sidebar.socialVisible}
+            onChange={(v) =>
+              onChange(patchSection(state, "sidebar", { socialVisible: v }))
+            }
+            testId="toggle-sidebar-social"
+          />
+        )}
+        {panels.bottomBar && (
+          <ToggleButton
+            label={t("toggle.bottomBar")}
+            checked={state.bottomBar.visible}
+            onChange={(v) =>
+              onChange(patchSection(state, "bottomBar", { visible: v }))
+            }
+            testId="toggle-bottom-bar"
+          />
+        )}
       </InspectorGroup>
 
       {!demoMode && (

@@ -7,7 +7,9 @@ import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
 import { getObsCameraFrameColors, type ObsCameraMode } from "../lib/obs-camera";
-import { WORKBENCH_LAYOUT, type OverlayLayout, type Rect } from "../lib/overlay-layout";
+import { getLayout, type OverlayLayout, type Rect } from "../lib/overlay-layout";
+import OverlayHeader from "./OverlayHeader";
+import PresenterIntro from "./PresenterIntro";
 import { editorialPalette } from "./lib/editorial-palette";
 
 interface OverlayCanvasProps {
@@ -16,7 +18,7 @@ interface OverlayCanvasProps {
   sidebarRef?: React.RefObject<HTMLDivElement | null>;
   bottomBarRef?: React.RefObject<HTMLDivElement | null>;
   cameraMode?: ObsCameraMode;
-  /** Geometry source of truth. Defaults to the workbench layout. */
+  /** Override the layout; by default it follows `state.layout`. */
   layout?: OverlayLayout;
 }
 
@@ -112,18 +114,23 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
       sidebarRef,
       bottomBarRef,
       cameraMode = "avatar",
-      layout = WORKBENCH_LAYOUT,
+      layout: layoutProp,
     },
     ref,
   ) => {
     const dotPatternId = useId().replaceAll(":", "");
     const { t } = useLocale();
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
+    // The OBS browser source renders this same component from pushed state, so
+    // following state.layout is what carries the layout through to OBS.
+    const layout = layoutProp ?? getLayout(state.layout);
     // A layout may omit a panel entirely; absent rect = the layout has no such panel.
     const mainRect = layout.regions.main;
     const cameraPanelRect = layout.panels.cameraPanel;
     const sidebarRect = layout.panels.sidebar;
     const bottomBarRect = layout.panels.bottomBar;
+    const headerRect = layout.panels.header;
+    const introRect = layout.panels.intro;
     const {
       bgDark,
       bgPanel,
@@ -182,6 +189,12 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           <path d={backdropPath} fill={bgDark} fillRule="evenodd" />
           <path d={backdropPath} fill={`url(#${dotPatternId})`} fillRule="evenodd" />
         </svg>
+
+        {/* Lecture header band — brand logo + the recurring programme name. */}
+        {headerRect && <OverlayHeader state={state} rect={headerRect} />}
+
+        {/* Lecture presenter card — this stream's title + who is speaking. */}
+        {introRect && <PresenterIntro state={state} rect={introRect} />}
 
         {/* Main screen OBS frame: only the UI frame is rendered here.
             The actual display/window capture should sit underneath this source in OBS. */}
