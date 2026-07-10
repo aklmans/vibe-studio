@@ -157,7 +157,19 @@ The script:
 
 The script never clicks Bilibili's start-live button. Confirm the title, category, microphone, preview, and final start action manually in Livehime.
 
-While live, the **Composition · OBS** controls (local/private Studio only — in the Overlay inspector and mirrored in **Session Config → Broadcast**) pick the source for each region: the main screen can show display 1, display 2, or the app window; the camera slot can show the webcam, a second monitor, the avatar theme, or nothing. You can swap two display regions and recall whole compositions from saved presets — all driving your local OBS over obs-websocket. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
+While live, the **Composition · OBS** controls (local/private Studio only — in the Overlay inspector and mirrored in **Session Config → Broadcast**) pick the source for each region the active scene layout defines: the main screen can show display 1, display 2, or the app window; the camera slot can show the webcam, a second monitor, the avatar theme, or nothing. You can swap two display regions and recall whole compositions from saved presets — all driving your local OBS over obs-websocket. Switching the scene layout re-parks the captures onto the new layout's regions. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
+
+## Scene Layouts
+
+The overlay is layout-driven: a **scene layout** decides which regions (transparent, OBS-backed cutouts) and panels (chrome the overlay draws) exist and where. Pick one in the Overlay inspector or **Session Config → Broadcast**, then fill each region with a source. Geometry has a single source of truth in `src/lib/overlay-layout.ts`.
+
+- **Workbench** (1920×1080) — the classic coding-stream frame: main capture left, sidebar top right, camera (or the current-focus card) bottom right, bottom bar beneath.
+- **Lecture · left / right** (1920×1080) — a lecture frame: a header band (brand logo + series name, plus today's topic and a date + LIVE badge once the session starts), a presenter column (camera above an intro card with the stream title, presenter name and affiliation lines), and an exact-16:9 slides region.
+- **Mobile · vertical** (1080×1920) — a portrait frame for phone-app / Livehime vertical streams: header, one large video cutout the phone's own camera or screen fills from beneath, and the presenter card. It has no local-OBS composition — export it as a frame or serve it as a browser source; streaming stays in the phone app.
+
+The bottom bar follows the layout while its segments are still an untouched default: workbench uses on-air / progress / stack, the lecture layouts use on-air / **agenda** / **follow** — the agenda segment renders "current section n/N + up next" straight from your sections, so driving the talk from the studio updates the on-air strip automatically, and the follow segment keeps your first visible social handle on screen. A hand-edited bottom bar is never touched, and both new segment kinds are available in every layout's bottom-bar editor.
+
+The lecture header and presenter card read from the **Brand layer** (Session Config → Session): logo, series/programme name, and presenter lines — set once, reused every stream, never edited by the AI.
 
 `pnpm live:stop` intentionally leaves Bilibili Livehime open because closing it can interrupt an active stream. Close Livehime manually after ending the livestream.
 
@@ -225,7 +237,8 @@ Current example dimensions:
 
 - Cover screen: `1280x720`
 - Poster: `1920x1080`
-- Full overlay: `1920x1080`
+- Full overlay: `1920x1080` (16:9 layouts)
+- Full overlay, mobile layout: `1080x1920` (saved as `vibe-coding-overlay-vertical.png`)
 - Sidebar: `470x760`
 - Bottom bar: `1856x180`
 - Wallpaper desktop 4K: `3840x2160`
@@ -260,7 +273,7 @@ drizzle/            SQL migrations for live data persistence
 - Export nodes stay mounted off-screen so PNG captures use the same render tree as the preview.
 - State persists in `localStorage` and is normalized through `src/stateStorage.ts`.
 - Config boundary: [`live-session.config.json`](docs/live-session.config.md) is the per-session content portable core (v1); a future [`studio.config.json`](docs/studio.config.md) is for studio-level settings (draft only); runtime state stays in `OverlayState`/`localStorage`. The split is pinned in `src/lib/session-config-boundary.ts`. Configs move by manual import/export, not a watched file.
-- Brand layer: the reusable identity + look — author, avatar, socials, theme, colors — persists separately as a Studio Profile (`src/lib/studio-profile.ts`), re-applied on load/reset (write once, reuse each stream). It is set by hand in **Session Config**, never by the AI agent, which only drafts per-stream content.
+- Brand layer: the reusable identity + look — author, avatar, socials, theme, colors, and the lecture header fields (logo, series name, presenter lines) — persists separately as a Studio Profile (`src/lib/studio-profile.ts`), re-applied on load/reset (write once, reuse each stream). It is set by hand in **Session Config**, never by the AI agent, which only drafts per-stream content.
 - `state.theme` is the app-wide light/dark appearance. App shell UI reads `APP_THEME_TOKENS` and CSS vars, while `state.colors` is the broadcast/export asset palette users can override. Switching Light/Dark currently loads the matching asset preset as a product default; if the app ever needs light UI with dark exports, add a separate `assetPalette` control instead of overloading `theme`.
 - The live-data persistence layer (behind the Session Config tab) persists to PostgreSQL when `DATABASE_URL` is configured, with local draft fallback when it is not.
 - Localization uses the custom `t()` dictionary system in `src/lib/i18n.ts`.
