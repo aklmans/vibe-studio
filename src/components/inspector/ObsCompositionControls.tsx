@@ -19,7 +19,7 @@ import {
   fetchObsCompositionStatus,
 } from "../../lib/obs-composition-client";
 import { getLayout } from "../../lib/overlay-layout";
-import { WorkbenchButton } from "../shared/Field";
+import { WorkbenchButton, choiceChipStyle } from "../shared/Field";
 import ObsCompositionPresets from "./ObsCompositionPresets";
 
 const mono = "var(--app-font-mono)";
@@ -401,21 +401,13 @@ function RegionSelect<T extends string>({
 
 function optionStyle(active: boolean, disabled: boolean): CSSProperties {
   return {
-    appearance: "none",
+    ...choiceChipStyle(active, disabled),
     minHeight: 28,
     padding: "0 6px",
-    borderRadius: 4,
-    border: `1px solid ${active ? UI_COLORS.accent : UI_COLORS.controlBorder}`,
-    background: active ? UI_COLORS.hoverSurface : "transparent",
-    color: disabled ? UI_COLORS.textSubtle : active ? UI_COLORS.text : UI_COLORS.textSoft,
-    fontFamily: mono,
-    fontSize: 11,
-    fontWeight: active ? 600 : 500,
     cursor: disabled ? "default" : "pointer",
     opacity: disabled ? 0.4 : 1,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    transition: "color 120ms ease, border-color 120ms ease",
   };
 }

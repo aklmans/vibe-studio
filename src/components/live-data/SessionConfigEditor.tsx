@@ -603,7 +603,7 @@ function ModeChip({ editing }: { editing: boolean }) {
         textTransform: "uppercase",
         color,
         border: `1px solid ${cssAlpha(color, 40)}`,
-        borderRadius: 3,
+        borderRadius: 0,
         padding: "1px 6px",
       }}
     >

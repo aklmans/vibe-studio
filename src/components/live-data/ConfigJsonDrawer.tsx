@@ -240,18 +240,18 @@ export default function ConfigJsonDrawer({
               style={{
                 appearance: "none",
                 border: `1px solid ${UI_COLORS.controlBorder}`,
-                borderRadius: 3,
+                borderRadius: 0,
                 background: "transparent",
                 color: UI_COLORS.textMuted,
                 cursor: "pointer",
                 fontFamily: "var(--app-font-mono)",
                 fontSize: 10,
-                letterSpacing: "0.02em",
+                letterSpacing: "0.06em",
                 padding: "3px 7px",
                 transition: "color 0.12s, border-color 0.12s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = UI_COLORS.text;
+                e.currentTarget.style.color = UI_COLORS.accentText;
                 e.currentTarget.style.borderColor = cssAlpha(UI_COLORS.accent, 44);
               }}
               onMouseLeave={(e) => {

@@ -102,7 +102,7 @@ export default function SidebarSectionEditor({
               style={{
                 width: 22,
                 height: 22,
-                borderRadius: 3,
+                borderRadius: 0,
                 border: `1px solid ${UI_COLORS.controlBorder}`,
                 background: "transparent",
                 color: UI_COLORS.textSubtle,
@@ -124,7 +124,7 @@ export default function SidebarSectionEditor({
                 // accent only tints it once the bullet is marked done.
                 width: 22,
                 height: 22,
-                borderRadius: 3,
+                borderRadius: 0,
                 border: `1px solid ${done ? cssAlpha(accentColor, 50) : UI_COLORS.controlBorder}`,
                 background: done ? cssAlpha(accentColor, 12) : "transparent",
                 cursor: "pointer",

@@ -27,6 +27,7 @@ import { resolveCopyResult, shortConfigHash, turnMessageKey, type CopyStatus } f
 import {
   WorkbenchButton,
   applyWorkbenchFocus,
+  choiceChipStyle,
   clearWorkbenchFocus,
   monoInputStyle,
 } from "../shared/Field";
@@ -575,7 +576,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
                         style={{
                           width: "100%",
                           borderLeft: `2px solid ${active ? UI_COLORS.accent : "transparent"}`,
-                          borderRadius: 4,
+                          borderRadius: 0,
                           background: active ? cssAlpha(UI_COLORS.accent, 10) : "transparent",
                           padding: "7px 7px 7px 9px",
                           display: "flex",
@@ -700,19 +701,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
                       data-testid={`agent-task-${item.id}`}
                       aria-pressed={active}
                       onClick={() => setTaskId(item.id)}
-                      style={{
-                        appearance: "none",
-                        cursor: "pointer",
-                        borderRadius: 999,
-                        border: `1px solid ${active ? cssAlpha(UI_COLORS.accent, 44) : UI_COLORS.controlBorder}`,
-                        background: active ? cssAlpha(UI_COLORS.accent, 12) : "transparent",
-                        color: active ? UI_COLORS.text : UI_COLORS.textMuted,
-                        fontFamily: mono,
-                        fontSize: 11,
-                        fontWeight: active ? 700 : 500,
-                        padding: "4px 11px",
-                        transition: "color 0.12s, border-color 0.12s, background 0.12s",
-                      }}
+                      style={{ ...choiceChipStyle(active), padding: "4px 11px" }}
                     >
                       {t(item.labelKey)}
                     </button>
@@ -1107,7 +1096,7 @@ function pillStyle(color: string, bg: string): CSSProperties {
     letterSpacing: "0.04em",
     color,
     background: bg,
-    borderRadius: 999,
+    borderRadius: 0,
     padding: "3px 10px",
   };
 }
@@ -1300,9 +1289,9 @@ function GhostButton({ testId, onClick, children }: { testId: string; onClick: (
         appearance: "none",
         cursor: "pointer",
         border: `1px solid ${UI_COLORS.controlBorder}`,
-        borderRadius: 4,
+        borderRadius: 0,
         background: "transparent",
-        color: UI_COLORS.textSoft,
+        color: UI_COLORS.accentText,
         fontFamily: mono,
         fontSize: 10,
         fontWeight: 600,

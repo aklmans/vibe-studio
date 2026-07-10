@@ -1,7 +1,5 @@
 import type { CSSProperties } from "react";
-import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
-
-const mono = "var(--app-font-mono)";
+import { choiceChipStyle } from "../shared/Field";
 
 interface SectionChipsProps {
   sections: { title: string; minutes?: number }[];
@@ -23,18 +21,12 @@ export default function SectionChips({
 }: SectionChipsProps) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const base: CSSProperties = {
-    appearance: "none",
-    cursor: "pointer",
-    borderRadius: 999,
-    fontFamily: mono,
-    fontSize: 11,
     lineHeight: 1,
     padding: "5px 11px",
     maxWidth: 180,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    transition: "color 0.12s, border-color 0.12s, background 0.12s",
   };
 
   return (
@@ -48,15 +40,7 @@ export default function SectionChips({
             data-testid={`${testIdPrefix}-${index}`}
             aria-pressed={isActive}
             onClick={() => onSelect(index)}
-            style={{
-              ...base,
-              border: `1px solid ${
-                isActive ? cssAlpha(UI_COLORS.accent, 44) : UI_COLORS.controlBorder
-              }`,
-              background: isActive ? cssAlpha(UI_COLORS.accent, 12) : "transparent",
-              color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
-              fontWeight: isActive ? 700 : 500,
-            }}
+            style={{ ...choiceChipStyle(isActive), ...base }}
           >
             {pad(index + 1)} {section.title || "—"}
             {section.minutes ? ` · ${section.minutes}m` : ""}

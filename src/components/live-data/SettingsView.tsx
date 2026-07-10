@@ -566,7 +566,7 @@ export default function SettingsView({
                       borderLeft: `2px solid ${active ? UI_COLORS.accent : "transparent"}`,
                       background: active ? cssAlpha(UI_COLORS.accent, 10) : "transparent",
                       cursor: "pointer",
-                      borderRadius: 4,
+                      borderRadius: 0,
                       padding: "6px 8px",
                       display: "flex",
                       flexDirection: "column",
@@ -617,7 +617,7 @@ export default function SettingsView({
                     fontSize: 12,
                     fontWeight: active ? 700 : 500,
                     letterSpacing: "0.02em",
-                    color: active ? UI_COLORS.text : UI_COLORS.textMuted,
+                    color: active ? UI_COLORS.accentText : UI_COLORS.textMuted,
                     transition: "color 0.12s, background 0.12s, border-color 0.12s",
                   }}
                   onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = UI_COLORS.text; }}

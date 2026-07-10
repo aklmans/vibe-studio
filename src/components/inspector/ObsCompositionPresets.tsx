@@ -142,7 +142,7 @@ const chipStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   border: `1px solid ${UI_COLORS.controlBorder}`,
-  borderRadius: 4,
+  borderRadius: 0,
   overflow: "hidden",
   maxWidth: "100%",
 };
@@ -151,7 +151,8 @@ const applyStyle: CSSProperties = {
   appearance: "none",
   border: "none",
   background: "transparent",
-  color: UI_COLORS.textSoft,
+  // Boxed action — speaks accent, per the button language.
+  color: UI_COLORS.accentText,
   cursor: "pointer",
   fontFamily: mono,
   fontSize: 11,

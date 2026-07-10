@@ -11,6 +11,12 @@ import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
  * command-adjacent controls, and live-data panels. These are intentionally
  * dumb: they carry the warm editorial workbench language without importing app
  * state or changing any editor behavior.
+ *
+ * Button language (one system everywhere): square corners, transparent ground,
+ * a 1px rule border, accent ink, mono caps with wide tracking. Hierarchy comes
+ * from the border alone — accent rule = primary, quiet controlBorder rule =
+ * secondary; the ink stays accent either way. Bare glyph micro-actions (×, ⌃)
+ * stay muted and borderless; anything boxed speaks accent.
  */
 
 export const fieldLabelStyle: CSSProperties = {
@@ -255,9 +261,10 @@ export function ToggleButton({
         style={{
           width: 38,
           height: 20,
-          borderRadius: 10,
+          // Square switch — the editorial language has no pills anywhere.
+          borderRadius: 0,
           border: `1px solid ${
-            checked ? cssAlpha(UI_COLORS.accent, 48) : UI_COLORS.controlBorder
+            checked ? cssAlpha(UI_COLORS.accent, 64) : UI_COLORS.controlBorder
           }`,
           cursor: "pointer",
           background: checked
@@ -272,7 +279,7 @@ export function ToggleButton({
           style={{
             width: 14,
             height: 14,
-            borderRadius: "50%",
+            borderRadius: 0,
             background: checked ? UI_COLORS.accentText : UI_COLORS.textMuted,
             position: "absolute",
             top: 2,
@@ -347,7 +354,7 @@ export function WorkbenchSegmented({
         gap: 3,
         background: UI_COLORS.inputInset,
         padding: 3,
-        borderRadius: 4,
+        borderRadius: 0,
         border: `1px solid ${UI_COLORS.controlBorder}`,
       }}
     >
@@ -365,13 +372,13 @@ export function WorkbenchSegmented({
                 ? cssAlpha(UI_COLORS.accent, 10)
                 : "transparent",
               border: `1px solid ${
-                isActive ? cssAlpha(UI_COLORS.accent, 28) : "transparent"
+                isActive ? cssAlpha(UI_COLORS.accent, 44) : "transparent"
               }`,
-              borderRadius: 4,
+              borderRadius: 0,
               fontFamily: "var(--app-font-mono)",
               fontSize: 10,
               fontWeight: isActive ? 650 : 500,
-              color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
+              color: isActive ? UI_COLORS.accentText : UI_COLORS.textMuted,
               cursor: "pointer",
               letterSpacing: "0.04em",
               transition: "color 0.12s, background 0.12s, border-color 0.12s",
@@ -434,11 +441,15 @@ export const WorkbenchButton = forwardRef<HTMLButtonElement, WorkbenchButtonProp
     },
     ref,
   ) {
+    // Accent ink on every boxed action; the border carries the hierarchy.
     const color =
       tone === "danger"
         ? UI_COLORS.danger
-        : accentColor ??
-          (tone === "accent" ? UI_COLORS.accentText : UI_COLORS.textSoft);
+        : accentColor ?? UI_COLORS.accentText;
+    const restingBorder =
+      tone === "neutral"
+        ? UI_COLORS.controlBorder
+        : cssAlpha(color, tone === "danger" ? 44 : 64);
 
     return (
       <button
@@ -447,19 +458,16 @@ export const WorkbenchButton = forwardRef<HTMLButtonElement, WorkbenchButtonProp
         disabled={disabled}
         style={{
           minHeight: 30,
-          borderRadius: 4,
-          border: `1px solid ${
-            disabled
-              ? UI_COLORS.controlBorder
-              : cssAlpha(color, tone === "neutral" ? 24 : 36)
-          }`,
-          background: disabled ? UI_COLORS.inputInset : "transparent",
+          borderRadius: 0,
+          border: `1px solid ${disabled ? UI_COLORS.controlBorder : restingBorder}`,
+          background: "transparent",
           color: disabled ? UI_COLORS.textSubtle : color,
           cursor: disabled ? "not-allowed" : "pointer",
           fontFamily: "var(--app-font-mono)",
           fontSize: 11,
           fontWeight: 600,
-          letterSpacing: "0.04em",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
           transition: "color 0.12s, border-color 0.12s, background 0.12s",
           ...style,
         }}
@@ -467,16 +475,13 @@ export const WorkbenchButton = forwardRef<HTMLButtonElement, WorkbenchButtonProp
           onMouseEnter?.(e);
           if (disabled) return;
           e.currentTarget.style.background = cssAlpha(color, 8);
-          e.currentTarget.style.borderColor = cssAlpha(color, 44);
+          e.currentTarget.style.borderColor = cssAlpha(color, 72);
         }}
         onMouseLeave={(e) => {
           onMouseLeave?.(e);
           if (disabled) return;
           e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.borderColor = cssAlpha(
-            color,
-            tone === "neutral" ? 24 : 36,
-          );
+          e.currentTarget.style.borderColor = restingBorder;
         }}
         {...props}
       >
@@ -485,3 +490,30 @@ export const WorkbenchButton = forwardRef<HTMLButtonElement, WorkbenchButtonProp
     );
   },
 );
+
+/**
+ * Square choice chip for aria-pressed pick-one rows (sections, tasks, OBS
+ * sources, JSON module jumps): rule border, accent ink when active, quiet
+ * otherwise. Spread it first, then override sizing per call site.
+ */
+export function choiceChipStyle(active: boolean, disabled = false): CSSProperties {
+  return {
+    appearance: "none",
+    cursor: disabled ? "not-allowed" : "pointer",
+    borderRadius: 0,
+    border: `1px solid ${
+      active ? cssAlpha(UI_COLORS.accent, 64) : UI_COLORS.controlBorder
+    }`,
+    background: active ? cssAlpha(UI_COLORS.accent, 10) : "transparent",
+    color: disabled
+      ? UI_COLORS.textSubtle
+      : active
+        ? UI_COLORS.accentText
+        : UI_COLORS.textMuted,
+    fontFamily: "var(--app-font-mono)",
+    fontSize: 11,
+    fontWeight: active ? 650 : 500,
+    letterSpacing: "0.06em",
+    transition: "color 0.12s, border-color 0.12s, background 0.12s",
+  };
+}

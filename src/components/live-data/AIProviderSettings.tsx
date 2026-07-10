@@ -199,7 +199,7 @@ function pill(color: string, bg: string): CSSProperties {
     letterSpacing: "0.04em",
     color,
     background: bg,
-    borderRadius: 999,
+    borderRadius: 0,
     padding: "3px 10px",
   };
 }

@@ -197,7 +197,8 @@ export function LineSegmented({
               fontFamily: "var(--app-font-mono)",
               fontSize: 10,
               fontWeight: isActive ? 650 : 500,
-              color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
+              // Selected = accent ink, matching the boxed-button language.
+              color: isActive ? UI_COLORS.accentText : UI_COLORS.textMuted,
               cursor: "pointer",
               letterSpacing: "0.04em",
               transition: "color 0.12s, box-shadow 0.12s",

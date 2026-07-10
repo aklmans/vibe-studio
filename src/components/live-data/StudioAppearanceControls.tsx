@@ -214,7 +214,7 @@ export function SettingsSelector<T extends string>({
               borderRight:
                 index === options.length - 1 ? "none" : `1px solid ${UI_COLORS.border}`,
               background: "transparent",
-              color: isActive ? UI_COLORS.text : UI_COLORS.textMuted,
+              color: isActive ? UI_COLORS.accentText : UI_COLORS.textMuted,
               cursor: "pointer",
               fontFamily: "var(--app-font-mono)",
               fontSize: 11,

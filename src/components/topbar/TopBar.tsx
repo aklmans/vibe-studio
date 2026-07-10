@@ -275,7 +275,7 @@ export default function TopBar({
                 fontWeight: 500,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: active ? UI_COLORS.text : UI_COLORS.textMuted,
+                color: active ? UI_COLORS.accentText : UI_COLORS.textMuted,
                 cursor: "pointer",
                 transition: "color 0.12s, border-color 0.12s",
               }}
