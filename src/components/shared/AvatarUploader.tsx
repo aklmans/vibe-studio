@@ -16,6 +16,8 @@ interface AvatarUploaderProps {
   clearValue?: string;
   /** Longest-edge cap for the stored image. Small for avatars, larger for covers. */
   maxDimension?: number;
+  /** Avatars preview as a circle; logos and scenes want the uncropped square. */
+  previewShape?: "round" | "square";
   testIdPrefix?: string;
 }
 
@@ -33,6 +35,7 @@ export default function AvatarUploader({
   onVisibleChange,
   clearValue = "",
   maxDimension = 512,
+  previewShape = "round",
   testIdPrefix = "avatar",
 }: AvatarUploaderProps) {
   const { t } = useLocale();
@@ -114,8 +117,8 @@ export default function AvatarUploader({
             style={{
               width: 40,
               height: 40,
-              borderRadius: "50%",
-              objectFit: "cover",
+              borderRadius: previewShape === "round" ? "50%" : 4,
+              objectFit: previewShape === "round" ? "cover" : "contain",
               border: `1px solid ${UI_COLORS.controlBorder}`,
             }}
           />

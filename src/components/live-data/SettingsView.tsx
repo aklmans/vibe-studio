@@ -12,7 +12,7 @@ import BadgesEditor from "../BadgesEditor";
 import SocialsEditor from "../SocialsEditor";
 import CoverVisualEditor from "../inspector/CoverVisualEditor";
 import AvatarUploader from "../shared/AvatarUploader";
-import { TextInput, WorkbenchButton } from "../shared/Field";
+import { TextInput, WorkbenchButton, workbenchInputStyle } from "../shared/Field";
 import { LineSegmented, RuleNote } from "../inspector/EditorRow";
 import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceControls";
 import AIProviderSettings from "./AIProviderSettings";
@@ -78,6 +78,7 @@ const FIELD_INDEX: FieldEntry[] = [
   { id: "subtitle", group: "session", labelKey: "label.subtitle", descKey: "settingsRow.subtitleDesc", terms: ["subtitle", "topic", "副标题", "话题"] },
   { id: "author", group: "session", labelKey: "settingsRow.authorTitle", descKey: "settingsRow.authorDesc", terms: ["author", "host", "byline", "作者", "主播", "署名"] },
   { id: "profile", group: "session", labelKey: "settingsRow.profileTitle", descKey: "settingsRow.profileDesc", terms: ["profile", "avatar", "头像"] },
+  { id: "brand", group: "session", labelKey: "settingsRow.brandTitle", descKey: "settingsRow.brandDesc", terms: ["brand", "logo", "series", "presenter", "品牌", "讲堂", "系列", "头衔", "单位"] },
   { id: "studioProfile", group: "session", labelKey: "settingsGroup.profile", descKey: "settingsGroup.profileHint", terms: ["studio profile", "profile defaults", "save default", "默认身份", "存为默认"] },
   { id: "cover", group: "session", labelKey: "cover.visual.label", descKey: "settingsRow.coverDesc", terms: ["cover", "visual", "封面"] },
   { id: "sections", group: "session", labelKey: "settingsField.sections", descKey: "settingsRow.sectionsDesc", terms: ["sections", "章节", "run of show", "流程"] },
@@ -275,6 +276,48 @@ export default function SettingsView({
               clearValue="/avatar.png"
               testIdPrefix="field-profile-avatar"
             />
+          </AssetRow>
+          {/* Lecture brand — rendered by the lecture layouts' header + presenter
+              card. Brand layer like the avatar above: the save button below
+              snapshots it, and the AI agent never edits it. */}
+          <AssetRow rowId="brand" label={t("settingsRow.brandTitle")} description={t("settingsRow.brandDesc")}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={summaryStyle}>{t("brand.logoLabel")}</span>
+                <AvatarUploader
+                  url={state.brand.logoUrl}
+                  onUrlChange={(v) => onChange(patchSection(state, "brand", { logoUrl: v }))}
+                  showToggle={false}
+                  previewShape="square"
+                  testIdPrefix="field-brand-logo"
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={summaryStyle}>{t("brand.seriesLabel")}</span>
+                <TextInput
+                  testId="field-brand-series"
+                  value={state.brand.seriesName}
+                  onChange={(v) => onChange(patchSection(state, "brand", { seriesName: v }))}
+                  placeholder={t("brand.seriesPlaceholder")}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={summaryStyle}>{t("brand.presenterLinesLabel")}</span>
+                <textarea
+                  data-testid="field-brand-presenter-lines"
+                  value={state.brand.presenterLines.join("\n")}
+                  onChange={(e) =>
+                    onChange(
+                      patchSection(state, "brand", { presenterLines: e.target.value.split("\n") }),
+                    )
+                  }
+                  placeholder={t("brand.presenterLinesPlaceholder")}
+                  rows={3}
+                  spellCheck={false}
+                  style={{ ...workbenchInputStyle, height: "auto", padding: "8px 10px", resize: "vertical", lineHeight: 1.5 }}
+                />
+              </div>
+            </div>
           </AssetRow>
           {/* Studio default — snapshot the identity above for reuse across streams. */}
           <div

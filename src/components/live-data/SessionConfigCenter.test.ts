@@ -177,6 +177,11 @@ test("Studio Profile persists reusable identity separately from stream config", 
   assert.match(html, /data-testid="settings-tab-session"/);
   assert.match(html, /data-testid="field-author"/);
   assert.match(html, /data-testid="field-profile-avatar-visible"/);
+  // The lecture brand (logo / series / presenter lines) edits in the same
+  // group, right above the save action that snapshots it.
+  assert.match(html, /data-testid="field-brand-logo-upload"/);
+  assert.match(html, /data-testid="field-brand-series"/);
+  assert.match(html, /data-testid="field-brand-presenter-lines"/);
   assert.match(html, /data-testid="studio-profile-save"/);
   assert.match(html, /data-testid="studio-profile-clear"/);
   assert.doesNotMatch(html, /data-testid="field-studio-profile-author"/);
