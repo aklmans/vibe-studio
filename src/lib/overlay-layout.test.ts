@@ -74,6 +74,14 @@ test("getLayout resolves the default layout", () => {
   equal(getLayout("workbench"), WORKBENCH_LAYOUT);
   equal(isLayoutId("lecture-left"), true);
   equal(isLayoutId("nope"), false);
+  // Untrusted input (localStorage / live-state PATCH / ?layout=) flows through
+  // this guard: Object.prototype keys must not pass, or getLayout returns a
+  // non-layout and every OverlayCanvas render crashes.
+  for (const hostile of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+    equal(isLayoutId(hostile), false, `${hostile} must be rejected`);
+  }
+  equal(isLayoutId(42), false);
+  equal(isLayoutId(null), false);
 });
 
 test("the camera cutout is derived from its panel's chrome, never written twice", () => {

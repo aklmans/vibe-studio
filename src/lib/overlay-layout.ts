@@ -178,7 +178,10 @@ export const LAYOUTS: Record<LayoutId, OverlayLayout> = {
 export const LAYOUT_IDS = Object.keys(LAYOUTS) as LayoutId[];
 
 export function isLayoutId(value: unknown): value is LayoutId {
-  return typeof value === "string" && value in LAYOUTS;
+  // Own-property check, NOT `in`: this guards untrusted input (localStorage,
+  // the live-state PATCH body, ?layout=), where prototype keys like
+  // "constructor" must not resolve to a non-layout object and crash renders.
+  return typeof value === "string" && Object.hasOwn(LAYOUTS, value);
 }
 
 export function getLayout(id: LayoutId = DEFAULT_LAYOUT_ID): OverlayLayout {

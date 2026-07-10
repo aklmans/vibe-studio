@@ -281,6 +281,33 @@ test("normalizeOverlayState keeps cover images compatible and replaceable", () =
   assert.equal(replaced.cover.sceneUrl, "data:image/png;base64,BBB");
 });
 
+test("normalizeOverlayState defaults brand + layout and rejects hostile layout values", () => {
+  // State saved before the lecture layouts has neither key.
+  const legacy = normalizeOverlayState({ theme: "dark" }, DEFAULT_STATE);
+  assert.equal(legacy.layout, DEFAULT_STATE.layout);
+  assert.deepEqual(legacy.brand, DEFAULT_STATE.brand);
+
+  // A valid layout survives; prototype keys and garbage fall back to default —
+  // this input can arrive via localStorage or the live-state PATCH body.
+  assert.equal(normalizeOverlayState({ layout: "lecture-left" }, DEFAULT_STATE).layout, "lecture-left");
+  for (const hostile of ["constructor", "__proto__", "toString", 42, {}]) {
+    assert.equal(
+      normalizeOverlayState({ layout: hostile }, DEFAULT_STATE).layout,
+      DEFAULT_STATE.layout,
+      `layout ${String(hostile)} must fall back`,
+    );
+  }
+
+  // Brand fields normalize per-field; presenterLines drops non-strings.
+  const brand = normalizeOverlayState(
+    { brand: { logoUrl: 7, seriesName: "Series", presenterLines: ["a", 1, "b"] } },
+    DEFAULT_STATE,
+  ).brand;
+  assert.equal(brand.logoUrl, DEFAULT_STATE.brand.logoUrl);
+  assert.equal(brand.seriesName, "Series");
+  assert.deepEqual(brand.presenterLines, ["a", "b"]);
+});
+
 test("normalizeOverlayState migrates legacy neon/editorial themes to dark/light", () => {
   const fromNeon = normalizeOverlayState({ theme: "neon" }, DEFAULT_STATE);
   assert.equal(fromNeon.theme, "dark");

@@ -51,11 +51,15 @@ export default function ObsCompositionControls({
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Region rects come from the layout, so a layout change means re-probing.
   const layoutId = state.layout;
+  // Only the latest probe may write state: rapid layout switches (or Retry) can
+  // resolve out of order, and an apply supersedes any in-flight probe.
+  const probeSeq = useRef(0);
   const refreshStatus = useCallback(() => {
+    const seq = ++probeSeq.current;
     setConnection("checking");
     void fetchObsCompositionStatus(layoutId).then((status) => {
+      if (seq !== probeSeq.current) return;
       setConnection(status.connected ? "connected" : "disconnected");
       setReason(status.reason ?? null);
       setMissingSources(status.missingSources ?? []);
@@ -63,12 +67,12 @@ export default function ObsCompositionControls({
     });
   }, [layoutId]);
 
+  // The notice's auto-dismiss must survive layout changes; unmount-only cleanup.
   useEffect(() => {
-    refreshStatus();
     return () => {
       if (noticeTimer.current) clearTimeout(noticeTimer.current);
     };
-  }, [refreshStatus]);
+  }, []);
 
   const showNotice = (kind: "ok" | "error", text: string) => {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
@@ -82,6 +86,7 @@ export default function ObsCompositionControls({
   const apply = useCallback(
     (next: CompositionState) => {
       if (applying) return;
+      probeSeq.current++;
       const previous = composition;
       setComposition(next);
       setApplying(true);
@@ -116,6 +121,24 @@ export default function ObsCompositionControls({
     },
     [applying, composition, onChange, state, t],
   );
+
+  // Mount: probe OBS to reflect reality. Layout change: the sources are still
+  // parked on the OLD layout's rects, so probing against the new rects would
+  // misinfer the regions and silently overwrite the user's composition —
+  // instead, re-APPLY the current composition so the captures move to the new
+  // slots (the layout "drives the OBS slots", as the picker hint promises).
+  // When OBS isn't connected (or an apply is mid-flight) fall back to a probe.
+  const prevLayoutRef = useRef<typeof layoutId | null>(null);
+  useEffect(() => {
+    const prev = prevLayoutRef.current;
+    if (prev === layoutId) return; // refired for other dep changes — not a layout change
+    prevLayoutRef.current = layoutId;
+    if (prev !== null && connection === "connected" && !applying) {
+      apply(composition);
+    } else {
+      refreshStatus();
+    }
+  }, [layoutId, connection, applying, composition, apply, refreshStatus]);
 
   const selectMain = (main: MainSource) =>
     apply(normalizeComposition({ ...composition, main }, "main"));
