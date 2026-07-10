@@ -8,6 +8,7 @@ const LAYOUT_LABEL: Record<LayoutId, TranslationKey> = {
   workbench: "layout.workbench",
   "lecture-left": "layout.lectureLeft",
   "lecture-right": "layout.lectureRight",
+  mobile: "layout.mobile",
 };
 
 /**

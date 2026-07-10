@@ -30,13 +30,17 @@ export type RegionId = "main" | "camera";
 /** Chrome the overlay itself draws. A layout declares which ones it has. */
 export type PanelId = "header" | "sidebar" | "intro" | "bottomBar" | "cameraPanel";
 
-export type LayoutId = "workbench" | "lecture-left" | "lecture-right";
+export type LayoutId = "workbench" | "lecture-left" | "lecture-right" | "mobile";
 
 export interface OverlayLayout {
   id: LayoutId;
   canvas: { width: number; height: number };
-  /** Transparent cutouts. OBS source transforms derive from these. */
-  regions: Record<RegionId, Rect>;
+  /**
+   * Transparent cutouts. OBS source transforms derive from these. `camera` is
+   * absent on layouts without a separate camera slot (mobile: the phone app's
+   * own video fills the main region, and there is no local-OBS composition).
+   */
+  regions: { main: Rect; camera?: Rect };
   /** Absent key = this layout has no such panel (drives the visibility UI). */
   panels: Partial<Record<PanelId, Rect>>;
 }
@@ -165,6 +169,40 @@ export const LECTURE_RIGHT_LAYOUT = lectureLayout(
   LECTURE_RIGHT_MAIN_X,
 );
 
+// ─── mobile ─────────────────────────────────────────────────────────────────
+//
+// Portrait 1080×1920 for phone-app / Livehime vertical streams: a header band,
+// one large video cutout (the phone's camera or screen fills it from beneath —
+// there is no separate camera slot and no local-OBS composition), and the
+// presenter card at the bottom. Exported as a frame or served as a browser
+// source; streaming itself stays in the phone app.
+
+const MOBILE_INTRO_HEIGHT = 320;
+const MOBILE_CONTENT_TOP = EDGE + HEADER_HEIGHT + GAP; // 144
+const MOBILE_INTRO_TOP = 1920 - EDGE - MOBILE_INTRO_HEIGHT; // 1576
+
+export const MOBILE_LAYOUT: OverlayLayout = {
+  id: "mobile",
+  canvas: { width: 1080, height: 1920 },
+  regions: {
+    main: {
+      left: EDGE,
+      top: MOBILE_CONTENT_TOP,
+      width: 1080 - EDGE * 2, // 1032
+      height: MOBILE_INTRO_TOP - GAP - MOBILE_CONTENT_TOP, // 1408
+    },
+  },
+  panels: {
+    header: { left: EDGE, top: EDGE, width: 1080 - EDGE * 2, height: HEADER_HEIGHT },
+    intro: {
+      left: EDGE,
+      top: MOBILE_INTRO_TOP,
+      width: 1080 - EDGE * 2,
+      height: MOBILE_INTRO_HEIGHT,
+    },
+  },
+};
+
 // ─── registry ───────────────────────────────────────────────────────────────
 
 export const DEFAULT_LAYOUT_ID: LayoutId = "workbench";
@@ -173,6 +211,7 @@ export const LAYOUTS: Record<LayoutId, OverlayLayout> = {
   workbench: WORKBENCH_LAYOUT,
   "lecture-left": LECTURE_LEFT_LAYOUT,
   "lecture-right": LECTURE_RIGHT_LAYOUT,
+  mobile: MOBILE_LAYOUT,
 };
 
 export const LAYOUT_IDS = Object.keys(LAYOUTS) as LayoutId[];

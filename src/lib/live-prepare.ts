@@ -78,7 +78,8 @@ export const DEFAULT_SCENE_ORDER = [
 // workbench layout's rects into the offline scene collection; the live
 // obs-websocket path (obs-composition.ts) reads the same rects.
 const MAIN_SCREEN_FRAME = WORKBENCH_LAYOUT.regions.main;
-const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera;
+// Prepare only manages the 16:9 workbench scene, which always has a camera slot.
+const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera!;
 export const OBS_BOUNDS_SCALE_INNER = 2;
 export const OBS_BOUNDS_SCALE_OUTER = 3;
 // OBS alignment bitmask: LEFT(1) | TOP(4) — positions are top-left anchored.

@@ -40,11 +40,17 @@ export async function exportElementAsPng(
   }
 }
 
-export async function exportFullOverlay(canvasEl: HTMLElement): Promise<void> {
+export async function exportFullOverlay(
+  canvasEl: HTMLElement,
+  canvas: { width: number; height: number } = OVERLAY_CANVAS_DIMENSIONS,
+): Promise<void> {
+  // The overlay surface is layout-sized: 16:9 layouts keep the classic filename
+  // and dimensions; the portrait mobile layout exports as its own asset.
+  const portrait = canvas.height > canvas.width;
   await exportElementAsPng(canvasEl, {
-    filename: "vibe-coding-overlay.png",
-    width: OVERLAY_CANVAS_DIMENSIONS.width,
-    height: OVERLAY_CANVAS_DIMENSIONS.height,
+    filename: portrait ? "vibe-coding-overlay-vertical.png" : "vibe-coding-overlay.png",
+    width: canvas.width,
+    height: canvas.height,
     backgroundColor: null,
   });
 }

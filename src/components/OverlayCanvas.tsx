@@ -100,7 +100,9 @@ function overlayBackdropPath(
   const { width, height } = layout.canvas;
   const cutouts = [
     mainScreenVisible ? slotCutoutPath(layout.regions.main) : null,
-    transparentCameraSlot ? slotCutoutPath(layout.regions.camera) : null,
+    transparentCameraSlot && layout.regions.camera
+      ? slotCutoutPath(layout.regions.camera)
+      : null,
   ].filter(Boolean);
 
   return `M0 0H${width}V${height}H0Z${cutouts.length > 0 ? ` ${cutouts.join(" ")}` : ""}`;

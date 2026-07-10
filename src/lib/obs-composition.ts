@@ -181,18 +181,22 @@ export function compositionOps(
   state: CompositionState,
   layout: OverlayLayout = WORKBENCH_LAYOUT,
 ): CompositionOps {
+  // A layout without a camera region (mobile) has nowhere to park a camera
+  // source: its choice is ignored, and the avatar theme frame stays off.
+  const cameraRegion = layout.regions.camera ?? null;
   const mainSourceName = CAPTURE_SOURCE_NAME[state.main];
-  const camChoice = cameraCapture(state.camera);
+  const camChoice = cameraRegion ? cameraCapture(state.camera) : null;
   const camSourceName = camChoice ? CAPTURE_SOURCE_NAME[camChoice] : null;
 
   // A capture is enabled iff it is assigned to a region.
   const assigned = new Set<string>([mainSourceName]);
   if (camSourceName) assigned.add(camSourceName);
 
+  const avatarTheme = cameraRegion !== null && state.camera === "avatar";
   const enables: SourceEnableOp[] = [
     // Theme: exactly one overlay frame browser source is visible.
-    { source: AVATAR_FRAME_SOURCE, enabled: state.camera === "avatar" },
-    { source: EMPTY_FRAME_SOURCE, enabled: state.camera !== "avatar" },
+    { source: AVATAR_FRAME_SOURCE, enabled: avatarTheme },
+    { source: EMPTY_FRAME_SOURCE, enabled: !avatarTheme },
     // Captures.
     ...MANAGED_CAPTURES.map((choice) => {
       const source = CAPTURE_SOURCE_NAME[choice];
@@ -204,10 +208,10 @@ export function compositionOps(
     { source: mainSourceName, transform: slotTransform(layout.regions.main, "contain") },
   ];
   // camSourceName === mainSourceName would be a conflict; guard defensively.
-  if (camSourceName && camSourceName !== mainSourceName) {
+  if (cameraRegion && camSourceName && camSourceName !== mainSourceName) {
     transforms.push({
       source: camSourceName,
-      transform: slotTransform(layout.regions.camera, "cover"),
+      transform: slotTransform(cameraRegion, "cover"),
     });
   }
 
@@ -244,6 +248,7 @@ function regionForCapture(
   positionY: number,
 ): RegionId {
   const { main, camera } = layout.regions;
+  if (!camera) return "main"; // single-region layout: everything is the main slot
   if (positionX === null) {
     return positionY < (main.top + camera.top) / 2 ? "main" : "camera";
   }
@@ -272,11 +277,13 @@ export function inferCompositionState(
     }
   }
 
-  const camera: CameraSource = probe.avatarFrameEnabled
-    ? "avatar"
-    : cameraCap && isCameraSource(cameraCap)
-      ? cameraCap
-      : "off";
+  const camera: CameraSource = !layout.regions.camera
+    ? "off" // no camera region in this layout; a stale avatar frame is noise
+    : probe.avatarFrameEnabled
+      ? "avatar"
+      : cameraCap && isCameraSource(cameraCap)
+        ? cameraCap
+        : "off";
 
   return normalizeComposition({ main, camera }, "main");
 }

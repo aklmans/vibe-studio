@@ -12,6 +12,7 @@ import {
 } from "../../lib/live-state";
 import type { ObsCameraMode } from "../../lib/obs-camera";
 import { OBS_SOURCES, type ObsSource } from "../../lib/obs-sources";
+import { getLayout } from "../../lib/overlay-layout";
 
 function parseLiveSnapshot(
   payload: string,
@@ -52,7 +53,10 @@ export default function ObsSourceClient({
       state: DEFAULT_STATE_BY_LOCALE.zh,
     }),
   );
-  const dimensions = OBS_SOURCES[source];
+  // The full overlay is layout-sized (portrait on mobile) and follows the
+  // pushed state; sidebar / bottom-bar stay fixed workbench-slice sizes.
+  const dimensions =
+    source === "overlay" ? getLayout(snapshot.state.layout).canvas : OBS_SOURCES[source];
 
   useEffect(() => {
     document.documentElement.dataset.obsSource = source;

@@ -74,8 +74,8 @@ function fakeConnection(items: Record<string, FakeItem>) {
 
 const MAIN_X = WORKBENCH_LAYOUT.regions.main.left;
 const MAIN_Y = WORKBENCH_LAYOUT.regions.main.top;
-const SLOT_X = WORKBENCH_LAYOUT.regions.camera.left;
-const SLOT_Y = WORKBENCH_LAYOUT.regions.camera.top;
+const SLOT_X = WORKBENCH_LAYOUT.regions.camera!.left;
+const SLOT_Y = WORKBENCH_LAYOUT.regions.camera!.top;
 
 function fullScene(): Record<string, FakeItem> {
   return {
@@ -127,8 +127,8 @@ test("probeComposition resolves the column vs the slides under a lecture layout"
   // Park the sources where a lecture-left apply would have put them.
   scene["Vibe Main Display Capture"].positionX = regions.main.left;
   scene["Vibe Main Display Capture"].positionY = regions.main.top;
-  scene["Vibe Camera Capture"].positionX = regions.camera.left;
-  scene["Vibe Camera Capture"].positionY = regions.camera.top;
+  scene["Vibe Camera Capture"].positionX = regions.camera!.left;
+  scene["Vibe Camera Capture"].positionY = regions.camera!.top;
 
   const { connection } = fakeConnection(scene);
   const probe = await probeComposition(connection, LECTURE_LEFT_LAYOUT);

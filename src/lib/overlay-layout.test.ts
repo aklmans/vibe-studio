@@ -7,6 +7,7 @@ import {
   LAYOUT_IDS,
   LECTURE_LEFT_LAYOUT,
   LECTURE_RIGHT_LAYOUT,
+  MOBILE_LAYOUT,
   WORKBENCH_LAYOUT,
   cameraCutoutFor,
   getLayout,
@@ -138,11 +139,27 @@ test("every layout keeps its rects on-canvas and its two regions apart", () => {
       ok(right(r) <= width && bottom(r) <= height, `${id}: no rect overflows the canvas`);
     }
     const { main, camera } = layout.regions;
-    const disjoint =
-      right(main) <= camera.left ||
-      right(camera) <= main.left ||
-      bottom(main) <= camera.top ||
-      bottom(camera) <= main.top;
-    ok(disjoint, `${id}: the main and camera regions must not overlap`);
+    if (camera) {
+      const disjoint =
+        right(main) <= camera.left ||
+        right(camera) <= main.left ||
+        bottom(main) <= camera.top ||
+        bottom(camera) <= main.top;
+      ok(disjoint, `${id}: the main and camera regions must not overlap`);
+    } else {
+      // A camera-less layout must not draw camera chrome it can't fill.
+      equal(layout.panels.cameraPanel, undefined, `${id}: no camera panel without a camera region`);
+    }
   }
+});
+
+test("mobile is a portrait single-region layout: header, one video cutout, intro", () => {
+  deepStrictEqual(MOBILE_LAYOUT.canvas, { width: 1080, height: 1920 });
+  deepStrictEqual(MOBILE_LAYOUT.panels.header, { left: 24, top: 24, width: 1032, height: 96 });
+  deepStrictEqual(MOBILE_LAYOUT.regions.main, { left: 24, top: 144, width: 1032, height: 1408 });
+  deepStrictEqual(MOBILE_LAYOUT.panels.intro, { left: 24, top: 1576, width: 1032, height: 320 });
+  equal(MOBILE_LAYOUT.regions.camera, undefined, "the phone's own video fills main — no camera slot");
+  equal(MOBILE_LAYOUT.panels.sidebar, undefined);
+  equal(MOBILE_LAYOUT.panels.bottomBar, undefined);
+  equal(MOBILE_LAYOUT.panels.cameraPanel, undefined);
 });

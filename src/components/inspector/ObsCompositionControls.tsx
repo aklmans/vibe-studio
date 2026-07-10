@@ -18,6 +18,7 @@ import {
   applyObsComposition,
   fetchObsCompositionStatus,
 } from "../../lib/obs-composition-client";
+import { getLayout } from "../../lib/overlay-layout";
 import { WorkbenchButton } from "../shared/Field";
 import ObsCompositionPresets from "./ObsCompositionPresets";
 
@@ -52,6 +53,11 @@ export default function ObsCompositionControls({
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const layoutId = state.layout;
+  // A layout without a camera region (mobile) never talks to OBS from here: the
+  // vertical video comes from the phone app. The component stays mounted so the
+  // layout history still tracks — switching workbench → mobile → lecture must
+  // re-park the sources on arrival exactly like workbench → lecture does.
+  const obsCapable = Boolean(getLayout(layoutId).regions.camera);
   // Only the latest probe may write state: rapid layout switches (or Retry) can
   // resolve out of order, and an apply supersedes any in-flight probe.
   const probeSeq = useRef(0);
@@ -133,12 +139,13 @@ export default function ObsCompositionControls({
     const prev = prevLayoutRef.current;
     if (prev === layoutId) return; // refired for other dep changes — not a layout change
     prevLayoutRef.current = layoutId;
+    if (!obsCapable) return; // inert layout: no probe, no apply — just record it
     if (prev !== null && connection === "connected" && !applying) {
       apply(composition);
     } else {
       refreshStatus();
     }
-  }, [layoutId, connection, applying, composition, apply, refreshStatus]);
+  }, [layoutId, obsCapable, connection, applying, composition, apply, refreshStatus]);
 
   const selectMain = (main: MainSource) =>
     apply(normalizeComposition({ ...composition, main }, "main"));
@@ -177,6 +184,23 @@ export default function ObsCompositionControls({
     ],
     [composition.main, sourceMissing, t],
   );
+
+  if (!obsCapable) {
+    return (
+      <p
+        data-testid="obs-composition-inert"
+        style={{
+          margin: 0,
+          fontFamily: mono,
+          fontSize: 11,
+          lineHeight: 1.6,
+          color: UI_COLORS.textMuted,
+        }}
+      >
+        {t("composition.notForLayout")}
+      </p>
+    );
+  }
 
   const controlsActive = connection === "connected";
   const statusText =

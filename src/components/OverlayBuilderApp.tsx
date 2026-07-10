@@ -28,8 +28,9 @@ import {
 } from "../lib/design-tokens";
 import {
   COVER_CANVAS_DIMENSIONS,
-  OVERLAY_CANVAS_DIMENSIONS,
+  POSTER_CANVAS_DIMENSIONS,
 } from "../lib/canvas-dimensions";
+import { getLayout } from "../lib/overlay-layout";
 import { produceState } from "../lib/state";
 import { exportForTab } from "../lib/export-targets";
 import { publishLiveState } from "../lib/live-state-client";
@@ -418,6 +419,10 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       });
   }, [applyLoadedLiveData, demoMode, liveDateKey]);
 
+  // The overlay surface is layout-sized (portrait on mobile). Declared before
+  // the export callbacks whose dependency arrays read it during render.
+  const overlayCanvas = getLayout(state.layout).canvas;
+
   const handleExport = useCallback(
     async (
       type: "overlay" | "sidebar" | "bottom-bar" | "cover" | "poster" | "wallpaper" | "all",
@@ -442,8 +447,8 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("overlay", () => exportFullOverlay(el));
-  }, [handleExport, t]);
+    handleExport("overlay", () => exportFullOverlay(el, overlayCanvas));
+  }, [handleExport, overlayCanvas, t]);
 
   const handleExportSidebar = useCallback(() => {
     const el = exportSidebarRef.current;
@@ -513,7 +518,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       if (!overlay || !cover || !poster || !sidebar || !bottomBar) {
         throw new Error(t("export.notReady"));
       }
-      await exportFullOverlay(overlay);
+      await exportFullOverlay(overlay, overlayCanvas);
       await exportCover(cover);
       await exportPoster(poster);
       for (const preset of WALLPAPER_PRESETS) {
@@ -529,7 +534,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       await exportSidebar(sidebar);
       await exportBottomBar(bottomBar);
     });
-  }, [handleExport, t]);
+  }, [handleExport, overlayCanvas, t]);
 
   const handleSaveStudioProfile = useCallback((profile: StudioProfile) => {
     saveStudioProfile(profile);
@@ -607,21 +612,27 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
     );
   const isCoverTab = previewTab === "cover";
   const isWallpaperTab = previewTab === "wallpaper";
+  const isPosterTab = previewTab === "poster";
+  // Poster keeps its own fixed canvas and must not follow the overlay layout.
   const previewW = isWallpaperTab
     ? wallpaperPreset.width
     : isCoverTab
       ? COVER_CANVAS_DIMENSIONS.width
-      : OVERLAY_CANVAS_DIMENSIONS.width;
+      : isPosterTab
+        ? POSTER_CANVAS_DIMENSIONS.width
+        : overlayCanvas.width;
   const previewH = isWallpaperTab
     ? wallpaperPreset.height
     : isCoverTab
       ? COVER_CANVAS_DIMENSIONS.height
-      : OVERLAY_CANVAS_DIMENSIONS.height;
+      : isPosterTab
+        ? POSTER_CANVAS_DIMENSIONS.height
+        : overlayCanvas.height;
 
   const tabBadge = (() => {
     switch (previewTab) {
       case "overlay":
-        return t("tabBadge.overlay");
+        return `${t("tabBadge.overlay")} · ${overlayCanvas.width}×${overlayCanvas.height}`;
       case "cover":
         return t("tabBadge.cover");
       case "poster":
@@ -639,7 +650,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
           No CSS transform or scaling — native resolution only.
       ─────────────────────────────────────────────────────────────────────── */}
 
-      {/* Full 1920×1080 overlay export */}
+      {/* Full layout-sized overlay export (16:9 layouts or portrait mobile) */}
       <div style={exportStageStyle}>
         <OverlayCanvas ref={exportOverlayRef} state={state} />
       </div>

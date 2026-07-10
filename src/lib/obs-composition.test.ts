@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   LECTURE_LEFT_LAYOUT,
   LECTURE_RIGHT_LAYOUT,
+  MOBILE_LAYOUT,
   WORKBENCH_LAYOUT,
   type OverlayLayout,
 } from "./overlay-layout";
@@ -26,7 +27,8 @@ import {
 } from "./obs-composition";
 
 const MAIN_SCREEN_FRAME = WORKBENCH_LAYOUT.regions.main;
-const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera;
+// The workbench always has a camera region; its geometry test pins it.
+const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera!;
 
 function enabledMap(ops: ReturnType<typeof compositionOps>): Record<string, boolean> {
   return Object.fromEntries(ops.enables.map((op) => [op.source, op.enabled]));
@@ -219,7 +221,8 @@ test("inferCompositionState tells the column from the slides in the lecture layo
   // These layouts put main and camera side by side, so a Y-only split cannot
   // separate them — the probe's positionX is what makes this work.
   for (const layout of [LECTURE_LEFT_LAYOUT, LECTURE_RIGHT_LAYOUT] as OverlayLayout[]) {
-    const { main, camera } = layout.regions;
+    const main = layout.regions.main;
+    const camera = layout.regions.camera!;
     deepStrictEqual(
       inferCompositionState(
         {
@@ -266,7 +269,7 @@ test("regions that share a top are separated by X, not Y", () => {
           "display-1": at(sideBySide.regions.main),
           "display-2": off,
           app: off,
-          camera: at(sideBySide.regions.camera),
+          camera: at(sideBySide.regions.camera!),
         },
       },
       sideBySide,
@@ -299,10 +302,45 @@ test("compositionOps parks sources on the given layout's regions", () => {
 
   equal(slides.positionX, LECTURE_LEFT_LAYOUT.regions.main.left);
   equal(slides.positionY, LECTURE_LEFT_LAYOUT.regions.main.top);
-  equal(webcam.positionX, LECTURE_LEFT_LAYOUT.regions.camera.left);
-  equal(webcam.positionY, LECTURE_LEFT_LAYOUT.regions.camera.top);
+  equal(webcam.positionX, LECTURE_LEFT_LAYOUT.regions.camera!.left);
+  equal(webcam.positionY, LECTURE_LEFT_LAYOUT.regions.camera!.top);
   // The column sits left of the slides in this layout.
   equal(webcam.positionX < slides.positionX, true);
+});
+
+test("a camera-less layout parks only the main capture and keeps the theme frames plain", () => {
+  // Mobile has no camera region: the camera choice is ignored, no camera
+  // transform is emitted, and the avatar theme frame must not switch on.
+  const ops = compositionOps({ main: "display-1", camera: "avatar" }, MOBILE_LAYOUT);
+  deepStrictEqual(enabledMap(ops), {
+    "Vibe Overlay Avatar Frame": false,
+    "Vibe Overlay Empty Frame": true,
+    "Vibe Main Display Capture": true,
+    "Vibe Second Screen Capture": false,
+    "Vibe Main App Capture": false,
+    "Vibe Camera Capture": false,
+  });
+  equal(ops.transforms.length, 1);
+  equal(ops.transforms[0].source, CAPTURE_SOURCE_NAME["display-1"]);
+  equal(ops.transforms[0].transform.positionX, MOBILE_LAYOUT.regions.main.left);
+
+  // Inference mirrors it: everything reads as main; camera is off even if a
+  // stale avatar frame is still enabled in the scene.
+  deepStrictEqual(
+    inferCompositionState(
+      {
+        avatarFrameEnabled: true,
+        captures: {
+          "display-1": at(MOBILE_LAYOUT.regions.main),
+          "display-2": off,
+          app: off,
+          camera: off,
+        },
+      },
+      MOBILE_LAYOUT,
+    ),
+    { main: "display-1", camera: "off" },
+  );
 });
 
 test("slotTransform sends boundsType as a string enum, not the scene-JSON integer", () => {
