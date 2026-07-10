@@ -1,5 +1,4 @@
 import type { OverlayState } from "../../types";
-import { segmentsForLayoutSwitch } from "../../lib/bottomBar";
 import { LAYOUT_IDS, type LayoutId } from "../../lib/overlay-layout";
 import type { TranslationKey } from "../../lib/i18n";
 import { useLocale } from "../../hooks/useLocale";
@@ -32,15 +31,9 @@ export default function LayoutControls({
       testId="layout-picker"
       active={state.layout}
       onSelect={(value) => {
-        const layout = value as LayoutId;
-        // Follow the layout with its default bottom-bar set — but only while
-        // the segments are still an untouched default; a hand-edited bar stays.
-        const segments = segmentsForLayoutSwitch(state.bottomBar.segments, layout);
-        onChange({
-          ...state,
-          layout,
-          ...(segments ? { bottomBar: { ...state.bottomBar, segments } } : {}),
-        });
+        // Each layout reads its OWN bar profile, so switching layouts never
+        // rewrites anyone's segments — just which set is active.
+        onChange({ ...state, layout: value as LayoutId });
       }}
       options={LAYOUT_IDS.map((id) => ({
         value: id,

@@ -74,6 +74,8 @@ export const liveBottomBarSegments = pgTable("live_bottom_bar_segments", {
   sessionId: uuid("session_id")
     .notNull()
     .references(() => liveSessions.id, { onDelete: "cascade" }),
+  // Which bar data set the row belongs to; pre-split rows were the workbench's.
+  profile: varchar("profile", { length: 16 }).notNull().default("workbench"),
   sortOrder: integer("sort_order").notNull(),
   kind: varchar("kind", { length: 24 }).notNull(),
   sectionIndex: integer("section_index"),

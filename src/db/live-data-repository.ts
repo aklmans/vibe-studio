@@ -1,8 +1,41 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { OverlayState } from "../types";
 import { DEFAULT_STATE_BY_LOCALE } from "../types";
-import type { BottomBarSlot } from "../lib/bottomBar";
+import {
+  LECTURE_DEFAULT_SEGMENTS,
+  MOBILE_DEFAULT_SEGMENTS,
+  WORKBENCH_DEFAULT_SEGMENTS,
+  type BottomBarSlot,
+} from "../lib/bottomBar";
 import type { Locale } from "../lib/i18n";
+import type { BarProfileId } from "../lib/overlay-layout";
+
+const BAR_PROFILES = ["workbench", "lecture", "mobile"] as const;
+
+/** Rows → per-profile record. Pre-split rows default to "workbench" (via the
+ *  column default); a profile with no rows falls back to its default set. */
+function segmentsByProfileFromRows(
+  rows: { profile: string; sortOrder: number; kind: string; sectionIndex: number | null; title: string | null; text: string | null; id: string; sessionId: string }[],
+): Record<BarProfileId, BottomBarSlot[]> {
+  const grouped: Record<BarProfileId, BottomBarSlot[]> = {
+    workbench: [],
+    lecture: [],
+    mobile: [],
+  };
+  for (const row of rows) {
+    const profile = (BAR_PROFILES as readonly string[]).includes(row.profile)
+      ? (row.profile as BarProfileId)
+      : "workbench";
+    grouped[profile].push(segmentFromRow(row as LiveBottomBarSegmentRow));
+  }
+  if (grouped.workbench.length === 0)
+    grouped.workbench = WORKBENCH_DEFAULT_SEGMENTS.map((slot) => ({ ...slot }));
+  if (grouped.lecture.length === 0)
+    grouped.lecture = LECTURE_DEFAULT_SEGMENTS.map((slot) => ({ ...slot }));
+  if (grouped.mobile.length === 0)
+    grouped.mobile = MOBILE_DEFAULT_SEGMENTS.map((slot) => ({ ...slot }));
+  return grouped;
+}
 import {
   normalizeLiveDataSnapshot,
   overlayStateToLiveData,
@@ -98,6 +131,7 @@ function segmentFromRow(row: LiveBottomBarSegmentRow): BottomBarSlot {
 
 function segmentToInsert(
   sessionId: string,
+  profile: BarProfileId,
   segment: BottomBarSlot,
   sortOrder: number,
 ): typeof liveBottomBarSegments.$inferInsert {
@@ -105,6 +139,7 @@ function segmentToInsert(
     case "progress":
       return {
         sessionId,
+        profile,
         sortOrder,
         kind: segment.kind,
         sectionIndex: segment.sectionIndex,
@@ -112,6 +147,7 @@ function segmentToInsert(
     case "text":
       return {
         sessionId,
+        profile,
         sortOrder,
         kind: segment.kind,
         title: segment.title,
@@ -120,6 +156,7 @@ function segmentToInsert(
     case "social":
       return {
         sessionId,
+        profile,
         sortOrder,
         kind: segment.kind,
         // Reuse the generic index column so no migration is needed.
@@ -131,6 +168,7 @@ function segmentToInsert(
     case "agenda":
       return {
         sessionId,
+        profile,
         sortOrder,
         kind: segment.kind,
       };
@@ -194,7 +232,7 @@ async function readLiveDataBySessionId(
     })),
     bottomBar: {
       visible: sessionRow.bottomBarVisible,
-      segments: segmentRows.map(segmentFromRow),
+      segments: segmentsByProfileFromRows(segmentRows),
     },
     stackItems: stackRows.map((item) => item.label),
   });
@@ -246,12 +284,13 @@ async function replaceLiveDataChildren(
     );
   }
 
-  if (liveData.bottomBar.segments.length > 0) {
-    await db.insert(liveBottomBarSegments).values(
-      liveData.bottomBar.segments.map((segment, sortOrder) =>
-        segmentToInsert(sessionId, segment, sortOrder),
-      ),
-    );
+  const segmentValues = BAR_PROFILES.flatMap((profile) =>
+    liveData.bottomBar.segments[profile].map((segment, sortOrder) =>
+      segmentToInsert(sessionId, profile, segment, sortOrder),
+    ),
+  );
+  if (segmentValues.length > 0) {
+    await db.insert(liveBottomBarSegments).values(segmentValues);
   }
 }
 

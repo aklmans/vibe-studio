@@ -1,8 +1,9 @@
 import type { OverlayState } from "../types";
-import { patchSection } from "../lib/state";
 import {
+  activeBarSegments,
   getBottomBarKindOptions,
   defaultSlotForKind,
+  withActiveBarSegments,
   type BottomBarKind,
   type BottomBarSlot,
 } from "../lib/bottomBar";
@@ -29,14 +30,18 @@ export default function BottomBarSegmentEditor({
   index,
 }: BottomBarSegmentEditorProps) {
   const { locale, t } = useLocale();
-  const slot = state.bottomBar.segments[index];
+  // Edits the ACTIVE layout's bar profile — each layout owns its own bar.
+  const segments = activeBarSegments(state);
+  const slot = segments[index];
   if (!slot) return null;
 
   const writeSlot = (next: BottomBarSlot) => {
-    const segments = state.bottomBar.segments.map((s, i) =>
-      i === index ? next : s,
+    onChange(
+      withActiveBarSegments(
+        state,
+        segments.map((s, i) => (i === index ? next : s)),
+      ),
     );
-    onChange(patchSection(state, "bottomBar", { segments }));
   };
 
   const setKind = (kind: BottomBarKind) => {

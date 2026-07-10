@@ -20,6 +20,15 @@ import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import LayoutControls from "../inspector/LayoutControls";
 import AgendaDrivePanel from "../inspector/AgendaDrivePanel";
 import { driveAgendaTo } from "../../lib/agenda";
+import { activeBarProfile, activeBarSegments } from "../../lib/bottomBar";
+import type { BarProfileId } from "../../lib/overlay-layout";
+
+/** Which bar you're editing follows the active scene layout. */
+const BAR_PROFILE_LABEL: Record<BarProfileId, TranslationKey> = {
+  workbench: "barProfile.workbench",
+  lecture: "barProfile.lecture",
+  mobile: "barProfile.mobile",
+};
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import {
@@ -239,7 +248,8 @@ export default function SettingsView({
   const stackSummary = `${state.stack.items.length} ${t("settingsSummary.items")}`;
   const badgesSummary = `${state.cover.badges.length} · ${state.cover.badges.filter((b) => b.visible).length} ${t("settingsSummary.visible")}`;
   const socialsSummary = `${state.cover.socials.length} · ${state.cover.socials.filter((s) => s.visible).length} ${t("settingsSummary.visible")}`;
-  const bottomBarSummary = `${state.bottomBar.segments.length} ${t("settingsSummary.segments")} · ${state.bottomBar.segments.map((s) => s.kind).join(" / ")}`;
+  const barSegments = activeBarSegments(state);
+  const bottomBarSummary = `${barSegments.length} ${t("settingsSummary.segments")} · ${barSegments.map((s) => s.kind).join(" / ")}`;
 
   const tabs: TabDef[] = [
     {
@@ -406,10 +416,12 @@ export default function SettingsView({
           )}
           <div id="settings-row-bottomBar" data-testid="live-data-bottom-bar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={fieldLabel}>{t("group.bottomBarSegments")}</span>
+              <span style={fieldLabel}>
+                {t("group.bottomBarSegments")} · {t(BAR_PROFILE_LABEL[activeBarProfile(state)])}
+              </span>
               <span data-testid="settings-summary-bottomBar" style={summaryStyle}>{bottomBarSummary}</span>
             </div>
-            {[0, 1, 2].map((idx) => (
+            {activeBarSegments(state).map((_, idx) => (
               <SettingRow key={idx} title={`${t("label.segment")} ${idx + 1}`} description="">
                 <BottomBarSegmentEditor state={state} onChange={onChange} index={idx} />
               </SettingRow>

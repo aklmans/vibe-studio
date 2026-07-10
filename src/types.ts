@@ -1,4 +1,4 @@
-import type { LayoutId } from "./lib/overlay-layout";
+import type { BarProfileId, LayoutId } from "./lib/overlay-layout";
 import { DARK_PRESET, type ColorTokens, type ThemeMode } from "./lib/theme";
 import type { BadgeConfig } from "./lib/badges";
 import type { SocialConfig } from "./lib/socials";
@@ -39,7 +39,8 @@ export interface OverlayState {
   };
   bottomBar: {
     visible: boolean;
-    segments: BottomBarSlot[];
+    /** Independent segment sets per bar profile; the active layout picks one. */
+    segments: Record<BarProfileId, BottomBarSlot[]>;
   };
   liveSession: {
     startedAt: string;
@@ -138,11 +139,15 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
   },
   bottomBar: {
     visible: true,
-    segments: [
-      { kind: "live" },
-      { kind: "progress", sectionIndex: 0 },
-      { kind: "stack" },
-    ],
+    segments: {
+      workbench: [
+        { kind: "live" },
+        { kind: "progress", sectionIndex: 0 },
+        { kind: "stack" },
+      ],
+      lecture: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+      mobile: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+    },
   },
   liveSession: {
     startedAt: "",
@@ -243,11 +248,15 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     },
     bottomBar: {
       visible: true,
-      segments: [
-        { kind: "live" },
-        { kind: "progress", sectionIndex: 0 },
-        { kind: "stack" },
-      ],
+      segments: {
+        workbench: [
+          { kind: "live" },
+          { kind: "progress", sectionIndex: 0 },
+          { kind: "stack" },
+        ],
+        lecture: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+        mobile: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+      },
     },
     liveSession: {
       startedAt: "",

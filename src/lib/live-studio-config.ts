@@ -347,11 +347,15 @@ function configSocialToState(
   };
 }
 
-const LIVE_STUDIO_BOTTOM_BAR_SEGMENTS: OverlayState["bottomBar"]["segments"] = [
-  { kind: "live" },
-  { kind: "progress", sectionIndex: 0 },
-  { kind: "stack" },
-];
+// Applying a v1 config resets every bar profile to its default set — the
+// config carries fresh content, so each layout's bar starts from its baseline.
+function liveStudioBottomBarSegments(): OverlayState["bottomBar"]["segments"] {
+  return {
+    workbench: [{ kind: "live" }, { kind: "progress", sectionIndex: 0 }, { kind: "stack" }],
+    lecture: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+    mobile: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+  };
+}
 
 export function configToOverlayState(
   state: OverlayState,
@@ -383,7 +387,7 @@ export function configToOverlayState(
     bottomBar: {
       ...state.bottomBar,
       visible: true,
-      segments: LIVE_STUDIO_BOTTOM_BAR_SEGMENTS.map((segment) => ({ ...segment })),
+      segments: liveStudioBottomBarSegments(),
     },
     cover: {
       ...state.cover,

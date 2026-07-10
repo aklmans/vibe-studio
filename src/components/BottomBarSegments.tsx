@@ -6,6 +6,8 @@ import { UI_COLORS } from "../lib/design-tokens";
 import { fontFamilies, wrapProse, clampLines, truncateLine } from "../lib/typography";
 import { stackItemLabel } from "../lib/stack";
 import { useNow } from "../hooks/useNow";
+import { activeBarSegments } from "../lib/bottomBar";
+import type { BarProfileId } from "../lib/overlay-layout";
 import { useLocale } from "../hooks/useLocale";
 import { editorialPalette } from "./lib/editorial-palette";
 import { BrandIcon } from "./shared/BrandIcon";
@@ -15,6 +17,8 @@ type Size = "small" | "large";
 interface BottomBarSegmentsProps {
   state: OverlayState;
   size?: Size;
+  /** Which bar data set to render; defaults to the active layout's profile. */
+  profile?: BarProfileId;
 }
 
 /**
@@ -25,12 +29,16 @@ interface BottomBarSegmentsProps {
 export default function BottomBarSegments({
   state,
   size = "small",
+  profile,
 }: BottomBarSegmentsProps) {
   const { t } = useLocale();
-  const { bottomBar, colors } = state;
+  const { colors } = state;
   const { textColor, mutedText } = colors;
   const E = editorialPalette(colors);
   const accent = E.primaryMark;
+  const segments = profile
+    ? state.bottomBar.segments[profile]
+    : activeBarSegments(state);
 
   const baseTitleSize = size === "large" ? 13 : 12;
   const baseValueSize = size === "large" ? 32 : 28;
@@ -38,7 +46,7 @@ export default function BottomBarSegments({
 
   return (
     <>
-      {bottomBar.segments.map((seg, idx) => {
+      {segments.map((seg, idx) => {
         return (
           <div
             key={idx}
@@ -52,7 +60,7 @@ export default function BottomBarSegments({
               gap: 8,
             }}
           >
-            {idx < bottomBar.segments.length - 1 && (
+            {idx < segments.length - 1 && (
               <div
                 style={{
                   position: "absolute",

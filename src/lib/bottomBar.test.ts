@@ -1,70 +1,64 @@
-import { deepStrictEqual, equal } from "node:assert/strict";
+import { deepStrictEqual, equal, notStrictEqual } from "node:assert/strict";
 import test from "node:test";
 
+import { DEFAULT_STATE } from "../types";
 import {
   LECTURE_DEFAULT_SEGMENTS,
+  MOBILE_DEFAULT_SEGMENTS,
   WORKBENCH_DEFAULT_SEGMENTS,
-  segmentsForLayoutSwitch,
+  activeBarProfile,
+  activeBarSegments,
+  defaultBarSegments,
+  withActiveBarSegments,
   type BottomBarSlot,
 } from "./bottomBar";
+import type { LayoutId } from "./overlay-layout";
 
-test("switching layouts swaps untouched default segments both ways", () => {
-  // Workbench default → a lecture layout: adopt the lecture lower-third.
-  deepStrictEqual(
-    segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "lecture-left"),
-    LECTURE_DEFAULT_SEGMENTS,
-  );
-  deepStrictEqual(
-    segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "lecture-right"),
-    LECTURE_DEFAULT_SEGMENTS,
-  );
-  // Lecture default → workbench: restore the coding-stream triple.
-  deepStrictEqual(
-    segmentsForLayoutSwitch(LECTURE_DEFAULT_SEGMENTS, "workbench"),
-    WORKBENCH_DEFAULT_SEGMENTS,
-  );
+function withLayout(layout: LayoutId) {
+  return { ...DEFAULT_STATE, layout };
+}
+
+test("each layout resolves its own bar profile", () => {
+  equal(activeBarProfile(withLayout("workbench")), "workbench");
+  equal(activeBarProfile(withLayout("lecture-left")), "lecture");
+  equal(activeBarProfile(withLayout("lecture-right")), "lecture");
+  equal(activeBarProfile(withLayout("mobile")), "mobile");
 });
 
-test("a hand-edited bottom bar is never touched by a layout switch", () => {
-  const custom: BottomBarSlot[] = [
+test("activeBarSegments reads the active profile's set", () => {
+  deepStrictEqual(activeBarSegments(withLayout("workbench")), WORKBENCH_DEFAULT_SEGMENTS);
+  deepStrictEqual(activeBarSegments(withLayout("lecture-left")), LECTURE_DEFAULT_SEGMENTS);
+  deepStrictEqual(activeBarSegments(withLayout("mobile")), MOBILE_DEFAULT_SEGMENTS);
+});
+
+test("editing one profile's bar never touches the others", () => {
+  // Customize the LECTURE bar while lecture-left is active...
+  const lectureCustom: BottomBarSlot[] = [
     { kind: "live" },
     { kind: "text", title: "打赏", text: "谢谢老板" },
-    { kind: "stack" },
   ];
-  equal(segmentsForLayoutSwitch(custom, "lecture-left"), null);
-  equal(segmentsForLayoutSwitch(custom, "workbench"), null);
+  const edited = withActiveBarSegments(withLayout("lecture-left"), lectureCustom);
+  deepStrictEqual(edited.bottomBar.segments.lecture, lectureCustom);
+  // ...the workbench and mobile bars are byte-identical to before.
+  deepStrictEqual(edited.bottomBar.segments.workbench, DEFAULT_STATE.bottomBar.segments.workbench);
+  deepStrictEqual(edited.bottomBar.segments.mobile, DEFAULT_STATE.bottomBar.segments.mobile);
 
-  // Same kinds as the workbench default but a different progress target still
-  // counts as hand-edited.
-  const retargeted: BottomBarSlot[] = [
-    { kind: "live" },
-    { kind: "progress", sectionIndex: 2 },
-    { kind: "stack" },
-  ];
-  equal(segmentsForLayoutSwitch(retargeted, "lecture-left"), null);
+  // Switching layout is just a pointer move: lecture keeps its custom bar and
+  // workbench still reads its own untouched set.
+  const backOnWorkbench = { ...edited, layout: "workbench" as LayoutId };
+  deepStrictEqual(activeBarSegments(backOnWorkbench), WORKBENCH_DEFAULT_SEGMENTS);
+  const backOnLecture = { ...edited, layout: "lecture-right" as LayoutId };
+  deepStrictEqual(activeBarSegments(backOnLecture), lectureCustom);
 });
 
-test("no-op switches return null (already the target set, or mobile)", () => {
-  equal(segmentsForLayoutSwitch(LECTURE_DEFAULT_SEGMENTS, "lecture-left"), null);
-  equal(segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "workbench"), null);
-  // Mobile has no bottom bar: leave segments alone so nothing is lost when the
-  // user later switches back to a 16:9 layout.
-  equal(segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "mobile"), null);
-  equal(segmentsForLayoutSwitch(LECTURE_DEFAULT_SEGMENTS, "mobile"), null);
-});
-
-test("a picked follow handle counts as hand-edited — layout switches keep it", () => {
-  const pickedFollow: BottomBarSlot[] = [
-    { kind: "live" },
-    { kind: "agenda" },
-    { kind: "social", socialIndex: 2 },
-  ];
-  equal(segmentsForLayoutSwitch(pickedFollow, "workbench"), null);
-  equal(segmentsForLayoutSwitch(pickedFollow, "lecture-right"), null);
-});
-
-test("the swap returns fresh slot objects, not shared references", () => {
-  const swapped = segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "lecture-left")!;
-  equal(swapped === LECTURE_DEFAULT_SEGMENTS, false);
-  swapped.forEach((slot, i) => equal(slot === LECTURE_DEFAULT_SEGMENTS[i], false));
+test("defaultBarSegments returns fresh copies, not shared references", () => {
+  const a = defaultBarSegments();
+  const b = defaultBarSegments();
+  notStrictEqual(a.workbench, b.workbench);
+  notStrictEqual(a.lecture[0], b.lecture[0]);
+  deepStrictEqual(a, {
+    workbench: WORKBENCH_DEFAULT_SEGMENTS,
+    lecture: LECTURE_DEFAULT_SEGMENTS,
+    mobile: MOBILE_DEFAULT_SEGMENTS,
+  });
 });

@@ -3,6 +3,18 @@ import { normalizeStackItems, stackItemsToLabels } from "./stack";
 import { isBottomBarKind } from "./bottomBar";
 import type { BottomBarSlot } from "./bottomBar";
 import type { Locale } from "./i18n";
+import type { BarProfileId } from "./overlay-layout";
+
+/** Deep-copy a per-profile segments record. */
+function copySegmentsByProfile(
+  segments: Record<BarProfileId, BottomBarSlot[]>,
+): Record<BarProfileId, BottomBarSlot[]> {
+  return {
+    workbench: segments.workbench.map((segment) => ({ ...segment })),
+    lecture: segments.lecture.map((segment) => ({ ...segment })),
+    mobile: segments.mobile.map((segment) => ({ ...segment })),
+  };
+}
 
 export type LiveSessionStatus = "draft" | "live" | "ended";
 
@@ -135,9 +147,11 @@ export function normalizeLiveDataSnapshot(snapshot: LiveDataSnapshot): LiveDataS
   const { sections, indexMap } = normalizeSections(snapshot.sections);
   const sectionCount = sections.length;
   const activeSection = remapSectionIndex(snapshot.activeSection, indexMap, sectionCount);
-  const segments = snapshot.bottomBar.segments.map((segment) =>
-    normalizeSegment(segment, indexMap, sectionCount),
-  );
+  const normalizeProfileSegments = (list: BottomBarSlot[]): BottomBarSlot[] =>
+    dedupeAdjacentByKey(
+      list.map((segment) => normalizeSegment(segment, indexMap, sectionCount)),
+      bottomBarSegmentKey,
+    );
 
   return {
     ...snapshot,
@@ -145,7 +159,11 @@ export function normalizeLiveDataSnapshot(snapshot: LiveDataSnapshot): LiveDataS
     sections,
     bottomBar: {
       ...snapshot.bottomBar,
-      segments: dedupeAdjacentByKey(segments, bottomBarSegmentKey),
+      segments: {
+        workbench: normalizeProfileSegments(snapshot.bottomBar.segments.workbench),
+        lecture: normalizeProfileSegments(snapshot.bottomBar.segments.lecture),
+        mobile: normalizeProfileSegments(snapshot.bottomBar.segments.mobile),
+      },
     },
     stackItems: dedupeAdjacentByKey(snapshot.stackItems, (item) => item),
   };
@@ -221,10 +239,21 @@ export function isLiveDataSnapshot(value: unknown): value is LiveDataSnapshot {
       }) &&
       bottomBar &&
       typeof bottomBar.visible === "boolean" &&
-      Array.isArray(bottomBar.segments) &&
-      bottomBar.segments.every(isBottomBarSlot) &&
+      isSegmentsByProfile(bottomBar.segments) &&
       Array.isArray(source.stackItems) &&
       source.stackItems.every((item) => typeof item === "string"),
+  );
+}
+
+function isSegmentsByProfile(
+  value: unknown,
+): value is Record<BarProfileId, BottomBarSlot[]> {
+  const source = record(value);
+  if (!source) return false;
+  return (["workbench", "lecture", "mobile"] as const).every(
+    (profile) =>
+      Array.isArray(source[profile]) &&
+      (source[profile] as unknown[]).every(isBottomBarSlot),
   );
 }
 
@@ -245,7 +274,7 @@ export function overlayStateToLiveData(
     })),
     bottomBar: {
       visible: state.bottomBar.visible,
-      segments: state.bottomBar.segments.map((segment) => ({ ...segment })),
+      segments: copySegmentsByProfile(state.bottomBar.segments),
     },
     stackItems: stackItemsToLabels(state.stack.items),
   });
@@ -274,7 +303,7 @@ export function applyLiveDataToOverlayState(
     bottomBar: {
       ...state.bottomBar,
       visible: normalized.bottomBar.visible,
-      segments: normalized.bottomBar.segments.map((segment) => ({ ...segment })),
+      segments: copySegmentsByProfile(normalized.bottomBar.segments),
     },
     liveSession: {
       ...state.liveSession,

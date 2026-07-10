@@ -202,6 +202,9 @@ export default function ObsCompositionControls({
     );
   }
 
+  const layoutCanvas = getLayout(layoutId).canvas;
+  const portrait = layoutCanvas.height > layoutCanvas.width;
+
   const controlsActive = connection === "connected";
   const statusText =
     connection === "checking"
@@ -253,6 +256,21 @@ export default function ObsCompositionControls({
           </WorkbenchButton>
         )}
       </div>
+
+      {portrait && (
+        <p
+          data-testid="obs-composition-portrait-hint"
+          style={{
+            margin: 0,
+            fontFamily: mono,
+            fontSize: 10,
+            lineHeight: 1.5,
+            color: UI_COLORS.textMuted,
+          }}
+        >
+          {t("composition.portraitCanvasHint")}
+        </p>
+      )}
 
       <div
         aria-disabled={!controlsActive}

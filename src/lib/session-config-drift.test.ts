@@ -114,7 +114,10 @@ test("v1 config is the portable core, not the whole Session Config page", () => 
     sidebar: { ...DEFAULT_STATE.sidebar, activeSection: 2 },
     bottomBar: {
       ...DEFAULT_STATE.bottomBar,
-      segments: [DEFAULT_STATE.bottomBar.segments[0]],
+      segments: {
+        ...DEFAULT_STATE.bottomBar.segments,
+        workbench: [DEFAULT_STATE.bottomBar.segments.workbench[0]],
+      },
     },
   };
   const applied = applyConfigText(
@@ -122,5 +125,5 @@ test("v1 config is the portable core, not the whole Session Config page", () => 
     projectConfigText(runtimeState),
   ).nextState;
   assert.equal(applied?.sidebar.activeSection, 0);
-  assert.equal(applied?.bottomBar.segments.length, 3);
+  assert.equal(applied?.bottomBar.segments.workbench.length, 3);
 });

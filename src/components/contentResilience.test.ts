@@ -203,7 +203,10 @@ test("SocialCard (horizontal) keeps each rail pair bounded", () => {
 test("BottomBar stack chips keep long package names inside the fixed slot", () => {
   const state: OverlayState = {
     ...DEFAULT_STATE,
-    bottomBar: { ...DEFAULT_STATE.bottomBar, segments: [{ kind: "stack" }] },
+    bottomBar: {
+      ...DEFAULT_STATE.bottomBar,
+      segments: { ...DEFAULT_STATE.bottomBar.segments, workbench: [{ kind: "stack" }] },
+    },
     stack: { items: [createStackItem(LONG_STACK_ITEM)] },
   };
 

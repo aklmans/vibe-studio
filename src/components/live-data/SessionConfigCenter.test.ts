@@ -290,7 +290,9 @@ test("Settings shows scannable summaries before the big editors", () => {
   // Summaries are derived from state (counts + visible state), not hard-coded.
   assert.match(SETTINGS_SRC, /settingsSummary\.sectionsUnit/);
   assert.match(SETTINGS_SRC, /state\.cover\.badges\.filter\(\(b\) => b\.visible\)/);
-  assert.match(SETTINGS_SRC, /state\.bottomBar\.segments\.map\(\(s\) => s\.kind\)/);
+  // The summary follows the ACTIVE layout's bar profile, not one shared array.
+  assert.match(SETTINGS_SRC, /activeBarSegments\(state\)/);
+  assert.match(SETTINGS_SRC, /barSegments\.map\(\(s\) => s\.kind\)/);
 });
 
 test("docs describe the real agent boundary (provider callable in local/private Studio; key not in client)", () => {

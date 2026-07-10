@@ -5,7 +5,7 @@ import {
   migrateThemeMode,
   type ThemeMode,
 } from "./lib/theme";
-import { isLayoutId } from "./lib/overlay-layout";
+import { isLayoutId, type BarProfileId } from "./lib/overlay-layout";
 import { OVERLAY_STATE_STORAGE_KEY } from "./lib/storage-keys";
 import {
   LEGACY_BADGE_KIND_TO_ICON_KEY,
@@ -229,6 +229,30 @@ function normalizeSegments(value: unknown, defaults: BottomBarSlot[]): BottomBar
     const fallback = defaults[index] ?? defaults[0];
     return normalizeSegment(items[index], fallback);
   });
+}
+
+/**
+ * Per-profile bottom bars. State saved before the split stored ONE array —
+ * that was always the workbench bar, so it migrates there and the other
+ * profiles start from their defaults.
+ */
+function normalizeSegmentsByProfile(
+  value: unknown,
+  defaults: Record<BarProfileId, BottomBarSlot[]>,
+): Record<BarProfileId, BottomBarSlot[]> {
+  if (Array.isArray(value)) {
+    return {
+      workbench: normalizeSegments(value, defaults.workbench),
+      lecture: defaults.lecture.map((slot) => ({ ...slot })),
+      mobile: defaults.mobile.map((slot) => ({ ...slot })),
+    };
+  }
+  const source = record(value);
+  return {
+    workbench: normalizeSegments(source?.workbench, defaults.workbench),
+    lecture: normalizeSegments(source?.lecture, defaults.lecture),
+    mobile: normalizeSegments(source?.mobile, defaults.mobile),
+  };
 }
 
 function normalizeColors(value: unknown, defaults: OverlayColors): OverlayColors {
@@ -472,7 +496,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         bottomBar?.visible,
         defaultValue.bottomBar.visible,
       ),
-      segments: normalizeSegments(bottomBar?.segments, defaultValue.bottomBar.segments),
+      segments: normalizeSegmentsByProfile(bottomBar?.segments, defaultValue.bottomBar.segments),
     },
     liveSession: {
       startedAt: stringOrDefault(

@@ -2,9 +2,10 @@
 // fields shown and the canvas renderer. Keeps the existing 3-segment width
 // budget; lets each segment carry structured info instead of free-form text.
 
+import type { OverlayState } from "../types";
 import type { Locale } from "./i18n";
 import { dict } from "./i18n";
-import type { LayoutId } from "./overlay-layout";
+import { getLayout, type BarProfileId } from "./overlay-layout";
 
 export type BottomBarKind =
   | "live"     // elapsed since liveSession.startedAt + start time
@@ -101,7 +102,11 @@ export function defaultSlotForKind(kind: BottomBarKind, locale: Locale = "zh"): 
   }
 }
 
-// ─── Per-layout default segment sets ────────────────────────────────────────
+// ─── Per-profile bottom bars ────────────────────────────────────────────────
+//
+// Each bar profile owns its own segment list: the workbench triple, the lecture
+// lower-third, and the mobile strip are independent data sets. Switching the
+// scene layout switches WHICH set renders and edits — it never rewrites one.
 
 /** The classic coding-stream triple (matches DEFAULT_STATE / the v1 apply). */
 export const WORKBENCH_DEFAULT_SEGMENTS: BottomBarSlot[] = [
@@ -117,45 +122,43 @@ export const LECTURE_DEFAULT_SEGMENTS: BottomBarSlot[] = [
   { kind: "social" },
 ];
 
-function sameSegments(a: BottomBarSlot[], b: BottomBarSlot[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((slot, i) => {
-    const other = b[i];
-    if (slot.kind !== other.kind) return false;
-    if (slot.kind === "progress" && other.kind === "progress") {
-      return slot.sectionIndex === other.sectionIndex;
-    }
-    if (slot.kind === "text" && other.kind === "text") {
-      return slot.title === other.title && slot.text === other.text;
-    }
-    if (slot.kind === "social" && other.kind === "social") {
-      return slot.socialIndex === other.socialIndex;
-    }
-    return true;
-  });
+/** The portrait strip — same lower-third logic as the lecture. */
+export const MOBILE_DEFAULT_SEGMENTS: BottomBarSlot[] = [
+  { kind: "live" },
+  { kind: "agenda" },
+  { kind: "social" },
+];
+
+/** Fresh per-profile defaults (new copies — safe to hand to state). */
+export function defaultBarSegments(): Record<BarProfileId, BottomBarSlot[]> {
+  return {
+    workbench: WORKBENCH_DEFAULT_SEGMENTS.map((slot) => ({ ...slot })),
+    lecture: LECTURE_DEFAULT_SEGMENTS.map((slot) => ({ ...slot })),
+    mobile: MOBILE_DEFAULT_SEGMENTS.map((slot) => ({ ...slot })),
+  };
 }
 
-/**
- * When the scene layout changes, swap the bottom-bar segments to the target
- * layout's default set — but ONLY while they still exactly match a known
- * default. A hand-edited bar is the user's own and is never touched. Mobile has
- * no bottom bar, so switching to it changes nothing (and loses nothing).
- * Returns the replacement, or null when the segments should stay as they are.
- */
-export function segmentsForLayoutSwitch(
-  current: BottomBarSlot[],
-  to: LayoutId,
-): BottomBarSlot[] | null {
-  if (to === "mobile") return null;
-  const target =
-    to === "lecture-left" || to === "lecture-right"
-      ? LECTURE_DEFAULT_SEGMENTS
-      : WORKBENCH_DEFAULT_SEGMENTS;
-  if (sameSegments(current, target)) return null;
-  const untouchedDefault =
-    sameSegments(current, WORKBENCH_DEFAULT_SEGMENTS) ||
-    sameSegments(current, LECTURE_DEFAULT_SEGMENTS);
-  return untouchedDefault ? target.map((slot) => ({ ...slot })) : null;
+/** The bar profile the active scene layout reads and edits. */
+export function activeBarProfile(state: OverlayState): BarProfileId {
+  return getLayout(state.layout).barProfile;
+}
+
+export function activeBarSegments(state: OverlayState): BottomBarSlot[] {
+  return state.bottomBar.segments[activeBarProfile(state)];
+}
+
+/** Replace the ACTIVE profile's segments; the other profiles stay untouched. */
+export function withActiveBarSegments(
+  state: OverlayState,
+  segments: BottomBarSlot[],
+): OverlayState {
+  return {
+    ...state,
+    bottomBar: {
+      ...state.bottomBar,
+      segments: { ...state.bottomBar.segments, [activeBarProfile(state)]: segments },
+    },
+  };
 }
 
 // Format milliseconds as a stream-style clock. <1h shows "M:SS"; >=1h shows

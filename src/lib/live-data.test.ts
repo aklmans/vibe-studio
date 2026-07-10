@@ -81,7 +81,11 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
     ],
     bottomBar: {
       visible: false,
-      segments: [{ kind: "text", title: "Now", text: "Database-backed" }],
+      segments: {
+        workbench: [{ kind: "text", title: "Now", text: "Database-backed" }],
+        lecture: [{ kind: "live" }],
+        mobile: [{ kind: "live" }],
+      },
     },
     stackItems: ["Next.js", "Postgres"],
   });
@@ -93,9 +97,10 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
   assert.deepEqual(next.sidebar.sections[0]?.bullets, ["Ship DB"]);
   assert.deepEqual(next.sidebar.sectionsDone[0], [true]);
   assert.equal(next.bottomBar.visible, false);
-  assert.deepEqual(next.bottomBar.segments, [
+  assert.deepEqual(next.bottomBar.segments.workbench, [
     { kind: "text", title: "Now", text: "Database-backed" },
   ]);
+  assert.deepEqual(next.bottomBar.segments.lecture, [{ kind: "live" }]);
   assert.deepEqual(next.stack.items.map((item) => item.label), ["Next.js", "Postgres"]);
   assert.equal(next.stack.items[0].iconKey, "nextdotjs");
   assert.equal(next.liveSession.startedAt, "2026-05-11T16:00:00.000Z");
@@ -167,14 +172,18 @@ test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
     ],
     bottomBar: {
       visible: true,
-      segments: [
-        { kind: "live" as const },
-        { kind: "live" as const },
-        { kind: "progress" as const, sectionIndex: 5 },
-        { kind: "progress" as const, sectionIndex: 5 },
-        { kind: "stack" as const },
-        { kind: "stack" as const },
-      ],
+      segments: {
+        workbench: [
+          { kind: "live" as const },
+          { kind: "live" as const },
+          { kind: "progress" as const, sectionIndex: 5 },
+          { kind: "progress" as const, sectionIndex: 5 },
+          { kind: "stack" as const },
+          { kind: "stack" as const },
+        ],
+        lecture: [{ kind: "live" as const }, { kind: "live" as const }],
+        mobile: [{ kind: "live" as const }],
+      },
     },
     stackItems: [
       "Claude Opus 4.7",
@@ -194,11 +203,13 @@ test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
   );
   assert.equal(normalized.activeSection, 2);
   assert.deepEqual(normalized.sections[2]?.tasks.map((task) => task.done), [false, true, false]);
-  assert.deepEqual(normalized.bottomBar.segments, [
+  assert.deepEqual(normalized.bottomBar.segments.workbench, [
     { kind: "live" },
     { kind: "progress", sectionIndex: 2 },
     { kind: "stack" },
   ]);
+  // Every profile is normalized independently — the lecture dup folds too.
+  assert.deepEqual(normalized.bottomBar.segments.lecture, [{ kind: "live" }]);
   assert.deepEqual(normalized.stackItems, ["Claude Opus 4.7", "Cursor", "React + Vite"]);
 });
 
@@ -227,14 +238,18 @@ test("applyLiveDataToOverlayState normalizes duplicated persisted snapshots", ()
     ],
     bottomBar: {
       visible: true,
-      segments: [
+      segments: {
+        lecture: [{ kind: "live" }],
+        mobile: [{ kind: "live" }],
+        workbench: [
         { kind: "live" },
         { kind: "live" },
         { kind: "progress", sectionIndex: 5 },
         { kind: "progress", sectionIndex: 5 },
         { kind: "stack" },
         { kind: "stack" },
-      ],
+        ],
+      },
     },
     stackItems: [
       "Claude Opus 4.7",
@@ -251,7 +266,7 @@ test("applyLiveDataToOverlayState normalizes duplicated persisted snapshots", ()
     ["今日目标", "当前问题", "输出记录"],
   );
   assert.equal(next.sidebar.activeSection, 2);
-  assert.deepEqual(next.bottomBar.segments, [
+  assert.deepEqual(next.bottomBar.segments.workbench, [
     { kind: "live" },
     { kind: "progress", sectionIndex: 2 },
     { kind: "stack" },

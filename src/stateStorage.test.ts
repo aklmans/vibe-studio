@@ -43,10 +43,13 @@ test("normalizeOverlayState fills missing nested editor data from defaults", () 
     state.sidebar.sections[1].title,
     DEFAULT_STATE.sidebar.sections[1].title,
   );
-  const firstSegment = state.bottomBar.segments[0];
+  // A legacy single-array bar migrates to the workbench profile; the other
+  // profiles start from their defaults.
+  const firstSegment = state.bottomBar.segments.workbench[0];
   assert.equal(firstSegment.kind, "text");
-  assert.equal(firstSegment.text, "Keep this");
-  assert.deepEqual(state.bottomBar.segments[1], DEFAULT_STATE.bottomBar.segments[1]);
+  assert.equal(firstSegment.kind === "text" && firstSegment.text, "Keep this");
+  assert.deepEqual(state.bottomBar.segments.workbench[1], DEFAULT_STATE.bottomBar.segments.workbench[1]);
+  assert.deepEqual(state.bottomBar.segments.lecture, DEFAULT_STATE.bottomBar.segments.lecture);
   assert.equal(state.colors.bgDark, "#000000");
   assert.equal(state.colors.textColor, DEFAULT_STATE.colors.textColor);
   assert.equal(state.activeTab, "cover");
@@ -286,16 +289,22 @@ test("normalizeOverlayState keeps agenda/social bottom-bar segments", () => {
     {
       bottomBar: {
         visible: true,
-        segments: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+        segments: {
+          workbench: [{ kind: "live" }, { kind: "agenda" }, { kind: "social", socialIndex: 1 }],
+          lecture: [{ kind: "agenda" }],
+          mobile: [{ kind: "social" }],
+        },
       },
     },
     DEFAULT_STATE,
   );
-  assert.deepEqual(next.bottomBar.segments, [
+  assert.deepEqual(next.bottomBar.segments.workbench, [
     { kind: "live" },
     { kind: "agenda" },
-    { kind: "social" },
+    { kind: "social", socialIndex: 1 },
   ]);
+  assert.equal(next.bottomBar.segments.lecture[0].kind, "agenda");
+  assert.equal(next.bottomBar.segments.mobile[0].kind, "social");
 });
 
 test("normalizeOverlayState defaults brand + layout and rejects hostile layout values", () => {

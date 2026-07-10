@@ -138,7 +138,10 @@ test("configToOverlayState applies all broadcast surfaces", () => {
     ...DEFAULT_STATE,
     bottomBar: {
       visible: false,
-      segments: [{ kind: "text", title: "Old", text: "Old" }],
+      segments: {
+        ...DEFAULT_STATE.bottomBar.segments,
+        workbench: [{ kind: "text", title: "Old", text: "Old" }],
+      },
     },
     cover: {
       ...DEFAULT_STATE.cover,
@@ -192,11 +195,16 @@ test("configToOverlayState applies all broadcast surfaces", () => {
   assert.equal(next.cover.badges.length, 3);
   assert.equal(next.cover.socials[0]?.value, "demo-org/vibe-live");
   assert.equal(next.bottomBar.visible, true);
-  assert.deepEqual(next.bottomBar.segments, [
-    { kind: "live" },
-    { kind: "progress", sectionIndex: 0 },
-    { kind: "stack" },
-  ]);
+  // Apply resets EVERY bar profile to its default set.
+  assert.deepEqual(next.bottomBar.segments, {
+    workbench: [
+      { kind: "live" },
+      { kind: "progress", sectionIndex: 0 },
+      { kind: "stack" },
+    ],
+    lecture: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+    mobile: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+  });
 });
 
 test("configToOverlayState respects an explicit empty badges array", () => {

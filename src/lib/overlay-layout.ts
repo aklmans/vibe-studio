@@ -32,13 +32,21 @@ export type PanelId = "header" | "sidebar" | "intro" | "bottomBar" | "cameraPane
 
 export type LayoutId = "workbench" | "lecture-left" | "lecture-right" | "mobile";
 
+/**
+ * Which bottom-bar data set a layout uses. Each profile owns its own segments —
+ * customizing the lecture bar never touches the workbench bar and vice versa.
+ * The two lecture layouts are mirrors of one scene, so they share one profile.
+ */
+export type BarProfileId = "workbench" | "lecture" | "mobile";
+
 export interface OverlayLayout {
   id: LayoutId;
   canvas: { width: number; height: number };
+  /** The bottom-bar data set this layout reads and edits. */
+  barProfile: BarProfileId;
   /**
-   * Transparent cutouts. OBS source transforms derive from these. `camera` is
-   * absent on layouts without a separate camera slot (mobile: the phone app's
-   * own video fills the main region, and there is no local-OBS composition).
+   * Transparent cutouts. OBS source transforms derive from these. `camera` may
+   * be absent on layouts without a separate camera slot.
    */
   regions: { main: Rect; camera?: Rect };
   /** Absent key = this layout has no such panel (drives the visibility UI). */
@@ -80,6 +88,7 @@ const WORKBENCH_BOTTOM_TOP = WORKBENCH_MAIN.top + WORKBENCH_MAIN.height + EDGE;
 export const WORKBENCH_LAYOUT: OverlayLayout = {
   id: "workbench",
   canvas: { width: 1920, height: 1080 },
+  barProfile: "workbench",
   regions: {
     main: WORKBENCH_MAIN,
     camera: cameraCutoutFor(WORKBENCH_CAMERA_PANEL),
@@ -134,6 +143,7 @@ function lectureLayout(id: LayoutId, columnX: number, mainX: number): OverlayLay
   return {
     id,
     canvas: { width: 1920, height: 1080 },
+    barProfile: "lecture",
     regions: {
       main: { left: mainX, top: LECTURE_CONTENT_TOP, ...LECTURE_MAIN },
       camera: cameraCutoutFor(cameraPanel),
@@ -171,33 +181,43 @@ export const LECTURE_RIGHT_LAYOUT = lectureLayout(
 
 // ─── mobile ─────────────────────────────────────────────────────────────────
 //
-// Portrait 1080×1920 for phone-app / Livehime vertical streams: a header band,
-// one large video cutout (the phone's camera or screen fills it from beneath —
-// there is no separate camera slot and no local-OBS composition), and the
-// presenter card at the bottom. Exported as a frame or served as a browser
-// source; streaming itself stays in the phone app.
+// Portrait 1080×1920, stacked top to bottom: header band, the screen share
+// (main region), the camera below it, a slim bottom bar, and the presenter
+// card. Both regions are OBS-backed cutouts, so the composition controls work —
+// provided the OBS base canvas is itself 1080×1920 (a vertical profile).
 
+const MOBILE_W = 1080 - EDGE * 2; // 1032
 const MOBILE_INTRO_HEIGHT = 320;
+const MOBILE_BAR_HEIGHT = 96;
 const MOBILE_CONTENT_TOP = EDGE + HEADER_HEIGHT + GAP; // 144
+const MOBILE_MAIN_HEIGHT = 580; // ~16:9 screen share
 const MOBILE_INTRO_TOP = 1920 - EDGE - MOBILE_INTRO_HEIGHT; // 1576
+const MOBILE_BAR_TOP = MOBILE_INTRO_TOP - GAP - MOBILE_BAR_HEIGHT; // 1456
+const MOBILE_CAMERA_TOP = MOBILE_CONTENT_TOP + MOBILE_MAIN_HEIGHT + GAP; // 748
+
+const MOBILE_CAMERA_PANEL: Rect = {
+  left: EDGE,
+  top: MOBILE_CAMERA_TOP,
+  width: MOBILE_W,
+  height: MOBILE_BAR_TOP - GAP - MOBILE_CAMERA_TOP, // 684
+};
 
 export const MOBILE_LAYOUT: OverlayLayout = {
   id: "mobile",
   canvas: { width: 1080, height: 1920 },
+  barProfile: "mobile",
   regions: {
-    main: {
-      left: EDGE,
-      top: MOBILE_CONTENT_TOP,
-      width: 1080 - EDGE * 2, // 1032
-      height: MOBILE_INTRO_TOP - GAP - MOBILE_CONTENT_TOP, // 1408
-    },
+    main: { left: EDGE, top: MOBILE_CONTENT_TOP, width: MOBILE_W, height: MOBILE_MAIN_HEIGHT },
+    camera: cameraCutoutFor(MOBILE_CAMERA_PANEL),
   },
   panels: {
-    header: { left: EDGE, top: EDGE, width: 1080 - EDGE * 2, height: HEADER_HEIGHT },
+    header: { left: EDGE, top: EDGE, width: MOBILE_W, height: HEADER_HEIGHT },
+    cameraPanel: MOBILE_CAMERA_PANEL,
+    bottomBar: { left: EDGE, top: MOBILE_BAR_TOP, width: MOBILE_W, height: MOBILE_BAR_HEIGHT },
     intro: {
       left: EDGE,
       top: MOBILE_INTRO_TOP,
-      width: 1080 - EDGE * 2,
+      width: MOBILE_W,
       height: MOBILE_INTRO_HEIGHT,
     },
   },

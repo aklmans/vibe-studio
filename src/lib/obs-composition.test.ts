@@ -255,6 +255,7 @@ test("regions that share a top are separated by X, not Y", () => {
   const sideBySide: OverlayLayout = {
     id: "lecture-left",
     canvas: { width: 1920, height: 1080 },
+    barProfile: "lecture",
     regions: {
       main: { left: 500, top: 144, width: 1000, height: 562 },
       camera: { left: 24, top: 144, width: 440, height: 248 },
@@ -308,10 +309,28 @@ test("compositionOps parks sources on the given layout's regions", () => {
   equal(webcam.positionX < slides.positionX, true);
 });
 
+test("mobile parks the screen share and the camera on its stacked portrait regions", () => {
+  const ops = compositionOps({ main: "display-1", camera: "camera" }, MOBILE_LAYOUT);
+  const screen = transformFor(ops, CAPTURE_SOURCE_NAME["display-1"])!;
+  const webcam = transformFor(ops, CAPTURE_SOURCE_NAME.camera)!;
+  equal(screen.positionY, MOBILE_LAYOUT.regions.main.top);
+  equal(webcam.positionY, MOBILE_LAYOUT.regions.camera!.top);
+  // Stacked vertically: the camera sits below the screen share.
+  equal((webcam.positionY as number) > (screen.positionY as number), true);
+});
+
 test("a camera-less layout parks only the main capture and keeps the theme frames plain", () => {
-  // Mobile has no camera region: the camera choice is ignored, no camera
-  // transform is emitted, and the avatar theme frame must not switch on.
-  const ops = compositionOps({ main: "display-1", camera: "avatar" }, MOBILE_LAYOUT);
+  // No layout ships camera-less today, but the guard must hold for one: the
+  // camera choice is ignored, no camera transform is emitted, and the avatar
+  // theme frame must not switch on.
+  const cameraLess: OverlayLayout = {
+    id: "mobile",
+    canvas: { width: 1080, height: 1920 },
+    barProfile: "mobile",
+    regions: { main: { left: 24, top: 144, width: 1032, height: 1408 } },
+    panels: {},
+  };
+  const ops = compositionOps({ main: "display-1", camera: "avatar" }, cameraLess);
   deepStrictEqual(enabledMap(ops), {
     "Vibe Overlay Avatar Frame": false,
     "Vibe Overlay Empty Frame": true,
@@ -322,7 +341,7 @@ test("a camera-less layout parks only the main capture and keeps the theme frame
   });
   equal(ops.transforms.length, 1);
   equal(ops.transforms[0].source, CAPTURE_SOURCE_NAME["display-1"]);
-  equal(ops.transforms[0].transform.positionX, MOBILE_LAYOUT.regions.main.left);
+  equal(ops.transforms[0].transform.positionX, cameraLess.regions.main.left);
 
   // Inference mirrors it: everything reads as main; camera is off even if a
   // stale avatar frame is still enabled in the scene.
@@ -331,13 +350,13 @@ test("a camera-less layout parks only the main capture and keeps the theme frame
       {
         avatarFrameEnabled: true,
         captures: {
-          "display-1": at(MOBILE_LAYOUT.regions.main),
+          "display-1": at(cameraLess.regions.main),
           "display-2": off,
           app: off,
           camera: off,
         },
       },
-      MOBILE_LAYOUT,
+      cameraLess,
     ),
     { main: "display-1", camera: "off" },
   );

@@ -28,7 +28,8 @@ const BottomBarPanel = forwardRef<HTMLDivElement, BottomBarPanelProps>(
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif',
         }}
       >
-        <BottomBarSegments state={state} size="large" />
+        {/* The standalone slice is a workbench asset — always that profile. */}
+        <BottomBarSegments state={state} size="large" profile="workbench" />
       </div>
     );
   }

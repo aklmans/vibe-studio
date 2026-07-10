@@ -153,13 +153,21 @@ test("every layout keeps its rects on-canvas and its two regions apart", () => {
   }
 });
 
-test("mobile is a portrait single-region layout: header, one video cutout, intro", () => {
+test("mobile stacks screen share over camera, with its own bar and the intro card", () => {
   deepStrictEqual(MOBILE_LAYOUT.canvas, { width: 1080, height: 1920 });
   deepStrictEqual(MOBILE_LAYOUT.panels.header, { left: 24, top: 24, width: 1032, height: 96 });
-  deepStrictEqual(MOBILE_LAYOUT.regions.main, { left: 24, top: 144, width: 1032, height: 1408 });
+  // Screen share on top (composition "main"), camera stacked beneath it.
+  deepStrictEqual(MOBILE_LAYOUT.regions.main, { left: 24, top: 144, width: 1032, height: 580 });
+  deepStrictEqual(MOBILE_LAYOUT.panels.cameraPanel, { left: 24, top: 748, width: 1032, height: 684 });
+  deepStrictEqual(MOBILE_LAYOUT.regions.camera, { left: 26, top: 778, width: 1032, height: 656 });
+  deepStrictEqual(MOBILE_LAYOUT.panels.bottomBar, { left: 24, top: 1456, width: 1032, height: 96 });
   deepStrictEqual(MOBILE_LAYOUT.panels.intro, { left: 24, top: 1576, width: 1032, height: 320 });
-  equal(MOBILE_LAYOUT.regions.camera, undefined, "the phone's own video fills main — no camera slot");
   equal(MOBILE_LAYOUT.panels.sidebar, undefined);
-  equal(MOBILE_LAYOUT.panels.bottomBar, undefined);
-  equal(MOBILE_LAYOUT.panels.cameraPanel, undefined);
+});
+
+test("every layout declares its bar profile; lecture mirrors share one", () => {
+  equal(WORKBENCH_LAYOUT.barProfile, "workbench");
+  equal(LECTURE_LEFT_LAYOUT.barProfile, "lecture");
+  equal(LECTURE_RIGHT_LAYOUT.barProfile, "lecture");
+  equal(MOBILE_LAYOUT.barProfile, "mobile");
 });

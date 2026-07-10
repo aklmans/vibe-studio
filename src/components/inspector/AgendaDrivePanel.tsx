@@ -1,7 +1,7 @@
 import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { clampSectionIndex, driveAgendaTo, restartSectionTimer } from "../../lib/agenda";
-import { patchSection } from "../../lib/state";
+import { activeBarSegments, withActiveBarSegments } from "../../lib/bottomBar";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "./EditorRow";
 import { WorkbenchButton } from "../shared/Field";
@@ -30,29 +30,32 @@ export default function AgendaDrivePanel({
   const drive = (target: number) =>
     onChange(driveAgendaTo(state, target, new Date().toISOString()));
 
-  // The follow slot: the first social segment in the bottom bar, if any.
-  const socialSegmentIndex = state.bottomBar.segments.findIndex(
+  // The follow slot: the first social segment in the ACTIVE layout's bar.
+  const barSegments = activeBarSegments(state);
+  const socialSegmentIndex = barSegments.findIndex(
     (segment) => segment.kind === "social",
   );
-  const socialSegment = state.bottomBar.segments[socialSegmentIndex];
+  const socialSegment = barSegments[socialSegmentIndex];
   const followIndex =
     socialSegment?.kind === "social" ? socialSegment.socialIndex : undefined;
 
   const setFollowIndex = (value: string) => {
     if (socialSegmentIndex < 0) return;
-    const segments = state.bottomBar.segments.map((segment, i) =>
-      i === socialSegmentIndex && segment.kind === "social"
-        ? { kind: "social" as const, ...(value === "auto" ? {} : { socialIndex: Number(value) }) }
-        : segment,
+    onChange(
+      withActiveBarSegments(
+        state,
+        barSegments.map((segment, i) =>
+          i === socialSegmentIndex && segment.kind === "social"
+            ? { kind: "social" as const, ...(value === "auto" ? {} : { socialIndex: Number(value) }) }
+            : segment,
+        ),
+      ),
     );
-    onChange(patchSection(state, "bottomBar", { segments }));
   };
 
   const addFollowSegment = () =>
     onChange(
-      patchSection(state, "bottomBar", {
-        segments: [...state.bottomBar.segments, { kind: "social" as const }],
-      }),
+      withActiveBarSegments(state, [...barSegments, { kind: "social" as const }]),
     );
 
   const followOptions = [
