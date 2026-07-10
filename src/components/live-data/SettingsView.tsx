@@ -4,7 +4,7 @@ import type { Locale, TranslationKey } from "../../lib/i18n";
 import { UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { patchSection } from "../../lib/state";
 import { useLocale } from "../../hooks/useLocale";
-import SidebarSectionEditor from "../SidebarSectionEditor";
+import SectionsManager from "../SectionsManager";
 import LiveSessionEditor from "../LiveSessionEditor";
 import StackEditor from "../StackEditor";
 import BottomBarSegmentEditor from "../BottomBarSegmentEditor";
@@ -19,7 +19,6 @@ import AIProviderSettings from "./AIProviderSettings";
 import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import LayoutControls from "../inspector/LayoutControls";
 import AgendaDrivePanel from "../inspector/AgendaDrivePanel";
-import { driveAgendaTo } from "../../lib/agenda";
 import { activeBarProfile, activeBarSegments } from "../../lib/bottomBar";
 import type { BarProfileId } from "../../lib/overlay-layout";
 
@@ -159,7 +158,6 @@ export default function SettingsView({
     Math.max(state.sidebar.activeSection, 0),
     Math.max(state.sidebar.sections.length - 1, 0),
   );
-  const activeSection = state.sidebar.sections[activeSectionIndex];
   const writeCover = (patch: Partial<OverlayState["cover"]>) =>
     onChange(patchSection(state, "cover", patch));
 
@@ -361,23 +359,8 @@ export default function SettingsView({
             <CoverVisualEditor state={state} onChange={onChange} />
           </AssetRow>
           <AssetRow rowId="sections" label={`${t("label.section")}s`} description={t("settingsRow.sectionsDesc")} summary={sectionsSummary}>
-            <div data-testid="live-data-sections" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <LineSegmented
-                testId="live-data-section-tabs"
-                active={String(activeSectionIndex)}
-                onSelect={(value) => onChange(driveAgendaTo(state, Number(value), new Date().toISOString()))}
-                options={state.sidebar.sections.map((section, idx) => ({
-                  value: String(idx),
-                  label: section.title || `${t("label.section")} ${idx + 1}`,
-                  meta: `${(state.sidebar.sectionsDone?.[idx] ?? []).filter(Boolean).length}/${section.bullets.length}`,
-                  testId: `live-data-section-tab-${idx}`,
-                }))}
-              />
-              {activeSection && (
-                <div data-testid={`live-data-section-panel-${activeSectionIndex}`}>
-                  <SidebarSectionEditor state={state} onChange={onChange} index={activeSectionIndex} accentColor={UI_COLORS.accent} />
-                </div>
-              )}
+            <div data-testid="live-data-sections">
+              <SectionsManager state={state} onChange={onChange} testIdPrefix="live-data-sections" />
             </div>
           </AssetRow>
           <AssetRow rowId="stack" label={t("group.stack")} description={t("group.stack.hint")} summary={stackSummary}>

@@ -39,10 +39,11 @@ test("normalizeOverlayState fills missing nested editor data from defaults", () 
   assert.equal(state.sidebar.visible, false);
   assert.equal(state.sidebar.sections[0].title, "自定义标题");
   assert.deepEqual(state.sidebar.sections[0].bullets, ["保留这一条"]);
-  assert.equal(
-    state.sidebar.sections[1].title,
-    DEFAULT_STATE.sidebar.sections[1].title,
-  );
+  // A provided section list is authoritative: one section in, one section out.
+  // Padding back to the 3 defaults would resurrect deleted sections.
+  assert.equal(state.sidebar.sections.length, 1);
+  assert.equal(state.sidebar.activeSection, 0);
+  assert.equal(state.sidebar.sectionsDone.length, 1);
   // A legacy single-array bar migrates to the workbench profile; the other
   // profiles start from their defaults.
   const firstSegment = state.bottomBar.segments.workbench[0];
@@ -111,7 +112,8 @@ test("normalizeOverlayState fills missing fields from the provided locale defaul
   assert.equal(state.cover.todayLabel, "TODAY'S BUILD");
   assert.equal(state.cover.todayTopic, "Multi-Agent Coding Live");
   assert.equal(state.sidebar.sections[0].title, "Custom Section");
-  assert.equal(state.sidebar.sections[1].title, "Current Problem");
+  // The provided one-section list stays one section (no padding from defaults).
+  assert.equal(state.sidebar.sections.length, 1);
   assert.equal(state.cover.socials[0].label, "YouTube");
 });
 

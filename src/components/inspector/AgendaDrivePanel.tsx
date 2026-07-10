@@ -4,6 +4,7 @@ import { clampSectionIndex, driveAgendaTo, restartSectionTimer } from "../../lib
 import { activeBarSegments, withActiveBarSegments } from "../../lib/bottomBar";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "./EditorRow";
+import SectionChips from "./SectionChips";
 import { WorkbenchButton } from "../shared/Field";
 
 const mono = "var(--app-font-mono)";
@@ -112,17 +113,12 @@ export default function AgendaDrivePanel({
         </WorkbenchButton>
       </div>
 
-      {/* Jump directly to a section */}
-      <LineSegmented
-        testId="agenda-jump"
-        active={String(idx)}
-        onSelect={(value) => drive(Number(value))}
-        options={sections.map((section, i) => ({
-          value: String(i),
-          label: section.title || `${i + 1}`,
-          meta: section.minutes ? `${section.minutes}m` : undefined,
-          testId: `agenda-jump-${i}`,
-        }))}
+      {/* Jump directly to a section — wrapping chips scale to 12 sections. */}
+      <SectionChips
+        sections={sections}
+        active={idx}
+        onSelect={(target) => drive(target)}
+        testIdPrefix="agenda-jump"
       />
 
       {/* Timer restart */}

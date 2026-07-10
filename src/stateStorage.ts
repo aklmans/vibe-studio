@@ -121,38 +121,29 @@ function colorOrDefault(value: unknown, fallback: string): string {
     : fallback;
 }
 
+const MAX_SECTIONS = 12;
+const MAX_BULLETS = 6;
+
 function normalizeBullets(value: unknown, fallback: string[]): string[] {
   if (!Array.isArray(value)) return [...fallback];
-
-  const bullets = value.filter(
-    (item): item is string => typeof item === "string",
-  );
-  return bullets.length > 0 ? bullets : [...fallback];
-}
-
-function normalizeBoolGrid(
-  value: unknown,
-  fallback: boolean[][],
-): boolean[][] {
-  if (!Array.isArray(value)) return fallback.map((row) => [...row]);
-
-  return fallback.map((defaultRow, rowIdx) => {
-    const row = Array.isArray((value as unknown[])[rowIdx])
-      ? ((value as unknown[])[rowIdx] as unknown[])
-      : [];
-    return defaultRow.map((defaultVal, colIdx) =>
-      typeof row[colIdx] === "boolean" ? (row[colIdx] as boolean) : defaultVal,
-    );
-  });
+  // An EMPTY provided array is a deliberate choice — a pure agenda item is a
+  // title (+ planned minutes) with no bullets. Only garbage falls back.
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .slice(0, MAX_BULLETS);
 }
 
 function normalizeSections(value: unknown, defaults: SidebarSection[]): SidebarSection[] {
-  const items = Array.isArray(value) ? value : [];
-  const length = Math.max(items.length, defaults.length);
+  // A provided list is authoritative — sections can be ADDED and REMOVED, so
+  // never pad back to the defaults' length (that would resurrect deleted
+  // sections). Only absence/garbage/empty falls back to the defaults.
+  if (!Array.isArray(value) || value.length === 0) {
+    return defaults.map((section) => ({ ...section, bullets: [...section.bullets] }));
+  }
 
-  return Array.from({ length }, (_, index) => {
-    const fallback = defaults[index] ?? defaults[0];
-    const source = record(items[index]);
+  return value.slice(0, MAX_SECTIONS).map((item, index) => {
+    const fallback = defaults[index] ?? { title: "", bullets: [] };
+    const source = record(item);
 
     const minutes =
       typeof source?.minutes === "number" &&
@@ -166,6 +157,21 @@ function normalizeSections(value: unknown, defaults: SidebarSection[]): SidebarS
       bullets: normalizeBullets(source?.bullets, fallback.bullets),
       ...(minutes !== undefined ? { minutes } : {}),
     };
+  });
+}
+
+/** sectionsDone takes its SHAPE from the normalized sections: one row per
+ *  section, one flag per bullet. Stored flags survive; the rest are false. */
+function normalizeSectionsDoneFor(
+  value: unknown,
+  sections: SidebarSection[],
+): boolean[][] {
+  const rows = Array.isArray(value) ? (value as unknown[]) : [];
+  return sections.map((section, rowIdx) => {
+    const row = Array.isArray(rows[rowIdx]) ? (rows[rowIdx] as unknown[]) : [];
+    return section.bullets.map((_, colIdx) =>
+      typeof row[colIdx] === "boolean" ? (row[colIdx] as boolean) : false,
+    );
   });
 }
 
@@ -470,6 +476,13 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
   const wallpaper = record(source?.wallpaper);
   const activeTab = source?.activeTab;
 
+  // Sections normalize first: activeSection clamps to their count and
+  // sectionsDone takes its shape from them.
+  const normalizedSections = normalizeSections(
+    sidebar?.sections,
+    defaultValue.sidebar.sections,
+  );
+
   return {
     sidebar: {
       visible: boolOrDefault(sidebar?.visible, defaultValue.sidebar.visible),
@@ -479,13 +492,10 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
       ),
       activeSection: normalizeActiveSection(
         sidebar?.activeSection,
-        defaultValue.sidebar.sections.length,
+        normalizedSections.length,
       ),
-      sectionsDone: normalizeBoolGrid(
-        sidebar?.sectionsDone,
-        defaultValue.sidebar.sectionsDone,
-      ),
-      sections: normalizeSections(sidebar?.sections, defaultValue.sidebar.sections),
+      sectionsDone: normalizeSectionsDoneFor(sidebar?.sectionsDone, normalizedSections),
+      sections: normalizedSections,
       activeSectionStartedAt: stringOrDefault(
         sidebar?.activeSectionStartedAt,
         defaultValue.sidebar.activeSectionStartedAt,

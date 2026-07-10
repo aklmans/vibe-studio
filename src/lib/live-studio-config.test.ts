@@ -74,7 +74,8 @@ test("validateLiveStudioConfig rejects unsupported registry and cover values", (
     socials: [{ icon: "not-a-social-icon", label: "Mystery", value: "handle" }],
     sections: [
       { title: "", bullets: ["Ship"] },
-      { title: "Empty", bullets: [] },
+      // Empty bullets are legal (pure agenda item) — only a non-array rejects.
+      { title: "Bad", bullets: "not-an-array" },
     ],
   };
   const result = validateLiveStudioConfig(invalid);
@@ -296,4 +297,52 @@ test("section minutes round-trip config -> state -> config, and bad values are r
   });
   assert.equal(validation.valid, false);
   assert.ok(validation.issues.some((issue) => issue.includes("minutes")));
+});
+
+test("a large bullet-less agenda round-trips config -> state -> config", () => {
+  // 8 pure agenda items (title + minutes, no bullets) — the lecture use case.
+  const sections = Array.from({ length: 8 }, (_, i) => ({
+    title: `Part ${i + 1}`,
+    minutes: (i + 1) * 5,
+  }));
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "Lecture",
+      subtitle: "Long agenda",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections,
+    }),
+  );
+  assert.ok(config);
+  assert.equal(config.sections.length, 8);
+  assert.deepEqual(config.sections[0].bullets, []);
+
+  const state = configToOverlayState(DEFAULT_STATE, config);
+  assert.equal(state.sidebar.sections.length, 8);
+  assert.deepEqual(state.sidebar.sections[7].bullets, []);
+  assert.equal(state.sidebar.sections[7].minutes, 40);
+  // Done rows track the new shape: 8 rows, all empty.
+  assert.equal(state.sidebar.sectionsDone.length, 8);
+
+  const back = overlayStateToConfig(state);
+  assert.equal(back.sections.length, 8);
+  assert.equal(back.sections[3].title, "Part 4");
+
+  // The 12-section cap trims anything beyond it on parse.
+  const oversized = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "T",
+      subtitle: "S",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: Array.from({ length: 15 }, (_, i) => ({ title: `S${i + 1}` })),
+    }),
+  );
+  assert.ok(oversized);
+  assert.equal(oversized.sections.length, 12);
 });

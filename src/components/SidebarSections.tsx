@@ -1,5 +1,6 @@
 import { OverlayState } from "../types";
 import { useLocale } from "../hooks/useLocale";
+import { sectionWindow } from "../lib/agenda";
 import { fontFamilies, wrapProse } from "../lib/typography";
 import { editorialPalette } from "./lib/editorial-palette";
 
@@ -21,10 +22,33 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
   const accent = E.activeRule;
   const activeIdx = sidebar.activeSection;
   const currentLabel = t("canvas.current");
+  // The fixed-height sidebar shows a window of 3 sections from the active one;
+  // with ≤ 3 sections this renders every section exactly as before.
+  const total = sidebar.sections.length;
+  const { start, end } = sectionWindow(activeIdx, total);
+  const windowed = sidebar.sections
+    .map((section, idx) => ({ section, idx }))
+    .slice(start, end);
 
   return (
     <>
-      {sidebar.sections.map((section, idx) => {
+      {total > 3 && (
+        <div
+          data-testid="sidebar-section-window"
+          style={{
+            flexShrink: 0,
+            padding: "10px 24px 0",
+            fontFamily: fontFamilies.mono,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.12em",
+            color: subtleText,
+          }}
+        >
+          {String(start + 1).padStart(2, "0")}–{String(end).padStart(2, "0")} / {String(total).padStart(2, "0")}
+        </div>
+      )}
+      {windowed.map(({ section, idx }) => {
         const isActive = idx === activeIdx;
         const headingColor = isActive ? textColor : mutedText;
         const railColor = isActive ? accent : E.line;

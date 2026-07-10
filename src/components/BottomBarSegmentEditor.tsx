@@ -13,6 +13,7 @@ import {
   WorkbenchLabel,
 } from "./shared/Field";
 import { LineSegmented, RuleNote } from "./inspector/EditorRow";
+import SectionChips from "./inspector/SectionChips";
 
 interface BottomBarSegmentEditorProps {
   state: OverlayState;
@@ -70,14 +71,11 @@ export default function BottomBarSegmentEditor({
       )}
 
       {slot.kind === "progress" && (
-        <LineSegmented
-          active={String(slot.sectionIndex)}
-          onSelect={(value) => writeSlot({ ...slot, sectionIndex: Number(value) })}
-          options={state.sidebar.sections.map((section, sIdx) => ({
-            value: String(sIdx),
-            label: section.title || `${t("label.section")} ${sIdx + 1}`,
-            testId: `bottom-seg${index + 1}-progress-${sIdx}`,
-          }))}
+        <SectionChips
+          sections={state.sidebar.sections}
+          active={slot.sectionIndex}
+          onSelect={(sIdx) => writeSlot({ ...slot, sectionIndex: sIdx })}
+          testIdPrefix={`bottom-seg${index + 1}-progress`}
         />
       )}
 

@@ -1,8 +1,9 @@
 import type { OverlayState } from "../types";
 import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
+import { MAX_SECTION_BULLETS, addBullet, removeBullet } from "../lib/agenda";
 import { patchSection } from "../lib/state";
 import { useLocale } from "../hooks/useLocale";
-import { SectionInput } from "./shared/Field";
+import { SectionInput, WorkbenchButton } from "./shared/Field";
 
 interface SidebarSectionEditorProps {
   state: OverlayState;
@@ -94,6 +95,27 @@ export default function SidebarSectionEditor({
               />
             </div>
             <button
+              onClick={() => onChange(removeBullet(state, index, i))}
+              title={t("sections.removeBullet")}
+              aria-label={t("sections.removeBullet")}
+              data-testid={`sidebar-s${index + 1}-bullet-${i}-remove`}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 3,
+                border: `1px solid ${UI_COLORS.controlBorder}`,
+                background: "transparent",
+                color: UI_COLORS.textSubtle,
+                cursor: "pointer",
+                fontSize: 12,
+                lineHeight: 1,
+                flexShrink: 0,
+                marginBottom: 3,
+              }}
+            >
+              ×
+            </button>
+            <button
               onClick={() => toggleBulletDone(i)}
               title={done ? t("btn.markUndone") : t("btn.markDone")}
               aria-pressed={done}
@@ -127,6 +149,16 @@ export default function SidebarSectionEditor({
           </div>
         );
       })}
+      <div>
+        <WorkbenchButton
+          testId={`sidebar-s${index + 1}-add-bullet`}
+          onClick={() => onChange(addBullet(state, index))}
+          disabled={section.bullets.length >= MAX_SECTION_BULLETS}
+          style={{ height: 24, padding: "0 10px" }}
+        >
+          + {t("sections.addBullet")}
+        </WorkbenchButton>
+      </div>
     </div>
   );
 }

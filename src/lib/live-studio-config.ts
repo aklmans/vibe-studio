@@ -146,7 +146,8 @@ function normalizeSections(value: unknown): LiveStudioConfigSection[] {
     if (!source) return sections;
     const title = cleanString(source.title);
     const bullets = cleanStringArray(source.bullets).slice(0, 6);
-    if (!title || bullets.length === 0) return sections;
+    // Bullets are optional: a pure agenda item is a title (+ planned minutes).
+    if (!title) return sections;
     const minutes = cleanMinutes(source.minutes);
     sections.push({ title, bullets, ...(minutes !== undefined ? { minutes } : {}) });
     return sections;
@@ -166,7 +167,7 @@ function normalizeConfig(value: unknown): LiveStudioConfig | null {
     badges: normalizeBadgeKeys(source.badges),
     stack: cleanStringArray(source.stack).slice(0, 8),
     socials: normalizeSocials(source.socials).slice(0, 8),
-    sections: normalizeSections(source.sections).slice(0, 6),
+    sections: normalizeSections(source.sections).slice(0, 12),
   };
 }
 
@@ -277,8 +278,10 @@ function validateSections(value: unknown, issues: string[]): void {
     if ("minutes" in source && source.minutes !== undefined && cleanMinutes(source.minutes) === undefined) {
       issues.push(`sections[${index}].minutes must be a whole number of minutes (1-999).`);
     }
-    if (cleanStringArray(source.bullets).length === 0) {
-      issues.push(`sections[${index}].bullets must not be empty.`);
+    // Bullets are optional (a pure agenda item is title + minutes); when
+    // present they must be an array of strings.
+    if ("bullets" in source && source.bullets !== undefined && !Array.isArray(source.bullets)) {
+      issues.push(`sections[${index}].bullets must be an array of strings.`);
     }
   });
 }

@@ -288,10 +288,15 @@ test("overlay inspector section tabs show one progress section at a time", () =>
     }),
   );
 
-  assert.match(html, /data-testid="active-section-1"[^>]*aria-pressed="true"/);
-  assert.match(html, /data-testid="overlay-section-panel-1"/);
-  assert.doesNotMatch(html, /data-testid="overlay-section-panel-0"/);
-  assert.doesNotMatch(html, /data-testid="overlay-section-panel-2"/);
+  // The sections manager: wrapping chips select the section, one editor shows,
+  // and the structure controls (add / move / remove) are present.
+  assert.match(html, /data-testid="inspector-sections-chip-1"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-testid="inspector-sections-chip-0"[^>]*aria-pressed="false"/);
+  assert.match(html, /data-testid="inspector-sections-editor-1"/);
+  assert.doesNotMatch(html, /data-testid="inspector-sections-editor-0"/);
+  assert.match(html, /data-testid="inspector-sections-add"/);
+  assert.match(html, /data-testid="inspector-sections-move-up"/);
+  assert.match(html, /data-testid="inspector-sections-remove"/);
 });
 
 test("session config section editor shows one progress section at a time", () => {
@@ -319,12 +324,12 @@ test("session config section editor shows one progress section at a time", () =>
     }),
   );
 
-  assert.match(html, /data-testid="live-data-section-tabs"/);
-  assert.match(html, /data-testid="live-data-section-panel-0"/);
-  assert.match(html, /data-testid="live-data-section-tab-0"[^>]*aria-pressed="true"/);
-  assert.match(html, /data-testid="live-data-section-tab-1"[^>]*aria-pressed="false"/);
-  assert.doesNotMatch(html, /data-testid="live-data-section-panel-1"/);
-  assert.doesNotMatch(html, /data-testid="live-data-section-panel-2"/);
+  assert.match(html, /data-testid="live-data-sections-manager"/);
+  assert.match(html, /data-testid="live-data-sections-chip-0"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-testid="live-data-sections-chip-1"[^>]*aria-pressed="false"/);
+  assert.match(html, /data-testid="live-data-sections-editor-0"/);
+  assert.doesNotMatch(html, /data-testid="live-data-sections-editor-1"/);
+  assert.match(html, /data-testid="live-data-sections-add"/);
 });
 
 test("social editor uses brand-icon search instead of fixed kind slots", () => {
@@ -640,6 +645,9 @@ test("badge editor exposes reorder controls, presets, and an empty hint", () => 
 });
 
 test("right inspector editors use the inspector line segmented control", () => {
+  // OverlayInspector delegates its pickers (SectionsManager chips, per-segment
+  // editors) so it has no segmented control of its own — it only needs to stay
+  // clear of the heavy WorkbenchSegmented.
   const files = [
     "src/components/BadgesEditor.tsx",
     "src/components/SocialsEditor.tsx",
@@ -648,11 +656,20 @@ test("right inspector editors use the inspector line segmented control", () => {
     "src/components/inspector/groups/WallpaperInspector.tsx",
     "src/components/live-data/SettingsView.tsx",
   ];
+  const usesLineSegmented = new Set([
+    "src/components/BadgesEditor.tsx",
+    "src/components/SocialsEditor.tsx",
+    "src/components/BottomBarSegmentEditor.tsx",
+    "src/components/inspector/groups/WallpaperInspector.tsx",
+    "src/components/live-data/SettingsView.tsx",
+  ]);
 
   for (const file of files) {
     const source = readFileSync(resolve(file), "utf8");
     assert.doesNotMatch(source, /WorkbenchSegmented/);
-    assert.match(source, /LineSegmented/);
+    if (usesLineSegmented.has(file)) {
+      assert.match(source, /LineSegmented/);
+    }
   }
 });
 
