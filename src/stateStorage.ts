@@ -193,6 +193,10 @@ function normalizeSegment(value: unknown, fallback: BottomBarSlot): BottomBarSlo
       return { kind: "stack" };
     case "topic":
       return { kind: "topic" };
+    case "agenda":
+      return { kind: "agenda" };
+    case "social":
+      return { kind: "social" };
     case "text":
       return {
         kind: "text",

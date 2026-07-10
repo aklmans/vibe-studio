@@ -168,6 +168,8 @@ function isBottomBarSlot(value: unknown): value is BottomBarSlot {
     case "live":
     case "stack":
     case "topic":
+    case "agenda":
+    case "social":
       return true;
     case "progress":
       return typeof source.sectionIndex === "number";

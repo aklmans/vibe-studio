@@ -281,6 +281,23 @@ test("normalizeOverlayState keeps cover images compatible and replaceable", () =
   assert.equal(replaced.cover.sceneUrl, "data:image/png;base64,BBB");
 });
 
+test("normalizeOverlayState keeps agenda/social bottom-bar segments", () => {
+  const next = normalizeOverlayState(
+    {
+      bottomBar: {
+        visible: true,
+        segments: [{ kind: "live" }, { kind: "agenda" }, { kind: "social" }],
+      },
+    },
+    DEFAULT_STATE,
+  );
+  assert.deepEqual(next.bottomBar.segments, [
+    { kind: "live" },
+    { kind: "agenda" },
+    { kind: "social" },
+  ]);
+});
+
 test("normalizeOverlayState defaults brand + layout and rejects hostile layout values", () => {
   // State saved before the lecture layouts has neither key.
   const legacy = normalizeOverlayState({ theme: "dark" }, DEFAULT_STATE);

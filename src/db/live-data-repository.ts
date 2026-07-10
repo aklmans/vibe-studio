@@ -77,6 +77,10 @@ function segmentFromRow(row: LiveBottomBarSegmentRow): BottomBarSlot {
       return { kind: "stack" };
     case "topic":
       return { kind: "topic" };
+    case "agenda":
+      return { kind: "agenda" };
+    case "social":
+      return { kind: "social" };
     case "text":
       return {
         kind: "text",
@@ -112,6 +116,8 @@ function segmentToInsert(
     case "live":
     case "stack":
     case "topic":
+    case "agenda":
+    case "social":
       return {
         sessionId,
         sortOrder,

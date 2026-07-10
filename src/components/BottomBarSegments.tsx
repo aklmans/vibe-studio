@@ -341,6 +341,88 @@ function SegmentBody({
       );
     }
 
+    case "agenda": {
+      // Lecture lower-third: where are we in the talk, and what comes next —
+      // all derived from the sections the sidebar would otherwise be showing.
+      const sections = state.sidebar.sections;
+      const count = sections.length;
+      const idx = Math.min(Math.max(0, state.sidebar.activeSection), Math.max(0, count - 1));
+      const current = sections[idx];
+      const upNext = sections[idx + 1];
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return (
+        <>
+          <div style={titleStyle}>
+            <div style={railStyle} />
+            <span style={ellipsisSpan}>
+              {t("bar.agenda")} · {pad(count === 0 ? 0 : idx + 1)}/{pad(count)}
+            </span>
+          </div>
+          <div
+            style={{
+              ...valueStyle,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 12,
+              minWidth: 0,
+            }}
+          >
+            <span style={{ ...ellipsisSpan, fontFamily: fontFamilies.serif }}>
+              {current?.title || t("bar.agenda")}
+            </span>
+            {upNext?.title ? (
+              <span
+                style={{
+                  ...ellipsisSpan,
+                  fontSize: Math.max(11, Math.round(valueSize * 0.6)),
+                  fontWeight: 500,
+                  color: mutedText,
+                  flexShrink: 2,
+                }}
+              >
+                {t("bar.agendaNext")} · {upNext.title}
+              </span>
+            ) : null}
+          </div>
+        </>
+      );
+    }
+
+    case "social": {
+      // Persistent attribution: the first visible handle, so a late joiner
+      // always knows where to follow — independent of the sidebar's footer.
+      const social = state.cover.socials.find(
+        (s) => s.visible && s.value.trim().length > 0,
+      );
+      return (
+        <>
+          <div style={titleStyle}>
+            <div style={railStyle} />
+            <span style={ellipsisSpan}>{t("bar.social")}</span>
+          </div>
+          <div
+            style={{
+              ...valueStyle,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+              minWidth: 0,
+            }}
+          >
+            {social ? (
+              <>
+                <span style={ellipsisSpan}>{social.label}</span>
+                <span style={{ color: mutedText, fontWeight: 500 }}>·</span>
+                <span style={{ ...ellipsisSpan, flexShrink: 2 }}>{social.value}</span>
+              </>
+            ) : (
+              <span style={{ color: mutedText }}>—</span>
+            )}
+          </div>
+        </>
+      );
+    }
+
     case "text": {
       return (
         <>
