@@ -53,6 +53,16 @@ test("no-op switches return null (already the target set, or mobile)", () => {
   equal(segmentsForLayoutSwitch(LECTURE_DEFAULT_SEGMENTS, "mobile"), null);
 });
 
+test("a picked follow handle counts as hand-edited — layout switches keep it", () => {
+  const pickedFollow: BottomBarSlot[] = [
+    { kind: "live" },
+    { kind: "agenda" },
+    { kind: "social", socialIndex: 2 },
+  ];
+  equal(segmentsForLayoutSwitch(pickedFollow, "workbench"), null);
+  equal(segmentsForLayoutSwitch(pickedFollow, "lecture-right"), null);
+});
+
 test("the swap returns fresh slot objects, not shared references", () => {
   const swapped = segmentsForLayoutSwitch(WORKBENCH_DEFAULT_SEGMENTS, "lecture-left")!;
   equal(swapped === LECTURE_DEFAULT_SEGMENTS, false);

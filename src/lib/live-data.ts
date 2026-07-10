@@ -26,6 +26,8 @@ export interface LiveTaskData {
 export interface LiveSectionData {
   title: string;
   tasks: LiveTaskData[];
+  /** Planned duration in minutes (agenda timing). */
+  minutes?: number;
 }
 
 export interface LiveDataSnapshot {
@@ -42,6 +44,7 @@ export interface LiveDataSnapshot {
 function sameSectionContent(a: LiveSectionData, b: LiveSectionData): boolean {
   return (
     a.title === b.title &&
+    a.minutes === b.minutes &&
     a.tasks.length === b.tasks.length &&
     a.tasks.every((task, index) => task.text === b.tasks[index]?.text)
   );
@@ -50,6 +53,7 @@ function sameSectionContent(a: LiveSectionData, b: LiveSectionData): boolean {
 function mergeSectionData(a: LiveSectionData, b: LiveSectionData): LiveSectionData {
   return {
     title: a.title,
+    ...(a.minutes !== undefined ? { minutes: a.minutes } : {}),
     tasks: a.tasks.map((task, index) => ({
       text: task.text,
       done: task.done || b.tasks[index]?.done === true,
@@ -75,6 +79,7 @@ function normalizeSections(sections: LiveSectionData[]): {
 
     normalized.push({
       title: section.title,
+      ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
       tasks: section.tasks.map((task) => ({ ...task })),
     });
     indexMap.push(normalized.length - 1);
@@ -169,8 +174,9 @@ function isBottomBarSlot(value: unknown): value is BottomBarSlot {
     case "stack":
     case "topic":
     case "agenda":
-    case "social":
       return true;
+    case "social":
+      return source.socialIndex === undefined || typeof source.socialIndex === "number";
     case "progress":
       return typeof source.sectionIndex === "number";
     case "text":
@@ -231,6 +237,7 @@ export function overlayStateToLiveData(
     activeSection: state.sidebar.activeSection,
     sections: state.sidebar.sections.map((section, sectionIndex) => ({
       title: section.title,
+      ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
       tasks: section.bullets.map((text, taskIndex) => ({
         text,
         done: state.sidebar.sectionsDone[sectionIndex]?.[taskIndex] ?? false,
@@ -258,6 +265,7 @@ export function applyLiveDataToOverlayState(
       sections: normalized.sections.map((section) => ({
         title: section.title,
         bullets: section.tasks.map((task) => task.text),
+        ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
       })),
       sectionsDone: normalized.sections.map((section) =>
         section.tasks.map((task) => task.done),

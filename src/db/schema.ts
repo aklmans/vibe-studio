@@ -45,6 +45,8 @@ export const liveSections = pgTable("live_sections", {
     .references(() => liveSessions.id, { onDelete: "cascade" }),
   sortOrder: integer("sort_order").notNull(),
   title: text("title").notNull(),
+  // Planned duration in minutes (agenda timing); null = not planned.
+  minutes: integer("minutes"),
 });
 
 export const liveTasks = pgTable("live_tasks", {

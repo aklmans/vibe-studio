@@ -13,6 +13,7 @@ import StackEditor from "../../StackEditor";
 import BottomBarSegmentEditor from "../../BottomBarSegmentEditor";
 import ObsCompositionControls from "../ObsCompositionControls";
 import LayoutControls from "../LayoutControls";
+import { driveAgendaTo } from "../../../lib/agenda";
 import { getLayout } from "../../../lib/overlay-layout";
 import { useLocale } from "../../../hooks/useLocale";
 
@@ -124,7 +125,7 @@ export default function OverlayInspector({
             active={String(activeSectionIndex)}
             onSelect={(value) =>
               onChange(
-                patchSection(state, "sidebar", { activeSection: Number(value) }),
+                driveAgendaTo(state, Number(value), new Date().toISOString()),
               )
             }
             options={state.sidebar.sections.map((s, idx) => ({

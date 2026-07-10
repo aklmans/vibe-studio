@@ -357,6 +357,11 @@ function SegmentBody({
             <span style={ellipsisSpan}>
               {t("bar.agenda")} · {pad(count === 0 ? 0 : idx + 1)}/{pad(count)}
             </span>
+            <AgendaTimer
+              startedAtIso={state.sidebar.activeSectionStartedAt || state.liveSession.startedAt}
+              minutes={current?.minutes}
+              textColor={textColor}
+            />
           </div>
           <div
             style={{
@@ -389,11 +394,16 @@ function SegmentBody({
     }
 
     case "social": {
-      // Persistent attribution: the first visible handle, so a late joiner
-      // always knows where to follow — independent of the sidebar's footer.
-      const social = state.cover.socials.find(
-        (s) => s.visible && s.value.trim().length > 0,
-      );
+      // Persistent attribution. A picked handle (socialIndex) wins when it is
+      // still visible and non-empty; otherwise fall back to the first visible
+      // one so the slot never goes blank because of a socials re-shuffle.
+      const socials = state.cover.socials;
+      const picked =
+        slot.socialIndex !== undefined ? socials[slot.socialIndex] : undefined;
+      const social =
+        picked && picked.visible && picked.value.trim().length > 0
+          ? picked
+          : socials.find((s) => s.visible && s.value.trim().length > 0);
       return (
         <>
           <div style={titleStyle}>
@@ -435,6 +445,32 @@ function SegmentBody({
       );
     }
   }
+}
+
+/** "08:12 / 30:00" — time in the current section over its planned duration.
+ *  No start yet → planned only; no plan → elapsed only; neither → nothing. */
+function AgendaTimer({
+  startedAtIso,
+  minutes,
+  textColor,
+}: {
+  startedAtIso: string;
+  minutes: number | undefined;
+  textColor: string;
+}) {
+  const startedMs = startedAtIso ? new Date(startedAtIso).getTime() : NaN;
+  const ready = Number.isFinite(startedMs);
+  const now = useNow(ready);
+  const plannedLabel = minutes ? formatElapsed(minutes * 60_000) : "";
+  if (!ready && !plannedLabel) return null;
+  const elapsedLabel = ready ? formatElapsed(Math.max(0, now - startedMs)) : "";
+  return (
+    <span style={{ marginLeft: 4, whiteSpace: "nowrap", color: textColor }}>
+      {elapsedLabel}
+      {elapsedLabel && plannedLabel ? " / " : ""}
+      {plannedLabel}
+    </span>
+  );
 }
 
 interface LiveElapsedValueProps {

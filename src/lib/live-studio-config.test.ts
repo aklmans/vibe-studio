@@ -245,3 +245,47 @@ test("example live studio config is parseable and valid", () => {
   assert.equal(parsed?.version, 1);
   assert.equal(parsed?.title, "Building With Agents");
 });
+
+test("section minutes round-trip config -> state -> config, and bad values are rejected", () => {
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "T",
+      subtitle: "S",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: [
+        { title: "One", minutes: 30, bullets: ["a"] },
+        { title: "Two", bullets: ["b"] }, // unplanned stays unplanned
+        { title: "Three", minutes: 12.9, bullets: ["c"] }, // floors to 12
+      ],
+    }),
+  );
+  assert.ok(config);
+  assert.equal(config.sections[0].minutes, 30);
+  assert.equal(config.sections[1].minutes, undefined);
+  assert.equal(config.sections[2].minutes, 12);
+
+  const state = configToOverlayState(DEFAULT_STATE, config);
+  assert.equal(state.sidebar.sections[0].minutes, 30);
+  assert.equal(state.sidebar.sections[1].minutes, undefined);
+  // Applying a config resets the section timer for a fresh agenda.
+  assert.equal(state.sidebar.activeSectionStartedAt, "");
+
+  const back = overlayStateToConfig(state);
+  assert.equal(back.sections[0].minutes, 30);
+  assert.equal("minutes" in back.sections[1], false);
+
+  const validation = validateLiveStudioConfig({
+    version: 1,
+    title: "T",
+    subtitle: "S",
+    badges: [],
+    stack: [],
+    socials: [],
+    sections: [{ title: "One", minutes: -5, bullets: ["a"] }],
+  });
+  assert.equal(validation.valid, false);
+  assert.ok(validation.issues.some((issue) => issue.includes("minutes")));
+});

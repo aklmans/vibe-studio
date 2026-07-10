@@ -19,6 +19,15 @@ import type { SocialConfig } from "./socials";
 export interface LiveStudioConfigSection {
   title: string;
   bullets: string[];
+  /** Planned duration in minutes — agenda timing for lecture-style streams. */
+  minutes?: number;
+}
+
+/** Positive whole minutes, capped at a sane ceiling; anything else is absent. */
+function cleanMinutes(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  const minutes = Math.floor(value);
+  return minutes >= 1 && minutes <= 999 ? minutes : undefined;
 }
 
 export interface LiveStudioConfigSocial {
@@ -138,7 +147,8 @@ function normalizeSections(value: unknown): LiveStudioConfigSection[] {
     const title = cleanString(source.title);
     const bullets = cleanStringArray(source.bullets).slice(0, 6);
     if (!title || bullets.length === 0) return sections;
-    sections.push({ title, bullets });
+    const minutes = cleanMinutes(source.minutes);
+    sections.push({ title, bullets, ...(minutes !== undefined ? { minutes } : {}) });
     return sections;
   }, []);
 }
@@ -264,6 +274,9 @@ function validateSections(value: unknown, issues: string[]): void {
       return;
     }
     if (!cleanString(source.title)) issues.push(`sections[${index}].title is required.`);
+    if ("minutes" in source && source.minutes !== undefined && cleanMinutes(source.minutes) === undefined) {
+      issues.push(`sections[${index}].minutes must be a whole number of minutes (1-999).`);
+    }
     if (cleanStringArray(source.bullets).length === 0) {
       issues.push(`sections[${index}].bullets must not be empty.`);
     }
@@ -347,6 +360,7 @@ export function configToOverlayState(
   const sections = config.sections.map((section) => ({
     title: section.title,
     bullets: [...section.bullets],
+    ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
   }));
   const avatarVisible = config.profile?.avatarVisible;
 
@@ -355,6 +369,8 @@ export function configToOverlayState(
     sidebar: {
       ...state.sidebar,
       activeSection: 0,
+      // Fresh agenda: the section timer restarts on the first drive.
+      activeSectionStartedAt: "",
       sections,
       sectionsDone: sections.map((section) => section.bullets.map(() => false)),
     },
@@ -435,6 +451,7 @@ export function overlayStateToConfig(state: OverlayState): LiveStudioConfig {
     sections: state.sidebar.sections.map((section) => ({
       title: section.title,
       bullets: [...section.bullets],
+      ...(cleanMinutes(section.minutes) !== undefined ? { minutes: cleanMinutes(section.minutes) } : {}),
     })),
   };
 }

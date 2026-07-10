@@ -80,7 +80,11 @@ function segmentFromRow(row: LiveBottomBarSegmentRow): BottomBarSlot {
     case "agenda":
       return { kind: "agenda" };
     case "social":
-      return { kind: "social" };
+      // The generic index column doubles as socialIndex for social slots.
+      return {
+        kind: "social",
+        ...(typeof row.sectionIndex === "number" ? { socialIndex: row.sectionIndex } : {}),
+      };
     case "text":
       return {
         kind: "text",
@@ -113,11 +117,18 @@ function segmentToInsert(
         title: segment.title,
         text: segment.text,
       };
+    case "social":
+      return {
+        sessionId,
+        sortOrder,
+        kind: segment.kind,
+        // Reuse the generic index column so no migration is needed.
+        sectionIndex: segment.socialIndex ?? null,
+      };
     case "live":
     case "stack":
     case "topic":
     case "agenda":
-    case "social":
       return {
         sessionId,
         sortOrder,
@@ -175,6 +186,7 @@ async function readLiveDataBySessionId(
     activeSection: sessionRow.activeSection,
     sections: sectionRows.map((section) => ({
       title: section.title,
+      ...(typeof section.minutes === "number" ? { minutes: section.minutes } : {}),
       tasks: (tasksBySection.get(section.id) ?? []).map((task) => ({
         text: task.text,
         done: task.done,
@@ -207,6 +219,7 @@ async function replaceLiveDataChildren(
         sessionId,
         sortOrder: sectionIndex,
         title: section.title,
+        minutes: section.minutes ?? null,
       })
       .returning();
     if (!sectionRow) continue;

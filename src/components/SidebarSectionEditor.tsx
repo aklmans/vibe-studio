@@ -33,6 +33,20 @@ export default function SidebarSectionEditor({
     onChange(patchSection(state, "sidebar", { sections }));
   };
 
+  // Planned duration in whole minutes; blank clears it. v1 content, so the
+  // agent may also draft it — this is the manual editor for the same field.
+  const updateMinutes = (value: string) => {
+    const parsed = Number.parseInt(value, 10);
+    const minutes =
+      Number.isFinite(parsed) && parsed >= 1 && parsed <= 999 ? parsed : undefined;
+    const sections = state.sidebar.sections.map((s, i) => {
+      if (i !== index) return s;
+      const { minutes: _drop, ...rest } = s;
+      return { ...rest, ...(minutes !== undefined ? { minutes } : {}) };
+    });
+    onChange(patchSection(state, "sidebar", { sections }));
+  };
+
   const updateBullet = (bulletIdx: number, value: string) => {
     const sections = state.sidebar.sections.map((s, i) => {
       if (i !== index) return s;
@@ -56,6 +70,13 @@ export default function SidebarSectionEditor({
         value={section.title}
         onChange={updateTitle}
         testId={`sidebar-s${index + 1}-title`}
+      />
+      <SectionInput
+        label={t("label.plannedMinutes")}
+        value={section.minutes !== undefined ? String(section.minutes) : ""}
+        onChange={updateMinutes}
+        placeholder={t("label.plannedMinutesPlaceholder")}
+        testId={`sidebar-s${index + 1}-minutes`}
       />
       {section.bullets.map((b, i) => {
         const done = state.sidebar.sectionsDone?.[index]?.[i] ?? false;

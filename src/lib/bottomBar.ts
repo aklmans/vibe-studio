@@ -33,6 +33,9 @@ export interface AgendaSlot {
 }
 export interface SocialSlot {
   kind: "social";
+  /** Which social to feature (index into cover.socials). Absent = the first
+   *  visible one — so the slot works with zero configuration. */
+  socialIndex?: number;
 }
 export interface TextSlot {
   kind: "text";
@@ -124,6 +127,9 @@ function sameSegments(a: BottomBarSlot[], b: BottomBarSlot[]): boolean {
     }
     if (slot.kind === "text" && other.kind === "text") {
       return slot.title === other.title && slot.text === other.text;
+    }
+    if (slot.kind === "social" && other.kind === "social") {
+      return slot.socialIndex === other.socialIndex;
     }
     return true;
   });

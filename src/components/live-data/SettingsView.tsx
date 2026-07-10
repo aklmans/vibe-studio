@@ -18,6 +18,8 @@ import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceCo
 import AIProviderSettings from "./AIProviderSettings";
 import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import LayoutControls from "../inspector/LayoutControls";
+import AgendaDrivePanel from "../inspector/AgendaDrivePanel";
+import { driveAgendaTo } from "../../lib/agenda";
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import {
@@ -86,6 +88,7 @@ const FIELD_INDEX: FieldEntry[] = [
   { id: "badges", group: "session", labelKey: "label.badge", descKey: "settingsRow.badgesDesc", terms: ["badges", "badge", "徽标"] },
   { id: "socials", group: "session", labelKey: "label.social", descKey: "settingsRow.socialsDesc", terms: ["socials", "social", "社交"] },
   { id: "layout", group: "broadcast", labelKey: "group.layout", descKey: "group.layout.hint", terms: ["layout", "scene", "lecture", "workbench", "布局", "场景", "讲座", "工作台"] },
+  { id: "agendaDrive", group: "broadcast", labelKey: "group.agendaDrive", descKey: "group.agendaDrive.hint", terms: ["agenda", "议程", "推进", "计时", "章节", "下一节", "关注", "follow", "timer"] },
   { id: "composition", group: "broadcast", labelKey: "group.composition", descKey: "group.composition.hint", terms: ["obs", "composition", "camera", "screen", "合成", "摄像头", "第二屏", "swap"] },
   { id: "bottomBar", group: "broadcast", labelKey: "group.bottomBarSegments", terms: ["bottom bar", "底栏", "status bar"] },
   { id: "theme", group: "appearance", labelKey: "settings.theme", descKey: "settings.themeHint", terms: ["theme", "主题", "light", "dark"] },
@@ -352,7 +355,7 @@ export default function SettingsView({
               <LineSegmented
                 testId="live-data-section-tabs"
                 active={String(activeSectionIndex)}
-                onSelect={(value) => onChange(patchSection(state, "sidebar", { activeSection: Number(value) }))}
+                onSelect={(value) => onChange(driveAgendaTo(state, Number(value), new Date().toISOString()))}
                 options={state.sidebar.sections.map((section, idx) => ({
                   value: String(idx),
                   label: section.title || `${t("label.section")} ${idx + 1}`,
@@ -392,6 +395,9 @@ export default function SettingsView({
           {/* Layout first: it decides which regions exist, then composition fills them. */}
           <AssetRow rowId="layout" label={t("group.layout")} description={t("group.layout.hint")}>
             <LayoutControls state={state} onChange={onChange} />
+          </AssetRow>
+          <AssetRow rowId="agendaDrive" label={t("group.agendaDrive")} description={t("group.agendaDrive.hint")}>
+            <AgendaDrivePanel state={state} onChange={onChange} />
           </AssetRow>
           {!demoMode && (
             <AssetRow rowId="composition" label={t("group.composition")} description={t("group.composition.hint")}>

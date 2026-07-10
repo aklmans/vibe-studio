@@ -26,10 +26,15 @@ export interface OverlayState {
     visible: boolean;
     socialVisible: boolean;
     activeSection: number;
+    /** ISO timestamp of the last agenda drive (runtime, not in the v1 config).
+     *  "" = untracked; the agenda timer then falls back to the live start. */
+    activeSectionStartedAt: string;
     sectionsDone: boolean[][];
     sections: {
       title: string;
       bullets: string[];
+      /** Planned duration in minutes — agenda timing (v1 content, optional). */
+      minutes?: number;
     }[];
   };
   bottomBar: {
@@ -110,6 +115,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     visible: true,
     socialVisible: false,
     activeSection: 0,
+    activeSectionStartedAt: "",
     sectionsDone: [
       [false, false, false],
       [false, false, false],
@@ -214,6 +220,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
       visible: true,
       socialVisible: false,
       activeSection: 0,
+      activeSectionStartedAt: "",
       sectionsDone: [
         [false, false, false],
         [false, false, false],

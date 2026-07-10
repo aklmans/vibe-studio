@@ -154,9 +154,17 @@ function normalizeSections(value: unknown, defaults: SidebarSection[]): SidebarS
     const fallback = defaults[index] ?? defaults[0];
     const source = record(items[index]);
 
+    const minutes =
+      typeof source?.minutes === "number" &&
+      Number.isFinite(source.minutes) &&
+      Math.floor(source.minutes) >= 1 &&
+      Math.floor(source.minutes) <= 999
+        ? Math.floor(source.minutes)
+        : undefined;
     return {
       title: stringOrDefault(source?.title, fallback.title),
       bullets: normalizeBullets(source?.bullets, fallback.bullets),
+      ...(minutes !== undefined ? { minutes } : {}),
     };
   });
 }
@@ -195,8 +203,15 @@ function normalizeSegment(value: unknown, fallback: BottomBarSlot): BottomBarSlo
       return { kind: "topic" };
     case "agenda":
       return { kind: "agenda" };
-    case "social":
-      return { kind: "social" };
+    case "social": {
+      const socialIndex =
+        typeof source.socialIndex === "number" &&
+        Number.isFinite(source.socialIndex) &&
+        Math.floor(source.socialIndex) >= 0
+          ? Math.floor(source.socialIndex)
+          : undefined;
+      return { kind: "social", ...(socialIndex !== undefined ? { socialIndex } : {}) };
+    }
     case "text":
       return {
         kind: "text",
@@ -447,6 +462,10 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         defaultValue.sidebar.sectionsDone,
       ),
       sections: normalizeSections(sidebar?.sections, defaultValue.sidebar.sections),
+      activeSectionStartedAt: stringOrDefault(
+        sidebar?.activeSectionStartedAt,
+        defaultValue.sidebar.activeSectionStartedAt,
+      ),
     },
     bottomBar: {
       visible: boolOrDefault(
