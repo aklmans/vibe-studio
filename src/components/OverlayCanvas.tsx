@@ -7,6 +7,7 @@ import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
 import { getObsCameraFrameColors, type ObsCameraMode } from "../lib/obs-camera";
+import { WORKBENCH_LAYOUT, type OverlayLayout, type Rect } from "../lib/overlay-layout";
 import { editorialPalette } from "./lib/editorial-palette";
 
 interface OverlayCanvasProps {
@@ -15,34 +16,11 @@ interface OverlayCanvasProps {
   sidebarRef?: React.RefObject<HTMLDivElement | null>;
   bottomBarRef?: React.RefObject<HTMLDivElement | null>;
   cameraMode?: ObsCameraMode;
+  /** Geometry source of truth. Defaults to the workbench layout. */
+  layout?: OverlayLayout;
 }
 
 const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(255,255,255,0.9)", "VC", 68);
-const OBS_CAMERA_SLOT = {
-  left: 1498,
-  top: 786,
-  width: 400,
-  height: 272,
-} as const;
-const CAMERA_PANEL_SLOT = {
-  left: 1496,
-  top: 756,
-  width: 400,
-  height: 300,
-} as const;
-const OVERLAY_EDGE = 24;
-const MAIN_SCREEN_SLOT = {
-  left: OVERLAY_EDGE,
-  top: OVERLAY_EDGE,
-  width: 1440,
-  height: 810,
-} as const;
-const BOTTOM_BAR_SLOT = {
-  left: OVERLAY_EDGE,
-  top: MAIN_SCREEN_SLOT.top + MAIN_SCREEN_SLOT.height + OVERLAY_EDGE,
-  width: MAIN_SCREEN_SLOT.width,
-  height: 1080 - (MAIN_SCREEN_SLOT.top + MAIN_SCREEN_SLOT.height + OVERLAY_EDGE) - OVERLAY_EDGE,
-} as const;
 
 function pickIncompleteBullet(
   bullets: string[],
@@ -101,39 +79,51 @@ function getCurrentFocus(state: OverlayState): {
   };
 }
 
-type OverlaySlot = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
-
-function slotCutoutPath(slot: OverlaySlot): string {
+function slotCutoutPath(slot: Rect): string {
   const right = slot.left + slot.width;
   const bottom = slot.top + slot.height;
   return `M${slot.left} ${slot.top}H${right}V${bottom}H${slot.left}Z`;
 }
 
-function overlayBackdropPath({
-  mainScreenVisible,
-  transparentCameraSlot,
-}: {
-  mainScreenVisible: boolean;
-  transparentCameraSlot: boolean;
-}): string {
+function overlayBackdropPath(
+  layout: OverlayLayout,
+  {
+    mainScreenVisible,
+    transparentCameraSlot,
+  }: {
+    mainScreenVisible: boolean;
+    transparentCameraSlot: boolean;
+  },
+): string {
+  const { width, height } = layout.canvas;
   const cutouts = [
-    mainScreenVisible ? slotCutoutPath(MAIN_SCREEN_SLOT) : null,
-    transparentCameraSlot ? slotCutoutPath(OBS_CAMERA_SLOT) : null,
+    mainScreenVisible ? slotCutoutPath(layout.regions.main) : null,
+    transparentCameraSlot ? slotCutoutPath(layout.regions.camera) : null,
   ].filter(Boolean);
 
-  return `M0 0H1920V1080H0Z${cutouts.length > 0 ? ` ${cutouts.join(" ")}` : ""}`;
+  return `M0 0H${width}V${height}H0Z${cutouts.length > 0 ? ` ${cutouts.join(" ")}` : ""}`;
 }
 
 const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
-  ({ state, onChange, sidebarRef, bottomBarRef, cameraMode = "avatar" }, ref) => {
+  (
+    {
+      state,
+      onChange,
+      sidebarRef,
+      bottomBarRef,
+      cameraMode = "avatar",
+      layout = WORKBENCH_LAYOUT,
+    },
+    ref,
+  ) => {
     const dotPatternId = useId().replaceAll(":", "");
     const { t } = useLocale();
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
+    // A layout may omit a panel entirely; absent rect = the layout has no such panel.
+    const mainRect = layout.regions.main;
+    const cameraPanelRect = layout.panels.cameraPanel;
+    const sidebarRect = layout.panels.sidebar;
+    const bottomBarRect = layout.panels.bottomBar;
     const {
       bgDark,
       bgPanel,
@@ -151,7 +141,7 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     const showCameraAvatar = cameraMode === "avatar";
     const cameraFrameColors = getObsCameraFrameColors(cameraMode);
     const hasTransparentCameraSlot = cameraMode === "empty" && mainScreen.cameraVisible;
-    const backdropPath = overlayBackdropPath({
+    const backdropPath = overlayBackdropPath(layout, {
       mainScreenVisible: mainScreen.visible,
       transparentCameraSlot: hasTransparentCameraSlot,
     });
@@ -162,8 +152,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
         ref={ref}
         data-testid="overlay-canvas"
         style={{
-          width: 1920,
-          height: 1080,
+          width: layout.canvas.width,
+          height: layout.canvas.height,
           position: "relative",
           background: "transparent",
           fontFamily:
@@ -175,9 +165,9 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
         <svg
           aria-hidden="true"
           data-testid="overlay-backdrop"
-          width="1920"
-          height="1080"
-          viewBox="0 0 1920 1080"
+          width={layout.canvas.width}
+          height={layout.canvas.height}
+          viewBox={`0 0 ${layout.canvas.width} ${layout.canvas.height}`}
           style={{
             position: "absolute",
             inset: 0,
@@ -200,10 +190,10 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
             data-testid="overlay-main-screen-frame"
             style={{
               position: "absolute",
-              left: MAIN_SCREEN_SLOT.left,
-              top: MAIN_SCREEN_SLOT.top,
-              width: MAIN_SCREEN_SLOT.width,
-              height: MAIN_SCREEN_SLOT.height,
+              left: mainRect.left,
+              top: mainRect.top,
+              width: mainRect.width,
+              height: mainRect.height,
               background: "transparent",
               border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
@@ -229,14 +219,14 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
         )}
 
         {/* Camera Frame — macOS style, bottom-right column (below sidebar) */}
-        {mainScreen.cameraVisible && (
+        {mainScreen.cameraVisible && cameraPanelRect && (
           <div
             style={{
               position: "absolute",
-              left: CAMERA_PANEL_SLOT.left,
-              top: CAMERA_PANEL_SLOT.top,
-              width: CAMERA_PANEL_SLOT.width,
-              height: CAMERA_PANEL_SLOT.height,
+              left: cameraPanelRect.left,
+              top: cameraPanelRect.top,
+              width: cameraPanelRect.width,
+              height: cameraPanelRect.height,
               background: cameraFrameColors.shellBackground,
               border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
@@ -353,15 +343,15 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
           </div>
         )}
 
-        {!mainScreen.cameraVisible && (
+        {!mainScreen.cameraVisible && cameraPanelRect && (
           <div
             data-testid="overlay-current-focus"
             style={{
               position: "absolute",
-              left: CAMERA_PANEL_SLOT.left,
-              top: CAMERA_PANEL_SLOT.top,
-              width: CAMERA_PANEL_SLOT.width,
-              height: CAMERA_PANEL_SLOT.height,
+              left: cameraPanelRect.left,
+              top: cameraPanelRect.top,
+              width: cameraPanelRect.width,
+              height: cameraPanelRect.height,
               background: `${bgPanel}F0`,
               border: `1px solid ${E.lineStrong}`,
               borderRadius: 0,
@@ -497,16 +487,16 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
         )}
 
         {/* Right Sidebar */}
-        {sidebar.visible && (
+        {sidebar.visible && sidebarRect && (
           <div
             ref={sidebarRef}
             data-testid="overlay-sidebar"
             style={{
               position: "absolute",
-              left: 1496,
-              top: 24,
-              width: 400,
-              height: 708,
+              left: sidebarRect.left,
+              top: sidebarRect.top,
+              width: sidebarRect.width,
+              height: sidebarRect.height,
               background: `${bgPanel}F0`,
               border: `2px solid ${E.lineStrong}`,
               borderRadius: 0,
@@ -571,16 +561,16 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
         )}
 
         {/* Bottom Status Bar */}
-        {bottomBar.visible && (
+        {bottomBar.visible && bottomBarRect && (
           <div
             ref={bottomBarRef}
             data-testid="overlay-bottom-bar"
             style={{
               position: "absolute",
-              left: BOTTOM_BAR_SLOT.left,
-              top: BOTTOM_BAR_SLOT.top,
-              width: BOTTOM_BAR_SLOT.width,
-              height: BOTTOM_BAR_SLOT.height,
+              left: bottomBarRect.left,
+              top: bottomBarRect.top,
+              width: bottomBarRect.width,
+              height: bottomBarRect.height,
               background: `${bgPanel}F0`,
               border: `1px solid ${E.line}`,
               borderTop: `2px solid ${E.lineStrong}`,

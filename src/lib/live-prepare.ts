@@ -1,3 +1,5 @@
+import { WORKBENCH_LAYOUT } from "./overlay-layout";
+
 export type ObsCameraMode = "empty" | "avatar";
 
 export interface ObsSceneItem {
@@ -72,20 +74,11 @@ export const DEFAULT_SCENE_ORDER = [
   AVATAR_FRAME_SOURCE,
   EMPTY_FRAME_SOURCE,
 ] as const;
-export const MAIN_SCREEN_FRAME = {
-  left: 24,
-  top: 24,
-  width: 1440,
-  height: 810,
-} as const;
-/** The transparent camera cutout in the 1920×1080 overlay. Must match
- * OBS_CAMERA_SLOT in OverlayCanvas.tsx (pinned by obs-composition.test.ts). */
-export const CAMERA_SLOT_FRAME = {
-  left: 1498,
-  top: 786,
-  width: 400,
-  height: 272,
-} as const;
+// Geometry has a single source of truth in overlay-layout.ts. Prepare writes the
+// workbench layout's rects into the offline scene collection; the live
+// obs-websocket path (obs-composition.ts) reads the same rects.
+const MAIN_SCREEN_FRAME = WORKBENCH_LAYOUT.regions.main;
+const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera;
 export const OBS_BOUNDS_SCALE_INNER = 2;
 export const OBS_BOUNDS_SCALE_OUTER = 3;
 // OBS alignment bitmask: LEFT(1) | TOP(4) — positions are top-left anchored.

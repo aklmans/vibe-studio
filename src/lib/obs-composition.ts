@@ -16,16 +16,15 @@
 
 import {
   AVATAR_FRAME_SOURCE,
-  CAMERA_SLOT_FRAME,
   CAMERA_SOURCE,
   EMPTY_FRAME_SOURCE,
   MAIN_APP_SOURCE,
   MAIN_DISPLAY_SOURCE,
-  MAIN_SCREEN_FRAME,
   OBS_ALIGN_TOP_LEFT,
   OBS_BOUNDS_ALIGN_CENTER,
   SECOND_SCREEN_SOURCE,
 } from "./live-prepare";
+import { WORKBENCH_LAYOUT, type OverlayLayout, type Rect } from "./overlay-layout";
 
 // obs-websocket v5 encodes the bounds-type enum as a STRING (the C enum name),
 // NOT the integer stored in the scene-collection JSON that live-prepare.ts
@@ -130,13 +129,6 @@ export function normalizeComposition(
   return { ...state, main: state.main === "display-1" ? "display-2" : "display-1" };
 }
 
-interface SlotRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
 /** obs-websocket v5 SetSceneItemTransform payload (partial transform). */
 export type SlotTransform = Record<string, string | number | boolean>;
 
@@ -147,7 +139,7 @@ export type SlotTransform = Record<string, string | number | boolean>;
  * cropToBounds requires OBS ≥ 30.2 (same capability prepare writes offline as
  * bounds_crop).
  */
-export function slotTransform(slot: SlotRect, fit: "contain" | "cover"): SlotTransform {
+export function slotTransform(slot: Rect, fit: "contain" | "cover"): SlotTransform {
   return {
     positionX: slot.left,
     positionY: slot.top,
@@ -180,7 +172,10 @@ export interface CompositionOps {
   transforms: SourceTransformOp[];
 }
 
-export function compositionOps(state: CompositionState): CompositionOps {
+export function compositionOps(
+  state: CompositionState,
+  layout: OverlayLayout = WORKBENCH_LAYOUT,
+): CompositionOps {
   const mainSourceName = CAPTURE_SOURCE_NAME[state.main];
   const camChoice = cameraCapture(state.camera);
   const camSourceName = camChoice ? CAPTURE_SOURCE_NAME[camChoice] : null;
@@ -201,13 +196,13 @@ export function compositionOps(state: CompositionState): CompositionOps {
   ];
 
   const transforms: SourceTransformOp[] = [
-    { source: mainSourceName, transform: slotTransform(MAIN_SCREEN_FRAME, "contain") },
+    { source: mainSourceName, transform: slotTransform(layout.regions.main, "contain") },
   ];
   // camSourceName === mainSourceName would be a conflict; guard defensively.
   if (camSourceName && camSourceName !== mainSourceName) {
     transforms.push({
       source: camSourceName,
-      transform: slotTransform(CAMERA_SLOT_FRAME, "cover"),
+      transform: slotTransform(layout.regions.camera, "cover"),
     });
   }
 
@@ -228,11 +223,18 @@ export interface CompositionProbe {
 
 /**
  * Reconstruct {main, camera} from live OBS so the Inspector reflects reality on
- * mount. A capture parked above the midpoint between the two slots is in the
+ * mount. A capture parked above the midpoint between the two regions is in the
  * main frame; below it, the camera cutout.
+ *
+ * This separates the two regions on Y alone, which holds for every layout whose
+ * regions are stacked vertically (workbench). A layout that puts them side by
+ * side needs the probe to carry positionX too — see the camera-left/right work.
  */
-export function inferCompositionState(probe: CompositionProbe): CompositionState {
-  const midpointY = (MAIN_SCREEN_FRAME.top + CAMERA_SLOT_FRAME.top) / 2;
+export function inferCompositionState(
+  probe: CompositionProbe,
+  layout: OverlayLayout = WORKBENCH_LAYOUT,
+): CompositionState {
+  const midpointY = (layout.regions.main.top + layout.regions.camera.top) / 2;
   let main: MainSource = "display-1";
   let cameraCap: CaptureChoice | null = null;
 

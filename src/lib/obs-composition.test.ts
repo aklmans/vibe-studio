@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-import { CAMERA_SLOT_FRAME, MAIN_SCREEN_FRAME } from "./live-prepare";
+import { WORKBENCH_LAYOUT } from "./overlay-layout";
 import {
   canSwap,
   compositionOps,
@@ -19,6 +19,9 @@ import {
   type CompositionState,
 } from "./obs-composition";
 
+const MAIN_SCREEN_FRAME = WORKBENCH_LAYOUT.regions.main;
+const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera;
+
 function enabledMap(ops: ReturnType<typeof compositionOps>): Record<string, boolean> {
   return Object.fromEntries(ops.enables.map((op) => [op.source, op.enabled]));
 }
@@ -30,16 +33,14 @@ function transformFor(
   return ops.transforms.find((op) => op.source === source)?.transform;
 }
 
-test("camera slot geometry matches the overlay canvas OBS cutout", () => {
+test("the overlay canvas reads geometry from the layout, never its own constants", () => {
+  // Geometry now has a single source of truth (overlay-layout.ts), so the old
+  // cross-file drift check is replaced by proving the canvas holds no copy.
   const source = readFileSync(resolve("src/components/OverlayCanvas.tsx"), "utf8");
-  const match = source.match(
-    /const OBS_CAMERA_SLOT = \{\s*left: (\d+),\s*top: (\d+),\s*width: (\d+),\s*height: (\d+),\s*\} as const;/,
-  );
-  assert(match, "OverlayCanvas.tsx should define OBS_CAMERA_SLOT");
-  deepStrictEqual(
-    { left: +match[1], top: +match[2], width: +match[3], height: +match[4] },
-    CAMERA_SLOT_FRAME,
-  );
+  assert.match(source, /from "\.\.\/lib\/overlay-layout"/);
+  for (const stale of ["OBS_CAMERA_SLOT", "CAMERA_PANEL_SLOT", "MAIN_SCREEN_SLOT", "BOTTOM_BAR_SLOT"]) {
+    assert.doesNotMatch(source, new RegExp(`const ${stale} = \\{`), `${stale} should come from the layout`);
+  }
 });
 
 test("default composition: display-1 fills the main frame, webcam fills the slot", () => {
