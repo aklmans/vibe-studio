@@ -1,7 +1,18 @@
 import { deepStrictEqual, equal, ok } from "node:assert/strict";
 import test from "node:test";
 
-import { DEFAULT_LAYOUT_ID, WORKBENCH_LAYOUT, getLayout, type Rect } from "./overlay-layout";
+import {
+  DEFAULT_LAYOUT_ID,
+  LAYOUTS,
+  LAYOUT_IDS,
+  LECTURE_LEFT_LAYOUT,
+  LECTURE_RIGHT_LAYOUT,
+  WORKBENCH_LAYOUT,
+  cameraCutoutFor,
+  getLayout,
+  isLayoutId,
+  type Rect,
+} from "./overlay-layout";
 
 /*
  * Anti-drift baseline.
@@ -61,4 +72,69 @@ test("getLayout resolves the default layout", () => {
   equal(DEFAULT_LAYOUT_ID, "workbench");
   equal(getLayout(), WORKBENCH_LAYOUT);
   equal(getLayout("workbench"), WORKBENCH_LAYOUT);
+  equal(isLayoutId("lecture-left"), true);
+  equal(isLayoutId("nope"), false);
+});
+
+test("the camera cutout is derived from its panel's chrome, never written twice", () => {
+  // 2px border + 28px titlebar. This is what used to be duplicated by hand.
+  deepStrictEqual(cameraCutoutFor({ left: 1496, top: 756, width: 400, height: 300 }), {
+    left: 1498,
+    top: 786,
+    width: 400,
+    height: 272,
+  });
+  for (const layout of Object.values(LAYOUTS)) {
+    const panel = layout.panels.cameraPanel;
+    if (!panel) continue;
+    deepStrictEqual(layout.regions.camera, cameraCutoutFor(panel), `${layout.id} cutout`);
+  }
+});
+
+test("lecture-left puts the presenter column left of 16:9 slides", () => {
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.panels.header, { left: 24, top: 24, width: 1872, height: 96 });
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.panels.cameraPanel, { left: 24, top: 144, width: 440, height: 280 });
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.regions.camera, { left: 26, top: 174, width: 440, height: 252 });
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.panels.intro, { left: 24, top: 448, width: 440, height: 608 });
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.regions.main, { left: 488, top: 144, width: 1408, height: 792 });
+  deepStrictEqual(LECTURE_LEFT_LAYOUT.panels.bottomBar, { left: 488, top: 960, width: 1408, height: 96 });
+  equal(LECTURE_LEFT_LAYOUT.panels.sidebar, undefined, "lecture layouts have no sidebar");
+});
+
+test("lecture-right mirrors lecture-left", () => {
+  deepStrictEqual(LECTURE_RIGHT_LAYOUT.regions.main, { left: 24, top: 144, width: 1408, height: 792 });
+  deepStrictEqual(LECTURE_RIGHT_LAYOUT.panels.cameraPanel, { left: 1456, top: 144, width: 440, height: 280 });
+  deepStrictEqual(LECTURE_RIGHT_LAYOUT.regions.camera, { left: 1458, top: 174, width: 440, height: 252 });
+  deepStrictEqual(LECTURE_RIGHT_LAYOUT.panels.intro, { left: 1456, top: 448, width: 440, height: 608 });
+  deepStrictEqual(LECTURE_RIGHT_LAYOUT.panels.bottomBar, { left: 24, top: 960, width: 1408, height: 96 });
+  equal(LECTURE_RIGHT_LAYOUT.panels.sidebar, undefined, "lecture layouts have no sidebar");
+});
+
+test("the lecture main region is an exact 16:9", () => {
+  for (const layout of [LECTURE_LEFT_LAYOUT, LECTURE_RIGHT_LAYOUT]) {
+    const { width, height } = layout.regions.main;
+    equal(width * 9, height * 16, `${layout.id} main must be 16:9`);
+  }
+});
+
+test("every layout keeps its rects on-canvas and its two regions apart", () => {
+  for (const id of LAYOUT_IDS) {
+    const layout = LAYOUTS[id];
+    const { width, height } = layout.canvas;
+    const rects: Rect[] = [
+      ...Object.values(layout.regions),
+      ...(Object.values(layout.panels) as Rect[]),
+    ];
+    for (const r of rects) {
+      ok(r.left >= 0 && r.top >= 0, `${id}: no rect starts off-canvas`);
+      ok(right(r) <= width && bottom(r) <= height, `${id}: no rect overflows the canvas`);
+    }
+    const { main, camera } = layout.regions;
+    const disjoint =
+      right(main) <= camera.left ||
+      right(camera) <= main.left ||
+      bottom(main) <= camera.top ||
+      bottom(camera) <= main.top;
+    ok(disjoint, `${id}: the main and camera regions must not overlap`);
+  }
 });

@@ -3,11 +3,13 @@ import { deepStrictEqual, equal } from "node:assert/strict";
 import test from "node:test";
 
 import { applyComposition, probeComposition } from "./obs-composition-runtime";
+import { LECTURE_LEFT_LAYOUT, WORKBENCH_LAYOUT } from "./overlay-layout";
 import { ObsRequestError, type ObsConnection } from "./obs-ws";
 
 interface FakeItem {
   id: number;
   enabled: boolean;
+  positionX: number;
   positionY: number;
   index: number;
 }
@@ -35,8 +37,13 @@ function fakeConnection(items: Record<string, FakeItem>) {
         }
         case "GetSceneItemEnabled":
           return { sceneItemEnabled: byId(payload.sceneItemId)?.enabled === true };
-        case "GetSceneItemTransform":
-          return { sceneItemTransform: { positionY: byId(payload.sceneItemId)?.positionY ?? 0 } };
+        case "GetSceneItemTransform": {
+          // OBS returns both axes; the probe needs X to separate side-by-side regions.
+          const item = byId(payload.sceneItemId);
+          return {
+            sceneItemTransform: { positionX: item?.positionX ?? 0, positionY: item?.positionY ?? 0 },
+          };
+        }
         case "GetSceneItemIndex":
           return { sceneItemIndex: byId(payload.sceneItemId)?.index ?? 0 };
         case "SetSceneItemEnabled": {
@@ -47,6 +54,7 @@ function fakeConnection(items: Record<string, FakeItem>) {
         case "SetSceneItemTransform": {
           const item = byId(payload.sceneItemId);
           const transform = payload.sceneItemTransform as Record<string, unknown>;
+          if (item && typeof transform.positionX === "number") item.positionX = transform.positionX;
           if (item && typeof transform.positionY === "number") item.positionY = transform.positionY;
           return {};
         }
@@ -64,17 +72,19 @@ function fakeConnection(items: Record<string, FakeItem>) {
   return { connection, calls, items };
 }
 
-const MAIN_Y = 24;
-const SLOT_Y = 786;
+const MAIN_X = WORKBENCH_LAYOUT.regions.main.left;
+const MAIN_Y = WORKBENCH_LAYOUT.regions.main.top;
+const SLOT_X = WORKBENCH_LAYOUT.regions.camera.left;
+const SLOT_Y = WORKBENCH_LAYOUT.regions.camera.top;
 
 function fullScene(): Record<string, FakeItem> {
   return {
-    "Vibe Main Display Capture": { id: 1, enabled: true, positionY: MAIN_Y, index: 0 },
-    "Vibe Main App Capture": { id: 2, enabled: false, positionY: MAIN_Y, index: 1 },
-    "Vibe Camera Capture": { id: 3, enabled: true, positionY: SLOT_Y, index: 2 },
-    "Vibe Second Screen Capture": { id: 4, enabled: false, positionY: SLOT_Y, index: 3 },
-    "Vibe Overlay Avatar Frame": { id: 5, enabled: false, positionY: 0, index: 4 },
-    "Vibe Overlay Empty Frame": { id: 6, enabled: true, positionY: 0, index: 5 },
+    "Vibe Main Display Capture": { id: 1, enabled: true, positionX: MAIN_X, positionY: MAIN_Y, index: 0 },
+    "Vibe Main App Capture": { id: 2, enabled: false, positionX: MAIN_X, positionY: MAIN_Y, index: 1 },
+    "Vibe Camera Capture": { id: 3, enabled: true, positionX: SLOT_X, positionY: SLOT_Y, index: 2 },
+    "Vibe Second Screen Capture": { id: 4, enabled: false, positionX: SLOT_X, positionY: SLOT_Y, index: 3 },
+    "Vibe Overlay Avatar Frame": { id: 5, enabled: false, positionX: 0, positionY: 0, index: 4 },
+    "Vibe Overlay Empty Frame": { id: 6, enabled: true, positionX: 0, positionY: 0, index: 5 },
   };
 }
 
@@ -100,13 +110,29 @@ test("probeComposition reports absent captures so the UI can annotate them", asy
 
 test("probeComposition detects swapped displays", async () => {
   const scene = fullScene();
+  scene["Vibe Main Display Capture"].positionX = SLOT_X;
   scene["Vibe Main Display Capture"].positionY = SLOT_Y;
   scene["Vibe Camera Capture"].enabled = false;
   scene["Vibe Second Screen Capture"].enabled = true;
+  scene["Vibe Second Screen Capture"].positionX = MAIN_X;
   scene["Vibe Second Screen Capture"].positionY = MAIN_Y;
   const { connection } = fakeConnection(scene);
   const probe = await probeComposition(connection);
   deepStrictEqual(probe.current, { main: "display-2", camera: "display-1" });
+});
+
+test("probeComposition resolves the column vs the slides under a lecture layout", async () => {
+  const { regions } = LECTURE_LEFT_LAYOUT;
+  const scene = fullScene();
+  // Park the sources where a lecture-left apply would have put them.
+  scene["Vibe Main Display Capture"].positionX = regions.main.left;
+  scene["Vibe Main Display Capture"].positionY = regions.main.top;
+  scene["Vibe Camera Capture"].positionX = regions.camera.left;
+  scene["Vibe Camera Capture"].positionY = regions.camera.top;
+
+  const { connection } = fakeConnection(scene);
+  const probe = await probeComposition(connection, LECTURE_LEFT_LAYOUT);
+  deepStrictEqual(probe.current, { main: "display-1", camera: "camera" });
 });
 
 test("applyComposition drives enables + transforms for a mixed per-region state", async () => {

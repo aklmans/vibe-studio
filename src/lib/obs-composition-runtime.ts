@@ -20,6 +20,7 @@ import {
   type CaptureChoice,
   type CompositionState,
 } from "./obs-composition";
+import { WORKBENCH_LAYOUT, type OverlayLayout } from "./overlay-layout";
 import {
   OBS_ERROR_RESOURCE_NOT_FOUND,
   ObsRequestError,
@@ -56,10 +57,10 @@ async function getSceneItemEnabled(
   return data.sceneItemEnabled === true;
 }
 
-async function getSceneItemPositionY(
+async function getSceneItemPosition(
   connection: ObsConnection,
   sceneItemId: number,
-): Promise<number | null> {
+): Promise<{ x: number | null; y: number | null }> {
   const data = await connection.request("GetSceneItemTransform", {
     sceneName: DEFAULT_SCENE_NAME,
     sceneItemId,
@@ -68,7 +69,8 @@ async function getSceneItemPositionY(
     data.sceneItemTransform && typeof data.sceneItemTransform === "object"
       ? (data.sceneItemTransform as Record<string, unknown>)
       : null;
-  return typeof transform?.positionY === "number" ? transform.positionY : null;
+  const asNumber = (value: unknown) => (typeof value === "number" ? value : null);
+  return { x: asNumber(transform?.positionX), y: asNumber(transform?.positionY) };
 }
 
 export interface CompositionProbeResult {
@@ -79,6 +81,7 @@ export interface CompositionProbeResult {
 
 export async function probeComposition(
   connection: ObsConnection,
+  layout: OverlayLayout = WORKBENCH_LAYOUT,
 ): Promise<CompositionProbeResult> {
   const captureSources = MANAGED_CAPTURES.map((choice) => CAPTURE_SOURCE_NAME[choice]);
   const ids = new Map<string, number | null>();
@@ -100,16 +103,21 @@ export async function probeComposition(
     const enabled = await enabledOf(source);
     // Position only matters for the enabled capture that occupies a region.
     const id = ids.get(source);
-    const positionY =
-      enabled && typeof id === "number" ? await getSceneItemPositionY(connection, id) : null;
-    captures[choice] = { enabled, positionY };
+    const position =
+      enabled && typeof id === "number"
+        ? await getSceneItemPosition(connection, id)
+        : { x: null, y: null };
+    captures[choice] = { enabled, positionX: position.x, positionY: position.y };
   }
 
   return {
-    current: inferCompositionState({
-      captures,
-      avatarFrameEnabled: await enabledOf(AVATAR_FRAME_SOURCE),
-    }),
+    current: inferCompositionState(
+      {
+        captures,
+        avatarFrameEnabled: await enabledOf(AVATAR_FRAME_SOURCE),
+      },
+      layout,
+    ),
     missingSources,
   };
 }
@@ -125,8 +133,9 @@ export interface CompositionApplyResult {
 export async function applyComposition(
   connection: ObsConnection,
   state: CompositionState,
+  layout: OverlayLayout = WORKBENCH_LAYOUT,
 ): Promise<CompositionApplyResult> {
-  const ops = compositionOps(state);
+  const ops = compositionOps(state, layout);
   const ids = new Map<string, number | null>();
   for (const op of ops.enables) {
     ids.set(op.source, await getSceneItemId(connection, op.source));

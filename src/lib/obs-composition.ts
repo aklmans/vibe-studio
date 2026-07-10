@@ -24,7 +24,12 @@ import {
   OBS_BOUNDS_ALIGN_CENTER,
   SECOND_SCREEN_SOURCE,
 } from "./live-prepare";
-import { WORKBENCH_LAYOUT, type OverlayLayout, type Rect } from "./overlay-layout";
+import {
+  WORKBENCH_LAYOUT,
+  type OverlayLayout,
+  type Rect,
+  type RegionId,
+} from "./overlay-layout";
 
 // obs-websocket v5 encodes the bounds-type enum as a STRING (the C enum name),
 // NOT the integer stored in the scene-collection JSON that live-prepare.ts
@@ -212,6 +217,12 @@ export function compositionOps(
 /** Per-capture flags the status GET reads from OBS to reconstruct the state. */
 export interface CaptureProbe {
   enabled: boolean;
+  /**
+   * Scene-item positionX, or null when unreadable. Required to tell apart
+   * regions that sit side by side (the camera-left / camera-right layouts);
+   * without it we can only separate vertically stacked regions.
+   */
+  positionX: number | null;
   /** Scene-item positionY, or null when unreadable. */
   positionY: number | null;
 }
@@ -222,26 +233,39 @@ export interface CompositionProbe {
 }
 
 /**
+ * Which region a capture currently sits in. Apply parks a source exactly on its
+ * region's top-left, so the nearest region wins. When positionX is unreadable we
+ * fall back to splitting on Y, which is only correct while the layout stacks its
+ * regions vertically (workbench) — a side-by-side layout needs the X.
+ */
+function regionForCapture(
+  layout: OverlayLayout,
+  positionX: number | null,
+  positionY: number,
+): RegionId {
+  const { main, camera } = layout.regions;
+  if (positionX === null) {
+    return positionY < (main.top + camera.top) / 2 ? "main" : "camera";
+  }
+  const distance = (r: Rect) => (positionX - r.left) ** 2 + (positionY - r.top) ** 2;
+  return distance(main) <= distance(camera) ? "main" : "camera";
+}
+
+/**
  * Reconstruct {main, camera} from live OBS so the Inspector reflects reality on
- * mount. A capture parked above the midpoint between the two regions is in the
- * main frame; below it, the camera cutout.
- *
- * This separates the two regions on Y alone, which holds for every layout whose
- * regions are stacked vertically (workbench). A layout that puts them side by
- * side needs the probe to carry positionX too — see the camera-left/right work.
+ * mount, by matching each enabled capture to the region it is parked on.
  */
 export function inferCompositionState(
   probe: CompositionProbe,
   layout: OverlayLayout = WORKBENCH_LAYOUT,
 ): CompositionState {
-  const midpointY = (layout.regions.main.top + layout.regions.camera.top) / 2;
   let main: MainSource = "display-1";
   let cameraCap: CaptureChoice | null = null;
 
   for (const choice of MANAGED_CAPTURES) {
     const capture = probe.captures[choice];
     if (!capture.enabled || capture.positionY === null) continue;
-    if (capture.positionY < midpointY) {
+    if (regionForCapture(layout, capture.positionX, capture.positionY) === "main") {
       if (isMainSource(choice)) main = choice;
     } else {
       cameraCap = choice;

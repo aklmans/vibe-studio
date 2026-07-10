@@ -28,10 +28,9 @@ export interface Rect {
 export type RegionId = "main" | "camera";
 
 /** Chrome the overlay itself draws. A layout declares which ones it has. */
-export type PanelId = "sidebar" | "bottomBar" | "cameraPanel";
+export type PanelId = "header" | "sidebar" | "intro" | "bottomBar" | "cameraPanel";
 
-/** Only the current layout ships today; lecture-* and mobile widen this union. */
-export type LayoutId = "workbench";
+export type LayoutId = "workbench" | "lecture-left" | "lecture-right";
 
 export interface OverlayLayout {
   id: LayoutId;
@@ -43,7 +42,30 @@ export interface OverlayLayout {
 }
 
 const EDGE = 24;
+const GAP = 24;
+
+/** The camera panel is a window: a 2px border and a 28px titlebar wrap the hole. */
+const CAMERA_CHROME_BORDER = 2;
+const CAMERA_CHROME_TITLEBAR = 28;
+
+/**
+ * The transparent camera cutout implied by a camera panel's chrome. Deriving it
+ * (rather than writing both rects by hand) is what keeps the hole and the window
+ * from drifting apart — the bug the old cross-file "must match" comment guarded.
+ */
+export function cameraCutoutFor(panel: Rect): Rect {
+  return {
+    left: panel.left + CAMERA_CHROME_BORDER,
+    top: panel.top + CAMERA_CHROME_BORDER + CAMERA_CHROME_TITLEBAR,
+    width: panel.width,
+    height: panel.height - CAMERA_CHROME_TITLEBAR,
+  };
+}
+
+// ─── workbench ──────────────────────────────────────────────────────────────
+
 const WORKBENCH_MAIN: Rect = { left: EDGE, top: EDGE, width: 1440, height: 810 };
+const WORKBENCH_CAMERA_PANEL: Rect = { left: 1496, top: 756, width: 400, height: 300 };
 const WORKBENCH_BOTTOM_TOP = WORKBENCH_MAIN.top + WORKBENCH_MAIN.height + EDGE;
 
 /**
@@ -56,12 +78,11 @@ export const WORKBENCH_LAYOUT: OverlayLayout = {
   canvas: { width: 1920, height: 1080 },
   regions: {
     main: WORKBENCH_MAIN,
-    // Inset inside the camera panel's window chrome, hence not flush with it.
-    camera: { left: 1498, top: 786, width: 400, height: 272 },
+    camera: cameraCutoutFor(WORKBENCH_CAMERA_PANEL),
   },
   panels: {
     sidebar: { left: 1496, top: EDGE, width: 400, height: 708 },
-    cameraPanel: { left: 1496, top: 756, width: 400, height: 300 },
+    cameraPanel: WORKBENCH_CAMERA_PANEL,
     bottomBar: {
       left: EDGE,
       top: WORKBENCH_BOTTOM_TOP,
@@ -71,11 +92,94 @@ export const WORKBENCH_LAYOUT: OverlayLayout = {
   },
 };
 
+// ─── lecture ────────────────────────────────────────────────────────────────
+//
+// A header band across the top, a presenter column on one side (camera above an
+// intro card), and the main capture — the slides — filling the rest at an exact
+// 16:9. There is no sidebar: the intro card is the presenter's identity, and the
+// slides carry the content.
+
+const HEADER_HEIGHT = 96;
+const LECTURE_CONTENT_TOP = EDGE + HEADER_HEIGHT + GAP; // 144
+const LECTURE_CONTENT_BOTTOM = 1080 - EDGE; // 1056
+const LECTURE_COLUMN_WIDTH = 440;
+const LECTURE_MAIN: { width: number; height: number } = { width: 1408, height: 792 }; // 16:9
+const LECTURE_CAMERA_PANEL_HEIGHT = 280;
+const LECTURE_INTRO_TOP = LECTURE_CONTENT_TOP + LECTURE_CAMERA_PANEL_HEIGHT + GAP; // 448
+const LECTURE_BOTTOM_TOP = LECTURE_CONTENT_TOP + LECTURE_MAIN.height + GAP; // 960
+
+const LECTURE_HEADER: Rect = { left: EDGE, top: EDGE, width: 1920 - EDGE * 2, height: HEADER_HEIGHT };
+const LECTURE_BOTTOM_HEIGHT = LECTURE_CONTENT_BOTTOM - LECTURE_BOTTOM_TOP; // 96
+const LECTURE_INTRO_HEIGHT = LECTURE_CONTENT_BOTTOM - LECTURE_INTRO_TOP; // 608
+
+/** Column on the left, slides on the right. */
+const LECTURE_LEFT_COLUMN_X = EDGE; // 24
+const LECTURE_LEFT_MAIN_X = EDGE + LECTURE_COLUMN_WIDTH + GAP; // 488
+
+/** Slides on the left, column on the right. */
+const LECTURE_RIGHT_MAIN_X = EDGE; // 24
+const LECTURE_RIGHT_COLUMN_X = 1920 - EDGE - LECTURE_COLUMN_WIDTH; // 1456
+
+function lectureLayout(id: LayoutId, columnX: number, mainX: number): OverlayLayout {
+  const cameraPanel: Rect = {
+    left: columnX,
+    top: LECTURE_CONTENT_TOP,
+    width: LECTURE_COLUMN_WIDTH,
+    height: LECTURE_CAMERA_PANEL_HEIGHT,
+  };
+  return {
+    id,
+    canvas: { width: 1920, height: 1080 },
+    regions: {
+      main: { left: mainX, top: LECTURE_CONTENT_TOP, ...LECTURE_MAIN },
+      camera: cameraCutoutFor(cameraPanel),
+    },
+    panels: {
+      header: LECTURE_HEADER,
+      cameraPanel,
+      intro: {
+        left: columnX,
+        top: LECTURE_INTRO_TOP,
+        width: LECTURE_COLUMN_WIDTH,
+        height: LECTURE_INTRO_HEIGHT,
+      },
+      bottomBar: {
+        left: mainX,
+        top: LECTURE_BOTTOM_TOP,
+        width: LECTURE_MAIN.width,
+        height: LECTURE_BOTTOM_HEIGHT,
+      },
+    },
+  };
+}
+
+export const LECTURE_LEFT_LAYOUT = lectureLayout(
+  "lecture-left",
+  LECTURE_LEFT_COLUMN_X,
+  LECTURE_LEFT_MAIN_X,
+);
+
+export const LECTURE_RIGHT_LAYOUT = lectureLayout(
+  "lecture-right",
+  LECTURE_RIGHT_COLUMN_X,
+  LECTURE_RIGHT_MAIN_X,
+);
+
+// ─── registry ───────────────────────────────────────────────────────────────
+
 export const DEFAULT_LAYOUT_ID: LayoutId = "workbench";
 
 export const LAYOUTS: Record<LayoutId, OverlayLayout> = {
   workbench: WORKBENCH_LAYOUT,
+  "lecture-left": LECTURE_LEFT_LAYOUT,
+  "lecture-right": LECTURE_RIGHT_LAYOUT,
 };
+
+export const LAYOUT_IDS = Object.keys(LAYOUTS) as LayoutId[];
+
+export function isLayoutId(value: unknown): value is LayoutId {
+  return typeof value === "string" && value in LAYOUTS;
+}
 
 export function getLayout(id: LayoutId = DEFAULT_LAYOUT_ID): OverlayLayout {
   return LAYOUTS[id];

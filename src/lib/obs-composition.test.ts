@@ -4,8 +4,14 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-import { WORKBENCH_LAYOUT } from "./overlay-layout";
 import {
+  LECTURE_LEFT_LAYOUT,
+  LECTURE_RIGHT_LAYOUT,
+  WORKBENCH_LAYOUT,
+  type OverlayLayout,
+} from "./overlay-layout";
+import {
+  CAPTURE_SOURCE_NAME,
   canSwap,
   compositionOps,
   hasSourceConflict,
@@ -146,17 +152,24 @@ test("conflict detection + normalization keep one capture per region", () => {
   );
 });
 
+const off = { enabled: false, positionX: null, positionY: null };
+/** A capture parked exactly on a region's top-left, which is what apply does. */
+const at = (r: { left: number; top: number }) => ({
+  enabled: true,
+  positionX: r.left,
+  positionY: r.top,
+});
+
 test("inferCompositionState reconstructs regions from OBS positions", () => {
-  const off = { enabled: false, positionY: null };
   // display-1 in the main frame, webcam in the slot.
   deepStrictEqual(
     inferCompositionState({
       avatarFrameEnabled: false,
       captures: {
-        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-1": at(MAIN_SCREEN_FRAME),
         "display-2": off,
         app: off,
-        camera: { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
+        camera: at(CAMERA_SLOT_FRAME),
       },
     }),
     { main: "display-1", camera: "camera" },
@@ -166,8 +179,8 @@ test("inferCompositionState reconstructs regions from OBS positions", () => {
     inferCompositionState({
       avatarFrameEnabled: false,
       captures: {
-        "display-1": { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
-        "display-2": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-1": at(CAMERA_SLOT_FRAME),
+        "display-2": at(MAIN_SCREEN_FRAME),
         app: off,
         camera: off,
       },
@@ -179,10 +192,10 @@ test("inferCompositionState reconstructs regions from OBS positions", () => {
     inferCompositionState({
       avatarFrameEnabled: true,
       captures: {
-        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-1": at(MAIN_SCREEN_FRAME),
         "display-2": off,
         app: off,
-        camera: { enabled: true, positionY: CAMERA_SLOT_FRAME.top },
+        camera: at(CAMERA_SLOT_FRAME),
       },
     }),
     { main: "display-1", camera: "avatar" },
@@ -192,7 +205,7 @@ test("inferCompositionState reconstructs regions from OBS positions", () => {
     inferCompositionState({
       avatarFrameEnabled: false,
       captures: {
-        "display-1": { enabled: true, positionY: MAIN_SCREEN_FRAME.top },
+        "display-1": at(MAIN_SCREEN_FRAME),
         "display-2": off,
         app: off,
         camera: off,
@@ -200,6 +213,96 @@ test("inferCompositionState reconstructs regions from OBS positions", () => {
     }),
     { main: "display-1", camera: "off" },
   );
+});
+
+test("inferCompositionState tells the column from the slides in the lecture layouts", () => {
+  // These layouts put main and camera side by side, so a Y-only split cannot
+  // separate them — the probe's positionX is what makes this work.
+  for (const layout of [LECTURE_LEFT_LAYOUT, LECTURE_RIGHT_LAYOUT] as OverlayLayout[]) {
+    const { main, camera } = layout.regions;
+    deepStrictEqual(
+      inferCompositionState(
+        {
+          avatarFrameEnabled: false,
+          captures: { "display-1": at(main), "display-2": off, app: off, camera: at(camera) },
+        },
+        layout,
+      ),
+      { main: "display-1", camera: "camera" },
+      `${layout.id}: display in the slides, webcam in the column`,
+    );
+    deepStrictEqual(
+      inferCompositionState(
+        {
+          avatarFrameEnabled: false,
+          captures: { "display-1": at(camera), "display-2": at(main), app: off, camera: off },
+        },
+        layout,
+      ),
+      { main: "display-2", camera: "display-1" },
+      `${layout.id}: swapped displays`,
+    );
+  }
+});
+
+test("regions that share a top are separated by X, not Y", () => {
+  // The shipped lecture rects happen to differ in Y by the camera titlebar, so a
+  // Y split would still work there. This pins the actual capability: the region
+  // is chosen by proximity, so a layout may place the two regions on one row.
+  const sideBySide: OverlayLayout = {
+    id: "lecture-left",
+    canvas: { width: 1920, height: 1080 },
+    regions: {
+      main: { left: 500, top: 144, width: 1000, height: 562 },
+      camera: { left: 24, top: 144, width: 440, height: 248 },
+    },
+    panels: {},
+  };
+  deepStrictEqual(
+    inferCompositionState(
+      {
+        avatarFrameEnabled: false,
+        captures: {
+          "display-1": at(sideBySide.regions.main),
+          "display-2": off,
+          app: off,
+          camera: at(sideBySide.regions.camera),
+        },
+      },
+      sideBySide,
+    ),
+    { main: "display-1", camera: "camera" },
+  );
+});
+
+test("inferCompositionState falls back to Y when positionX is unreadable", () => {
+  // Older/partial probes carry no X. Still correct while the layout stacks its
+  // regions vertically, which is exactly the workbench case.
+  deepStrictEqual(
+    inferCompositionState({
+      avatarFrameEnabled: false,
+      captures: {
+        "display-1": { enabled: true, positionX: null, positionY: MAIN_SCREEN_FRAME.top },
+        "display-2": off,
+        app: off,
+        camera: { enabled: true, positionX: null, positionY: CAMERA_SLOT_FRAME.top },
+      },
+    }),
+    { main: "display-1", camera: "camera" },
+  );
+});
+
+test("compositionOps parks sources on the given layout's regions", () => {
+  const ops = compositionOps({ main: "display-1", camera: "camera" }, LECTURE_LEFT_LAYOUT);
+  const slides = transformFor(ops, CAPTURE_SOURCE_NAME["display-1"])!;
+  const webcam = transformFor(ops, CAPTURE_SOURCE_NAME.camera)!;
+
+  equal(slides.positionX, LECTURE_LEFT_LAYOUT.regions.main.left);
+  equal(slides.positionY, LECTURE_LEFT_LAYOUT.regions.main.top);
+  equal(webcam.positionX, LECTURE_LEFT_LAYOUT.regions.camera.left);
+  equal(webcam.positionY, LECTURE_LEFT_LAYOUT.regions.camera.top);
+  // The column sits left of the slides in this layout.
+  equal(webcam.positionX < slides.positionX, true);
 });
 
 test("slotTransform sends boundsType as a string enum, not the scene-JSON integer", () => {
