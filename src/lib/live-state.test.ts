@@ -18,7 +18,7 @@ test("normalizeLiveStatePayload uses locale-specific defaults", () => {
   });
 
   assert.equal(snapshot.locale, "en");
-  assert.equal(snapshot.state.sidebar.sections[0]?.title, "Custom");
+  assert.equal(snapshot.state.sidebar.agendas.workbench.sections[0]?.title, "Custom");
   assert.equal(
     snapshot.state.cover.todayLabel,
     DEFAULT_STATE_BY_LOCALE.en.cover.todayLabel,

@@ -281,7 +281,13 @@ test("overlay inspector section tabs show one progress section at a time", () =>
       children: React.createElement(OverlayInspector, {
         state: {
           ...DEFAULT_STATE,
-          sidebar: { ...DEFAULT_STATE.sidebar, activeSection: 1 },
+          sidebar: {
+            ...DEFAULT_STATE.sidebar,
+            agendas: {
+              ...DEFAULT_STATE.sidebar.agendas,
+              workbench: { ...DEFAULT_STATE.sidebar.agendas.workbench, activeSection: 1 },
+            },
+          },
         },
         onChange: () => {},
       }),

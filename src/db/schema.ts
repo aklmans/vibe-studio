@@ -19,7 +19,11 @@ export const liveSessions = pgTable(
     locale: varchar("locale", { length: 2 }).notNull(),
     title: text("title").notNull(),
     status: varchar("status", { length: 16 }).notNull().default("draft"),
+    // Per scene-profile active agenda section. The unqualified column is the
+    // workbench profile (legacy rows keep their meaning).
     activeSection: integer("active_section").notNull().default(0),
+    activeSectionLecture: integer("active_section_lecture").notNull().default(0),
+    activeSectionMobile: integer("active_section_mobile").notNull().default(0),
     bottomBarVisible: boolean("bottom_bar_visible").notNull().default(true),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
@@ -43,6 +47,8 @@ export const liveSections = pgTable("live_sections", {
   sessionId: uuid("session_id")
     .notNull()
     .references(() => liveSessions.id, { onDelete: "cascade" }),
+  /** Scene profile this section belongs to (workbench / lecture / mobile). */
+  profile: varchar("profile", { length: 16 }).notNull().default("workbench"),
   sortOrder: integer("sort_order").notNull(),
   title: text("title").notNull(),
   // Planned duration in minutes (agenda timing); null = not planned.

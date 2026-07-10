@@ -2,6 +2,7 @@ import type { OverlayState } from "../types";
 import { UI_COLORS } from "../lib/design-tokens";
 import {
   MAX_AGENDA_SECTIONS,
+  activeAgenda,
   addSection,
   clampSectionIndex,
   driveAgendaTo,
@@ -31,8 +32,9 @@ export default function SectionsManager({
   testIdPrefix?: string;
 }) {
   const { t } = useLocale();
-  const sections = state.sidebar.sections;
-  const active = clampSectionIndex(state, state.sidebar.activeSection);
+  const agenda = activeAgenda(state);
+  const sections = agenda.sections;
+  const active = clampSectionIndex(state, agenda.activeSection);
   const atCap = sections.length >= MAX_AGENDA_SECTIONS;
 
   return (

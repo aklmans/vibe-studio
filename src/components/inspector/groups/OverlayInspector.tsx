@@ -13,8 +13,17 @@ import BottomBarSegmentEditor from "../../BottomBarSegmentEditor";
 import ObsCompositionControls from "../ObsCompositionControls";
 import LayoutControls from "../LayoutControls";
 import { activeBarSegments } from "../../../lib/bottomBar";
-import { getLayout } from "../../../lib/overlay-layout";
+import { activeAgendaProfile } from "../../../lib/agenda";
+import { getLayout, type BarProfileId } from "../../../lib/overlay-layout";
 import { useLocale } from "../../../hooks/useLocale";
+import type { TranslationKey } from "../../../lib/i18n";
+
+/** The agenda being edited follows the active scene layout (like the bar). */
+const SCENE_PROFILE_LABEL: Record<BarProfileId, TranslationKey> = {
+  workbench: "sceneProfile.workbench",
+  lecture: "sceneProfile.lecture",
+  mobile: "sceneProfile.mobile",
+};
 
 interface OverlayInspectorProps {
   state: OverlayState;
@@ -108,7 +117,7 @@ export default function OverlayInspector({
       )}
 
       <InspectorGroup
-        title={t("group.sections")}
+        title={`${t("group.sections")} · ${t(SCENE_PROFILE_LABEL[activeAgendaProfile(state)])}`}
         hint={t("group.sections.hint")}
         testId="group-overlay-sections"
       >

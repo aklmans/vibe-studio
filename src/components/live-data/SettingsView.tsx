@@ -20,6 +20,7 @@ import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import LayoutControls from "../inspector/LayoutControls";
 import AgendaDrivePanel from "../inspector/AgendaDrivePanel";
 import { activeBarProfile, activeBarSegments } from "../../lib/bottomBar";
+import { activeAgenda, activeAgendaProfile } from "../../lib/agenda";
 import type { BarProfileId } from "../../lib/overlay-layout";
 
 /** Which bar you're editing follows the active scene layout. */
@@ -27,6 +28,13 @@ const BAR_PROFILE_LABEL: Record<BarProfileId, TranslationKey> = {
   workbench: "barProfile.workbench",
   lecture: "barProfile.lecture",
   mobile: "barProfile.mobile",
+};
+
+/** The agenda being edited follows the active scene layout (like the bar). */
+const SCENE_PROFILE_LABEL: Record<BarProfileId, TranslationKey> = {
+  workbench: "sceneProfile.workbench",
+  lecture: "sceneProfile.lecture",
+  mobile: "sceneProfile.mobile",
 };
 import SourceOfTruthBar, { type SessionPersistence } from "./SourceOfTruthBar";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
@@ -154,9 +162,10 @@ export default function SettingsView({
     if (focus?.group) setActiveTab(focus.group);
   }, [focus]);
 
+  const agenda = activeAgenda(state);
   const activeSectionIndex = Math.min(
-    Math.max(state.sidebar.activeSection, 0),
-    Math.max(state.sidebar.sections.length - 1, 0),
+    Math.max(agenda.activeSection, 0),
+    Math.max(agenda.sections.length - 1, 0),
   );
   const writeCover = (patch: Partial<OverlayState["cover"]>) =>
     onChange(patchSection(state, "cover", patch));
@@ -239,8 +248,8 @@ export default function SettingsView({
   }, []);
 
   // Scannable summaries for the big editors (presentational only).
-  const sections = state.sidebar.sections;
-  const curDone = (state.sidebar.sectionsDone?.[activeSectionIndex] ?? []).filter(Boolean).length;
+  const sections = agenda.sections;
+  const curDone = (agenda.sectionsDone[activeSectionIndex] ?? []).filter(Boolean).length;
   const curTotal = sections[activeSectionIndex]?.bullets.length ?? 0;
   const sectionsSummary = `${sections.length} ${t("settingsSummary.sectionsUnit")} · ${t("settingsSummary.current")} ${activeSectionIndex + 1} · ${curDone}/${curTotal} ${t("settingsSummary.done")}`;
   const stackSummary = `${state.stack.items.length} ${t("settingsSummary.items")}`;
@@ -358,7 +367,7 @@ export default function SettingsView({
           <AssetRow rowId="cover" label={t("cover.visual.label")} description={t("settingsRow.coverDesc")}>
             <CoverVisualEditor state={state} onChange={onChange} />
           </AssetRow>
-          <AssetRow rowId="sections" label={`${t("label.section")}s`} description={t("settingsRow.sectionsDesc")} summary={sectionsSummary}>
+          <AssetRow rowId="sections" label={`${t("label.section")}s · ${t(SCENE_PROFILE_LABEL[activeAgendaProfile(state)])}`} description={t("settingsRow.sectionsDesc")} summary={sectionsSummary}>
             <div data-testid="live-data-sections">
               <SectionsManager state={state} onChange={onChange} testIdPrefix="live-data-sections" />
             </div>

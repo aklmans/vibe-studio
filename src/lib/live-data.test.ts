@@ -5,20 +5,33 @@ import {
   applyLiveDataToOverlayState,
   normalizeLiveDataSnapshot,
   overlayStateToLiveData,
+  type LiveAgendaData,
 } from "./live-data";
 
-test("overlayStateToLiveData extracts only stream data from overlay state", () => {
+const EMPTY_AGENDA: LiveAgendaData = { activeSection: 0, sections: [] };
+
+test("overlayStateToLiveData extracts every profile's agenda from overlay state", () => {
   const base = DEFAULT_STATE_BY_LOCALE.en;
   const state = {
     ...base,
     sidebar: {
       ...base.sidebar,
-      activeSection: 1,
-      sectionsDone: [
-        [true, false, false],
-        [false, true, false],
-        [false, false, true],
-      ],
+      agendas: {
+        ...base.sidebar.agendas,
+        workbench: {
+          ...base.sidebar.agendas.workbench,
+          activeSection: 1,
+          sectionsDone: [
+            [true, false, false],
+            [false, true, false],
+            [false, false, true],
+          ],
+        },
+        lecture: {
+          ...base.sidebar.agendas.lecture,
+          activeSection: 2,
+        },
+      },
     },
     liveSession: {
       startedAt: "2026-05-10T16:00:00.000Z",
@@ -42,22 +55,40 @@ test("overlayStateToLiveData extracts only stream data from overlay state", () =
   });
 
   assert.equal(liveData.session.id, "session-1");
-  assert.equal(liveData.activeSection, 1);
-  assert.equal(liveData.sections[0]?.tasks[0]?.done, true);
-  assert.equal(liveData.sections[1]?.tasks[1]?.done, true);
-  assert.equal(liveData.sections[2]?.tasks[2]?.done, true);
+  assert.equal(liveData.agendas.workbench.activeSection, 1);
+  assert.equal(liveData.agendas.workbench.sections[0]?.tasks[0]?.done, true);
+  assert.equal(liveData.agendas.workbench.sections[1]?.tasks[1]?.done, true);
+  assert.equal(liveData.agendas.workbench.sections[2]?.tasks[2]?.done, true);
+  // The lecture scene's agenda persists too — with its own active index.
+  assert.equal(liveData.agendas.lecture.activeSection, 2);
+  assert.equal(
+    liveData.agendas.lecture.sections.length,
+    base.sidebar.agendas.lecture.sections.length,
+  );
+  assert.equal(liveData.agendas.lecture.sections[0]?.minutes, 5);
   assert.deepEqual(liveData.stackItems, base.stack.items.map((item) => item.label));
   assert.deepEqual(liveData.bottomBar.segments, base.bottomBar.segments);
   assert.equal("cover" in liveData, false);
 });
 
-test("applyLiveDataToOverlayState updates stream data while preserving visual settings", () => {
+test("applyLiveDataToOverlayState updates per-profile agendas while preserving visuals + timers", () => {
   const base = {
     ...DEFAULT_STATE_BY_LOCALE.en,
     activeTab: "live" as const,
     cover: {
       ...DEFAULT_STATE_BY_LOCALE.en.cover,
       title: "Keep this visual title",
+    },
+    sidebar: {
+      ...DEFAULT_STATE_BY_LOCALE.en.sidebar,
+      agendas: {
+        ...DEFAULT_STATE_BY_LOCALE.en.sidebar.agendas,
+        lecture: {
+          ...DEFAULT_STATE_BY_LOCALE.en.sidebar.agendas.lecture,
+          // A running lecture timer — the snapshot must not clobber it.
+          activeSectionStartedAt: "2026-05-11T16:30:00.000Z",
+        },
+      },
     },
   };
 
@@ -73,12 +104,24 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
       createdAt: "2026-05-11T15:00:00.000Z",
       updatedAt: "2026-05-11T18:00:00.000Z",
     },
-    activeSection: 2,
-    sections: [
-      { title: "Goal", tasks: [{ text: "Ship DB", done: true }] },
-      { title: "Problem", tasks: [{ text: "Keep simple", done: false }] },
-      { title: "Log", tasks: [{ text: "Verified", done: true }] },
-    ],
+    agendas: {
+      workbench: {
+        activeSection: 2,
+        sections: [
+          { title: "Goal", tasks: [{ text: "Ship DB", done: true }] },
+          { title: "Problem", tasks: [{ text: "Keep simple", done: false }] },
+          { title: "Log", tasks: [{ text: "Verified", done: true }] },
+        ],
+      },
+      lecture: {
+        activeSection: 1,
+        sections: [
+          { title: "开场", minutes: 5, tasks: [] },
+          { title: "主体", minutes: 30, tasks: [] },
+        ],
+      },
+      mobile: EMPTY_AGENDA,
+    },
     bottomBar: {
       visible: false,
       segments: {
@@ -92,10 +135,19 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
 
   assert.equal(next.activeTab, "live");
   assert.equal(next.cover.title, "Keep this visual title");
-  assert.equal(next.sidebar.activeSection, 2);
-  assert.equal(next.sidebar.sections[0]?.title, "Goal");
-  assert.deepEqual(next.sidebar.sections[0]?.bullets, ["Ship DB"]);
-  assert.deepEqual(next.sidebar.sectionsDone[0], [true]);
+  assert.equal(next.sidebar.agendas.workbench.activeSection, 2);
+  assert.equal(next.sidebar.agendas.workbench.sections[0]?.title, "Goal");
+  assert.deepEqual(next.sidebar.agendas.workbench.sections[0]?.bullets, ["Ship DB"]);
+  assert.deepEqual(next.sidebar.agendas.workbench.sectionsDone[0], [true]);
+  // The lecture agenda landed in its own profile, minutes intact…
+  assert.equal(next.sidebar.agendas.lecture.activeSection, 1);
+  assert.equal(next.sidebar.agendas.lecture.sections[1]?.minutes, 30);
+  assert.deepEqual(next.sidebar.agendas.lecture.sections[0]?.bullets, []);
+  // …and the runtime section timer survived the apply.
+  assert.equal(
+    next.sidebar.agendas.lecture.activeSectionStartedAt,
+    "2026-05-11T16:30:00.000Z",
+  );
   assert.equal(next.bottomBar.visible, false);
   assert.deepEqual(next.bottomBar.segments.workbench, [
     { kind: "text", title: "Now", text: "Database-backed" },
@@ -106,7 +158,11 @@ test("applyLiveDataToOverlayState updates stream data while preserving visual se
   assert.equal(next.liveSession.startedAt, "2026-05-11T16:00:00.000Z");
 });
 
-test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
+test("normalizeLiveDataSnapshot folds adjacent duplicates per profile", () => {
+  const dupSection = (title: string, tasks: { text: string; done: boolean }[]) => ({
+    title,
+    tasks,
+  });
   const duplicated = {
     session: {
       id: "session-dup",
@@ -119,57 +175,29 @@ test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
       createdAt: "2026-06-27T00:00:00.000Z",
       updatedAt: "2026-06-27T00:00:00.000Z",
     },
-    activeSection: 5,
-    sections: [
-      {
-        title: "今日目标",
-        tasks: [
-          { text: "配置直播画面", done: false },
-          { text: "优化 AI 工作流", done: false },
-          { text: "边做边解释", done: false },
+    agendas: {
+      workbench: {
+        activeSection: 5,
+        sections: [
+          dupSection("今日目标", [{ text: "配置直播画面", done: false }]),
+          dupSection("今日目标", [{ text: "配置直播画面", done: false }]),
+          dupSection("当前问题", [{ text: "哪一步最卡？", done: false }]),
+          dupSection("当前问题", [{ text: "哪一步最卡？", done: false }]),
+          dupSection("输出记录", [{ text: "已验证效果", done: false }]),
+          dupSection("输出记录", [{ text: "已验证效果", done: true }]),
         ],
       },
-      {
-        title: "今日目标",
-        tasks: [
-          { text: "配置直播画面", done: false },
-          { text: "优化 AI 工作流", done: false },
-          { text: "边做边解释", done: false },
+      lecture: {
+        activeSection: 3,
+        sections: [
+          dupSection("开场", []),
+          dupSection("开场", []),
+          dupSection("主体", []),
+          dupSection("答疑", []),
         ],
       },
-      {
-        title: "当前问题",
-        tasks: [
-          { text: "哪一步最卡？", done: false },
-          { text: "如何更简单？", done: false },
-          { text: "下一步测什么？", done: false },
-        ],
-      },
-      {
-        title: "当前问题",
-        tasks: [
-          { text: "哪一步最卡？", done: false },
-          { text: "如何更简单？", done: false },
-          { text: "下一步测什么？", done: false },
-        ],
-      },
-      {
-        title: "输出记录",
-        tasks: [
-          { text: "已更新布局", done: false },
-          { text: "已验证效果", done: false },
-          { text: "下一步继续简化", done: false },
-        ],
-      },
-      {
-        title: "输出记录",
-        tasks: [
-          { text: "已更新布局", done: false },
-          { text: "已验证效果", done: true },
-          { text: "下一步继续简化", done: false },
-        ],
-      },
-    ],
+      mobile: EMPTY_AGENDA,
+    },
     bottomBar: {
       visible: true,
       segments: {
@@ -179,101 +207,47 @@ test("normalizeLiveDataSnapshot folds adjacent duplicate stream data", () => {
           { kind: "progress" as const, sectionIndex: 5 },
           { kind: "progress" as const, sectionIndex: 5 },
           { kind: "stack" as const },
-          { kind: "stack" as const },
         ],
-        lecture: [{ kind: "live" as const }, { kind: "live" as const }],
+        // The lecture bar's progress indexes the LECTURE agenda: dup section 1
+        // folds into 0, so index 1 (主体) remaps to 1 in the deduped list.
+        lecture: [
+          { kind: "live" as const },
+          { kind: "progress" as const, sectionIndex: 2 },
+        ],
         mobile: [{ kind: "live" as const }],
       },
     },
-    stackItems: [
-      "Claude Opus 4.7",
-      "Claude Opus 4.7",
-      "Cursor",
-      "Cursor",
-      "React + Vite",
-      "React + Vite",
-    ],
+    stackItems: ["Cursor", "Cursor", "React + Vite"],
   };
 
   const normalized = normalizeLiveDataSnapshot(duplicated);
 
   assert.deepEqual(
-    normalized.sections.map((section) => section.title),
+    normalized.agendas.workbench.sections.map((section) => section.title),
     ["今日目标", "当前问题", "输出记录"],
   );
-  assert.equal(normalized.activeSection, 2);
-  assert.deepEqual(normalized.sections[2]?.tasks.map((task) => task.done), [false, true, false]);
+  assert.equal(normalized.agendas.workbench.activeSection, 2);
+  // The done flag from the folded duplicate survives the merge.
+  assert.deepEqual(
+    normalized.agendas.workbench.sections[2]?.tasks.map((task) => task.done),
+    [true],
+  );
   assert.deepEqual(normalized.bottomBar.segments.workbench, [
     { kind: "live" },
     { kind: "progress", sectionIndex: 2 },
     { kind: "stack" },
   ]);
-  // Every profile is normalized independently — the lecture dup folds too.
-  assert.deepEqual(normalized.bottomBar.segments.lecture, [{ kind: "live" }]);
-  assert.deepEqual(normalized.stackItems, ["Claude Opus 4.7", "Cursor", "React + Vite"]);
-});
 
-test("applyLiveDataToOverlayState normalizes duplicated persisted snapshots", () => {
-  const base = DEFAULT_STATE_BY_LOCALE.zh;
-  const next = applyLiveDataToOverlayState(base, {
-    session: {
-      id: "session-dup",
-      dateKey: "2026-06-27",
-      locale: "zh",
-      title: "Dup",
-      status: "draft",
-      startedAt: "",
-      endedAt: null,
-      createdAt: "2026-06-27T00:00:00.000Z",
-      updatedAt: "2026-06-27T00:00:00.000Z",
-    },
-    activeSection: 5,
-    sections: [
-      { title: "今日目标", tasks: [{ text: "配置直播画面", done: false }] },
-      { title: "今日目标", tasks: [{ text: "配置直播画面", done: false }] },
-      { title: "当前问题", tasks: [{ text: "哪一步最卡？", done: false }] },
-      { title: "当前问题", tasks: [{ text: "哪一步最卡？", done: false }] },
-      { title: "输出记录", tasks: [{ text: "已验证效果", done: true }] },
-      { title: "输出记录", tasks: [{ text: "已验证效果", done: true }] },
-    ],
-    bottomBar: {
-      visible: true,
-      segments: {
-        lecture: [{ kind: "live" }],
-        mobile: [{ kind: "live" }],
-        workbench: [
-        { kind: "live" },
-        { kind: "live" },
-        { kind: "progress", sectionIndex: 5 },
-        { kind: "progress", sectionIndex: 5 },
-        { kind: "stack" },
-        { kind: "stack" },
-        ],
-      },
-    },
-    stackItems: [
-      "Claude Opus 4.7",
-      "Claude Opus 4.7",
-      "Cursor",
-      "Cursor",
-      "React + Vite",
-      "React + Vite",
-    ],
-  });
-
+  // The lecture agenda dedupes independently, and ITS bar remaps against the
+  // lecture indexMap — not the workbench one.
   assert.deepEqual(
-    next.sidebar.sections.map((section) => section.title),
-    ["今日目标", "当前问题", "输出记录"],
+    normalized.agendas.lecture.sections.map((section) => section.title),
+    ["开场", "主体", "答疑"],
   );
-  assert.equal(next.sidebar.activeSection, 2);
-  assert.deepEqual(next.bottomBar.segments.workbench, [
+  assert.equal(normalized.agendas.lecture.activeSection, 2);
+  assert.deepEqual(normalized.bottomBar.segments.lecture, [
     { kind: "live" },
-    { kind: "progress", sectionIndex: 2 },
-    { kind: "stack" },
+    { kind: "progress", sectionIndex: 1 },
   ]);
-  assert.deepEqual(next.stack.items.map((item) => item.label), [
-    "Claude Opus 4.7",
-    "Cursor",
-    "React + Vite",
-  ]);
+  assert.deepEqual(normalized.stackItems, ["Cursor", "React + Vite"]);
 });

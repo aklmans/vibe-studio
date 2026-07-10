@@ -124,6 +124,6 @@ test("v1 config is the portable core, not the whole Session Config page", () => 
     runtimeState,
     projectConfigText(runtimeState),
   ).nextState;
-  assert.equal(applied?.sidebar.activeSection, 0);
+  assert.equal(applied?.sidebar.agendas.workbench.activeSection, 0);
   assert.equal(applied?.bottomBar.segments.workbench.length, 3);
 });

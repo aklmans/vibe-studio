@@ -42,10 +42,16 @@ export interface LiveSectionData {
   minutes?: number;
 }
 
-export interface LiveDataSnapshot {
-  session: LiveSessionSummary;
+/** One scene profile's persisted agenda: its sections and active index. */
+export interface LiveAgendaData {
   activeSection: number;
   sections: LiveSectionData[];
+}
+
+export interface LiveDataSnapshot {
+  session: LiveSessionSummary;
+  /** Independent agendas per scene profile, mirroring OverlayState.sidebar. */
+  agendas: Record<BarProfileId, LiveAgendaData>;
   bottomBar: {
     visible: boolean;
     segments: OverlayState["bottomBar"]["segments"];
@@ -143,26 +149,42 @@ function dedupeAdjacentByKey<T>(items: T[], keyForItem: (item: T) => string): T[
 }
 
 export function normalizeLiveDataSnapshot(snapshot: LiveDataSnapshot): LiveDataSnapshot {
-  // Repairs adjacent duplicate rows from persisted live-data snapshots without touching visual state.
-  const { sections, indexMap } = normalizeSections(snapshot.sections);
-  const sectionCount = sections.length;
-  const activeSection = remapSectionIndex(snapshot.activeSection, indexMap, sectionCount);
-  const normalizeProfileSegments = (list: BottomBarSlot[]): BottomBarSlot[] =>
+  // Repairs adjacent duplicate rows from persisted live-data snapshots without
+  // touching visual state. Each profile's agenda normalizes independently, and
+  // a bar profile's progress segments remap against ITS OWN agenda's indexMap
+  // (bar and agenda share the scene profile key).
+  const normalizedAgendas = {} as Record<BarProfileId, LiveAgendaData>;
+  const indexMaps = {} as Record<BarProfileId, { indexMap: number[]; count: number }>;
+  for (const profile of ["workbench", "lecture", "mobile"] as const) {
+    const agenda = snapshot.agendas[profile];
+    const { sections, indexMap } = normalizeSections(agenda.sections);
+    normalizedAgendas[profile] = {
+      sections,
+      activeSection: remapSectionIndex(agenda.activeSection, indexMap, sections.length),
+    };
+    indexMaps[profile] = { indexMap, count: sections.length };
+  }
+
+  const normalizeProfileSegments = (
+    list: BottomBarSlot[],
+    profile: BarProfileId,
+  ): BottomBarSlot[] =>
     dedupeAdjacentByKey(
-      list.map((segment) => normalizeSegment(segment, indexMap, sectionCount)),
+      list.map((segment) =>
+        normalizeSegment(segment, indexMaps[profile].indexMap, indexMaps[profile].count),
+      ),
       bottomBarSegmentKey,
     );
 
   return {
     ...snapshot,
-    activeSection,
-    sections,
+    agendas: normalizedAgendas,
     bottomBar: {
       ...snapshot.bottomBar,
       segments: {
-        workbench: normalizeProfileSegments(snapshot.bottomBar.segments.workbench),
-        lecture: normalizeProfileSegments(snapshot.bottomBar.segments.lecture),
-        mobile: normalizeProfileSegments(snapshot.bottomBar.segments.mobile),
+        workbench: normalizeProfileSegments(snapshot.bottomBar.segments.workbench, "workbench"),
+        lecture: normalizeProfileSegments(snapshot.bottomBar.segments.lecture, "lecture"),
+        mobile: normalizeProfileSegments(snapshot.bottomBar.segments.mobile, "mobile"),
       },
     },
     stackItems: dedupeAdjacentByKey(snapshot.stackItems, (item) => item),
@@ -219,6 +241,19 @@ export function isLiveDataSnapshot(value: unknown): value is LiveDataSnapshot {
       (typeof session.endedAt === "string" || session.endedAt === null) &&
       typeof session.createdAt === "string" &&
       typeof session.updatedAt === "string" &&
+      isAgendasByProfile(source.agendas) &&
+      bottomBar &&
+      typeof bottomBar.visible === "boolean" &&
+      isSegmentsByProfile(bottomBar.segments) &&
+      Array.isArray(source.stackItems) &&
+      source.stackItems.every((item) => typeof item === "string"),
+  );
+}
+
+function isLiveAgendaData(value: unknown): boolean {
+  const source = record(value);
+  return Boolean(
+    source &&
       typeof source.activeSection === "number" &&
       Array.isArray(source.sections) &&
       source.sections.every((section) => {
@@ -236,12 +271,15 @@ export function isLiveDataSnapshot(value: unknown): value is LiveDataSnapshot {
             );
           })
         );
-      }) &&
-      bottomBar &&
-      typeof bottomBar.visible === "boolean" &&
-      isSegmentsByProfile(bottomBar.segments) &&
-      Array.isArray(source.stackItems) &&
-      source.stackItems.every((item) => typeof item === "string"),
+      }),
+  );
+}
+
+function isAgendasByProfile(value: unknown): boolean {
+  const source = record(value);
+  if (!source) return false;
+  return (["workbench", "lecture", "mobile"] as const).every((profile) =>
+    isLiveAgendaData(source[profile]),
   );
 }
 
@@ -257,21 +295,31 @@ function isSegmentsByProfile(
   );
 }
 
+function agendaToLiveData(agenda: OverlayState["sidebar"]["agendas"][BarProfileId]): LiveAgendaData {
+  return {
+    activeSection: agenda.activeSection,
+    sections: agenda.sections.map((section, sectionIndex) => ({
+      title: section.title,
+      ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      tasks: section.bullets.map((text, taskIndex) => ({
+        text,
+        done: agenda.sectionsDone[sectionIndex]?.[taskIndex] ?? false,
+      })),
+    })),
+  };
+}
+
 export function overlayStateToLiveData(
   state: OverlayState,
   session: LiveSessionSummary,
 ): LiveDataSnapshot {
   return normalizeLiveDataSnapshot({
     session,
-    activeSection: state.sidebar.activeSection,
-    sections: state.sidebar.sections.map((section, sectionIndex) => ({
-      title: section.title,
-      ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
-      tasks: section.bullets.map((text, taskIndex) => ({
-        text,
-        done: state.sidebar.sectionsDone[sectionIndex]?.[taskIndex] ?? false,
-      })),
-    })),
+    agendas: {
+      workbench: agendaToLiveData(state.sidebar.agendas.workbench),
+      lecture: agendaToLiveData(state.sidebar.agendas.lecture),
+      mobile: agendaToLiveData(state.sidebar.agendas.mobile),
+    },
     bottomBar: {
       visible: state.bottomBar.visible,
       segments: copySegmentsByProfile(state.bottomBar.segments),
@@ -286,19 +334,30 @@ export function applyLiveDataToOverlayState(
 ): OverlayState {
   const normalized = normalizeLiveDataSnapshot(liveData);
 
+  const liveDataToAgenda = (
+    data: LiveAgendaData,
+    previous: OverlayState["sidebar"]["agendas"][BarProfileId],
+  ): OverlayState["sidebar"]["agendas"][BarProfileId] => ({
+    activeSection: data.activeSection,
+    // The section timer is runtime-local, not persisted — keep the running one.
+    activeSectionStartedAt: previous.activeSectionStartedAt,
+    sections: data.sections.map((section) => ({
+      title: section.title,
+      bullets: section.tasks.map((task) => task.text),
+      ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+    })),
+    sectionsDone: data.sections.map((section) => section.tasks.map((task) => task.done)),
+  });
+
   return {
     ...state,
     sidebar: {
       ...state.sidebar,
-      activeSection: normalized.activeSection,
-      sections: normalized.sections.map((section) => ({
-        title: section.title,
-        bullets: section.tasks.map((task) => task.text),
-        ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
-      })),
-      sectionsDone: normalized.sections.map((section) =>
-        section.tasks.map((task) => task.done),
-      ),
+      agendas: {
+        workbench: liveDataToAgenda(normalized.agendas.workbench, state.sidebar.agendas.workbench),
+        lecture: liveDataToAgenda(normalized.agendas.lecture, state.sidebar.agendas.lecture),
+        mobile: liveDataToAgenda(normalized.agendas.mobile, state.sidebar.agendas.mobile),
+      },
     },
     bottomBar: {
       ...state.bottomBar,

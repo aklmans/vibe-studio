@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { OverlayState } from "../types";
+import { activeAgenda } from "../lib/agenda";
 import type { BottomBarSlot } from "../lib/bottomBar";
 import { formatElapsed, formatStartLabel } from "../lib/bottomBar";
 import { UI_COLORS } from "../lib/design-tokens";
@@ -209,10 +210,10 @@ function SegmentBody({
     }
 
     case "progress": {
+      const agenda = activeAgenda(state);
       const sectionIdx = slot.sectionIndex;
-      const section =
-        state.sidebar.sections[sectionIdx] ?? state.sidebar.sections[0];
-      const doneRow = state.sidebar.sectionsDone?.[sectionIdx] ?? [];
+      const section = agenda.sections[sectionIdx] ?? agenda.sections[0];
+      const doneRow = agenda.sectionsDone[sectionIdx] ?? [];
       const total = section?.bullets.length ?? 0;
       const done = doneRow.filter(Boolean).length;
       const ratio = total === 0 ? 0 : done / total;
@@ -352,9 +353,10 @@ function SegmentBody({
     case "agenda": {
       // Lecture lower-third: where are we in the talk, and what comes next —
       // all derived from the sections the sidebar would otherwise be showing.
-      const sections = state.sidebar.sections;
+      const agenda = activeAgenda(state);
+      const sections = agenda.sections;
       const count = sections.length;
-      const idx = Math.min(Math.max(0, state.sidebar.activeSection), Math.max(0, count - 1));
+      const idx = Math.min(Math.max(0, agenda.activeSection), Math.max(0, count - 1));
       const current = sections[idx];
       const upNext = sections[idx + 1];
       const pad = (n: number) => String(n).padStart(2, "0");
@@ -366,7 +368,7 @@ function SegmentBody({
               {t("bar.agenda")} · {pad(count === 0 ? 0 : idx + 1)}/{pad(count)}
             </span>
             <AgendaTimer
-              startedAtIso={state.sidebar.activeSectionStartedAt || state.liveSession.startedAt}
+              startedAtIso={agenda.activeSectionStartedAt || state.liveSession.startedAt}
               minutes={current?.minutes}
               textColor={textColor}
             />

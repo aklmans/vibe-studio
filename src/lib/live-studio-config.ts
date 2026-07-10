@@ -1,4 +1,5 @@
 import type { CoverVisual, OverlayState } from "../types";
+import { activeAgenda, activeAgendaProfile } from "./agenda";
 import { createBadge } from "./badge-editor";
 import {
   badgeLabelForIconKey,
@@ -371,15 +372,24 @@ export function configToOverlayState(
   }));
   const avatarVisible = config.profile?.avatarVisible;
 
+  const profile = activeAgendaProfile(state);
   return {
     ...state,
     sidebar: {
       ...state.sidebar,
-      activeSection: 0,
-      // Fresh agenda: the section timer restarts on the first drive.
-      activeSectionStartedAt: "",
-      sections,
-      sectionsDone: sections.map((section) => section.bullets.map(() => false)),
+      // The v1 sections are the ACTIVE scene's run of show. Other scenes'
+      // agendas are untouched — applying a workbench config never rewrites a
+      // lecture agenda, and vice versa.
+      agendas: {
+        ...state.sidebar.agendas,
+        [profile]: {
+          activeSection: 0,
+          // Fresh agenda: the section timer restarts on the first drive.
+          activeSectionStartedAt: "",
+          sections,
+          sectionsDone: sections.map((section) => section.bullets.map(() => false)),
+        },
+      },
     },
     stack: {
       ...state.stack,
@@ -455,7 +465,7 @@ export function overlayStateToConfig(state: OverlayState): LiveStudioConfig {
     socials: state.cover.socials
       .map(stateSocialToConfig)
       .filter((social): social is LiveStudioConfigSocial => Boolean(social)),
-    sections: state.sidebar.sections.map((section) => ({
+    sections: activeAgenda(state).sections.map((section) => ({
       title: section.title,
       bullets: [...section.bullets],
       ...(cleanMinutes(section.minutes) !== undefined ? { minutes: cleanMinutes(section.minutes) } : {}),

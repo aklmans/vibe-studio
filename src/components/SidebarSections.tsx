@@ -1,6 +1,6 @@
 import { OverlayState } from "../types";
 import { useLocale } from "../hooks/useLocale";
-import { sectionWindow } from "../lib/agenda";
+import { activeAgenda, sectionWindow } from "../lib/agenda";
 import { fontFamilies, wrapProse } from "../lib/typography";
 import { editorialPalette } from "./lib/editorial-palette";
 
@@ -16,17 +16,18 @@ interface SidebarSectionsProps {
  */
 export default function SidebarSections({ state }: SidebarSectionsProps) {
   const { t, locale } = useLocale();
-  const { sidebar, colors } = state;
+  const { colors } = state;
+  const agenda = activeAgenda(state);
   const { textColor, mutedText, subtleText } = colors;
   const E = editorialPalette(colors);
   const accent = E.activeRule;
-  const activeIdx = sidebar.activeSection;
+  const activeIdx = agenda.activeSection;
   const currentLabel = t("canvas.current");
   // The fixed-height sidebar shows a window of 3 sections from the active one;
   // with ≤ 3 sections this renders every section exactly as before.
-  const total = sidebar.sections.length;
+  const total = agenda.sections.length;
   const { start, end } = sectionWindow(activeIdx, total);
-  const windowed = sidebar.sections
+  const windowed = agenda.sections
     .map((section, idx) => ({ section, idx }))
     .slice(start, end);
 
@@ -53,7 +54,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
         const headingColor = isActive ? textColor : mutedText;
         const railColor = isActive ? accent : E.line;
 
-        const doneBullets = sidebar.sectionsDone?.[idx] ?? [];
+        const doneBullets = agenda.sectionsDone[idx] ?? [];
         const doneCount = doneBullets.filter(Boolean).length;
         const totalCount = section.bullets.length;
         const currentIdx = section.bullets.findIndex(
@@ -70,7 +71,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
               flexDirection: "column",
               padding: "16px 24px",
               borderBottom:
-                idx < sidebar.sections.length - 1
+                idx < agenda.sections.length - 1
                   ? `1px solid ${E.line}`
                   : "none",
               overflow: "hidden",

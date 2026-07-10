@@ -65,10 +65,16 @@ test("locale changes keep the user's broadcast config, appearance and asset pale
     },
     sidebar: {
       ...DEFAULT_STATE_BY_LOCALE.zh.sidebar,
-      sections: [
-        { title: "自定义段落", bullets: ["保留这一条"] },
-        ...DEFAULT_STATE_BY_LOCALE.zh.sidebar.sections.slice(1),
-      ],
+      agendas: {
+        ...DEFAULT_STATE_BY_LOCALE.zh.sidebar.agendas,
+        workbench: {
+          ...DEFAULT_STATE_BY_LOCALE.zh.sidebar.agendas.workbench,
+          sections: [
+            { title: "自定义段落", bullets: ["保留这一条"] },
+            ...DEFAULT_STATE_BY_LOCALE.zh.sidebar.agendas.workbench.sections.slice(1),
+          ],
+        },
+      },
     },
     theme: "light" as const,
     colors: { ...LIGHT_PRESET },
@@ -83,8 +89,8 @@ test("locale changes keep the user's broadcast config, appearance and asset pale
   assert.equal(next.cover.title, "Custom Session");
   assert.equal(next.cover.todayLabel, "我的标签");
   assert.equal(next.cover.todayTopic, "用户自己的主题");
-  assert.equal(next.sidebar.sections[0].title, "自定义段落");
-  assert.deepEqual(next.sidebar.sections[0].bullets, ["保留这一条"]);
+  assert.equal(next.sidebar.agendas.workbench.sections[0].title, "自定义段落");
+  assert.deepEqual(next.sidebar.agendas.workbench.sections[0].bullets, ["保留这一条"]);
 });
 
 test("live-data persistence is keyed by the session locale, not UI language changes", () => {

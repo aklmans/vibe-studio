@@ -37,13 +37,18 @@ test("normalizeOverlayState fills missing nested editor data from defaults", () 
   });
 
   assert.equal(state.sidebar.visible, false);
-  assert.equal(state.sidebar.sections[0].title, "自定义标题");
-  assert.deepEqual(state.sidebar.sections[0].bullets, ["保留这一条"]);
+  // A legacy flat sidebar agenda migrates to the workbench profile…
+  const workbench = state.sidebar.agendas.workbench;
+  assert.equal(workbench.sections[0].title, "自定义标题");
+  assert.deepEqual(workbench.sections[0].bullets, ["保留这一条"]);
   // A provided section list is authoritative: one section in, one section out.
   // Padding back to the 3 defaults would resurrect deleted sections.
-  assert.equal(state.sidebar.sections.length, 1);
-  assert.equal(state.sidebar.activeSection, 0);
-  assert.equal(state.sidebar.sectionsDone.length, 1);
+  assert.equal(workbench.sections.length, 1);
+  assert.equal(workbench.activeSection, 0);
+  assert.equal(workbench.sectionsDone.length, 1);
+  // …while lecture and mobile seed from their own scene defaults.
+  assert.deepEqual(state.sidebar.agendas.lecture, DEFAULT_STATE.sidebar.agendas.lecture);
+  assert.deepEqual(state.sidebar.agendas.mobile, DEFAULT_STATE.sidebar.agendas.mobile);
   // A legacy single-array bar migrates to the workbench profile; the other
   // profiles start from their defaults.
   const firstSegment = state.bottomBar.segments.workbench[0];
@@ -111,9 +116,10 @@ test("normalizeOverlayState fills missing fields from the provided locale defaul
   assert.equal(state.cover.title, "Custom Title");
   assert.equal(state.cover.todayLabel, "TODAY'S BUILD");
   assert.equal(state.cover.todayTopic, "Multi-Agent Coding Live");
-  assert.equal(state.sidebar.sections[0].title, "Custom Section");
+  assert.equal(state.sidebar.agendas.workbench.sections[0].title, "Custom Section");
   // The provided one-section list stays one section (no padding from defaults).
-  assert.equal(state.sidebar.sections.length, 1);
+  assert.equal(state.sidebar.agendas.workbench.sections.length, 1);
+  assert.equal(state.sidebar.agendas.lecture.sections[0].title, "Opening");
   assert.equal(state.cover.socials[0].label, "YouTube");
 });
 
@@ -184,9 +190,9 @@ test("normalizeOverlayState handles empty arrays and invalid types conservativel
 
   assert.equal(state.sidebar.visible, defaultValue.sidebar.visible);
   assert.equal(state.sidebar.socialVisible, defaultValue.sidebar.socialVisible);
-  assert.equal(state.sidebar.activeSection, 2);
-  assert.deepEqual(state.sidebar.sectionsDone[0], [false, true, false]);
-  assert.equal(state.sidebar.sections[0].title, "Today's Goal");
+  assert.equal(state.sidebar.agendas.workbench.activeSection, 2);
+  assert.deepEqual(state.sidebar.agendas.workbench.sectionsDone[0], [false, true, false]);
+  assert.equal(state.sidebar.agendas.workbench.sections[0].title, "Today's Goal");
   assert.deepEqual(state.bottomBar.segments, defaultValue.bottomBar.segments);
   assert.deepEqual(state.stack.items.map((item) => item.label), ["Keep"]);
   assert.equal(state.cover.avatarVisible, defaultValue.cover.avatarVisible);

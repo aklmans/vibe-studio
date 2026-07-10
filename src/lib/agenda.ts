@@ -1,79 +1,108 @@
-import type { OverlayState } from "../types";
+import type { AgendaState, OverlayState } from "../types";
 import type { BottomBarSlot } from "./bottomBar";
 import type { BarProfileId } from "./overlay-layout";
+import { getLayout } from "./overlay-layout";
 
 /*
+ * Agendas are bound to the scene layout: each profile (workbench / lecture /
+ * mobile) owns an independent AgendaState — sections, done flags, active index
+ * and section timer. Every operation below reads and writes the ACTIVE
+ * layout's agenda only, so a lecture's run of show never leaks into the
+ * workbench sidebar and vice versa. The same profile key also selects the
+ * bottom bar, so a bar's progress/agenda segments always point into their own
+ * layout family's agenda.
+ *
  * Driving the agenda = changing the active section as a broadcast action.
  * Every switch stamps activeSectionStartedAt so the on-air "time in section"
- * restarts — this is the one choke point all section switches go through
- * (the agenda drive panel, the Sections editors, the inspector tabs).
+ * restarts — this is the one choke point all section switches go through.
  *
- * The structure operations below (add / remove / move sections, add / remove
- * bullets) are the ONLY way the UI reshapes the agenda: each keeps
- * sectionsDone's shape, the active index, and every bar profile's progress
- * segments consistent in one atomic state update.
+ * The structure operations (add / remove / move sections, add / remove
+ * bullets) are the ONLY way the UI reshapes an agenda: each keeps the
+ * done-flag shape, the active index, and the same profile's progress segments
+ * consistent in one atomic state update.
  */
 
 export const MAX_AGENDA_SECTIONS = 12;
 export const MAX_SECTION_BULLETS = 6;
 
-type Sidebar = OverlayState["sidebar"];
+/** The agenda profile follows the active scene layout (same key as the bar). */
+export function activeAgendaProfile(state: OverlayState): BarProfileId {
+  return getLayout(state.layout).barProfile;
+}
 
-/** Remap each profile's progress segments after sections moved or vanished. */
-function remapProgressSegments(
+export function agendaFor(state: OverlayState, profile: BarProfileId): AgendaState {
+  return state.sidebar.agendas[profile];
+}
+
+export function activeAgenda(state: OverlayState): AgendaState {
+  return agendaFor(state, activeAgendaProfile(state));
+}
+
+export function withAgenda(
+  state: OverlayState,
+  profile: BarProfileId,
+  agenda: AgendaState,
+): OverlayState {
+  return {
+    ...state,
+    sidebar: {
+      ...state.sidebar,
+      agendas: { ...state.sidebar.agendas, [profile]: agenda },
+    },
+  };
+}
+
+export function withActiveAgenda(state: OverlayState, agenda: AgendaState): OverlayState {
+  return withAgenda(state, activeAgendaProfile(state), agenda);
+}
+
+/** Remap the ACTIVE profile's progress segments after sections moved or
+ *  vanished. Other profiles' bars index into their own agendas — untouched. */
+function remapActiveProgressSegments(
   state: OverlayState,
   map: (index: number) => number,
 ): OverlayState["bottomBar"]["segments"] {
-  const remapList = (list: BottomBarSlot[]): BottomBarSlot[] =>
-    list.map((slot) =>
-      slot.kind === "progress" ? { ...slot, sectionIndex: map(slot.sectionIndex) } : slot,
-    );
-  const out = {} as OverlayState["bottomBar"]["segments"];
-  for (const profile of Object.keys(state.bottomBar.segments) as BarProfileId[]) {
-    out[profile] = remapList(state.bottomBar.segments[profile]);
-  }
-  return out;
-}
-
-function withSidebar(state: OverlayState, sidebar: Sidebar): OverlayState {
-  return { ...state, sidebar };
+  const profile = activeAgendaProfile(state);
+  const remapped: BottomBarSlot[] = state.bottomBar.segments[profile].map((slot) =>
+    slot.kind === "progress" ? { ...slot, sectionIndex: map(slot.sectionIndex) } : slot,
+  );
+  return { ...state.bottomBar.segments, [profile]: remapped };
 }
 
 /** Append a new agenda section (title only; bullets grow on demand). */
 export function addSection(state: OverlayState, title: string): OverlayState {
-  const sections = state.sidebar.sections;
-  if (sections.length >= MAX_AGENDA_SECTIONS) return state;
-  return withSidebar(state, {
-    ...state.sidebar,
-    sections: [...sections, { title, bullets: [] }],
-    sectionsDone: [...state.sidebar.sectionsDone, []],
+  const agenda = activeAgenda(state);
+  if (agenda.sections.length >= MAX_AGENDA_SECTIONS) return state;
+  return withActiveAgenda(state, {
+    ...agenda,
+    sections: [...agenda.sections, { title, bullets: [] }],
+    sectionsDone: [...agenda.sectionsDone, []],
   });
 }
 
 /** Remove a section; the last one can never be removed. */
 export function removeSection(state: OverlayState, index: number): OverlayState {
-  const sections = state.sidebar.sections;
+  const agenda = activeAgenda(state);
+  const sections = agenda.sections;
   if (sections.length <= 1 || index < 0 || index >= sections.length) return state;
 
   const nextSections = sections.filter((_, i) => i !== index);
-  const nextDone = state.sidebar.sectionsDone.filter((_, i) => i !== index);
+  const nextDone = agenda.sectionsDone.filter((_, i) => i !== index);
   const nextActive = Math.min(
-    state.sidebar.activeSection > index
-      ? state.sidebar.activeSection - 1
-      : state.sidebar.activeSection,
+    agenda.activeSection > index ? agenda.activeSection - 1 : agenda.activeSection,
     nextSections.length - 1,
   );
 
   return {
-    ...withSidebar(state, {
-      ...state.sidebar,
+    ...withActiveAgenda(state, {
+      ...agenda,
       sections: nextSections,
       sectionsDone: nextDone,
       activeSection: nextActive,
     }),
     bottomBar: {
       ...state.bottomBar,
-      segments: remapProgressSegments(state, (i) =>
+      segments: remapActiveProgressSegments(state, (i) =>
         Math.min(i > index ? i - 1 : i, Math.max(0, nextSections.length - 1)),
       ),
     },
@@ -87,7 +116,8 @@ export function moveSection(
   index: number,
   direction: -1 | 1,
 ): OverlayState {
-  const sections = state.sidebar.sections;
+  const agenda = activeAgenda(state);
+  const sections = agenda.sections;
   const target = index + direction;
   if (index < 0 || index >= sections.length || target < 0 || target >= sections.length) {
     return state;
@@ -101,29 +131,30 @@ export function moveSection(
   const mapIndex = (i: number) => (i === index ? target : i === target ? index : i);
 
   return {
-    ...withSidebar(state, {
-      ...state.sidebar,
+    ...withActiveAgenda(state, {
+      ...agenda,
       sections: swap(sections),
-      sectionsDone: swap(state.sidebar.sectionsDone),
-      activeSection: mapIndex(state.sidebar.activeSection),
+      sectionsDone: swap(agenda.sectionsDone),
+      activeSection: mapIndex(agenda.activeSection),
     }),
     bottomBar: {
       ...state.bottomBar,
-      segments: remapProgressSegments(state, mapIndex),
+      segments: remapActiveProgressSegments(state, mapIndex),
     },
   };
 }
 
 /** Append an empty bullet to a section (grows its done-row too). */
 export function addBullet(state: OverlayState, sectionIndex: number): OverlayState {
-  const section = state.sidebar.sections[sectionIndex];
+  const agenda = activeAgenda(state);
+  const section = agenda.sections[sectionIndex];
   if (!section || section.bullets.length >= MAX_SECTION_BULLETS) return state;
-  return withSidebar(state, {
-    ...state.sidebar,
-    sections: state.sidebar.sections.map((s, i) =>
+  return withActiveAgenda(state, {
+    ...agenda,
+    sections: agenda.sections.map((s, i) =>
       i === sectionIndex ? { ...s, bullets: [...s.bullets, ""] } : s,
     ),
-    sectionsDone: state.sidebar.sectionsDone.map((row, i) =>
+    sectionsDone: agenda.sectionsDone.map((row, i) =>
       i === sectionIndex ? [...row, false] : row,
     ),
   });
@@ -136,23 +167,24 @@ export function removeBullet(
   sectionIndex: number,
   bulletIndex: number,
 ): OverlayState {
-  const section = state.sidebar.sections[sectionIndex];
+  const agenda = activeAgenda(state);
+  const section = agenda.sections[sectionIndex];
   if (!section || bulletIndex < 0 || bulletIndex >= section.bullets.length) return state;
-  return withSidebar(state, {
-    ...state.sidebar,
-    sections: state.sidebar.sections.map((s, i) =>
+  return withActiveAgenda(state, {
+    ...agenda,
+    sections: agenda.sections.map((s, i) =>
       i === sectionIndex
         ? { ...s, bullets: s.bullets.filter((_, j) => j !== bulletIndex) }
         : s,
     ),
-    sectionsDone: state.sidebar.sectionsDone.map((row, i) =>
+    sectionsDone: agenda.sectionsDone.map((row, i) =>
       i === sectionIndex ? row.filter((_, j) => j !== bulletIndex) : row,
     ),
   });
 }
 
 export function clampSectionIndex(state: OverlayState, index: number): number {
-  const last = Math.max(0, state.sidebar.sections.length - 1);
+  const last = Math.max(0, activeAgenda(state).sections.length - 1);
   return Math.min(Math.max(0, Math.floor(index)), last);
 }
 
@@ -161,18 +193,16 @@ export function driveAgendaTo(
   index: number,
   nowIso: string,
 ): OverlayState {
+  const agenda = activeAgenda(state);
   const next = clampSectionIndex(state, index);
-  if (next === state.sidebar.activeSection && state.sidebar.activeSectionStartedAt) {
+  if (next === agenda.activeSection && agenda.activeSectionStartedAt) {
     return state; // already there and already timed — no-op
   }
-  return {
-    ...state,
-    sidebar: {
-      ...state.sidebar,
-      activeSection: next,
-      activeSectionStartedAt: nowIso,
-    },
-  };
+  return withActiveAgenda(state, {
+    ...agenda,
+    activeSection: next,
+    activeSectionStartedAt: nowIso,
+  });
 }
 
 /**
@@ -192,8 +222,6 @@ export function sectionWindow(
 
 /** Restart the current section's timer without moving the agenda. */
 export function restartSectionTimer(state: OverlayState, nowIso: string): OverlayState {
-  return {
-    ...state,
-    sidebar: { ...state.sidebar, activeSectionStartedAt: nowIso },
-  };
+  const agenda = activeAgenda(state);
+  return withActiveAgenda(state, { ...agenda, activeSectionStartedAt: nowIso });
 }

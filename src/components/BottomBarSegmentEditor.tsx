@@ -14,6 +14,7 @@ import {
 } from "./shared/Field";
 import { LineSegmented, RuleNote } from "./inspector/EditorRow";
 import SectionChips from "./inspector/SectionChips";
+import { activeAgenda } from "../lib/agenda";
 
 interface BottomBarSegmentEditorProps {
   state: OverlayState;
@@ -72,7 +73,7 @@ export default function BottomBarSegmentEditor({
 
       {slot.kind === "progress" && (
         <SectionChips
-          sections={state.sidebar.sections}
+          sections={activeAgenda(state).sections}
           active={slot.sectionIndex}
           onSelect={(sIdx) => writeSlot({ ...slot, sectionIndex: sIdx })}
           testIdPrefix={`bottom-seg${index + 1}-progress`}

@@ -186,8 +186,8 @@ test("configToOverlayState applies all broadcast surfaces", () => {
   assert.equal(next.wallpaper.avatarVisible, true);
   assert.equal(next.cover.portraitUrl, "/cover-portrait.png");
   assert.equal(next.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.deepEqual(next.sidebar.sections.map((s) => s.title), ["Goal", "Problem", "Log"]);
-  assert.deepEqual(next.sidebar.sectionsDone, [
+  assert.deepEqual(next.sidebar.agendas.workbench.sections.map((s) => s.title), ["Goal", "Problem", "Log"]);
+  assert.deepEqual(next.sidebar.agendas.workbench.sectionsDone, [
     [false, false, false],
     [false, false, false],
     [false, false, false],
@@ -242,7 +242,7 @@ test("overlayStateToConfig exports a reusable config", () => {
     avatarUrl: DEFAULT_STATE.cover.avatarUrl,
     avatarVisible: DEFAULT_STATE.cover.avatarVisible,
   });
-  assert.equal(parsed?.sections.length, DEFAULT_STATE.sidebar.sections.length);
+  assert.equal(parsed?.sections.length, DEFAULT_STATE.sidebar.agendas.workbench.sections.length);
 });
 
 test("example live studio config is parseable and valid", () => {
@@ -277,10 +277,10 @@ test("section minutes round-trip config -> state -> config, and bad values are r
   assert.equal(config.sections[2].minutes, 12);
 
   const state = configToOverlayState(DEFAULT_STATE, config);
-  assert.equal(state.sidebar.sections[0].minutes, 30);
-  assert.equal(state.sidebar.sections[1].minutes, undefined);
+  assert.equal(state.sidebar.agendas.workbench.sections[0].minutes, 30);
+  assert.equal(state.sidebar.agendas.workbench.sections[1].minutes, undefined);
   // Applying a config resets the section timer for a fresh agenda.
-  assert.equal(state.sidebar.activeSectionStartedAt, "");
+  assert.equal(state.sidebar.agendas.workbench.activeSectionStartedAt, "");
 
   const back = overlayStateToConfig(state);
   assert.equal(back.sections[0].minutes, 30);
@@ -321,11 +321,11 @@ test("a large bullet-less agenda round-trips config -> state -> config", () => {
   assert.deepEqual(config.sections[0].bullets, []);
 
   const state = configToOverlayState(DEFAULT_STATE, config);
-  assert.equal(state.sidebar.sections.length, 8);
-  assert.deepEqual(state.sidebar.sections[7].bullets, []);
-  assert.equal(state.sidebar.sections[7].minutes, 40);
+  assert.equal(state.sidebar.agendas.workbench.sections.length, 8);
+  assert.deepEqual(state.sidebar.agendas.workbench.sections[7].bullets, []);
+  assert.equal(state.sidebar.agendas.workbench.sections[7].minutes, 40);
   // Done rows track the new shape: 8 rows, all empty.
-  assert.equal(state.sidebar.sectionsDone.length, 8);
+  assert.equal(state.sidebar.agendas.workbench.sectionsDone.length, 8);
 
   const back = overlayStateToConfig(state);
   assert.equal(back.sections.length, 8);
@@ -345,4 +345,39 @@ test("a large bullet-less agenda round-trips config -> state -> config", () => {
   );
   assert.ok(oversized);
   assert.equal(oversized.sections.length, 12);
+});
+
+test("config sections bind to the ACTIVE scene: lecture apply leaves workbench alone", () => {
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "Lecture Night",
+      subtitle: "Deep dive",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: [
+        { title: "开场", minutes: 5 },
+        { title: "正题", minutes: 40 },
+      ],
+    }),
+  );
+  assert.ok(config);
+
+  const lectureState = { ...DEFAULT_STATE, layout: "lecture-left" as const };
+  const applied = configToOverlayState(lectureState, config);
+
+  // The lecture agenda took the config…
+  assert.deepEqual(
+    applied.sidebar.agendas.lecture.sections.map((s) => s.title),
+    ["开场", "正题"],
+  );
+  assert.equal(applied.sidebar.agendas.lecture.activeSection, 0);
+  assert.equal(applied.sidebar.agendas.lecture.activeSectionStartedAt, "");
+  // …and the workbench agenda is byte-identical to before.
+  assert.equal(applied.sidebar.agendas.workbench, DEFAULT_STATE.sidebar.agendas.workbench);
+
+  // Export reads the active scene too: the same state exports lecture sections.
+  const exported = overlayStateToConfig(applied);
+  assert.deepEqual(exported.sections.map((s) => s.title), ["开场", "正题"]);
 });

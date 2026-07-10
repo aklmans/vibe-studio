@@ -1,6 +1,7 @@
 import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
-import { clampSectionIndex, driveAgendaTo, restartSectionTimer } from "../../lib/agenda";
+import { activeAgenda,
+  clampSectionIndex, driveAgendaTo, restartSectionTimer } from "../../lib/agenda";
 import { activeBarSegments, withActiveBarSegments } from "../../lib/bottomBar";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "./EditorRow";
@@ -23,9 +24,10 @@ export default function AgendaDrivePanel({
   onChange: (state: OverlayState) => void;
 }) {
   const { t } = useLocale();
-  const sections = state.sidebar.sections;
+  const agenda = activeAgenda(state);
+  const sections = agenda.sections;
   const count = sections.length;
-  const idx = clampSectionIndex(state, state.sidebar.activeSection);
+  const idx = clampSectionIndex(state, agenda.activeSection);
   const current = sections[idx];
 
   const drive = (target: number) =>
@@ -131,7 +133,7 @@ export default function AgendaDrivePanel({
           {t("agendaDrive.restartTimer")}
         </WorkbenchButton>
         <span style={{ fontFamily: mono, fontSize: 10, color: UI_COLORS.textMuted }}>
-          {state.sidebar.activeSectionStartedAt
+          {agenda.activeSectionStartedAt
             ? t("agendaDrive.timerRunning")
             : t("agendaDrive.timerIdle")}
         </span>

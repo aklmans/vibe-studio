@@ -1,5 +1,6 @@
 import { forwardRef, useId } from "react";
 import { OverlayState } from "../types";
+import { activeAgenda } from "../lib/agenda";
 import { avatarPlaceholder } from "../lib/avatar";
 import { fontFamilies, clampLines } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
@@ -43,13 +44,14 @@ function getCurrentFocus(state: OverlayState): {
   current: string;
   next: string;
 } {
-  const { sidebar, cover } = state;
+  const { cover } = state;
+  const agenda = activeAgenda(state);
   const activeIndex = Math.min(
-    Math.max(0, sidebar.activeSection),
-    Math.max(0, sidebar.sections.length - 1),
+    Math.max(0, agenda.activeSection),
+    Math.max(0, agenda.sections.length - 1),
   );
-  const activeSection = sidebar.sections[activeIndex] ?? sidebar.sections[0];
-  const activeDone = sidebar.sectionsDone[activeIndex];
+  const activeSection = agenda.sections[activeIndex] ?? agenda.sections[0];
+  const activeDone = agenda.sectionsDone[activeIndex];
   const current =
     activeSection
       ? pickIncompleteBullet(activeSection.bullets, activeDone) ??
@@ -64,10 +66,10 @@ function getCurrentFocus(state: OverlayState): {
       : null;
 
   if (!next) {
-    for (let i = activeIndex + 1; i < sidebar.sections.length; i++) {
+    for (let i = activeIndex + 1; i < agenda.sections.length; i++) {
       next = pickIncompleteBullet(
-        sidebar.sections[i].bullets,
-        sidebar.sectionsDone[i],
+        agenda.sections[i].bullets,
+        agenda.sectionsDone[i],
       );
       if (next) break;
     }

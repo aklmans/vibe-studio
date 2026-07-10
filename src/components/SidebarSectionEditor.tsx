@@ -1,7 +1,12 @@
 import type { OverlayState } from "../types";
 import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
-import { MAX_SECTION_BULLETS, addBullet, removeBullet } from "../lib/agenda";
-import { patchSection } from "../lib/state";
+import {
+  MAX_SECTION_BULLETS,
+  activeAgenda,
+  addBullet,
+  removeBullet,
+  withActiveAgenda,
+} from "../lib/agenda";
 import { useLocale } from "../hooks/useLocale";
 import { SectionInput, WorkbenchButton } from "./shared/Field";
 
@@ -24,14 +29,15 @@ export default function SidebarSectionEditor({
   accentColor,
 }: SidebarSectionEditorProps) {
   const { t } = useLocale();
-  const section = state.sidebar.sections[index];
+  const agenda = activeAgenda(state);
+  const section = agenda.sections[index];
   if (!section) return null;
 
   const updateTitle = (value: string) => {
-    const sections = state.sidebar.sections.map((s, i) =>
+    const sections = agenda.sections.map((s, i) =>
       i === index ? { ...s, title: value } : s,
     );
-    onChange(patchSection(state, "sidebar", { sections }));
+    onChange(withActiveAgenda(state, { ...agenda, sections }));
   };
 
   // Planned duration in whole minutes; blank clears it. v1 content, so the
@@ -40,28 +46,28 @@ export default function SidebarSectionEditor({
     const parsed = Number.parseInt(value, 10);
     const minutes =
       Number.isFinite(parsed) && parsed >= 1 && parsed <= 999 ? parsed : undefined;
-    const sections = state.sidebar.sections.map((s, i) => {
+    const sections = agenda.sections.map((s, i) => {
       if (i !== index) return s;
       const { minutes: _drop, ...rest } = s;
       return { ...rest, ...(minutes !== undefined ? { minutes } : {}) };
     });
-    onChange(patchSection(state, "sidebar", { sections }));
+    onChange(withActiveAgenda(state, { ...agenda, sections }));
   };
 
   const updateBullet = (bulletIdx: number, value: string) => {
-    const sections = state.sidebar.sections.map((s, i) => {
+    const sections = agenda.sections.map((s, i) => {
       if (i !== index) return s;
       const bullets = s.bullets.map((b, j) => (j === bulletIdx ? value : b));
       return { ...s, bullets };
     });
-    onChange(patchSection(state, "sidebar", { sections }));
+    onChange(withActiveAgenda(state, { ...agenda, sections }));
   };
 
   const toggleBulletDone = (bulletIdx: number) => {
-    const sectionsDone = (state.sidebar.sectionsDone ?? []).map((row, i) =>
+    const sectionsDone = agenda.sectionsDone.map((row, i) =>
       i === index ? row.map((v, j) => (j === bulletIdx ? !v : v)) : row,
     );
-    onChange(patchSection(state, "sidebar", { sectionsDone }));
+    onChange(withActiveAgenda(state, { ...agenda, sectionsDone }));
   };
 
   return (
@@ -80,7 +86,7 @@ export default function SidebarSectionEditor({
         testId={`sidebar-s${index + 1}-minutes`}
       />
       {section.bullets.map((b, i) => {
-        const done = state.sidebar.sectionsDone?.[index]?.[i] ?? false;
+        const done = agenda.sectionsDone[index]?.[i] ?? false;
         return (
           <div
             key={i}

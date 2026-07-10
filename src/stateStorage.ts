@@ -1,4 +1,4 @@
-import { DEFAULT_STATE, type CoverVisual, type OverlayState } from "./types";
+import { DEFAULT_STATE, type AgendaState, type CoverVisual, type OverlayState } from "./types";
 import {
   THEME_PRESETS,
   isLegacyThemeMode,
@@ -38,7 +38,8 @@ import { normalizeStackItems } from "./lib/stack";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 type OverlayColors = OverlayState["colors"];
-type SidebarSection = OverlayState["sidebar"]["sections"][number];
+type SidebarSection = AgendaState["sections"][number];
+type AgendaProfiles = OverlayState["sidebar"]["agendas"];
 
 const LEGACY_DEFAULT_COVER_AVATAR_URL = "/avatar.jpg";
 const DEFAULT_BROADCAST_AVATAR_URL = "/avatar.png";
@@ -173,6 +174,48 @@ function normalizeSectionsDoneFor(
       typeof row[colIdx] === "boolean" ? (row[colIdx] as boolean) : false,
     );
   });
+}
+
+/** One profile's agenda: sections first (activeSection clamps to their count,
+ *  sectionsDone takes its shape from them), then the runtime fields. */
+function normalizeAgenda(value: unknown, defaults: AgendaState): AgendaState {
+  const source = record(value);
+  const sections = normalizeSections(source?.sections, defaults.sections);
+  return {
+    sections,
+    activeSection: normalizeActiveSection(source?.activeSection, sections.length),
+    sectionsDone: normalizeSectionsDoneFor(source?.sectionsDone, sections),
+    activeSectionStartedAt: stringOrDefault(
+      source?.activeSectionStartedAt,
+      defaults.activeSectionStartedAt,
+    ),
+  };
+}
+
+/**
+ * Per-profile agendas. Legacy states carried ONE flat agenda directly on the
+ * sidebar — that data was always the workbench scene's, so it migrates there;
+ * lecture and mobile then start from their own scene defaults.
+ */
+function normalizeAgendas(
+  sidebar: Record<string, unknown> | null,
+  defaults: AgendaProfiles,
+): AgendaProfiles {
+  const agendas = record(sidebar?.agendas);
+  const legacy =
+    !agendas && Array.isArray(sidebar?.sections)
+      ? {
+          sections: sidebar?.sections,
+          activeSection: sidebar?.activeSection,
+          sectionsDone: sidebar?.sectionsDone,
+          activeSectionStartedAt: sidebar?.activeSectionStartedAt,
+        }
+      : null;
+  return {
+    workbench: normalizeAgenda(agendas?.workbench ?? legacy, defaults.workbench),
+    lecture: normalizeAgenda(agendas?.lecture, defaults.lecture),
+    mobile: normalizeAgenda(agendas?.mobile, defaults.mobile),
+  };
 }
 
 function normalizeSegment(value: unknown, fallback: BottomBarSlot): BottomBarSlot {
@@ -476,13 +519,6 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
   const wallpaper = record(source?.wallpaper);
   const activeTab = source?.activeTab;
 
-  // Sections normalize first: activeSection clamps to their count and
-  // sectionsDone takes its shape from them.
-  const normalizedSections = normalizeSections(
-    sidebar?.sections,
-    defaultValue.sidebar.sections,
-  );
-
   return {
     sidebar: {
       visible: boolOrDefault(sidebar?.visible, defaultValue.sidebar.visible),
@@ -490,16 +526,7 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         sidebar?.socialVisible,
         defaultValue.sidebar.socialVisible,
       ),
-      activeSection: normalizeActiveSection(
-        sidebar?.activeSection,
-        normalizedSections.length,
-      ),
-      sectionsDone: normalizeSectionsDoneFor(sidebar?.sectionsDone, normalizedSections),
-      sections: normalizedSections,
-      activeSectionStartedAt: stringOrDefault(
-        sidebar?.activeSectionStartedAt,
-        defaultValue.sidebar.activeSectionStartedAt,
-      ),
+      agendas: normalizeAgendas(sidebar, defaultValue.sidebar.agendas),
     },
     bottomBar: {
       visible: boolOrDefault(

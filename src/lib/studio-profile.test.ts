@@ -147,7 +147,7 @@ test("studio profile applies brand palette + identity over defaults without chan
   assert.deepEqual(profiled.colors, BRAND_COLORS);
   // Stream content untouched.
   assert.equal(profiled.cover.title, DEMO_DEFAULT.cover.title);
-  assert.deepEqual(profiled.sidebar.sections, DEMO_DEFAULT.sidebar.sections);
+  assert.deepEqual(profiled.sidebar.agendas.workbench.sections, DEMO_DEFAULT.sidebar.agendas.workbench.sections);
 });
 
 test("a palette-less profile leaves the current theme/colors untouched on apply", () => {

@@ -219,17 +219,25 @@ async function readLiveDataBySessionId(
       .orderBy(asc(liveBottomBarSegments.sortOrder)),
   ]);
 
+  const sectionsFor = (profile: string) =>
+    sectionRows
+      .filter((section) => section.profile === profile)
+      .map((section) => ({
+        title: section.title,
+        ...(typeof section.minutes === "number" ? { minutes: section.minutes } : {}),
+        tasks: (tasksBySection.get(section.id) ?? []).map((task) => ({
+          text: task.text,
+          done: task.done,
+        })),
+      }));
+
   return normalizeLiveDataSnapshot({
     session: rowToSession(sessionRow),
-    activeSection: sessionRow.activeSection,
-    sections: sectionRows.map((section) => ({
-      title: section.title,
-      ...(typeof section.minutes === "number" ? { minutes: section.minutes } : {}),
-      tasks: (tasksBySection.get(section.id) ?? []).map((task) => ({
-        text: task.text,
-        done: task.done,
-      })),
-    })),
+    agendas: {
+      workbench: { activeSection: sessionRow.activeSection, sections: sectionsFor("workbench") },
+      lecture: { activeSection: sessionRow.activeSectionLecture, sections: sectionsFor("lecture") },
+      mobile: { activeSection: sessionRow.activeSectionMobile, sections: sectionsFor("mobile") },
+    },
     bottomBar: {
       visible: sessionRow.bottomBarVisible,
       segments: segmentsByProfileFromRows(segmentRows),
@@ -250,27 +258,30 @@ async function replaceLiveDataChildren(
     .delete(liveBottomBarSegments)
     .where(eq(liveBottomBarSegments.sessionId, sessionId));
 
-  for (const [sectionIndex, section] of liveData.sections.entries()) {
-    const [sectionRow] = await db
-      .insert(liveSections)
-      .values({
-        sessionId,
-        sortOrder: sectionIndex,
-        title: section.title,
-        minutes: section.minutes ?? null,
-      })
-      .returning();
-    if (!sectionRow) continue;
+  for (const profile of ["workbench", "lecture", "mobile"] as const) {
+    for (const [sectionIndex, section] of liveData.agendas[profile].sections.entries()) {
+      const [sectionRow] = await db
+        .insert(liveSections)
+        .values({
+          sessionId,
+          profile,
+          sortOrder: sectionIndex,
+          title: section.title,
+          minutes: section.minutes ?? null,
+        })
+        .returning();
+      if (!sectionRow) continue;
 
-    const taskRows = section.tasks.map((task, taskIndex) => ({
-      sectionId: sectionRow.id,
-      sortOrder: taskIndex,
-      text: task.text,
-      done: task.done,
-      doneAt: task.done ? new Date() : null,
-    }));
-    if (taskRows.length > 0) {
-      await db.insert(liveTasks).values(taskRows);
+      const taskRows = section.tasks.map((task, taskIndex) => ({
+        sectionId: sectionRow.id,
+        sortOrder: taskIndex,
+        text: task.text,
+        done: task.done,
+        doneAt: task.done ? new Date() : null,
+      }));
+      if (taskRows.length > 0) {
+        await db.insert(liveTasks).values(taskRows);
+      }
     }
   }
 
@@ -323,7 +334,7 @@ export async function getCurrentLiveData(
       locale,
       title: defaultTitle(defaultState, dateKey),
       status: "draft",
-      activeSection: defaultState.sidebar.activeSection,
+      activeSection: defaultState.sidebar.agendas.workbench.activeSection,
       bottomBarVisible: defaultState.bottomBar.visible,
       createdAt: now,
       updatedAt: now,
@@ -367,7 +378,9 @@ export async function saveCurrentLiveData(
     .set({
       title: session.title,
       status: session.status,
-      activeSection: normalizedLiveData.activeSection,
+      activeSection: normalizedLiveData.agendas.workbench.activeSection,
+      activeSectionLecture: normalizedLiveData.agendas.lecture.activeSection,
+      activeSectionMobile: normalizedLiveData.agendas.mobile.activeSection,
       bottomBarVisible: normalizedLiveData.bottomBar.visible,
       startedAt: dateOrNull(session.startedAt),
       endedAt: dateOrNull(session.endedAt),

@@ -31,6 +31,7 @@ import {
   clearWorkbenchFocus,
   monoInputStyle,
 } from "../shared/Field";
+import { activeAgenda } from "../../lib/agenda";
 
 interface AgentViewProps {
   state: OverlayState;
@@ -1059,7 +1060,7 @@ function DiffRow({ field }: { field: FieldDiff }) {
 /** A small read-only preview of the proposal applied — derived, never written. */
 function ProposalPreview({ previewState }: { previewState: OverlayState }) {
   const { t } = useLocale();
-  const sectionTitles = previewState.sidebar.sections.map((s, i) => s.title || `#${i + 1}`).join(" · ");
+  const sectionTitles = activeAgenda(previewState).sections.map((s, i) => s.title || `#${i + 1}`).join(" · ");
   const stackLabels = previewState.stack.items.map((i) => i.label || i.iconKey).filter(Boolean).join(" · ");
   return (
     <div
