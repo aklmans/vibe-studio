@@ -199,7 +199,8 @@ export default function SectionsManager({
           }}
           disabled={atCap}
           tone="accent"
-          style={{ height: 28, padding: "0 4px" }}
+          title={t("sections.addHint")}
+          style={{ height: 28, padding: "0 4px", whiteSpace: "nowrap" }}
         >
           + {t("sections.add")}
         </WorkbenchButton>
@@ -210,7 +211,8 @@ export default function SectionsManager({
             setSelectedRaw(Math.max(0, selected - 1));
           }}
           disabled={selected <= 0}
-          style={{ height: 28, padding: "0 4px" }}
+          title={t("sections.moveUpHint")}
+          style={{ height: 28, padding: "0 4px", whiteSpace: "nowrap" }}
         >
           ↑ {t("sections.moveUp")}
         </WorkbenchButton>
@@ -221,7 +223,8 @@ export default function SectionsManager({
             setSelectedRaw(Math.min(sections.length - 1, selected + 1));
           }}
           disabled={selected >= sections.length - 1}
-          style={{ height: 28, padding: "0 4px" }}
+          title={t("sections.moveDownHint")}
+          style={{ height: 28, padding: "0 4px", whiteSpace: "nowrap" }}
         >
           ↓ {t("sections.moveDown")}
         </WorkbenchButton>
@@ -233,9 +236,10 @@ export default function SectionsManager({
           }}
           disabled={sections.length <= 1}
           tone="danger"
-          style={{ height: 28, padding: "0 4px" }}
+          title={t("sections.removeHint")}
+          style={{ height: 28, padding: "0 4px", whiteSpace: "nowrap" }}
         >
-          {t("sections.remove")}
+          ✕ {t("sections.remove")}
         </WorkbenchButton>
       </div>
 
