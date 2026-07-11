@@ -31,8 +31,17 @@ test("first-run wizard renders the name step with skip-all always available", ()
   assert.match(html, /aria-modal="true"/);
   assert.match(html, /data-testid="wizard-name-input"/);
   assert.match(html, /data-testid="wizard-skip-all"/);
-  // Next is disabled until a name is typed; the other steps are optional.
-  assert.match(html, /data-testid="wizard-next"[^>]*disabled=""/);
+  // Every step is optional — Next is never blocked on input.
+  assert.doesNotMatch(html, /data-testid="wizard-next"[^>]*disabled/);
+});
+
+test("finishing an empty wizard is the same as skipping it", () => {
+  // No name, no avatar, no social -> onSkip; no empty brand profile is written.
+  assert.match(
+    WIZARD_SRC,
+    /if \(!trimmedName && !avatarUrl && socials\.length === 0\) \{\s*onSkip\(\);/,
+  );
+  assert.doesNotMatch(WIZARD_SRC, /nextDisabled/);
 });
 
 test("first-run wizard copy is localized in both languages", () => {
@@ -43,7 +52,7 @@ test("first-run wizard copy is localized in both languages", () => {
 test("wizard builds a v3 brand profile and never touches session content", () => {
   // Completion produces a StudioProfile (brand layer) — no cover/stack/agenda writes.
   assert.match(WIZARD_SRC, /version: 3/);
-  assert.match(WIZARD_SRC, /author: name\.trim\(\)/);
+  assert.match(WIZARD_SRC, /author: trimmedName/);
   assert.doesNotMatch(WIZARD_SRC, /sidebar|stack|agendas/);
 });
 

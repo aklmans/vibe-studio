@@ -51,6 +51,7 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
   }, [step]);
 
   const finish = () => {
+    const trimmedName = name.trim();
     const socials =
       platform && handle.trim()
         ? [
@@ -64,9 +65,15 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
             },
           ]
         : [];
+    // Nothing filled in = nothing worth saving: finishing an empty wizard is
+    // the same explicit decision as skipping it (no empty brand profile).
+    if (!trimmedName && !avatarUrl && socials.length === 0) {
+      onSkip();
+      return;
+    }
     onComplete({
       version: 3,
-      author: name.trim(),
+      author: trimmedName,
       avatarUrl,
       avatarVisible: Boolean(avatarUrl),
       socialVisible: socials.length > 0,
@@ -76,7 +83,6 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
 
   const stepLabels = [t("wizard.stepName"), t("wizard.stepAvatar"), t("wizard.stepSocial")];
   const isLast = step === 2;
-  const nextDisabled = step === 0 && !name.trim();
 
   const onPickFile = async (file: File | null) => {
     if (!file) return;
@@ -167,7 +173,7 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
                 placeholder={t("wizard.namePlaceholder")}
                 ariaLabel={t("wizard.nameLabel")}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && name.trim()) setStep(1);
+                  if (e.key === "Enter") setStep(1);
                 }}
               />
               <p style={{ ...workbenchNoteStyle, margin: 0 }}>{t("wizard.nameHint")}</p>
@@ -290,7 +296,6 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
             {!isLast ? (
               <WorkbenchButton
                 testId="wizard-next"
-                disabled={nextDisabled}
                 onClick={() => setStep(step + 1)}
               >
                 {t("wizard.next")}
