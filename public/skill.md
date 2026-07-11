@@ -17,6 +17,8 @@ browser sources, and exports a visual kit.
 
 - `AGENTS.md`
 - `README.md`
+- `docs/deploy.md` (Docker / hosted deploys)
+- `docs/author-setup.md` (macOS OBS + Livehime automation)
 - `src/components/OverlayBuilderApp.tsx`
 - `src/components/live-data/`
 - `src/lib/live-studio-config.ts`
@@ -33,6 +35,11 @@ Open:
 
 - `/demo` for the safe local demo.
 - `/studio` for the private full workspace.
+
+A true first run of `/studio` greets the host with a 3-step setup wizard
+(name → avatar → platform; every step and the whole wizard are skippable —
+automation can click "Skip setup"). Completing or skipping writes the Brand
+layer; a mid-wizard refresh brings the wizard back.
 
 Use pnpm only.
 
@@ -62,10 +69,15 @@ Use pnpm only.
 
 - `live-session.config.json` is the per-session content portable core.
 - It may include title, subtitle, author, profile, cover, badges, stack,
-  socials, and sections.
+  socials, and sections. Sections are
+  `{ title, minutes?, bullets?, speaker?, speakerLines? }` (up to 12) —
+  planned minutes, optional bullets, and an optional per-section speaker with
+  role/affiliation lines.
 - runtime / OBS / localStorage / studio appearance do not belong in v1 config.
-- Current section, done states, live timer, OBS state, and app appearance remain
-  runtime or studio state.
+- Each scene layout (workbench / lecture / mobile) keeps its OWN agenda;
+  config sections apply to an explicit target scene (default: the active one).
+- The active section, manual completion check-offs, bullet done states, the
+  section timer, OBS state, and app appearance remain runtime or studio state.
 
 ## OBS Browser Sources
 
@@ -79,7 +91,13 @@ Add these as browser sources when running the app:
 ```
 
 The overlay is a transparent UI frame. Place real screen capture, windows, and
-camera sources underneath it in OBS or Livehime.
+camera sources underneath it in OBS or Livehime. The README's OBS section is a
+five-minute manual tutorial that works on any OS.
+
+Scene layouts: workbench, lecture · left/right, and mobile · vertical. The
+vertical layout renders 1080×1920 — give OBS a portrait base canvas to match
+(on macOS, `pnpm live:prepare:mobile` derives a "Vibe Vertical" profile +
+collection automatically; see `docs/author-setup.md`).
 
 ## AI Provider Setup
 

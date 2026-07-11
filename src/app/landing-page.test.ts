@@ -544,7 +544,7 @@ test("Surfaces section tells the designed live-room workflow story, not an asset
 
   assert.match(html, /Natural-language brief becomes structured stream content/);
   assert.match(html, /Proposal enters a review drawer, never live state/);
-  assert.match(html, /Overlay is a transparent UI frame, not a locked scene layout/);
+  assert.match(html, /Four scene layouts: workbench, lecture · left\/right, vertical 1080×1920/);
   assert.match(html, /Overlay, cover, poster and wallpapers from one state/);
   assert.match(html, /Export All for the whole package before you go live/);
 
@@ -784,12 +784,19 @@ test("the AI / Agent section tells the three-step product story and safety claim
   assert.match(html, /browser sources/i);
 });
 
-test("Get Started is an agent-ready handoff with dual-mode panel", () => {
+test("Get Started is human-first with the agent handoff one tab away", () => {
   const html = renderLanding("en");
 
-  assert.match(html, /Start with an agent-ready handoff\./i);
+  assert.match(html, /Run it in five minutes — or hand it to your agent\./i);
   assert.match(html, /id="get-started"/);
-  assert.doesNotMatch(html, /Try the demo, then take the studio live\./i);
+  assert.doesNotMatch(html, /Start with an agent-ready handoff\./i);
+  // The manual path is the default tab; the agent panel stays hidden until picked.
+  const humanPanelTag = html.match(/<div[^>]*data-testid="landing-human-panel"[^>]*>/)?.[0] ?? "";
+  const agentPanelTag = html.match(/<div[^>]*data-testid="landing-agent-panel"[^>]*>/)?.[0] ?? "";
+  assert.ok(humanPanelTag && !humanPanelTag.includes("hidden"), "human panel is the visible default");
+  assert.ok(agentPanelTag.includes("hidden"), "agent panel starts hidden");
+  // And the human tab renders before the agent tab in the tablist.
+  assert.ok(html.indexOf("I'm a Human") < html.indexOf("I'm an Agent") || html.indexOf("I&#x27;m a Human") < html.indexOf("I&#x27;m an Agent"), "human tab comes first");
 
   assert.match(html, /data-testid="landing-handoff"/);
   assert.match(html, /data-testid="landing-agent-panel"/);

@@ -232,11 +232,11 @@ const enContent: LandingContent = {
   wordmark: "Vibe Coding Live",
   eyebrow: "Live visual workbench",
   h1: "Designed live graphics without fighting OBS",
-  lede: "For Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat and co-working streams. Design the frame and export kit in Vibe Studio, keep real captures in OBS or Livehime, and let the Agent draft session copy/config for review.",
+  lede: "For Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat and co-working streams. Pick a scene layout — coding workbench, lecture with a presenter card, or vertical mobile — run the show from a timed agenda, keep real captures in OBS or Livehime, and let the Agent draft session copy for review.",
   tryDemo: "Try Demo",
   openStudio: "Open Studio",
   copyAgentPrompt: "Copy agent prompt",
-  heroChips: ["Agent drafts", "You review", "You apply"],
+  heroChips: ["4 scene layouts", "Run-of-show driven", "AI drafts · you apply"],
   heroNote: "Try the live agent in the demo — nothing applies until you review it. Private studio at",
   heroStudioLink: "/studio",
   viewGithub: "View on GitHub",
@@ -252,19 +252,23 @@ const enContent: LandingContent = {
   showcaseLabel: "OBS composition · main screen",
 
   featuresEyebrow: "Features",
-  featuresTitle: "Three reasons to stop hand-building live scenes",
+  featuresTitle: "Why stop hand-building live scenes",
   features: [
     {
-      title: "Designed live-room frame",
-      copy: "Create a transparent frame and companion assets in the app, then place screen, camera, game, browser or chat captures underneath in OBS or Livehime.",
+      title: "Designed live-room frame, four scene layouts",
+      copy: "Pick the coding workbench, a lecture frame (left or right presenter column) or a vertical 1080×1920 mobile frame. Each is a transparent editorial frame — screen, camera, game, browser or chat captures stay underneath in OBS or Livehime, and every layout keeps its own agenda and bottom bar.",
+    },
+    {
+      title: "A run of show that drives the picture",
+      copy: "Sections carry planned minutes and optional per-section speakers. Drive the agenda live from the broadcast console, check finished sections off by hand, and the lecture card introduces whoever is speaking now. Preparing the next stream keeps your brand and clears the content.",
     },
     {
       title: "Session Config Agent",
-      copy: "Describe today's stream. The Agent drafts the title, subtitle, sections, stack and topic badges so setup starts from a reviewed proposal, not a blank form.",
+      copy: "Describe today's stream — the Agent drafts the title, subtitle, timed sections, stack and topic badges in the language of your brief. You review the field-level diff and apply with one click; nothing changes until you do.",
     },
     {
       title: "Local-first Studio",
-      copy: "Try the agent live in the public demo — it drafts, you review and apply, and it never touches a database or your OBS. Run the private Studio locally or self-hosted, with your own env API key and OBS automation.",
+      copy: "Try the agent live in the public demo — it drafts, you review and apply, and it never touches a database or your OBS. Run the private Studio locally, in Docker, or self-hosted with your own env API key; the repo ships the deploy recipes.",
     },
   ],
 
@@ -285,10 +289,10 @@ const enContent: LandingContent = {
         width: 3960,
         height: 2128,
       },
-      summary: "Describe a study session, coding hangout, game stream or chat show in plain language. The Agent drafts the title, subtitle, sections, stack and topic badges — no manual form filling.",
+      summary: "Describe a study session, coding hangout, lecture or chat show in plain language. The Agent drafts the title, subtitle, timed sections, stack and topic badges — in the language of your brief, no manual form filling.",
       points: [
-        "Natural-language brief becomes structured stream content",
-        "Title, subtitle, sections, stack and badges proposed in one pass",
+        "Natural-language brief becomes structured stream content, in your brief's language",
+        "Sections carry planned minutes — and optional per-section speakers for lectures",
         "Your brand — avatar, socials, theme — stays fixed; the agent only drafts content",
       ],
     },
@@ -321,11 +325,11 @@ const enContent: LandingContent = {
         width: 1174,
         height: 660,
       },
-      summary: "Vibe Studio owns only the transparent editorial frame. Real screen capture, camera, game windows, browser tabs and chat stay free underneath in OBS or Livehime.",
+      summary: "Vibe Studio owns only the transparent editorial frame — pick workbench, lecture or vertical and the OBS slots follow. Real screen capture, camera, game windows, browser tabs and chat stay free underneath in OBS or Livehime.",
       points: [
-        "Overlay is a transparent UI frame, not a locked scene layout",
+        "Four scene layouts: workbench, lecture · left/right, vertical 1080×1920",
         "Screen, camera, game and chat captures stay in OBS where they belong",
-        "Online demo cannot push to OBS; local Studio can automate your local scene",
+        "Online demo cannot push to OBS; the local Studio can drive your local scene",
       ],
     },
     {
@@ -335,7 +339,7 @@ const enContent: LandingContent = {
       summary: "One session config drives the high-value public assets: overlay, cover, poster and desktop/mobile wallpapers. Export All keeps the whole package visually aligned.",
       points: [
         "Overlay, cover, poster and wallpapers from one state",
-        "Desktop and mobile wallpaper variants stay aligned",
+        "Files are named after your stream — title, surface, date",
         "Export All for the whole package before you go live",
       ],
       gallery: galleryImagesForLocale("en"),
@@ -354,12 +358,12 @@ const enContent: LandingContent = {
     {
       step: "01",
       title: "Agent drafts a session config",
-      copy: "Describe the stream. The agent returns proposed content — title, subtitle, sections, stack, badges — as JSON you can read.",
+      copy: "Describe the stream. The agent returns proposed content — title, subtitle, timed sections, stack, badges — in your brief's language, as JSON you can read.",
     },
     {
       step: "02",
       title: "Human reviews and applies",
-      copy: "The proposal opens in the JSON review drawer. Inspect the field-level diff, then Apply. Nothing is auto-applied.",
+      copy: "The proposal shows a field-level diff with a one-click Apply; the JSON review drawer stays as the advanced path. Nothing is auto-applied.",
     },
     {
       step: "03",
@@ -374,8 +378,8 @@ const enContent: LandingContent = {
   agentProviders: "Works with any OpenAI-compatible provider — DeepSeek, OpenAI, Kimi, z.ai and others — configured in your local/private Studio env. No key configured? The agent falls back to a local copy handoff.",
 
   getStartedEyebrow: "Get started",
-  getStartedTitle: "Start with an agent-ready handoff.",
-  getStartedLede: "Most setup work is better delegated: clone, inspect, run, configure a local AI key, and prepare OBS routes. The public demo stays browser-local and cannot touch your OBS.",
+  getStartedTitle: "Run it in five minutes — or hand it to your agent.",
+  getStartedLede: "Clone, pnpm dev, paste four browser sources into OBS — the README walks it on any OS, and the first-run wizard makes the studio yours in three steps. Docker and deploy recipes ship in the repo. Prefer delegation? The agent handoff is one copy away. The public demo stays browser-local and cannot touch your OBS.",
   agentTabLabel: "I'm an Agent",
   humanTabLabel: "I'm a Human",
   agentTasksLabel: "Agent tasks",
@@ -443,6 +447,8 @@ Keep it under 300 words.`,
   humanChecklist: [
     { label: "Install", value: "pnpm install" },
     { label: "Dev server", value: "pnpm dev" },
+    { label: "Docker", value: "docker compose up" },
+    { label: "Deploy guide", value: "docs/deploy.md" },
     { label: "Public demo", value: "/demo", href: "/demo" },
     { label: "Private studio", value: "/studio", href: "/studio" },
     { label: "Overlay (empty)", value: "/obs/overlay?camera=empty" },
@@ -460,7 +466,15 @@ Keep it under 300 words.`,
     },
     {
       question: "Is it only for coding streams?",
-      answer: "No. It works for Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat, co-working and other with-me formats where the stream needs a polished visual frame.",
+      answer: "No. It works for Study With Me, Coding With Me, Build in Public, Vibe Coding, gaming, chat, co-working and other with-me formats — and the lecture layouts carry a presenter card with a run of show, so structured talks and online classes fit too.",
+    },
+    {
+      question: "What scene layouts are there?",
+      answer: "Four: the coding workbench, lecture · left and lecture · right (a presenter column with the camera, the speaker's card and the run of show beside a 16:9 slides region), and a vertical 1080×1920 mobile frame. Each layout keeps its own agenda and bottom bar; sections can introduce per-section guest speakers on the lecture card.",
+    },
+    {
+      question: "Do I re-enter everything for the next stream?",
+      answer: "No. The first-run wizard writes your name, avatar and socials into the Brand layer once. 'Prepare next session' clears the per-stream content — title, agendas, stack — while keeping your brand, layout, theme and bottom bars.",
     },
     {
       question: "Is the public demo connected to my private stream?",
@@ -480,7 +494,7 @@ Keep it under 300 words.`,
     },
     {
       question: "How do I use it with OBS?",
-      answer: "Add the OBS routes as browser sources: overlay, sidebar and bottom bar. Place your real screen capture and camera underneath the transparent overlay frame.",
+      answer: "Add the OBS routes as browser sources: overlay, sidebar and bottom bar — the README has a five-minute manual tutorial that works on any OS (the macOS one-command automation is documented separately). Place your real screen capture and camera underneath the transparent overlay frame.",
     },
     {
       question: "Where is the real screen capture?",
@@ -528,11 +542,11 @@ const zhContent: LandingContent = {
   wordmark: "Vibe Coding Live",
   eyebrow: "直播画面工作台",
   h1: "不用和 OBS 较劲，也能有好看的直播画面",
-  lede: "适合 Study With Me、Coding With Me、Build in Public、Vibe Coding、一起打游戏、聊天互动和线上共学。Vibe Studio 负责设计画面框架与导出资产，真实捕获仍留在 OBS 或直播姬；Agent 帮你草拟本场文案和配置，由你确认后生效。",
+  lede: "适合 Study With Me、Coding With Me、Build in Public、Vibe Coding、一起打游戏、聊天互动和线上共学。选一个场景布局——编程工作台、带讲师卡的讲座、或手机竖屏——用带时长的议程推进直播，真实捕获仍留在 OBS 或直播姬；Agent 帮你草拟本场文案，由你确认后生效。",
   tryDemo: "体验 Demo",
   openStudio: "打开 Studio",
   copyAgentPrompt: "复制 Agent 提示词",
-  heroChips: ["Agent 起草", "你来审阅", "你来应用"],
+  heroChips: ["四种场景布局", "议程驱动画面", "AI 起草 · 你确认"],
   heroNote: "在 Demo 里试用实时 Agent —— 你确认前不会生效。私有工作台地址",
   heroStudioLink: "/studio",
   viewGithub: "在 GitHub 查看",
@@ -551,16 +565,20 @@ const zhContent: LandingContent = {
   featuresTitle: "为什么不用再手搓直播场景",
   features: [
     {
-      title: "好看的直播画面框架",
-      copy: "在应用里设计透明画面框架与配套资产，再把屏幕、摄像头、游戏窗口、浏览器或聊天区放在 OBS / 直播姬底层。",
+      title: "好看的画面框架，四种场景布局",
+      copy: "编程工作台、讲座框架（讲师列居左或居右）、竖屏 1080×1920 手机框架任选。每一种都是透明的编辑部风格框架——屏幕、摄像头、游戏窗口、浏览器或聊天区仍在 OBS / 直播姬底层，且每个布局拥有自己独立的议程与底栏。",
+    },
+    {
+      title: "议程驱动直播画面",
+      copy: "每节可设计划分钟数、可选每节讲者。直播中在推进台切换当前节、讲完的手动打勾，讲师卡自动介绍正在发言的嘉宾。第二天再播,「准备下一场」保住品牌、清空内容。",
     },
     {
       title: "Session Config Agent",
-      copy: "描述今天要直播什么，Agent 帮你草拟标题、副标题、章节、工具栈与话题徽标，从可审阅提案开始，而不是从空表单开始。",
+      copy: "描述今天要直播什么，Agent 用你描述的语言草拟标题、副标题、带时长的章节、工具栈与话题徽标。你审阅字段级 diff 后一键应用——你确认前什么都不会变。",
     },
     {
       title: "本地优先的 Studio",
-      copy: "在公开 Demo 里就能试用实时 Agent——它起草、你审阅、你应用，全程不写数据库、也不碰你的 OBS。私有 Studio 在本地或你自己的部署中运行，用你自己的 API key 和 OBS 自动化。",
+      copy: "在公开 Demo 里就能试用实时 Agent——它起草、你审阅、你应用，全程不写数据库、也不碰你的 OBS。私有 Studio 可本地、Docker 或自托管运行，用你自己的 API key；部署配方随仓库提供。",
     },
   ],
 
@@ -581,10 +599,10 @@ const zhContent: LandingContent = {
         width: 3960,
         height: 2128,
       },
-      summary: "用自然语言描述一场共学、编程、游戏或聊天直播，Session Config Agent 生成标题、副标题、章节、工具栈与话题徽标——无需手工填表。",
+      summary: "用自然语言描述一场共学、编程、讲座或聊天直播，Session Config Agent 用你描述的语言生成标题、副标题、带时长的章节、工具栈与话题徽标——无需手工填表。",
       points: [
-        "自然语言描述转为结构化直播内容",
-        "标题、副标题、章节、工具栈与徽标一次生成",
+        "自然语言描述转为结构化直播内容，语言跟随你的描述",
+        "每节自带计划分钟数——讲座还可以给每节配讲者",
         "品牌(头像、社交、主题)保持不变，Agent 只草拟内容",
       ],
     },
@@ -617,11 +635,11 @@ const zhContent: LandingContent = {
         width: 1174,
         height: 660,
       },
-      summary: "Vibe Studio 只负责透明画面框架，真实屏幕捕获、摄像头、游戏窗口、浏览器和聊天区保留在 OBS 或直播姬底层自由摆放。",
+      summary: "Vibe Studio 只负责透明画面框架——工作台、讲座、竖屏任选，OBS 槽位随布局走。真实屏幕捕获、摄像头、游戏窗口、浏览器和聊天区保留在 OBS 或直播姬底层自由摆放。",
       points: [
-        "合成画面是透明 UI 框架，不锁定场景布局",
+        "四种场景布局：工作台、讲座 · 左/右、竖屏 1080×1920",
         "屏幕、摄像头、游戏和聊天捕获留在 OBS 底层",
-        "线上 Demo 不能推送到 OBS；本地 Studio 才能自动化本机场景",
+        "线上 Demo 不能推送到 OBS；本地 Studio 才能驱动本机场景",
       ],
     },
     {
@@ -631,7 +649,7 @@ const zhContent: LandingContent = {
       summary: "一份 session config 驱动高价值公开资产：合成画面、封面、海报与桌面/手机壁纸。Export All 保持整套视觉一致。",
       points: [
         "合成画面、封面、海报、壁纸来自同一状态",
-        "桌面与手机壁纸变体保持对齐",
+        "文件以你的直播命名——标题 · 面 · 日期",
         "开播前 Export All 一次导出整套",
       ],
       gallery: galleryImagesForLocale("zh"),
@@ -650,12 +668,12 @@ const zhContent: LandingContent = {
     {
       step: "01",
       title: "Agent 生成直播配置",
-      copy: "描述直播内容，Agent 返回提案内容——标题、副标题、章节、工具栈、徽标——以 JSON 格式呈现。",
+      copy: "描述直播内容，Agent 用你描述的语言返回提案——标题、副标题、带时长的章节、工具栈、徽标——以 JSON 格式呈现。",
     },
     {
       step: "02",
       title: "人工确认并应用",
-      copy: "提案进入 JSON 审阅抽屉，检查字段级 diff，确认后再应用。AI 不直接修改直播状态。",
+      copy: "提案显示字段级 diff，确认后一键应用；JSON 审阅抽屉保留为高级路径。AI 不直接修改直播状态。",
     },
     {
       step: "03",
@@ -670,8 +688,8 @@ const zhContent: LandingContent = {
   agentProviders: "兼容任何 OpenAI 兼容 provider——DeepSeek、OpenAI、Kimi、z.ai 等——通过本地/私有 Studio 环境变量配置。未配置 key？Agent 回退到本地复制交接。生成的配置需人工确认后生效。",
 
   getStartedEyebrow: "开始使用",
-  getStartedTitle: "从 Agent 就绪的交接开始",
-  getStartedLede: "大部分配置工作更适合委托：克隆、检查、运行、配置本地 AI key、准备 OBS 路由。公开 Demo 只在浏览器本地运行，不能触碰你的 OBS。",
+  getStartedTitle: "五分钟自己跑起来，或交给你的 Agent",
+  getStartedLede: "克隆、pnpm dev、把四条浏览器源贴进 OBS——README 有任意系统可用的五分钟教程，首启向导三步把工作台变成你的。Docker 与部署配方随仓库提供。更想委托？Agent 交接一键复制。公开 Demo 只在浏览器本地运行，不能触碰你的 OBS。",
   agentTabLabel: "我是 Agent",
   humanTabLabel: "我是人类",
   agentTasksLabel: "Agent 任务",
@@ -739,6 +757,8 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
   humanChecklist: [
     { label: "安装", value: "pnpm install" },
     { label: "开发服务器", value: "pnpm dev" },
+    { label: "Docker", value: "docker compose up" },
+    { label: "部署指南", value: "docs/deploy.md" },
     { label: "公开 Demo", value: "/demo", href: "/demo" },
     { label: "私有 Studio", value: "/studio", href: "/studio" },
     { label: "合成画面（空）", value: "/obs/overlay?camera=empty" },
@@ -756,7 +776,15 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
     },
     {
       question: "它只适合编程直播吗？",
-      answer: "不是。Study With Me、Coding With Me、Build in Public、Vibe Coding、一起打游戏、聊天互动、线上共学这类需要更好直播画面的场景都可以用。",
+      answer: "不是。Study With Me、Coding With Me、Build in Public、Vibe Coding、一起打游戏、聊天互动、线上共学都可以用——讲座布局自带讲师卡与流程清单，结构化分享和线上公开课同样合适。",
+    },
+    {
+      question: "有哪些场景布局？",
+      answer: "四种：编程工作台、讲座 · 左 / 讲座 · 右（讲师列包含摄像头、讲者卡与流程清单，配 16:9 幻灯片区）、以及竖屏 1080×1920 手机框架。每个布局拥有独立的议程与底栏；讲座的每一节还可以配自己的讲者，讲师卡会自动介绍当前发言人。",
+    },
+    {
+      question: "第二天再播要重新配一遍吗？",
+      answer: "不用。首启向导会把名字、头像、社交写入品牌层，只需一次。「准备下一场」清空本场内容——标题、议程、工具栈——同时保住品牌、布局、主题与底栏。",
     },
     {
       question: "公开 Demo 连着我的私有直播吗？",
@@ -776,7 +804,7 @@ Session Config Agent 边界（服务器端 key、审阅/应用、不自动应用
     },
     {
       question: "如何配合 OBS 使用？",
-      answer: "将 OBS 路由添加为浏览器源：合成画面、侧栏与底栏。将真实屏幕捕获和摄像头放在透明 overlay 框架下方。",
+      answer: "将 OBS 路由添加为浏览器源：合成画面、侧栏与底栏——README 有任意系统可用的五分钟手动教程（macOS 一键自动化另有文档）。将真实屏幕捕获和摄像头放在透明 overlay 框架下方。",
     },
     {
       question: "真实屏幕捕获在哪里？",

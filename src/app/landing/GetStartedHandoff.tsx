@@ -36,7 +36,9 @@ export default function GetStartedHandoff({
   readmeGithub,
   setupModeLabel,
 }: GetStartedHandoffProps) {
-  const [mode, setMode] = useState<Mode>("agent");
+  // Humans first: the five-minute manual path is the default; the agent
+  // handoff stays one tab away.
+  const [mode, setMode] = useState<Mode>("human");
   const [taskIndex, setTaskIndex] = useState(0);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,24 +95,6 @@ export default function GetStartedHandoff({
     <div className="akl-handoff" data-testid="landing-handoff">
       <div className="akl-handoff-segmented" role="tablist" aria-label={setupModeLabel}>
         <button
-          ref={agentTabRef}
-          type="button"
-          role="tab"
-          id={agentTabId}
-          aria-selected={mode === "agent"}
-          aria-controls={agentPanelId}
-          tabIndex={mode === "agent" ? 0 : -1}
-          className="akl-handoff-seg"
-          data-selected={mode === "agent" || undefined}
-          onClick={() => {
-            setMode("agent");
-            resetCopyState();
-          }}
-          onKeyDown={onSegmentedKeyDown}
-        >
-          {agentTabLabel}
-        </button>
-        <button
           ref={humanTabRef}
           type="button"
           role="tab"
@@ -127,6 +111,24 @@ export default function GetStartedHandoff({
           onKeyDown={onSegmentedKeyDown}
         >
           {humanTabLabel}
+        </button>
+        <button
+          ref={agentTabRef}
+          type="button"
+          role="tab"
+          id={agentTabId}
+          aria-selected={mode === "agent"}
+          aria-controls={agentPanelId}
+          tabIndex={mode === "agent" ? 0 : -1}
+          className="akl-handoff-seg"
+          data-selected={mode === "agent" || undefined}
+          onClick={() => {
+            setMode("agent");
+            resetCopyState();
+          }}
+          onKeyDown={onSegmentedKeyDown}
+        >
+          {agentTabLabel}
         </button>
       </div>
 
