@@ -30,10 +30,11 @@ test("buildAgentPrompt sends stream content only — identity + brand never ente
   assert.match(prompt, /sections/);
 });
 
-test("prompts pin the output language to the brief with a locale fallback (review P1-10)", () => {
-  const zh = buildAgentPrompt(DEFAULT_STATE, "", "", "zh");
-  const en = buildAgentPrompt(DEFAULT_STATE, "", "", "en");
-  assert.match(zh, /same language as the Brief/);
-  assert.match(zh, /Simplified Chinese/);
-  assert.match(en, /use English/);
+test("prompts pin the output language deterministically (review P1-10)", () => {
+  // CJK brief wins even in an EN locale; latin brief wins in a zh locale;
+  // an empty brief falls back to the UI locale.
+  assert.match(buildAgentPrompt(DEFAULT_STATE, "准备一场直播", "", "en"), /in Simplified Chinese/);
+  assert.match(buildAgentPrompt(DEFAULT_STATE, "prepare a stream", "", "zh"), /in English/);
+  assert.match(buildAgentPrompt(DEFAULT_STATE, "", "", "zh"), /in Simplified Chinese/);
+  assert.match(buildAgentPrompt(DEFAULT_STATE, "", "", "en"), /in English/);
 });

@@ -183,11 +183,30 @@ export async function testAgentConnection(
 }
 
 /** Compose the chat messages: a JSON-output system prompt + the user context. */
+/**
+ * Resolve the OUTPUT language for content strings deterministically on our
+ * side (CJK in the brief -> Chinese; latin brief -> English; empty brief -> UI
+ * locale) instead of asking the model to infer it — "match the brief" alone
+ * proved unreliable across providers.
+ */
+export function resolveContentLanguage(brief: string, locale: string): "zh" | "en" {
+  const trimmed = brief.trim();
+  if (/[\u4e00-\u9fff]/.test(trimmed)) return "zh";
+  if (/[a-zA-Z]/.test(trimmed)) return "en";
+  return locale === "zh" ? "zh" : "en";
+}
+
+function contentLanguageName(language: "zh" | "en"): string {
+  return language === "zh" ? "Simplified Chinese (简体中文)" : "English";
+}
+
 export function buildChatMessages(request: SessionAgentRequest): ChatMessage[] {
-  const fallbackLanguage = request.locale === "zh" ? "Simplified Chinese (简体中文)" : "English";
+  const contentLanguage = contentLanguageName(
+    resolveContentLanguage(request.brief, request.locale),
+  );
   const system = [
     "You are a stream-content assistant for a livestream studio app.",
-    `Write every content string (title, subtitle, section titles, bullets, stack labels) in the same language as the user's Brief. If the brief is empty or its language is unclear, write them in ${fallbackLanguage}.`,
+    `Write every content string (title, subtitle, section titles, bullets, stack labels) in ${contentLanguage}. This is a hard requirement regardless of the current content language.`,
     "You edit ONLY the per-stream content of live-session.config.json (v1): version, title, subtitle, badges: string[], stack: string[], sections: [{ title, minutes?, bullets?: string[] }] (up to 12 sections). minutes is the section's optional planned duration in whole minutes (the on-air agenda timer uses it); bullets are optional — a pure agenda item is just a title + minutes.",
     CONFIG_BADGE_PROMPT_RULE,
     "Identity and brand are fixed and NOT shown to you — author, avatar, socials, cover, theme and fonts. Never add or change them; never include author, profile, socials or cover in your output.",
