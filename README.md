@@ -138,9 +138,10 @@ pnpm live:prepare
 Useful lifecycle commands:
 
 ```bash
+pnpm live:prepare:mobile   # Portrait setup — derives the Vibe Vertical OBS profile + collection.
 pnpm live:status    # Show Next/OBS/Livehime status.
 pnpm live:stop      # Stop OBS Virtual Camera, quit OBS, and stop the local Next server.
-pnpm live:restart   # Stop local live tooling, then run live:prepare again.
+pnpm live:restart   # Stop local live tooling, then run live:prepare again (accepts --layout mobile).
 ```
 
 The script:
@@ -165,7 +166,7 @@ The overlay is layout-driven: a **scene layout** decides which regions (transpar
 
 - **Workbench** (1920×1080) — the classic coding-stream frame: main capture left, sidebar top right, camera (or the current-focus card) bottom right, bottom bar beneath.
 - **Lecture · left / right** (1920×1080) — a lecture frame: a header band (brand logo + series name, plus today's topic and a date + LIVE badge once the session starts), a presenter column (camera above an intro card with the stream title, presenter name and affiliation lines), and an exact-16:9 slides region.
-- **Mobile · vertical** (1080×1920) — a portrait frame stacked top to bottom: header, the screen share (main region), the camera below it, a slim bottom bar, and the presenter card. Both regions are OBS-backed cutouts, so the composition controls work — set the OBS base canvas to 1080×1920 (a vertical profile) so the slot coordinates line up. It also exports as a frame for phone-app streaming.
+- **Mobile · vertical** (1080×1920) — a portrait frame stacked top to bottom: header, the screen share (main region), the camera below it, a slim bottom bar, and the presenter card. Both regions are OBS-backed cutouts, so the composition controls work. `pnpm live:prepare:mobile` sets the OBS side up automatically: on first run it derives a `Vibe Vertical` OBS profile (1080×1920 base canvas) and a `Vibe Vertical` scene collection from your landscape setup (same scene + source names, portrait browser sources, captures parked on the mobile rects), then opens OBS on that pair — just switch the Studio's scene layout to Mobile. It also exports as a frame for phone-app streaming.
 
 Every layout family owns its **own bottom bar**: the workbench bar (on-air / progress / stack), the lecture bar (on-air / **agenda** / **follow** — the two lecture mirrors share one), and the mobile bar are independent data sets, so customizing one never touches the others; switching layouts just switches which set renders and edits. The agenda segment renders "current section n/N + time in section / planned + up next" straight from your sections — each section can carry an optional planned duration in minutes (part of the v1 content, so the Agent can draft the timing too), and every section switch restarts the on-air timer. The follow segment features a specific social handle of your choice (falling back to the first visible one). All segment kinds are available in every layout's bottom-bar editor.
 

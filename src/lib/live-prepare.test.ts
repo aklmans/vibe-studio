@@ -6,10 +6,15 @@ import { test } from "node:test";
 
 import {
   buildObsOverlayUrl,
+  deriveVerticalProfileIni,
+  deriveVerticalSceneConfig,
   prepareObsSceneConfig,
   prepareObsWebSocketConfig,
+  VERTICAL_PROFILE_NAME,
+  VERTICAL_SCENE_COLLECTION,
   type ObsSceneItem,
 } from "./live-prepare";
+import { MOBILE_LAYOUT } from "./overlay-layout";
 
 function makeObsSceneConfig() {
   return {
@@ -109,6 +114,7 @@ test("prepareObsSceneConfig updates overlay URLs and resets the live scene layer
   deepStrictEqual(changes, [
     "Set Vibe Overlay Empty Frame URL",
     "Set Vibe Overlay Avatar Frame URL",
+    "Set overlay frames to 1920x1080",
     "Reset Vibe Live Overlay source order",
     "Set Vibe Main Display Capture to main screen frame",
     "Set Vibe Main App Capture to main screen frame",
@@ -212,4 +218,107 @@ test("prepareObsWebSocketConfig enables automation without changing authenticati
     "Disable OBS WebSocket startup alerts",
     "Mark OBS WebSocket as initialized",
   ]);
+});
+
+test("prepareObsSceneConfig with the mobile layout writes portrait geometry", () => {
+  const { config } = prepareObsSceneConfig(makeObsSceneConfig(), {
+    port: 3000,
+    layout: MOBILE_LAYOUT,
+  });
+
+  const browser = config.sources.find((s) => s.name === "Vibe Overlay Empty Frame");
+  equal(browser?.settings.width, 1080);
+  equal(browser?.settings.height, 1920);
+
+  const items = config.sources.find((s) => s.name === "Vibe Live Overlay")?.settings
+    .items as ObsSceneItem[];
+  const main = items.find((item) => item.name === "Vibe Main Display Capture");
+  deepStrictEqual(main?.pos, {
+    x: MOBILE_LAYOUT.regions.main.left,
+    y: MOBILE_LAYOUT.regions.main.top,
+  });
+  deepStrictEqual(main?.bounds, {
+    x: MOBILE_LAYOUT.regions.main.width,
+    y: MOBILE_LAYOUT.regions.main.height,
+  });
+
+  // A derived portrait scene has no hand-placed camera history — the camera
+  // parks into the mobile camera slot (landscape prepare never moves it).
+  const camera = items.find((item) => item.name === "Vibe Camera Capture");
+  deepStrictEqual(camera?.pos, {
+    x: MOBILE_LAYOUT.regions.camera!.left,
+    y: MOBILE_LAYOUT.regions.camera!.top,
+  });
+  equal(camera?.visible, true);
+});
+
+test("the landscape prepare leaves the hand-placed camera transform alone", () => {
+  const input = makeObsSceneConfig();
+  const items = input.sources.find((s) => s.name === "Vibe Live Overlay")!.settings
+    .items as ObsSceneItem[];
+  const camera = items.find((item) => item.name === "Vibe Camera Capture")!;
+  camera.pos = { x: 123, y: 456 };
+
+  const { config } = prepareObsSceneConfig(input, { port: 3000 });
+  const outItems = config.sources.find((s) => s.name === "Vibe Live Overlay")!.settings
+    .items as ObsSceneItem[];
+  const outCamera = outItems.find((item) => item.name === "Vibe Camera Capture")!;
+  deepStrictEqual(outCamera.pos, { x: 123, y: 456 });
+});
+
+test("deriveVerticalSceneConfig renames the collection and keeps the input pristine", () => {
+  const landscape = {
+    ...makeObsSceneConfig(),
+    name: "Vibe Coding Live Overlay",
+    resolution: { x: 1920, y: 1080 },
+  };
+  const before = JSON.stringify(landscape);
+
+  const { config, changes } = deriveVerticalSceneConfig(landscape, { port: 3000 });
+
+  equal(config.name, VERTICAL_SCENE_COLLECTION);
+  deepStrictEqual(config.resolution, { x: 1080, y: 1920 });
+  // The scene + source names are the contract the runtime composition relies
+  // on — the derived collection keeps them identical.
+  equal(config.current_scene, "Vibe Live Overlay");
+  const items = config.sources.find((s) => s.name === "Vibe Live Overlay")?.settings
+    .items as ObsSceneItem[];
+  equal(items.some((item) => item.name === "Vibe Camera Capture"), true);
+  equal(changes.some((c) => c.includes("1080x1920")), true);
+  // Derivation never mutates the landscape input.
+  equal(JSON.stringify(landscape), before);
+});
+
+test("deriveVerticalProfileIni swaps the canvas and name, nothing else", () => {
+  const landscapeIni = [
+    "[General]",
+    "Name=Vibe Coding Live Overlay",
+    "",
+    "[Stream1]",
+    "IgnoreRecommended=false",
+    "",
+    "[Video]",
+    "BaseCX=1920",
+    "BaseCY=1080",
+    "OutputCX=1920",
+    "OutputCY=1080",
+    "FPSType=0",
+    "",
+    "[Audio]",
+    "SampleRate=48000",
+  ].join("\n");
+
+  const { ini, changes } = deriveVerticalProfileIni(landscapeIni);
+
+  const lines = ini.split("\n");
+  equal(lines.includes(`Name=${VERTICAL_PROFILE_NAME}`), true);
+  equal(lines.includes("BaseCX=1080"), true);
+  equal(lines.includes("BaseCY=1920"), true);
+  equal(lines.includes("OutputCX=1080"), true);
+  equal(lines.includes("OutputCY=1920"), true);
+  // Untouched sections carry over verbatim.
+  equal(lines.includes("IgnoreRecommended=false"), true);
+  equal(lines.includes("SampleRate=48000"), true);
+  equal(lines.includes("FPSType=0"), true);
+  equal(changes.length, 5);
 });

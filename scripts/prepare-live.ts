@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { closeSync, openSync } from "node:fs";
-import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -9,11 +9,16 @@ import { fileURLToPath } from "node:url";
 
 import {
   buildObsOverlayUrl,
+  deriveVerticalProfileIni,
+  deriveVerticalSceneConfig,
   prepareObsSceneConfig,
   prepareObsWebSocketConfig,
+  VERTICAL_PROFILE_NAME,
+  VERTICAL_SCENE_COLLECTION,
   type ObsSceneConfig,
   type ObsWebSocketConfig,
 } from "../src/lib/live-prepare.ts";
+import { MOBILE_LAYOUT, WORKBENCH_LAYOUT, type OverlayLayout } from "../src/lib/overlay-layout.ts";
 
 const PORT = 3000;
 const OBS_SCENE = "Vibe Live Overlay";
@@ -54,20 +59,24 @@ const livePrepareDir = path.join(repoRoot, "tmp/live-prepare");
 const nextPidFile = path.join(livePrepareDir, "next-dev.pid");
 const overlayUrl = buildObsOverlayUrl(PORT, "empty");
 type LiveCommand = "prepare" | "status" | "stop" | "restart";
+type LayoutKind = "landscape" | "mobile";
 type ObsTarget = {
   profile: string;
   sceneCollection: string;
   sceneFile: string;
+  layout: OverlayLayout;
 };
 
 async function main(): Promise<void> {
-  const command = parseCommand(process.argv[2]);
-  console.log(`Vibe Studio ${command}`);
+  const args = process.argv.slice(2);
+  const command = parseCommand(args.find((arg) => !arg.startsWith("--")));
+  const layoutKind = parseLayoutFlag(args);
+  console.log(`Vibe Studio ${command}${layoutKind === "mobile" ? " (mobile portrait)" : ""}`);
   console.log(`Repo: ${repoRoot}`);
 
   switch (command) {
     case "prepare":
-      await prepareLive();
+      await prepareLive(layoutKind);
       break;
     case "status":
       await printStatus();
@@ -77,13 +86,13 @@ async function main(): Promise<void> {
       break;
     case "restart":
       await stopLive();
-      await prepareLive();
+      await prepareLive(layoutKind);
       break;
   }
 }
 
-async function prepareLive(): Promise<void> {
-  const obsTarget = await resolveObsTarget();
+async function prepareLive(layoutKind: LayoutKind): Promise<void> {
+  const obsTarget = await resolveObsTarget(layoutKind);
   await ensureNextDevServer();
   await quitObsIfRunning();
   await updateObsSceneFile(obsTarget);
@@ -95,9 +104,20 @@ async function prepareLive(): Promise<void> {
 
   console.log("");
   console.log("Ready for the manual steps:");
-  console.log(`1. Fill stream title/tasks in http://localhost:${PORT}/studio`);
-  console.log("2. In Bilibili Livehime, confirm category and microphone.");
-  console.log("3. Check the preview, then click 开始直播 manually.");
+  if (layoutKind === "mobile") {
+    console.log(
+      `1. In http://localhost:${PORT}/studio switch the scene layout to 手机竖屏 (Mobile · vertical).`,
+    );
+    console.log(
+      `2. OBS is on the "${obsTarget.profile}" profile — base canvas ${MOBILE_LAYOUT.canvas.width}x${MOBILE_LAYOUT.canvas.height}.`,
+    );
+    console.log("3. In Bilibili Livehime, confirm category and microphone.");
+    console.log("4. Check the (portrait) preview, then click 开始直播 manually.");
+  } else {
+    console.log(`1. Fill stream title/tasks in http://localhost:${PORT}/studio`);
+    console.log("2. In Bilibili Livehime, confirm category and microphone.");
+    console.log("3. Check the preview, then click 开始直播 manually.");
+  }
 }
 
 async function stopLive(): Promise<void> {
@@ -206,7 +226,23 @@ async function stopNextDevServer(): Promise<void> {
   await removeNextPidFile();
 }
 
-async function resolveObsTarget(): Promise<ObsTarget> {
+async function resolveObsTarget(layoutKind: LayoutKind): Promise<ObsTarget> {
+  if (layoutKind === "mobile") {
+    // The portrait profile + collection are DERIVED from the landscape pair,
+    // so the landscape setup must exist first (it is the tested source of
+    // truth for stream service, encoders and the source list).
+    const landscapeProfile = await resolveObsProfile();
+    const landscapeCollection = await resolveObsSceneCollection();
+    await ensureVerticalProfile(landscapeProfile);
+    await ensureVerticalSceneCollection(landscapeCollection);
+    return {
+      profile: VERTICAL_PROFILE_NAME,
+      sceneCollection: VERTICAL_SCENE_COLLECTION,
+      sceneFile: path.join(OBS_SCENE_DIR, `${VERTICAL_SCENE_COLLECTION}.json`),
+      layout: MOBILE_LAYOUT,
+    };
+  }
+
   const profile = await resolveObsProfile();
   const sceneCollection = await resolveObsSceneCollection();
 
@@ -214,7 +250,59 @@ async function resolveObsTarget(): Promise<ObsTarget> {
     profile,
     sceneCollection,
     sceneFile: path.join(OBS_SCENE_DIR, `${sceneCollection}.json`),
+    layout: WORKBENCH_LAYOUT,
   };
+}
+
+/** Clone the landscape profile into "Vibe Vertical" (1080×1920) once; keep an
+ *  existing vertical profile untouched (the user may have tuned encoders). */
+async function ensureVerticalProfile(landscapeProfile: string): Promise<void> {
+  const verticalDir = path.join(OBS_PROFILE_DIR, VERTICAL_PROFILE_NAME);
+  try {
+    const info = await stat(verticalDir);
+    if (info.isDirectory()) return;
+  } catch (error) {
+    if (getErrorCode(error) !== "ENOENT") throw error;
+  }
+
+  const sourceDir = path.join(OBS_PROFILE_DIR, landscapeProfile);
+  await mkdir(verticalDir, { recursive: true });
+  for (const entry of await readdir(sourceDir)) {
+    const from = path.join(sourceDir, entry);
+    const to = path.join(verticalDir, entry);
+    if (entry === "basic.ini") {
+      const { ini, changes } = deriveVerticalProfileIni(await readFile(from, "utf8"));
+      await writeFile(to, ini);
+      console.log(`Created OBS profile "${VERTICAL_PROFILE_NAME}" from "${landscapeProfile}"`);
+      for (const change of changes) console.log(`- ${change}`);
+      continue;
+    }
+    const entryInfo = await stat(from);
+    if (entryInfo.isFile()) await copyFile(from, to);
+  }
+}
+
+/** Derive the portrait scene collection from the landscape one once; an
+ *  existing vertical collection is refreshed by updateObsSceneFile instead. */
+async function ensureVerticalSceneCollection(landscapeCollection: string): Promise<void> {
+  const verticalFile = path.join(OBS_SCENE_DIR, `${VERTICAL_SCENE_COLLECTION}.json`);
+  try {
+    await stat(verticalFile);
+    return; // exists — the regular update pass re-parks it on the mobile rects
+  } catch (error) {
+    if (getErrorCode(error) !== "ENOENT") throw error;
+  }
+
+  const landscapeFile = path.join(OBS_SCENE_DIR, `${landscapeCollection}.json`);
+  const raw = await readFile(landscapeFile, "utf8");
+  const parsed = JSON.parse(raw) as ObsSceneConfig;
+  const { config, changes } = deriveVerticalSceneConfig(parsed, { port: PORT });
+  await writeFile(verticalFile, `${JSON.stringify(config, null, 2)}\n`);
+
+  console.log(
+    `Created OBS scene collection "${VERTICAL_SCENE_COLLECTION}" from "${landscapeCollection}"`,
+  );
+  for (const change of changes) console.log(`- ${change}`);
 }
 
 async function resolveObsProfile(): Promise<string> {
@@ -273,6 +361,7 @@ async function updateObsSceneFile(target: ObsTarget): Promise<void> {
   const { config, changes } = prepareObsSceneConfig(parsed, {
     port: PORT,
     sceneName: OBS_SCENE,
+    layout: target.layout,
   });
   const backupPath = `${target.sceneFile}.live-prepare-${timestamp()}.bak`;
 
@@ -890,6 +979,21 @@ async function writeNextListenerPidFile(): Promise<void> {
   }
   await mkdir(livePrepareDir, { recursive: true });
   await writeFile(nextPidFile, `${pid}\n`);
+}
+
+function parseLayoutFlag(args: string[]): LayoutKind {
+  const index = args.indexOf("--layout");
+  const value =
+    index >= 0 ? args[index + 1] : args.find((arg) => arg.startsWith("--layout="))?.slice(9);
+  if (value === undefined || value === "landscape" || value === "workbench") {
+    return "landscape";
+  }
+  if (value === "mobile" || value === "vertical" || value === "portrait") {
+    return "mobile";
+  }
+  throw new Error(
+    `Unknown --layout "${value}". Use mobile (portrait) or landscape (default).`,
+  );
 }
 
 function parseCommand(value: string | undefined): LiveCommand {

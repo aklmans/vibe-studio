@@ -1,4 +1,4 @@
-import { WORKBENCH_LAYOUT } from "./overlay-layout";
+import { MOBILE_LAYOUT, WORKBENCH_LAYOUT, type OverlayLayout } from "./overlay-layout";
 
 export type ObsCameraMode = "empty" | "avatar";
 
@@ -40,6 +40,8 @@ export interface ObsWebSocketConfig {
 export interface PrepareObsSceneOptions {
   port: number;
   sceneName?: string;
+  /** Scene geometry + canvas; the 16:9 workbench scene by default. */
+  layout?: OverlayLayout;
 }
 
 interface PrepareObsSceneResult {
@@ -65,6 +67,12 @@ export const MAIN_APP_SOURCE = "Vibe Main App Capture";
  * (macOS Screen Capture named exactly this, pointed at display 2); prepare and
  * the composition route tolerate its absence. */
 export const SECOND_SCREEN_SOURCE = "Vibe Second Screen Capture";
+/** The portrait (1080×1920) OBS profile + scene collection pair. Both are
+ * DERIVED from the landscape ones by live:prepare --layout mobile, so the
+ * source and scene names stay identical — the runtime composition contract
+ * (obs-composition.ts) works unchanged against either collection. */
+export const VERTICAL_PROFILE_NAME = "Vibe Vertical";
+export const VERTICAL_SCENE_COLLECTION = "Vibe Vertical";
 
 export const DEFAULT_SCENE_ORDER = [
   MAIN_DISPLAY_SOURCE,
@@ -75,11 +83,8 @@ export const DEFAULT_SCENE_ORDER = [
   EMPTY_FRAME_SOURCE,
 ] as const;
 // Geometry has a single source of truth in overlay-layout.ts. Prepare writes the
-// workbench layout's rects into the offline scene collection; the live
+// chosen layout's rects into the offline scene collection; the live
 // obs-websocket path (obs-composition.ts) reads the same rects.
-const MAIN_SCREEN_FRAME = WORKBENCH_LAYOUT.regions.main;
-// Prepare only manages the 16:9 workbench scene, which always has a camera slot.
-const CAMERA_SLOT_FRAME = WORKBENCH_LAYOUT.regions.camera!;
 export const OBS_BOUNDS_SCALE_INNER = 2;
 export const OBS_BOUNDS_SCALE_OUTER = 3;
 // OBS alignment bitmask: LEFT(1) | TOP(4) — positions are top-left anchored.
@@ -98,6 +103,9 @@ export function prepareObsSceneConfig(
   options: PrepareObsSceneOptions,
 ): PrepareObsSceneResult {
   const sceneName = options.sceneName ?? DEFAULT_SCENE_NAME;
+  const layout = options.layout ?? WORKBENCH_LAYOUT;
+  const mainFrame = layout.regions.main;
+  const cameraFrame = layout.regions.camera ?? null;
   const config = structuredClone(input) as ObsSceneConfig;
   const changes: string[] = [];
 
@@ -111,6 +119,15 @@ export function prepareObsSceneConfig(
   avatarFrame.settings.url = buildObsOverlayUrl(options.port, "avatar");
   changes.push(`Set ${AVATAR_FRAME_SOURCE} URL`);
 
+  // Browser sources render at the layout's canvas — /obs/overlay draws a
+  // portrait page once the Studio's scene layout is mobile, so the source
+  // viewport must match (1920×1080 landscape, 1080×1920 portrait).
+  for (const frame of [emptyFrame, avatarFrame]) {
+    frame.settings.width = layout.canvas.width;
+    frame.settings.height = layout.canvas.height;
+  }
+  changes.push(`Set overlay frames to ${layout.canvas.width}x${layout.canvas.height}`);
+
   const items = scene.settings.items;
   if (!items) {
     throw new Error(`OBS scene "${sceneName}" has no scene items.`);
@@ -119,23 +136,109 @@ export function prepareObsSceneConfig(
   scene.settings.items = orderSceneItems(items, DEFAULT_SCENE_ORDER);
   changes.push(`Reset ${sceneName} source order`);
 
-  setMainScreenFrame(scene.settings.items, MAIN_DISPLAY_SOURCE, changes);
-  setMainScreenFrame(scene.settings.items, MAIN_APP_SOURCE, changes);
+  setMainScreenFrame(scene.settings.items, MAIN_DISPLAY_SOURCE, mainFrame, changes);
+  setMainScreenFrame(scene.settings.items, MAIN_APP_SOURCE, mainFrame, changes);
   setSceneItemVisibility(scene.settings.items, EMPTY_FRAME_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, AVATAR_FRAME_SOURCE, false, changes);
   setSceneItemVisibility(scene.settings.items, CAMERA_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, MAIN_DISPLAY_SOURCE, true, changes);
   setSceneItemVisibility(scene.settings.items, MAIN_APP_SOURCE, true, changes);
 
+  // The camera's transform in the LANDSCAPE scene is the user's own manual
+  // placement — prepare never touches it there. A derived portrait scene has
+  // no hand-placed history, so the camera parks into the layout's camera slot.
+  if (cameraFrame && layout.id !== WORKBENCH_LAYOUT.id) {
+    setCameraSlotFrame(scene.settings.items, CAMERA_SOURCE, cameraFrame, changes);
+  }
+
   // The second-screen capture is optional (created manually in OBS). When
   // present, park it in the camera slot and keep it hidden — the runtime
   // composition route then only toggles visibility, never re-derives geometry.
-  if (scene.settings.items.some((item) => item.name === SECOND_SCREEN_SOURCE)) {
-    setCameraSlotFrame(scene.settings.items, SECOND_SCREEN_SOURCE, changes);
+  if (
+    cameraFrame &&
+    scene.settings.items.some((item) => item.name === SECOND_SCREEN_SOURCE)
+  ) {
+    setCameraSlotFrame(scene.settings.items, SECOND_SCREEN_SOURCE, cameraFrame, changes);
     setSceneItemVisibility(scene.settings.items, SECOND_SCREEN_SOURCE, false, changes);
   }
 
   return { config, changes };
+}
+
+/**
+ * Derive the portrait scene collection from the (already working) landscape
+ * one: same sources, same scene name, same source-name contract — only the
+ * collection name, the canvas resolution, the browser-source viewports and
+ * the item geometry change. The input is never mutated.
+ */
+export function deriveVerticalSceneConfig(
+  landscape: ObsSceneConfig,
+  options: { port: number; sceneName?: string },
+): PrepareObsSceneResult {
+  const { config, changes } = prepareObsSceneConfig(landscape, {
+    port: options.port,
+    sceneName: options.sceneName,
+    layout: MOBILE_LAYOUT,
+  });
+
+  config.name = VERTICAL_SCENE_COLLECTION;
+  changes.push(`Set collection name to ${VERTICAL_SCENE_COLLECTION}`);
+  if (toRecordValue(config.resolution)) {
+    config.resolution = { x: MOBILE_LAYOUT.canvas.width, y: MOBILE_LAYOUT.canvas.height };
+    changes.push(
+      `Set collection resolution to ${MOBILE_LAYOUT.canvas.width}x${MOBILE_LAYOUT.canvas.height}`,
+    );
+  }
+
+  return { config, changes };
+}
+
+/**
+ * Derive the portrait profile's basic.ini from the landscape profile: rename
+ * it and swap the base + output canvas to 1080×1920. Every other line (stream
+ * service, encoder, audio) carries over unchanged.
+ */
+export function deriveVerticalProfileIni(landscapeIni: string): {
+  ini: string;
+  changes: string[];
+} {
+  const changes: string[] = [];
+  const canvas = MOBILE_LAYOUT.canvas;
+  const replacements: Record<string, string> = {
+    BaseCX: String(canvas.width),
+    BaseCY: String(canvas.height),
+    OutputCX: String(canvas.width),
+    OutputCY: String(canvas.height),
+  };
+
+  let section = "";
+  const lines = landscapeIni.split("\n").map((line) => {
+    const sectionMatch = line.match(/^\[(.+)\]\s*$/);
+    if (sectionMatch) {
+      section = sectionMatch[1];
+      return line;
+    }
+    const kv = line.match(/^([A-Za-z0-9_]+)=(.*)$/);
+    if (!kv) return line;
+    const [, key] = kv;
+    if (section === "General" && key === "Name") {
+      changes.push(`Set profile name to ${VERTICAL_PROFILE_NAME}`);
+      return `Name=${VERTICAL_PROFILE_NAME}`;
+    }
+    if (section === "Video" && key in replacements) {
+      changes.push(`Set ${key}=${replacements[key]}`);
+      return `${key}=${replacements[key]}`;
+    }
+    return line;
+  });
+
+  return { ini: lines.join("\n"), changes };
+}
+
+function toRecordValue(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 export function prepareObsWebSocketConfig(
@@ -200,6 +303,7 @@ function setSceneItemVisibility(
 function setMainScreenFrame(
   items: ObsSceneItem[],
   sourceName: string,
+  frame: { left: number; top: number; width: number; height: number },
   changes: string[],
 ): void {
   const item = items.find((candidate) => candidate.name === sourceName);
@@ -207,8 +311,8 @@ function setMainScreenFrame(
     throw new Error(`OBS scene item "${sourceName}" was not found.`);
   }
 
-  item.pos = { x: MAIN_SCREEN_FRAME.left, y: MAIN_SCREEN_FRAME.top };
-  item.bounds = { x: MAIN_SCREEN_FRAME.width, y: MAIN_SCREEN_FRAME.height };
+  item.pos = { x: frame.left, y: frame.top };
+  item.bounds = { x: frame.width, y: frame.height };
   item.bounds_type = OBS_BOUNDS_SCALE_INNER;
   item.bounds_crop = false;
   item.bounds_align = OBS_BOUNDS_ALIGN_CENTER;
@@ -222,12 +326,13 @@ function setMainScreenFrame(
   changes.push(`Set ${sourceName} to main screen frame`);
 }
 
-// Park a capture in the camera cutout: fill the 400×272 slot (SCALE_OUTER) and
-// crop the 16:9 overflow to the bounds (≈8–9% off each side), so a second
-// monitor reads as a clean window inside the overlay's camera chrome.
+// Park a capture in the camera cutout: fill the slot (SCALE_OUTER) and crop
+// the overflow to the bounds, so a capture reads as a clean window inside the
+// overlay's camera chrome.
 function setCameraSlotFrame(
   items: ObsSceneItem[],
   sourceName: string,
+  frame: { left: number; top: number; width: number; height: number },
   changes: string[],
 ): void {
   const item = items.find((candidate) => candidate.name === sourceName);
@@ -235,8 +340,8 @@ function setCameraSlotFrame(
     throw new Error(`OBS scene item "${sourceName}" was not found.`);
   }
 
-  item.pos = { x: CAMERA_SLOT_FRAME.left, y: CAMERA_SLOT_FRAME.top };
-  item.bounds = { x: CAMERA_SLOT_FRAME.width, y: CAMERA_SLOT_FRAME.height };
+  item.pos = { x: frame.left, y: frame.top };
+  item.bounds = { x: frame.width, y: frame.height };
   item.bounds_type = OBS_BOUNDS_SCALE_OUTER;
   item.bounds_crop = true;
   item.bounds_align = OBS_BOUNDS_ALIGN_CENTER;

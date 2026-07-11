@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "live:prepare": "tsx scripts/prepare-live.ts prepare",
+    "live:prepare:mobile": "tsx scripts/prepare-live.ts prepare --layout mobile",
     "live:status": "tsx scripts/prepare-live.ts status",
     "live:stop": "tsx scripts/prepare-live.ts stop",
     "live:restart": "tsx scripts/prepare-live.ts restart",
