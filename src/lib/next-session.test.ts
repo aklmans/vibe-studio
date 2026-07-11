@@ -62,3 +62,33 @@ test("prepare next session keeps identity even without a saved profile", () => {
   assert.equal(next.cover.title, DEFAULT_STATE_BY_LOCALE.en.cover.title);
   assert.equal(next.layout, "lecture-left");
 });
+
+test("prepare next session clamps pinned progress segments to the reset agendas (F-3)", () => {
+  const state = richState();
+  // Pin progress far past the locale defaults (workbench resets to 3 sections,
+  // lecture to 4); keep a non-progress segment to prove it stays untouched.
+  state.bottomBar = {
+    visible: true,
+    segments: {
+      workbench: [
+        { kind: "progress", sectionIndex: 6 },
+        { kind: "stack" },
+      ],
+      lecture: [{ kind: "live" }, { kind: "progress", sectionIndex: 9 }],
+      mobile: [{ kind: "progress", sectionIndex: 1 }],
+    },
+  };
+
+  const next = prepareNextSessionState(state, PROFILE, "en");
+
+  assert.deepEqual(next.bottomBar.segments.workbench, [
+    { kind: "progress", sectionIndex: 2 }, // 3 default sections -> max 2
+    { kind: "stack" },
+  ]);
+  assert.deepEqual(next.bottomBar.segments.lecture, [
+    { kind: "live" },
+    { kind: "progress", sectionIndex: 3 }, // 4 default sections -> max 3
+  ]);
+  // Already in range: untouched.
+  assert.deepEqual(next.bottomBar.segments.mobile, [{ kind: "progress", sectionIndex: 1 }]);
+});

@@ -1,4 +1,6 @@
 import { DEFAULT_STATE_BY_LOCALE, type OverlayState } from "../types";
+import { clampProfileProgressSegments } from "./agenda";
+import type { BarProfileId } from "./overlay-layout";
 import type { Locale } from "./i18n";
 import {
   applyStudioProfileToState,
@@ -38,11 +40,22 @@ export function prepareNextSessionState(
     mainScreen: { ...state.mainScreen },
     bottomBar: {
       visible: state.bottomBar.visible,
-      segments: {
-        workbench: state.bottomBar.segments.workbench.map((segment) => ({ ...segment })),
-        lecture: state.bottomBar.segments.lecture.map((segment) => ({ ...segment })),
-        mobile: state.bottomBar.segments.mobile.map((segment) => ({ ...segment })),
-      },
+      // Bar structure is presentation and stays — but every agenda was just
+      // reset to the locale defaults, so each profile's pinned progress
+      // segments must be clamped into its NEW section count (F-3).
+      segments: (["workbench", "lecture", "mobile"] as BarProfileId[]).reduce(
+        (segments, profile) =>
+          clampProfileProgressSegments(
+            segments,
+            profile,
+            base.sidebar.agendas[profile].sections.length,
+          ),
+        {
+          workbench: state.bottomBar.segments.workbench.map((segment) => ({ ...segment })),
+          lecture: state.bottomBar.segments.lecture.map((segment) => ({ ...segment })),
+          mobile: state.bottomBar.segments.mobile.map((segment) => ({ ...segment })),
+        },
+      ),
     },
     sidebar: {
       // Agendas come from the defaults (cleared content); panel visibility is
