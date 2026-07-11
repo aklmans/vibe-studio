@@ -1,0 +1,37 @@
+# Vibe Studio — container setup.
+#
+#   docker compose up --build              # app only (localStorage draft mode)
+#   docker compose --profile db up --build # app + PostgreSQL persistence
+#
+# All environment variables are optional; see .env.example and docs/deploy.md.
+# To enable persistence inside compose, uncomment DATABASE_URL below and run
+# `pnpm db:push` once against the same database to create the schema.
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # DATABASE_URL: postgres://vibe:vibe@db:5432/vibe_coding_live
+      # VIBE_SHOWCASE: "1"
+      # SESSION_AGENT_PROVIDER: deepseek
+      # SESSION_AGENT_BASE_URL: https://api.deepseek.com
+      # SESSION_AGENT_API_KEY: sk-...
+      # SESSION_AGENT_MODEL: deepseek-chat
+      NODE_ENV: production
+
+  db:
+    profiles: ["db"]
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: vibe
+      POSTGRES_PASSWORD: vibe
+      POSTGRES_DB: vibe_coding_live
+    ports:
+      - "5432:5432"
+    volumes:
+      - vibe-pgdata:/var/lib/postgresql/data
+
+volumes:
+  vibe-pgdata:

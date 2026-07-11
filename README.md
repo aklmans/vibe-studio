@@ -105,6 +105,31 @@ Read https://<deployment-domain>/skill.md first, then follow it to run and confi
 
 Locally, the same guide is checked in at [`public/skill.md`](public/skill.md).
 
+## Deploy
+
+You do not need a terminal-based install to try Vibe Studio — deploy it once and share the URL. Full step-by-step notes (including the public-showcase checklist) live in [`docs/deploy.md`](docs/deploy.md).
+
+**Vercel** (one click, no database required):
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Faklmans%2Fvibe-studio)
+
+**Docker** (self-host):
+
+```bash
+docker compose up --build              # app only (localStorage draft mode)
+docker compose --profile db up --build # app + PostgreSQL persistence
+```
+
+All environment variables are optional; the app runs with none of them set:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL persistence (run `pnpm db:push` once). Unset = localStorage draft mode. |
+| `SESSION_AGENT_PROVIDER` / `SESSION_AGENT_BASE_URL` / `SESSION_AGENT_API_KEY` / `SESSION_AGENT_MODEL` | Server-side AI agent. Unset = local copy-handoff fallback. |
+| `VIBE_SHOWCASE` | `1` serves the marketing landing at `/` and applies demo guardrails. Unset = `/` redirects to `/studio`. |
+| `SESSION_AGENT_RATE_LIMIT` / `SESSION_AGENT_MAX_TOKENS` | Showcase-only agent abuse guardrails. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL used in page metadata. |
+
 ## Common Commands
 
 ```bash

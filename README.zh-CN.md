@@ -104,6 +104,31 @@ Read https://<deployment-domain>/skill.md first, then follow it to run and confi
 
 本地也提供同一份说明,已提交在 [`public/skill.md`](public/skill.md)。
 
+## 部署
+
+试用 Vibe Studio 并不需要在终端里安装——部署一次,分享 URL 即可。完整的分步说明(含公开展示站的检查清单)见 [`docs/deploy.md`](docs/deploy.md)。
+
+**Vercel**(一键,无需数据库):
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Faklmans%2Fvibe-studio)
+
+**Docker**(自托管):
+
+```bash
+docker compose up --build              # 仅应用(localStorage 草稿模式)
+docker compose --profile db up --build # 应用 + PostgreSQL 持久化
+```
+
+所有环境变量均为可选;一个都不设也能运行:
+
+| 变量 | 用途 |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL 持久化(首次需执行 `pnpm db:push`)。不设 = localStorage 草稿模式。 |
+| `SESSION_AGENT_PROVIDER` / `SESSION_AGENT_BASE_URL` / `SESSION_AGENT_API_KEY` / `SESSION_AGENT_MODEL` | 服务端 AI agent。不设 = 本地复制交接兜底。 |
+| `VIBE_SHOWCASE` | `1` 时 `/` 提供营销落地页并启用演示防护。不设 = `/` 重定向到 `/studio`。 |
+| `SESSION_AGENT_RATE_LIMIT` / `SESSION_AGENT_MAX_TOKENS` | 仅展示站生效的 agent 滥用防护。 |
+| `NEXT_PUBLIC_SITE_URL` | 页面元数据中的规范 URL。 |
+
 ## 常用命令
 
 ```bash
