@@ -209,7 +209,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
   const nextTurnId = useRef(1);
 
   const task = TASKS.find((item) => item.id === taskId) ?? TASKS[0];
-  const handoff = useMemo(() => buildAgentPrompt(state, brief, task.line), [state, brief, task.line]);
+  const handoff = useMemo(() => buildAgentPrompt(state, brief, task.line, locale), [state, brief, task.line, locale]);
   const connected = status.configured;
   const showChips = turns.length === 0 || intentsOpen;
   const [slashActive, setSlashActive] = useState(0);

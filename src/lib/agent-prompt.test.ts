@@ -29,3 +29,11 @@ test("buildAgentPrompt sends stream content only — identity + brand never ente
   assert.match(prompt, /Identity and brand .* are fixed/);
   assert.match(prompt, /sections/);
 });
+
+test("prompts pin the output language to the brief with a locale fallback (review P1-10)", () => {
+  const zh = buildAgentPrompt(DEFAULT_STATE, "", "", "zh");
+  const en = buildAgentPrompt(DEFAULT_STATE, "", "", "en");
+  assert.match(zh, /same language as the Brief/);
+  assert.match(zh, /Simplified Chinese/);
+  assert.match(en, /use English/);
+});

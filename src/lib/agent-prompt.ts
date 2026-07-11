@@ -21,9 +21,11 @@ export function buildAgentPrompt(
   state: OverlayState,
   brief: string,
   task = "",
+  locale: "zh" | "en" = "zh",
 ): string {
   const config = sanitizeConfigTextForProvider(projectConfigText(state)).trim();
   const trimmedBrief = brief.trim() || "(none)";
+  const fallbackLanguage = locale === "zh" ? "Simplified Chinese (简体中文)" : "English";
   const taskLine =
     task.trim() || "Task: prepare or update the stream content from the brief below.";
   return [
@@ -35,6 +37,7 @@ export function buildAgentPrompt(
     "bullets are optional — a pure agenda item is just a title + minutes.",
     CONFIG_BADGE_PROMPT_RULE,
     "Identity and brand (author, avatar, socials, cover, theme, fonts) are fixed and not shown — never add them.",
+    `Write every content string (title, subtitle, section titles, bullets, stack labels) in the same language as the Brief; if the brief is empty or its language is unclear, use ${fallbackLanguage}.`,
     "",
     taskLine,
     `Brief: ${trimmedBrief}`,
