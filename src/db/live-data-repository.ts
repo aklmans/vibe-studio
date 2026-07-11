@@ -225,6 +225,10 @@ async function readLiveDataBySessionId(
       .map((section) => ({
         title: section.title,
         ...(typeof section.minutes === "number" ? { minutes: section.minutes } : {}),
+        ...(section.speaker ? { speaker: section.speaker } : {}),
+        ...(Array.isArray(section.speakerLines) && section.speakerLines.length
+          ? { speakerLines: section.speakerLines.filter((line): line is string => typeof line === "string") }
+          : {}),
         ...(section.done ? { done: true } : {}),
         tasks: (tasksBySection.get(section.id) ?? []).map((task) => ({
           text: task.text,
@@ -270,6 +274,8 @@ async function replaceLiveDataChildren(
           title: section.title,
           minutes: section.minutes ?? null,
           done: section.done === true,
+          speaker: section.speaker ?? null,
+          speakerLines: section.speakerLines?.length ? section.speakerLines : null,
         })
         .returning();
       if (!sectionRow) continue;

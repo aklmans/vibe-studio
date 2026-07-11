@@ -55,6 +55,9 @@ export const liveSections = pgTable("live_sections", {
   minutes: integer("minutes"),
   // Manual per-section completion (checked off by the host).
   done: boolean("done").notNull().default(false),
+  // Per-section speaker/guest and their role/affiliation lines.
+  speaker: text("speaker"),
+  speakerLines: jsonb("speaker_lines").$type<string[]>(),
 });
 
 export const liveTasks = pgTable("live_tasks", {

@@ -42,6 +42,9 @@ export interface LiveSectionData {
   minutes?: number;
   /** Manual per-section completion (checked off by the host). */
   done?: boolean;
+  /** Per-section speaker/guest and their role lines (v1 content, optional). */
+  speaker?: string;
+  speakerLines?: string[];
 }
 
 /** One scene profile's persisted agenda: its sections and active index. */
@@ -66,6 +69,8 @@ function sameSectionContent(a: LiveSectionData, b: LiveSectionData): boolean {
   return (
     a.title === b.title &&
     a.minutes === b.minutes &&
+    a.speaker === b.speaker &&
+    (a.speakerLines ?? []).join("\n") === (b.speakerLines ?? []).join("\n") &&
     a.tasks.length === b.tasks.length &&
     a.tasks.every((task, index) => task.text === b.tasks[index]?.text)
   );
@@ -75,6 +80,8 @@ function mergeSectionData(a: LiveSectionData, b: LiveSectionData): LiveSectionDa
   return {
     title: a.title,
     ...(a.minutes !== undefined ? { minutes: a.minutes } : {}),
+    ...(a.speaker ? { speaker: a.speaker } : {}),
+    ...(a.speakerLines?.length ? { speakerLines: [...a.speakerLines] } : {}),
     ...(a.done || b.done ? { done: true } : {}),
     tasks: a.tasks.map((task, index) => ({
       text: task.text,
@@ -102,6 +109,8 @@ function normalizeSections(sections: LiveSectionData[]): {
     normalized.push({
       title: section.title,
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      ...(section.speaker ? { speaker: section.speaker } : {}),
+      ...(section.speakerLines?.length ? { speakerLines: [...section.speakerLines] } : {}),
       ...(section.done ? { done: true } : {}),
       tasks: section.tasks.map((task) => ({ ...task })),
     });
@@ -306,6 +315,8 @@ function agendaToLiveData(agenda: OverlayState["sidebar"]["agendas"][BarProfileI
     sections: agenda.sections.map((section, sectionIndex) => ({
       title: section.title,
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      ...(section.speaker ? { speaker: section.speaker } : {}),
+      ...(section.speakerLines?.length ? { speakerLines: [...section.speakerLines] } : {}),
       ...(agenda.completed[sectionIndex] ? { done: true } : {}),
       tasks: section.bullets.map((text, taskIndex) => ({
         text,
@@ -351,6 +362,8 @@ export function applyLiveDataToOverlayState(
       title: section.title,
       bullets: section.tasks.map((task) => task.text),
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      ...(section.speaker ? { speaker: section.speaker } : {}),
+      ...(section.speakerLines?.length ? { speakerLines: [...section.speakerLines] } : {}),
     })),
     sectionsDone: data.sections.map((section) => section.tasks.map((task) => task.done)),
     completed: data.sections.map((section) => section.done === true),
