@@ -424,17 +424,26 @@ test("sections carry an optional per-section speaker through the config round-tr
       stack: [],
       socials: [],
       sections: [
-        { title: "One", minutes: 10, speaker: "林教授", bullets: [] },
+        {
+          title: "One",
+          minutes: 10,
+          speaker: "林教授",
+          speakerLines: ["计算机学院 · 教授", "  ", "《系统设计》作者"],
+          bullets: [],
+        },
         { title: "Two", speaker: "   ", bullets: [] }, // blank speaker is dropped
       ],
     }),
   );
   assert.ok(config);
   assert.equal(config.sections[0].speaker, "林教授");
+  // Blank lines are cleaned; real ones survive the round-trip.
+  assert.deepEqual(config.sections[0].speakerLines, ["计算机学院 · 教授", "《系统设计》作者"]);
   assert.equal("speaker" in config.sections[1], false);
 
   const reparsed = parseLiveStudioConfigJson(formatLiveStudioConfigJson(config));
   assert.equal(reparsed?.sections[0].speaker, "林教授");
+  assert.deepEqual(reparsed?.sections[0].speakerLines, ["计算机学院 · 教授", "《系统设计》作者"]);
 
   // Validation: a non-string speaker is rejected.
   const invalid = validateLiveStudioConfig({
@@ -448,4 +457,24 @@ test("sections carry an optional per-section speaker through the config round-tr
   });
   assert.equal(invalid.valid, false);
   assert.ok(invalid.issues.some((issue) => issue.includes("speaker")));
+});
+
+test("applying a config lands speaker + speakerLines in the target agenda", () => {
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "T",
+      subtitle: "S",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: [
+        { title: "Keynote", minutes: 30, speaker: "林教授", speakerLines: ["教授"], bullets: [] },
+      ],
+    }),
+  );
+  assert.ok(config);
+  const next = configToOverlayState(DEFAULT_STATE, config, "lecture");
+  assert.equal(next.sidebar.agendas.lecture.sections[0].speaker, "林教授");
+  assert.deepEqual(next.sidebar.agendas.lecture.sections[0].speakerLines, ["教授"]);
 });

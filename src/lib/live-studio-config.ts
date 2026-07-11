@@ -25,6 +25,8 @@ export interface LiveStudioConfigSection {
   minutes?: number;
   /** Per-section speaker/guest name — the lecture card follows the active section. */
   speaker?: string;
+  /** The speaker's role / affiliation / achievement lines. */
+  speakerLines?: string[];
 }
 
 /** Positive whole minutes, capped at a sane ceiling; anything else is absent. */
@@ -154,11 +156,13 @@ function normalizeSections(value: unknown): LiveStudioConfigSection[] {
     if (!title) return sections;
     const minutes = cleanMinutes(source.minutes);
     const speaker = cleanString(source.speaker);
+    const speakerLines = cleanStringArray(source.speakerLines);
     sections.push({
       title,
       bullets,
       ...(minutes !== undefined ? { minutes } : {}),
       ...(speaker ? { speaker } : {}),
+      ...(speakerLines.length > 0 ? { speakerLines } : {}),
     });
     return sections;
   }, []);
@@ -296,6 +300,9 @@ function validateSections(value: unknown, issues: string[]): void {
     if ("speaker" in source && source.speaker !== undefined && typeof source.speaker !== "string") {
       issues.push(`sections[${index}].speaker must be a string.`);
     }
+    if ("speakerLines" in source && source.speakerLines !== undefined && !Array.isArray(source.speakerLines)) {
+      issues.push(`sections[${index}].speakerLines must be an array of strings.`);
+    }
   });
 }
 
@@ -383,6 +390,8 @@ export function configToOverlayState(
     title: section.title,
     bullets: [...section.bullets],
     ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+    ...(section.speaker !== undefined ? { speaker: section.speaker } : {}),
+    ...(section.speakerLines !== undefined ? { speakerLines: [...section.speakerLines] } : {}),
   }));
   const avatarVisible = config.profile?.avatarVisible;
 
@@ -485,6 +494,9 @@ export function overlayStateToConfig(state: OverlayState): LiveStudioConfig {
       bullets: [...section.bullets],
       ...(cleanMinutes(section.minutes) !== undefined ? { minutes: cleanMinutes(section.minutes) } : {}),
       ...(section.speaker && section.speaker.trim() ? { speaker: section.speaker } : {}),
+      ...(section.speakerLines && section.speakerLines.some((line) => line.trim())
+        ? { speakerLines: section.speakerLines.filter((line) => line.trim()) }
+        : {}),
     })),
   };
 }

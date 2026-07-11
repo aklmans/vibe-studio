@@ -46,6 +46,12 @@ export default function PresenterIntro({
     : "";
   const guest = Boolean(activeSpeaker) && activeSpeaker !== name;
   const displayName = activeSpeaker || name;
+  // The guest's own role / affiliation lines (never the host's).
+  const guestLines = guest
+    ? (agenda.sections[activeIdx]?.speakerLines ?? []).filter(
+        (line) => line.trim().length > 0,
+      )
+    : [];
 
   return (
     <div
@@ -129,8 +135,24 @@ export default function PresenterIntro({
               {displayName}
             </div>
           )}
-          {/* Affiliation lines belong to the HOST's identity; a guest gets a
-              quiet hosted-by line instead of someone else's titles. */}
+          {/* Affiliation lines: the guest's own when a guest is on, otherwise
+              the host's — the two identities never mix. */}
+          {guest &&
+            guestLines.map((line, index) => (
+              <div
+                key={index}
+                data-testid={`overlay-presenter-guest-line-${index}`}
+                style={{
+                  ...clampLines(2),
+                  fontSize: 16,
+                  fontWeight: 500,
+                  lineHeight: 1.45,
+                  color: colors.mutedText,
+                }}
+              >
+                {line}
+              </div>
+            ))}
           {!guest &&
             lines.map((line, index) => (
               <div

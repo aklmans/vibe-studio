@@ -97,7 +97,13 @@ test("the card introduces the active section's speaker with a hosted-by line", (
     activeSection: 1,
     sections: [
       { title: "开场", minutes: 5, bullets: [] },
-      { title: "专题分享", minutes: 20, bullets: [], speaker: "林教授" },
+      {
+        title: "专题分享",
+        minutes: 20,
+        bullets: [],
+        speaker: "林教授",
+        speakerLines: ["计算机学院 · 教授", "《系统设计》作者"],
+      },
       { title: "答疑", minutes: 10, bullets: [] },
     ],
     sectionsDone: [[], [], []],
@@ -111,6 +117,9 @@ test("the card introduces the active section's speaker with a hosted-by line", (
   assert.match(html, /data-testid="overlay-presenter-now-speaking"/);
   assert.match(html, /data-testid="overlay-presenter-name"[^>]*>林教授</);
   assert.match(html, /data-testid="overlay-presenter-host"[^>]*>主持 · 阿彬</);
+  // The guest's own role/affiliation lines render; the host's never do.
+  assert.match(html, /data-testid="overlay-presenter-guest-line-0"[^>]*>计算机学院 · 教授</);
+  assert.match(html, /《系统设计》作者/);
   assert.doesNotMatch(html, /独立开发者/);
   // The run of show annotates its rows with their speakers.
   assert.match(html, /data-testid="lecture-agenda-speaker-1"/);

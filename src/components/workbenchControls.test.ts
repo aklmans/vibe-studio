@@ -860,6 +860,7 @@ test("the speaker field appears only where a presenter card renders (lecture)", 
     }),
   );
   assert.match(lecture, /data-testid="sidebar-s1-speaker"/);
+  assert.match(lecture, /data-testid="sidebar-s1-speaker-lines"/);
 
   const workbench = renderToStaticMarkup(
     React.createElement(LocaleProvider, {

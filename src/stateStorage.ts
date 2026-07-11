@@ -157,11 +157,18 @@ function normalizeSections(value: unknown, defaults: SidebarSection[]): SidebarS
       typeof source?.speaker === "string" && source.speaker.trim()
         ? source.speaker
         : undefined;
+    const speakerLines = Array.isArray(source?.speakerLines)
+      ? (source.speakerLines as unknown[]).filter(
+          (line): line is string => typeof line === "string",
+        )
+      : [];
+    const hasSpeakerLines = speakerLines.some((line) => line.trim().length > 0);
     return {
       title: stringOrDefault(source?.title, fallback.title),
       bullets: normalizeBullets(source?.bullets, fallback.bullets),
       ...(minutes !== undefined ? { minutes } : {}),
       ...(speaker !== undefined ? { speaker } : {}),
+      ...(hasSpeakerLines ? { speakerLines } : {}),
     };
   });
 }

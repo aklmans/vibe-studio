@@ -9,7 +9,7 @@ import {
   withActiveAgenda,
 } from "../lib/agenda";
 import { useLocale } from "../hooks/useLocale";
-import { SectionInput, WorkbenchButton } from "./shared/Field";
+import { SectionInput, WorkbenchButton, fieldLabelStyle, workbenchInputStyle } from "./shared/Field";
 
 interface SidebarSectionEditorProps {
   state: OverlayState;
@@ -66,6 +66,19 @@ export default function SidebarSectionEditor({
     onChange(withActiveAgenda(state, { ...agenda, sections }));
   };
 
+  // The speaker's role / affiliation / achievements — one line per entry,
+  // mirroring the host's presenterLines editor. All-blank clears the field.
+  const updateSpeakerLines = (value: string) => {
+    const lines = value.split("\n");
+    const keep = lines.some((line) => line.trim().length > 0);
+    const sections = agenda.sections.map((s, i) => {
+      if (i !== index) return s;
+      const { speakerLines: _drop, ...rest } = s;
+      return { ...rest, ...(keep ? { speakerLines: lines } : {}) };
+    });
+    onChange(withActiveAgenda(state, { ...agenda, sections }));
+  };
+
   const updateBullet = (bulletIdx: number, value: string) => {
     const sections = agenda.sections.map((s, i) => {
       if (i !== index) return s;
@@ -91,13 +104,34 @@ export default function SidebarSectionEditor({
         testId={`sidebar-s${index + 1}-title`}
       />
       {activeAgendaProfile(state) === "lecture" && (
-        <SectionInput
-          label={t("label.speaker")}
-          value={section.speaker ?? ""}
-          onChange={updateSpeaker}
-          placeholder={t("label.speakerPlaceholder")}
-          testId={`sidebar-s${index + 1}-speaker`}
-        />
+        <>
+          <SectionInput
+            label={t("label.speaker")}
+            value={section.speaker ?? ""}
+            onChange={updateSpeaker}
+            placeholder={t("label.speakerPlaceholder")}
+            testId={`sidebar-s${index + 1}-speaker`}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <label style={fieldLabelStyle}>{t("label.speakerLines")}</label>
+            <textarea
+              data-testid={`sidebar-s${index + 1}-speaker-lines`}
+              aria-label={t("label.speakerLines")}
+              value={(section.speakerLines ?? []).join("\n")}
+              onChange={(e) => updateSpeakerLines(e.target.value)}
+              placeholder={t("label.speakerLinesPlaceholder")}
+              rows={2}
+              spellCheck={false}
+              style={{
+                ...workbenchInputStyle,
+                height: "auto",
+                padding: "8px 10px",
+                resize: "vertical",
+                lineHeight: 1.5,
+              }}
+            />
+          </div>
+        </>
       )}
       <SectionInput
         label={t("label.plannedMinutes")}

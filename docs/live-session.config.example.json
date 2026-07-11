@@ -42,7 +42,11 @@
         "Build with agents",
         "Verify the output"
       ],
-      "speaker": "Guest · Dr. Lin"
+      "speaker": "Guest · Dr. Lin",
+      "speakerLines": [
+        "Distinguished Engineer",
+        "Author of the series"
+      ]
     },
     {
       "title": "Current Problem",

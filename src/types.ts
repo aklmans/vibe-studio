@@ -29,6 +29,10 @@ export interface SidebarSection {
   /** Per-section speaker/guest (v1 content, optional) — the lecture presenter
    *  card introduces the ACTIVE section's speaker, falling back to the host. */
   speaker?: string;
+  /** The speaker's role / affiliation / achievement lines (v1 content,
+   *  optional) — rendered under the guest's name, like the host's
+   *  presenterLines; never mixed with the host's own lines. */
+  speakerLines?: string[];
 }
 
 /**

@@ -472,13 +472,16 @@ test("normalizeOverlayState keeps per-section speakers and drops blanks", () => 
       agendas: {
         lecture: {
           sections: [
-            { title: "专题分享", bullets: [], speaker: "林教授" },
-            { title: "答疑", bullets: [], speaker: "   " },
+            { title: "专题分享", bullets: [], speaker: "林教授", speakerLines: ["教授", ""] },
+            { title: "答疑", bullets: [], speaker: "   ", speakerLines: ["  ", ""] },
           ],
         },
       },
     },
   });
   assert.equal(state.sidebar.agendas.lecture.sections[0].speaker, "林教授");
+  assert.deepEqual(state.sidebar.agendas.lecture.sections[0].speakerLines, ["教授", ""]);
   assert.equal("speaker" in state.sidebar.agendas.lecture.sections[1], false);
+  // All-blank speakerLines are dropped, not stored as noise.
+  assert.equal("speakerLines" in state.sidebar.agendas.lecture.sections[1], false);
 });

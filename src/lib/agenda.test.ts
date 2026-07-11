@@ -345,10 +345,11 @@ test("clampProfileProgressSegments only touches dangling progress slots", () => 
 test("copyAgendaToProfile carries per-section speakers", () => {
   const state = structuredClone(DEFAULT_STATE);
   state.sidebar.agendas.workbench.sections = [
-    { title: "One", bullets: [], speaker: "林教授" },
+    { title: "One", bullets: [], speaker: "林教授", speakerLines: ["教授"] },
     { title: "Two", bullets: [] },
   ];
   const next = copyAgendaToProfile(state, "workbench", "mobile");
   equal(next.sidebar.agendas.mobile.sections[0].speaker, "林教授");
+  deepEqual(next.sidebar.agendas.mobile.sections[0].speakerLines, ["教授"]);
   equal("speaker" in next.sidebar.agendas.mobile.sections[1], false);
 });

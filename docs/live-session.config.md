@@ -26,7 +26,7 @@ complete, valid example.
 | `badges` | string[] | Agent badge icon keys, e.g. `["claude","codex"]`. See badge rules below. |
 | `stack` | string[] | Tool-stack labels. |
 | `socials` | `{ icon?, label, value, color? }[]` | Social links. |
-| `sections` | `{ title, minutes?, speaker?, bullets?: string[] }[]` | Run-of-show sections. `minutes` = planned duration; `speaker` = optional per-section presenter/guest (the lecture card introduces the active section's speaker, falling back to the host). |
+| `sections` | `{ title, minutes?, speaker?, speakerLines?: string[], bullets?: string[] }[]` | Run-of-show sections. `minutes` = planned duration; `speaker` = optional per-section presenter/guest (the lecture card introduces the active section's speaker, falling back to the host); `speakerLines` = that speaker's role / affiliation / achievement lines. |
 
 ## What v1 does NOT include
 
