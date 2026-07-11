@@ -39,6 +39,7 @@ import {
 import { getLayout } from "../lib/overlay-layout";
 import { produceState } from "../lib/state";
 import { exportForTab } from "../lib/export-targets";
+import { exportFileName } from "../lib/export-filename";
 import { publishLiveState } from "../lib/live-state-client";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./live-data/obs-sync";
 import {
@@ -201,6 +202,8 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   );
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  // Success feedback for exports (filename or file count); auto-clears.
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [sessionConfigFocus, setSessionConfigFocus] = useState<SessionConfigFocus | null>(null);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [obsSync, setObsSync] = useState<ObsSyncState>(IDLE_OBS_SYNC);
@@ -447,11 +450,14 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
     async (
       type: "overlay" | "sidebar" | "bottom-bar" | "cover" | "poster" | "wallpaper" | "all",
       fn: () => Promise<void>,
+      doneMessage?: string,
     ) => {
       setExporting(type);
       setExportError(null);
+      setExportNotice(null);
       try {
         await fn();
+        if (doneMessage) setExportNotice(doneMessage);
       } catch (err) {
         setExportError(err instanceof Error ? err.message : t("export.failed"));
       } finally {
@@ -461,14 +467,29 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
     [t],
   );
 
+  useEffect(() => {
+    if (!exportNotice) return;
+    const timer = setTimeout(() => setExportNotice(null), 4000);
+    return () => clearTimeout(timer);
+  }, [exportNotice]);
+
+  // Exports are named after the host's stream, not the app:
+  // <title-slug>-<surface>-<date>.png
+  const exportName = useCallback(
+    (surface: string) => exportFileName(state.cover.title, surface),
+    [state.cover.title],
+  );
+
   const handleExportOverlay = useCallback(() => {
     const el = exportOverlayRef.current;
     if (!el) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("overlay", () => exportFullOverlay(el, overlayCanvas));
-  }, [handleExport, overlayCanvas, t]);
+    const portrait = overlayCanvas.height > overlayCanvas.width;
+    const name = exportName(portrait ? "overlay-vertical" : "overlay");
+    handleExport("overlay", () => exportFullOverlay(el, overlayCanvas, name), `${t("export.done")} ${name}`);
+  }, [handleExport, overlayCanvas, exportName, t]);
 
   const handleExportSidebar = useCallback(() => {
     const el = exportSidebarRef.current;
@@ -476,8 +497,9 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("sidebar", () => exportSidebar(el));
-  }, [handleExport, t]);
+    const name = exportName("sidebar");
+    handleExport("sidebar", () => exportSidebar(el, name), `${t("export.done")} ${name}`);
+  }, [handleExport, exportName, t]);
 
   const handleExportBottomBar = useCallback(() => {
     const el = exportBottomBarRef.current;
@@ -485,8 +507,9 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("bottom-bar", () => exportBottomBar(el));
-  }, [handleExport, t]);
+    const name = exportName("bottom-bar");
+    handleExport("bottom-bar", () => exportBottomBar(el, name), `${t("export.done")} ${name}`);
+  }, [handleExport, exportName, t]);
 
   const handleExportCover = useCallback(() => {
     const el = exportCoverRef.current;
@@ -494,8 +517,9 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("cover", () => exportCover(el));
-  }, [handleExport, t]);
+    const name = exportName("cover");
+    handleExport("cover", () => exportCover(el, name), `${t("export.done")} ${name}`);
+  }, [handleExport, exportName, t]);
 
   const handleExportPoster = useCallback(() => {
     const el = exportPosterRef.current;
@@ -503,8 +527,9 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(t("export.notReady"));
       return;
     }
-    handleExport("poster", () => exportPoster(el));
-  }, [handleExport, t]);
+    const name = exportName("poster");
+    handleExport("poster", () => exportPoster(el, name), `${t("export.done")} ${name}`);
+  }, [handleExport, exportName, t]);
 
   const handleExportWallpaper = useCallback(() => {
     handleExport("wallpaper", async () => {
@@ -515,13 +540,13 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
         }
         await exportWallpaper(
           el,
-          `vibe-coding-wallpaper-${preset.id}.png`,
+          exportName(`wallpaper-${preset.id}`),
           preset.width,
           preset.height,
         );
       }
-    });
-  }, [handleExport]);
+    }, t("export.doneWallpaper"));
+  }, [handleExport, exportName, t]);
 
   // Export every artifact in one action. Sequential — the offscreen export
   // nodes and the browser's download channel are shared, so one PNG at a time
@@ -538,23 +563,24 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       if (!overlay || !cover || !poster || !sidebar || !bottomBar) {
         throw new Error(t("export.notReady"));
       }
-      await exportFullOverlay(overlay, overlayCanvas);
-      await exportCover(cover);
-      await exportPoster(poster);
+      const portrait = overlayCanvas.height > overlayCanvas.width;
+      await exportFullOverlay(overlay, overlayCanvas, exportName(portrait ? "overlay-vertical" : "overlay"));
+      await exportCover(cover, exportName("cover"));
+      await exportPoster(poster, exportName("poster"));
       for (const preset of WALLPAPER_PRESETS) {
         const el = exportWallpaperRefs.current.get(preset.id);
         if (!el) throw new Error(`Wallpaper export node missing: ${preset.id}`);
         await exportWallpaper(
           el,
-          `vibe-coding-wallpaper-${preset.id}.png`,
+          exportName(`wallpaper-${preset.id}`),
           preset.width,
           preset.height,
         );
       }
-      await exportSidebar(sidebar);
-      await exportBottomBar(bottomBar);
-    });
-  }, [handleExport, overlayCanvas, t]);
+      await exportSidebar(sidebar, exportName("sidebar"));
+      await exportBottomBar(bottomBar, exportName("bottom-bar"));
+    }, t("export.doneAll"));
+  }, [handleExport, overlayCanvas, exportName, t]);
 
   const handleSaveStudioProfile = useCallback((profile: StudioProfile) => {
     saveStudioProfile(profile);
@@ -833,6 +859,27 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
                     style={PREVIEW_HEADER_STYLES.exportError}
                   >
                     {exportError}
+                  </div>
+                )}
+                {!exportError && exportNotice && (
+                  <div
+                    data-testid="export-notice"
+                    role="status"
+                    style={{
+                      fontFamily: "var(--app-font-mono)",
+                      fontSize: 10,
+                      color: UI_COLORS.accentText,
+                      border: UI_BORDERS.control,
+                      borderRadius: 5,
+                      padding: "4px 9px",
+                      letterSpacing: "0.06em",
+                      maxWidth: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {exportNotice}
                   </div>
                 )}
               </div>

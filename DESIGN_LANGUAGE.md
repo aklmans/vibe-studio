@@ -55,7 +55,8 @@ Visual style may change on this branch. These must not change unless explicitly
 requested:
 
 - export dimensions;
-- export filenames;
+- the export filename scheme (`<title-slug>-<surface>-<date>.png`,
+  src/lib/export-filename.ts);
 - OBS routes: `/obs/overlay`, `/obs/sidebar`, `/obs/bottom-bar`;
 - OBS source names used by `pnpm live:prepare`;
 - off-screen export nodes;

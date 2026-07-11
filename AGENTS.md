@@ -90,7 +90,9 @@ Target direction:
 
 Hard contracts that must not change during the redesign:
 
-- Export dimensions and filenames unless explicitly requested.
+- Export dimensions unless explicitly requested. Export filenames follow the
+  personalized scheme `<title-slug>-<surface>-<date>.png` (src/lib/export-filename.ts);
+  keep that scheme stable rather than the literal names.
 - OBS source routes and source names: `/obs/overlay`, `/obs/sidebar`, `/obs/bottom-bar`, plus the current OBS scene/source naming in the live preparation script.
 - The off-screen export architecture: preview and export should keep rendering from the same state and component logic.
 - `OverlayState` semantics, `localStorage` normalization/migration behavior, live-state APIs, database APIs, and existing tests unless a test is intentionally updated to reflect the new visual contract.

@@ -230,7 +230,7 @@ SESSION_AGENT_USER_AGENT=Vibe-Studio/SessionConfigAgent
 - 封面:`1280x720`
 - 海报:`1920x1080`
 - 完整覆盖层:`1920x1080`(16:9 布局)
-- 完整覆盖层 · 手机竖屏布局:`1080x1920`(保存为 `vibe-coding-overlay-vertical.png`)
+- 完整覆盖层 · 手机竖屏布局:`1080x1920`
 - 侧栏:`470x760`
 - 底栏:`1856x180`
 - 壁纸 桌面 4K:`3840x2160`

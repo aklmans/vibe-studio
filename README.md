@@ -231,12 +231,14 @@ Current example dimensions:
 - Cover screen: `1280x720`
 - Poster: `1920x1080`
 - Full overlay: `1920x1080` (16:9 layouts)
-- Full overlay, mobile layout: `1080x1920` (saved as `vibe-coding-overlay-vertical.png`)
+- Full overlay, mobile layout: `1080x1920`
 - Sidebar: `470x760`
 - Bottom bar: `1856x180`
 - Wallpaper desktop 4K: `3840x2160`
 - Wallpaper desktop QHD: `2560x1440`
 - Wallpaper mobile: `1290x2796`
+
+Exported files are named after your stream: `<title-slug>-<surface>-<date>.png` (e.g. `rust-from-scratch-cover-2026-07-10.png`); an empty title falls back to `vibe-live`.
 
 Current default social stacks:
 

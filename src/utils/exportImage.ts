@@ -43,44 +43,45 @@ export async function exportElementAsPng(
 export async function exportFullOverlay(
   canvasEl: HTMLElement,
   canvas: { width: number; height: number } = OVERLAY_CANVAS_DIMENSIONS,
+  filename?: string,
 ): Promise<void> {
-  // The overlay surface is layout-sized: 16:9 layouts keep the classic filename
-  // and dimensions; the portrait mobile layout exports as its own asset.
+  // The overlay surface is layout-sized: 16:9 layouts and the portrait mobile
+  // layout are distinct assets; callers pass a personalized filename.
   const portrait = canvas.height > canvas.width;
   await exportElementAsPng(canvasEl, {
-    filename: portrait ? "vibe-coding-overlay-vertical.png" : "vibe-coding-overlay.png",
+    filename: filename ?? (portrait ? "vibe-coding-overlay-vertical.png" : "vibe-coding-overlay.png"),
     width: canvas.width,
     height: canvas.height,
     backgroundColor: null,
   });
 }
 
-export async function exportSidebar(sidebarEl: HTMLElement): Promise<void> {
+export async function exportSidebar(sidebarEl: HTMLElement, filename?: string): Promise<void> {
   await exportElementAsPng(sidebarEl, {
-    filename: "vibe-coding-sidebar.png",
+    filename: filename ?? "vibe-coding-sidebar.png",
     backgroundColor: undefined,
   });
 }
 
-export async function exportBottomBar(bottomBarEl: HTMLElement): Promise<void> {
+export async function exportBottomBar(bottomBarEl: HTMLElement, filename?: string): Promise<void> {
   await exportElementAsPng(bottomBarEl, {
-    filename: "vibe-coding-bottom-bar.png",
+    filename: filename ?? "vibe-coding-bottom-bar.png",
     backgroundColor: undefined,
   });
 }
 
-export async function exportCover(coverEl: HTMLElement): Promise<void> {
+export async function exportCover(coverEl: HTMLElement, filename?: string): Promise<void> {
   await exportElementAsPng(coverEl, {
-    filename: "vibe-coding-cover.png",
+    filename: filename ?? "vibe-coding-cover.png",
     width: COVER_CANVAS_DIMENSIONS.width,
     height: COVER_CANVAS_DIMENSIONS.height,
     backgroundColor: null,
   });
 }
 
-export async function exportPoster(posterEl: HTMLElement): Promise<void> {
+export async function exportPoster(posterEl: HTMLElement, filename?: string): Promise<void> {
   await exportElementAsPng(posterEl, {
-    filename: "vibe-coding-poster.png",
+    filename: filename ?? "vibe-coding-poster.png",
     width: POSTER_CANVAS_DIMENSIONS.width,
     height: POSTER_CANVAS_DIMENSIONS.height,
     backgroundColor: null,
