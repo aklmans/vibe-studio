@@ -68,7 +68,7 @@ the boundary so the split can happen safely later.
 The boundary is also pinned in code: `src/lib/session-config-boundary.ts`
 defines `LIVE_SESSION_CONFIG_V1_KEYS`, `RUNTIME_STATE_EXCLUSIONS`,
 `STUDIO_CONFIG_FIELDS`, and a `StudioConfigV1Draft` type + parser. The future
-studio config is specified (as a draft) in [`studio.config.md`](./studio.config.md).
+studio config is specified (as a draft) in [`studio.config.md`](./internal/studio.config.md).
 
 ## Badge icon rules
 

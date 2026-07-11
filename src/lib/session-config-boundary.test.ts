@@ -137,7 +137,7 @@ test("parseStudioConfigDraft returns a draft for valid JSON, null otherwise", ()
 });
 
 test("the studio.config example fixture parses + validates", () => {
-  const raw = readFileSync(resolve("docs/studio.config.example.json"), "utf8");
+  const raw = readFileSync(resolve("docs/internal/studio.config.example.json"), "utf8");
   assert.equal(validateStudioConfigDraft(JSON.parse(raw)).valid, true);
   const parsed = parseStudioConfigDraft(raw);
   assert.equal(parsed?.schemaVersion, 1);
@@ -145,7 +145,7 @@ test("the studio.config example fixture parses + validates", () => {
 });
 
 test("studio.config doc marks it a draft and never claims a watched / bound file", () => {
-  const doc = readFileSync(resolve("docs/studio.config.md"), "utf8");
+  const doc = readFileSync(resolve("docs/internal/studio.config.md"), "utf8");
   assert.match(doc, /draft, not a running feature/i);
   assert.match(doc, /does \*\*not\*\* read, write, watch/i);
   assert.doesNotMatch(doc, /synced to (a )?file|auto-?reads a (local )?file|watches the file/i);

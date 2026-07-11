@@ -264,7 +264,7 @@ drizzle/            live data 持久化的 SQL 迁移
 - 画布输出以 DOM / CSS 渲染,并用 `html-to-image` 导出。
 - 导出节点常驻离屏挂载,因此 PNG 捕获使用与预览相同的渲染树。
 - 状态持久化在 `localStorage`,并经 `src/stateStorage.ts` 归一化。
-- 配置边界:[`live-session.config.json`](docs/live-session.config.md) 是每场直播的内容可移植核心(v1);未来的 [`studio.config.json`](docs/studio.config.md) 用于 studio 级设置(仅草案);运行时状态留在 `OverlayState` / `localStorage`。这个拆分固定在 `src/lib/session-config-boundary.ts`。配置通过手动导入 / 导出移动,而非监听文件。
+- 配置边界:[`live-session.config.json`](docs/live-session.config.md) 是每场直播的内容可移植核心(v1);未来的 [`studio.config.json`](docs/internal/studio.config.md) 用于 studio 级设置(仅草案);运行时状态留在 `OverlayState` / `localStorage`。这个拆分固定在 `src/lib/session-config-boundary.ts`。配置通过手动导入 / 导出移动,而非监听文件。
 - 品牌层:可复用的身份与外观 —— 作者、头像、社交链接、主题、配色,以及讲座 header 字段(Logo、系列名、讲者头衔行)—— 作为 Studio Profile 单独持久化(`src/lib/studio-profile.ts`),在加载 / 重置时重新套用(写一次、每场复用)。它在 **Session Config** 里手动设置,AI agent 永不编辑,后者只起草每场的内容。
 - `state.theme` 是应用全局的明 / 暗外观。应用外壳 UI 读取 `APP_THEME_TOKENS` 和 CSS 变量,而 `state.colors` 是用户可覆盖的直播 / 导出素材配色。切换 明 / 暗 目前会加载对应的素材预设作为产品默认;如果将来需要浅色 UI 配深色导出,应新增一个独立的 `assetPalette` 控件,而不是重载 `theme`。
 - live-data 持久化层(在 Session Config 标签背后)在配置了 `DATABASE_URL` 时持久化到 PostgreSQL,否则回退到本地草稿。
