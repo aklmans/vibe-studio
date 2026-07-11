@@ -336,16 +336,16 @@ test("ManualSettings is renamed to SettingsView (no Manual naming leaks)", () =>
   assert.match(i18nSrc, /"settingsView\.menuLabel"/);
 });
 
-test("Session Config opens Agent-first — Agent is the default visible mode", () => {
+test("Session Config opens on the Session form — Agent is the second tab (review P1-5)", () => {
   const html = renderCenter();
-  // Agent is shown; Settings is mounted but hidden until selected.
-  assert.match(html, /data-testid="config-view-agent"[^>]*display:flex/);
-  assert.match(html, /data-testid="config-view-settings"[^>]*display:none/);
-  assert.match(html, /data-testid="agent-view"/);
-  // The mode segmented leads with Agent, then Settings — no "Manual" copy.
+  // The manual form is shown; Agent is mounted but hidden until selected, so
+  // changing a title never requires meeting the AI first.
+  assert.match(html, /data-testid="config-view-settings"[^>]*display:flex/);
+  assert.match(html, /data-testid="config-view-agent"[^>]*display:none/);
+  // The mode segmented leads with the Session form, then Agent.
   const agentIdx = html.indexOf('data-testid="config-mode-agent"');
   const settingsIdx = html.indexOf('data-testid="config-mode-settings"');
-  assert.ok(agentIdx > 0 && settingsIdx > agentIdx, "Agent precedes Settings");
+  assert.ok(settingsIdx > 0 && agentIdx > settingsIdx, "Session precedes Agent");
   assert.doesNotMatch(html, /data-testid="config-mode-manual"/);
   assert.doesNotMatch(html, /Manual Settings/);
 });

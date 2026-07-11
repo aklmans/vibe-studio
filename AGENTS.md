@@ -33,7 +33,8 @@ For OBS/live-data behavior, also read:
 Naming note: **"Live Data" is the persistence / API layer** (DB repo, `live-data*`
 libs, `/api/sessions`, the OBS `live-state` bridge), not a page. The user-facing
 tab is **Session Config** (`src/components/live-data/` — `LiveDataManager` shell
-that opens **Agent-first**, with a **Settings** mode grouped by the config
+that opens on the **Session form** (manual editing first; the **Agent** is the
+second, opt-in tab), with the form grouped by the config
 boundary — Session (portable v1) / Broadcast (runtime OBS + bottom bar) / Studio
 Appearance / AI Provider / Data & Sync — plus a cross-group search and a global
 drift-safe JSON drawer). There is no Recipe / Brief flow and no `SessionRecipePanel`;

@@ -51,8 +51,9 @@ interface LiveDataManagerProps {
 
 /**
  * Session Config Center — a centered modal dialog over the dimmed workbench, in
- * the spirit of a desktop settings window. It opens Agent-first: the dialog
- * header carries the top mental model (Agent vs Settings) + a top-right Open
+ * the spirit of a desktop settings window. It opens on the Session form (the
+ * manual editor) so changing a title never requires meeting the AI first; the
+ * header carries the top mental model (Session vs Agent) + a top-right Open
  * JSON + close. The body is the active mode:
  *   - Agent: a chat window (transcript + composer) with real-AI / local handoff
  *     and slash commands; it links to Settings but never edits settings itself.
@@ -83,7 +84,7 @@ export default function LiveDataManager({
   onClearStudioProfile,
 }: LiveDataManagerProps) {
   const { t } = useLocale();
-  const [mode, setMode] = useState<ConfigMode>("agent");
+  const [mode, setMode] = useState<ConfigMode>("settings");
   const [jsonOpen, setJsonOpen] = useState(false);
   const [jsonKey, setJsonKey] = useState<string | null>(null);
   const [reviewText, setReviewText] = useState<string | null>(null);
@@ -162,8 +163,8 @@ export default function LiveDataManager({
                 active={mode}
                 onSelect={(value) => setMode(value as ConfigMode)}
                 options={[
-                  { value: "agent", label: t("configMode.agent"), testId: "config-mode-agent" },
                   { value: "settings", label: t("configMode.settings"), testId: "config-mode-settings" },
+                  { value: "agent", label: t("configMode.agent"), testId: "config-mode-agent" },
                 ]}
               />
             </div>
@@ -214,7 +215,7 @@ export default function LiveDataManager({
         {/* Body — the active mode. Both stay mounted (visibility toggled) so the
             JSON drift stays synced and the IA is statically inspectable. The
             source-of-truth + lifecycle live inside Settings → Data & Sync so the
-            calm Agent-first entry isn't crowded by status the moment it opens. */}
+            calm entry isn't crowded by status the moment it opens. */}
         <div style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}>
           <div
             data-testid="config-view-agent"
