@@ -49,10 +49,18 @@ test("wizard builds a v3 brand profile and never touches session content", () =>
 
 test("app shows the wizard only on a true studio first run", () => {
   // Never in demo mode; only when neither a draft nor a brand profile exists,
-  // decided in the initializer (before the persist effect writes the draft).
+  // decided in the initializer via the pure first-run gate.
+  assert.match(APP_SRC, /shouldShowFirstRun\(\{/);
+  assert.match(APP_SRC, /hasStoredDraft: hasStoredOverlayState\(\)/);
+  assert.match(APP_SRC, /hasBrandProfile: Boolean\(loadStudioProfile\(\)\)/);
+});
+
+test("draft autosave is deferred while the wizard is open (F-1)", () => {
+  // A mid-wizard refresh must boot back into the wizard: the persist effect
+  // bails until the host completes or skips (both flip firstRunOpen).
   assert.match(
     APP_SRC,
-    /!demoMode && !hasStoredOverlayState\(\) && !loadStudioProfile\(\)/,
+    /if \(!shouldPersistOverlayDraft\(\{ demoMode, firstRunOpen \}\)\) return;/,
   );
 });
 

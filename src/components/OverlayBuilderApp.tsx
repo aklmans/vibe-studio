@@ -26,6 +26,7 @@ import {
   exportWallpaper,
 } from "../utils/exportImage";
 import { hasStoredOverlayState, loadOverlayState, saveOverlayState } from "../stateStorage";
+import { shouldPersistOverlayDraft, shouldShowFirstRun } from "../lib/first-run";
 import { prepareNextSessionState } from "../lib/next-session";
 import {
   UI_BORDERS,
@@ -191,10 +192,15 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   );
   // First-run setup: only the private studio, only when nothing has ever been
   // persisted (no draft, no brand profile). Computed once in the initializer —
-  // the app is client-only (`ssr: false`), and the persist effect below writes
-  // the draft right after mount, so this must be decided before effects run.
-  const [firstRunOpen, setFirstRunOpen] = useState(
-    () => !demoMode && !hasStoredOverlayState() && !loadStudioProfile(),
+  // the app is client-only (`ssr: false`). While the wizard is open the draft
+  // autosave is deferred (see the persist effect below), so a refresh or crash
+  // mid-wizard boots back into the wizard instead of silently dismissing it.
+  const [firstRunOpen, setFirstRunOpen] = useState(() =>
+    shouldShowFirstRun({
+      demoMode,
+      hasStoredDraft: hasStoredOverlayState(),
+      hasBrandProfile: Boolean(loadStudioProfile()),
+    }),
   );
   const [liveDateKey] = useState(() => formatDateKey(new Date()));
   const [previewMetrics, setPreviewMetrics] = useState<PreviewMetrics | null>(
@@ -312,8 +318,13 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   }, [state.theme]);
 
   useEffect(() => {
+    // Deferred while the first-run wizard is open: the wizard is modal (no
+    // edits underneath), and an early autosave would make a mid-wizard refresh
+    // look like a returning studio. Completing/skipping flips firstRunOpen,
+    // which re-runs this effect and records the decision immediately.
+    if (!shouldPersistOverlayDraft({ demoMode, firstRunOpen })) return;
     saveOverlayState(state, undefined, stateStorageKey);
-  }, [state, stateStorageKey]);
+  }, [state, stateStorageKey, demoMode, firstRunOpen]);
 
   // Push the current state to the live-state store (OBS sources mirror it) and
   // surface the real push status in the source-of-truth bar. Debounced so rapid
