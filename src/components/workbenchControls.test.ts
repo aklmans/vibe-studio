@@ -794,3 +794,42 @@ test("icon editors expose shared workflow presets", () => {
   assert.match(stackHtml, /data-testid="stack-preset-frontend"/);
   assert.match(stackHtml, /data-testid="stack-preset-streaming"/);
 });
+
+test("sections manager edits without driving the live agenda (review P0-3)", () => {
+  const SECTIONS_SRC = readFileSync(resolve("src/components/SectionsManager.tsx"), "utf8");
+  const DRIVE_SRC = readFileSync(resolve("src/components/inspector/AgendaDrivePanel.tsx"), "utf8");
+
+  // Picking a chip in the manager is an editing selection — it must never
+  // drive the on-air section or restart its timer. Driving stays in the
+  // Broadcast agenda drive console.
+  assert.doesNotMatch(SECTIONS_SRC, /driveAgendaTo/);
+  assert.match(SECTIONS_SRC, /setSelectedRaw\(index\)/);
+  assert.match(SECTIONS_SRC, /liveIndex=\{live\}/);
+  assert.match(DRIVE_SRC, /driveAgendaTo|drive\(/);
+
+  // The live section carries a quiet marker distinct from the edit selection.
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayInspector, {
+        state: {
+          ...DEFAULT_STATE,
+          sidebar: {
+            ...DEFAULT_STATE.sidebar,
+            agendas: {
+              ...DEFAULT_STATE.sidebar.agendas,
+              workbench: { ...DEFAULT_STATE.sidebar.agendas.workbench, activeSection: 1 },
+            },
+          },
+        },
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(html, /data-testid="inspector-sections-chip-1-live-dot"/);
+  assert.match(html, /data-testid="inspector-sections-live-tag"/);
+  // Manual completion is a labeled control with a >=24px hit area.
+  assert.match(html, /data-testid="inspector-sections-completed"[^>]*aria-label="/);
+  assert.match(html, /data-testid="inspector-sections-completed"[^>]*style="width:24px;height:24px/);
+});

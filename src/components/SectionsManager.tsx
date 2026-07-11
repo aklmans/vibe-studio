@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { OverlayState } from "../types";
 import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import {
@@ -5,7 +6,6 @@ import {
   activeAgenda,
   addSection,
   clampSectionIndex,
-  driveAgendaTo,
   moveSection,
   removeSection,
   toggleSectionCompleted,
@@ -19,10 +19,11 @@ const mono = "var(--app-font-mono)";
 
 /**
  * The agenda structure manager — the one place sections are added, removed and
- * reordered (up to 12). Fixed-width numbered chips select (and drive) a
- * section; the SELECTION LINE below carries its title, planned minutes, the
- * manual completion checkbox and the count; a uniform four-button grid holds
- * the structure actions; the editor edits the selected section.
+ * reordered (up to 12). Numbered chips pick the section being EDITED; picking
+ * one never drives the live agenda or restarts its timer — advancing on air
+ * belongs to the Broadcast agenda drive console. The live section carries a
+ * quiet accent dot so the host always sees where the broadcast is while
+ * editing anywhere else.
  */
 export default function SectionsManager({
   state,
@@ -36,9 +37,13 @@ export default function SectionsManager({
   const { t } = useLocale();
   const agenda = activeAgenda(state);
   const sections = agenda.sections;
-  const active = clampSectionIndex(state, agenda.activeSection);
-  const activeSection = sections[active];
-  const isCompleted = agenda.completed[active] === true;
+  const live = clampSectionIndex(state, agenda.activeSection);
+  // Editing selection — local to the manager, independent of the on-air
+  // pointer. Starts on the live section; a null value means "follow live".
+  const [selectedRaw, setSelectedRaw] = useState<number | null>(null);
+  const selected = Math.min(Math.max(selectedRaw ?? live, 0), sections.length - 1);
+  const selectedSection = sections[selected];
+  const isCompleted = agenda.completed[selected] === true;
   const atCap = sections.length >= MAX_AGENDA_SECTIONS;
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -46,9 +51,11 @@ export default function SectionsManager({
     <div data-testid={`${testIdPrefix}-manager`} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <SectionChips
         sections={sections}
-        active={active}
+        active={selected}
         completed={agenda.completed}
-        onSelect={(index) => onChange(driveAgendaTo(state, index, new Date().toISOString()))}
+        liveIndex={live}
+        liveLabel={t("sections.onAir")}
+        onSelect={(index) => setSelectedRaw(index)}
         testIdPrefix={`${testIdPrefix}-chip`}
       />
 
@@ -68,12 +75,13 @@ export default function SectionsManager({
         <button
           type="button"
           data-testid={`${testIdPrefix}-completed`}
-          onClick={() => onChange(toggleSectionCompleted(state, active))}
+          onClick={() => onChange(toggleSectionCompleted(state, selected))}
           aria-pressed={isCompleted}
+          aria-label={t(isCompleted ? "sections.unmarkCompleted" : "sections.markCompleted")}
           title={t(isCompleted ? "sections.unmarkCompleted" : "sections.markCompleted")}
           style={{
-            width: 18,
-            height: 18,
+            width: 24,
+            height: 24,
             borderRadius: 0,
             border: `1px solid ${
               isCompleted ? cssAlpha(UI_COLORS.accent, 64) : UI_COLORS.controlBorder
@@ -87,7 +95,7 @@ export default function SectionsManager({
             transition: "border-color 0.12s, background 0.12s",
           }}
         >
-          <svg width="10" height="10" viewBox="0 0 11 11" fill="none">
+          <svg width="12" height="12" viewBox="0 0 11 11" fill="none">
             <path
               d="M2 5.5L4.5 8L9 3"
               stroke={isCompleted ? UI_COLORS.accentText : UI_COLORS.textSubtle}
@@ -107,7 +115,7 @@ export default function SectionsManager({
             flexShrink: 0,
           }}
         >
-          {pad(active + 1)}
+          {pad(selected + 1)}
         </span>
         <span
           style={{
@@ -122,11 +130,27 @@ export default function SectionsManager({
             textDecoration: isCompleted ? "line-through" : "none",
           }}
         >
-          {activeSection?.title || "—"}
+          {selectedSection?.title || "—"}
         </span>
-        {activeSection?.minutes !== undefined && (
+        {selected === live && (
+          <span
+            data-testid={`${testIdPrefix}-live-tag`}
+            style={{
+              fontFamily: mono,
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: UI_COLORS.accentText,
+              flexShrink: 0,
+            }}
+          >
+            {t("sections.onAir")}
+          </span>
+        )}
+        {selectedSection?.minutes !== undefined && (
           <span style={{ fontFamily: mono, fontSize: 10, color: UI_COLORS.textMuted, flexShrink: 0 }}>
-            {activeSection.minutes}m
+            {selectedSection.minutes}m
           </span>
         )}
         <span
@@ -141,7 +165,11 @@ export default function SectionsManager({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
         <WorkbenchButton
           testId={`${testIdPrefix}-add`}
-          onClick={() => onChange(addSection(state, `${t("label.section")} ${sections.length + 1}`))}
+          onClick={() => {
+            onChange(addSection(state, `${t("label.section")} ${sections.length + 1}`));
+            // Jump the editing selection to the newly appended section.
+            if (!atCap) setSelectedRaw(sections.length);
+          }}
           disabled={atCap}
           tone="accent"
           style={{ height: 28, padding: "0 4px" }}
@@ -150,23 +178,32 @@ export default function SectionsManager({
         </WorkbenchButton>
         <WorkbenchButton
           testId={`${testIdPrefix}-move-up`}
-          onClick={() => onChange(moveSection(state, active, -1))}
-          disabled={active <= 0}
+          onClick={() => {
+            onChange(moveSection(state, selected, -1));
+            setSelectedRaw(Math.max(0, selected - 1));
+          }}
+          disabled={selected <= 0}
           style={{ height: 28, padding: "0 4px" }}
         >
           ↑ {t("sections.moveUp")}
         </WorkbenchButton>
         <WorkbenchButton
           testId={`${testIdPrefix}-move-down`}
-          onClick={() => onChange(moveSection(state, active, 1))}
-          disabled={active >= sections.length - 1}
+          onClick={() => {
+            onChange(moveSection(state, selected, 1));
+            setSelectedRaw(Math.min(sections.length - 1, selected + 1));
+          }}
+          disabled={selected >= sections.length - 1}
           style={{ height: 28, padding: "0 4px" }}
         >
           ↓ {t("sections.moveDown")}
         </WorkbenchButton>
         <WorkbenchButton
           testId={`${testIdPrefix}-remove`}
-          onClick={() => onChange(removeSection(state, active))}
+          onClick={() => {
+            onChange(removeSection(state, selected));
+            setSelectedRaw(Math.max(0, Math.min(selected, sections.length - 2)));
+          }}
           disabled={sections.length <= 1}
           tone="danger"
           style={{ height: 28, padding: "0 4px" }}
@@ -175,11 +212,11 @@ export default function SectionsManager({
         </WorkbenchButton>
       </div>
 
-      <div data-testid={`${testIdPrefix}-editor-${active}`}>
+      <div data-testid={`${testIdPrefix}-editor-${selected}`}>
         <SidebarSectionEditor
           state={state}
           onChange={onChange}
-          index={active}
+          index={selected}
           accentColor={UI_COLORS.accent}
         />
       </div>
