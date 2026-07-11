@@ -51,6 +51,8 @@ const PRODUCT_ASSETS = [
   "public/product/vibe-coding-cover-light.png",
   "public/product/vibe-coding-poster-dark.png",
   "public/product/vibe-coding-poster-light.png",
+  "public/product/vibe-coding-overlay-vertical-dark.png",
+  "public/product/vibe-coding-overlay-vertical-light.png",
   "public/product/vibe-coding-wallpaper-desktop-4k-dark.png",
   "public/product/vibe-coding-wallpaper-desktop-4k-light.png",
 ];
@@ -302,6 +304,7 @@ test("landing product imagery switches between dark and light screenshots", () =
       "/product/vibe-coding-overlay-dark.png",
       "/product/vibe-coding-cover-dark.png",
       "/product/vibe-coding-poster-dark.png",
+      "/product/vibe-coding-overlay-vertical-dark.png",
       "/product/vibe-coding-wallpaper-desktop-4k-dark.png",
     ],
   );
@@ -311,6 +314,7 @@ test("landing product imagery switches between dark and light screenshots", () =
       "/product/vibe-coding-overlay-light.png",
       "/product/vibe-coding-cover-light.png",
       "/product/vibe-coding-poster-light.png",
+      "/product/vibe-coding-overlay-vertical-light.png",
       "/product/vibe-coding-wallpaper-desktop-4k-light.png",
     ],
   );
@@ -572,11 +576,11 @@ test("landing images have width, height, loading, and decoding attributes", () =
 
   assert.match(
     html,
-    /src="\/product\/obs-main-screen-light\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/,
+    /src="\/product\/obs-main-screen-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/,
   );
   assert.match(html, /src="\/product\/agent-proposal-light\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
   assert.match(html, /src="\/product\/json-drawer-review-light\.png"[^>]*width="3960"[^>]*height="2128"[^>]*loading="lazy"[^>]*decoding="async"/);
-  assert.match(html, /src="\/product\/obs-main-screen-light\.png"[^>]*width="1174"[^>]*height="660"[^>]*loading="eager"[^>]*decoding="async"/);
+  assert.match(html, /src="\/product\/obs-main-screen-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/);
   assert.match(html, /src="\/product\/vibe-coding-overlay-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="eager"[^>]*decoding="async"/);
   assert.match(html, /src="\/product\/vibe-coding-cover-light\.png"[^>]*width="1280"[^>]*height="720"[^>]*loading="lazy"[^>]*decoding="async"/);
   assert.match(html, /src="\/product\/vibe-coding-poster-light\.png"[^>]*width="1920"[^>]*height="1080"[^>]*loading="lazy"[^>]*decoding="async"/);
