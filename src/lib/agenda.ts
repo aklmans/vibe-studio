@@ -69,6 +69,27 @@ function remapActiveProgressSegments(
   return { ...state.bottomBar.segments, [profile]: remapped };
 }
 
+/**
+ * Clamp ONE profile's bottom-bar progress segments into a section count
+ * (min(index, count-1) — the same semantics removeSection's remap uses).
+ * Every wholesale agenda replacement (copy across scenes, prepare-next-session)
+ * must run this on the profiles whose agendas it replaced, so a pinned
+ * progress segment can never dangle past the new last section.
+ */
+export function clampProfileProgressSegments(
+  segments: OverlayState["bottomBar"]["segments"],
+  profile: BarProfileId,
+  sectionCount: number,
+): OverlayState["bottomBar"]["segments"] {
+  const max = Math.max(0, sectionCount - 1);
+  const clamped: BottomBarSlot[] = segments[profile].map((slot) =>
+    slot.kind === "progress" && slot.sectionIndex > max
+      ? { ...slot, sectionIndex: max }
+      : slot,
+  );
+  return { ...segments, [profile]: clamped };
+}
+
 /** Append a new agenda section (title only; bullets grow on demand). */
 /**
  * Copy one scene profile's agenda (sections, bullets, planned minutes) onto
@@ -102,6 +123,16 @@ export function copyAgendaToProfile(
           completed: sections.map(() => false),
         },
       },
+    },
+    bottomBar: {
+      ...state.bottomBar,
+      // The target's bar keeps its structure, but a progress segment pinned
+      // past the copied agenda's last section would dangle — clamp it.
+      segments: clampProfileProgressSegments(
+        state.bottomBar.segments,
+        to,
+        sections.length,
+      ),
     },
   };
 }

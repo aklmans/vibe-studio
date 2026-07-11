@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { DEFAULT_STATE, type OverlayState } from "../types";
 import {
+  clampProfileProgressSegments,
   copyAgendaToProfile,
   MAX_AGENDA_SECTIONS,
   MAX_SECTION_BULLETS,
@@ -294,4 +295,49 @@ test("copyAgendaToProfile replaces the target agenda and resets its progress (re
   // Source untouched; same-profile copy is a no-op.
   equal(next.sidebar.agendas.workbench.sections[0].title, "One");
   equal(copyAgendaToProfile(state, "mobile", "mobile"), state);
+});
+
+test("copyAgendaToProfile clamps the target's pinned progress segments (F-2)", () => {
+  const state = structuredClone(DEFAULT_STATE);
+  // Source: 2 sections. Target (lecture) bar pins progress on section 7 and
+  // carries a non-progress segment that must stay untouched.
+  state.sidebar.agendas.workbench.sections = [
+    { title: "One", bullets: [] },
+    { title: "Two", bullets: [] },
+  ];
+  state.bottomBar.segments.lecture = [
+    { kind: "live" },
+    { kind: "progress", sectionIndex: 6 },
+    { kind: "social" },
+  ];
+  state.bottomBar.segments.mobile = [{ kind: "progress", sectionIndex: 6 }];
+
+  const next = copyAgendaToProfile(state, "workbench", "lecture");
+
+  deepEqual(next.bottomBar.segments.lecture, [
+    { kind: "live" },
+    { kind: "progress", sectionIndex: 1 }, // clamped to new count - 1
+    { kind: "social" },
+  ]);
+  // Other profiles' bars are untouched.
+  deepEqual(next.bottomBar.segments.mobile, [{ kind: "progress", sectionIndex: 6 }]);
+});
+
+test("clampProfileProgressSegments only touches dangling progress slots", () => {
+  const segments = {
+    workbench: [
+      { kind: "progress" as const, sectionIndex: 1 },
+      { kind: "progress" as const, sectionIndex: 5 },
+      { kind: "stack" as const },
+    ],
+    lecture: [{ kind: "progress" as const, sectionIndex: 9 }],
+    mobile: [],
+  };
+  const next = clampProfileProgressSegments(segments, "workbench", 3);
+  deepEqual(next.workbench, [
+    { kind: "progress", sectionIndex: 1 }, // in range: untouched
+    { kind: "progress", sectionIndex: 2 }, // clamped
+    { kind: "stack" },
+  ]);
+  equal(next.lecture, segments.lecture); // other profile untouched (same ref)
 });
