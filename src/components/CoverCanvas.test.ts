@@ -61,17 +61,24 @@ const coverWithVisual = (visual: "avatar" | "scene" | "title", patch = {}) =>
     }),
   );
 
-test("CoverCanvas defaults to the avatar type and renders avatar.png", () => {
-  // DEFAULT_STATE.cover.visual === "avatar".
+test("CoverCanvas defaults to pure editorial typography (title visual)", () => {
+  // DEFAULT_STATE.cover.visual === "title" — a fresh studio has no portrait.
   const html = renderToStaticMarkup(
     React.createElement(CoverCanvas, { state: DEFAULT_STATE }),
   );
+
+  assert.doesNotMatch(html, /data-testid="cover-portrait-image"/);
+  assert.doesNotMatch(html, /data-testid="cover-scene-image"/);
+  assert.doesNotMatch(html, /vibe-studio-bg\.png/);
+});
+
+test("CoverCanvas (avatar type) renders the portrait image", () => {
+  const html = coverWithVisual("avatar", { portraitUrl: "/avatar.png" });
 
   assert.match(html, /data-testid="cover-portrait-image"/);
   assert.match(html, /src="\/avatar\.png"/);
   assert.match(html, /object-fit:cover/);
   assert.doesNotMatch(html, /data-testid="cover-scene-image"/);
-  assert.doesNotMatch(html, /vibe-studio-bg\.png/);
 });
 
 test("CoverCanvas (scene type) renders the studio subject as a background layer", () => {

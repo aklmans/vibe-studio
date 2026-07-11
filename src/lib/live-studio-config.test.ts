@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { DEFAULT_STATE } from "../types";
+import { DEFAULT_STATE, DEMO_STATE_BY_LOCALE } from "../types";
 import {
   configToOverlayState,
   formatLiveStudioConfigJson,
@@ -233,16 +233,24 @@ test("configToOverlayState respects an explicit empty badges array", () => {
 });
 
 test("overlayStateToConfig exports a reusable config", () => {
-  const config = overlayStateToConfig(DEFAULT_STATE);
+  const demo = DEMO_STATE_BY_LOCALE.zh;
+  const config = overlayStateToConfig(demo);
   const json = formatLiveStudioConfigJson(config);
   const parsed = parseLiveStudioConfigJson(json);
   assert.equal(parsed?.version, 1);
-  assert.equal(parsed?.title, DEFAULT_STATE.cover.title);
+  assert.equal(parsed?.title, demo.cover.title);
   assert.deepEqual(parsed?.profile, {
-    avatarUrl: DEFAULT_STATE.cover.avatarUrl,
-    avatarVisible: DEFAULT_STATE.cover.avatarVisible,
+    avatarUrl: demo.cover.avatarUrl,
+    avatarVisible: demo.cover.avatarVisible,
   });
-  assert.equal(parsed?.sections.length, DEFAULT_STATE.sidebar.agendas.workbench.sections.length);
+  assert.equal(parsed?.sections.length, demo.sidebar.agendas.workbench.sections.length);
+
+  // The neutral studio default has no avatar; the exporter simply omits the
+  // empty url instead of writing "".
+  const neutral = parseLiveStudioConfigJson(
+    formatLiveStudioConfigJson(overlayStateToConfig(DEFAULT_STATE)),
+  );
+  assert.deepEqual(neutral?.profile, { avatarVisible: false });
 });
 
 test("example live studio config is parseable and valid", () => {

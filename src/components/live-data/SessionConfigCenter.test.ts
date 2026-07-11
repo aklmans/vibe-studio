@@ -5,7 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LocaleProvider } from "../../hooks/useLocale";
-import { DEFAULT_STATE } from "../../types";
+import { DEMO_STATE_BY_LOCALE, DEFAULT_STATE } from "../../types";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
 import { focusTargetTestId, needsFocusRetry } from "./drawer-focus";
 import { resolveCopyResult, shortConfigHash, turnMessageKey } from "./agent-copy";
@@ -32,7 +32,7 @@ function renderCenter(persistence: Partial<Persistence> = {}) {
       initialLocale: "en",
       persist: false,
       children: React.createElement(LiveDataManager, {
-        state: DEFAULT_STATE,
+        state: DEMO_STATE_BY_LOCALE.zh,
         onChange: () => {},
         dateKey: "2026-06-25",
         persistence: { ...BASE_PERSISTENCE, ...persistence },
@@ -634,7 +634,7 @@ test("the agent handoff includes the current config and changes with the task", 
   assert.notEqual(sections, check);
   assert.match(sections, /update only the sections/);
   for (const p of [sections, check]) {
-    assert.match(p, /"title": "Building With Agents"/);
+    assert.match(p, /"title": "我的直播间"/);
     assert.match(p, /version: 1/);
     assert.match(p, /Allowed badge keys:/);
     assert.match(p, /claude-code/);

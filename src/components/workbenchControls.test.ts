@@ -9,7 +9,7 @@ import { cssAlpha, UI_COLORS } from "../lib/design-tokens";
 import { dict } from "../lib/i18n";
 import { parseLiveStudioConfigJson } from "../lib/live-studio-config";
 import { LocaleProvider } from "../hooks/useLocale";
-import { DEFAULT_STATE } from "../types";
+import { DEMO_STATE_BY_LOCALE, DEFAULT_STATE } from "../types";
 import CommandPalette from "./CommandPalette";
 import TopBar from "./topbar/TopBar";
 import BadgesEditor from "./BadgesEditor";
@@ -598,7 +598,7 @@ test("badge editor is an add-list workflow instead of fixed visibility slots", (
       initialLocale: "en",
       persist: false,
       children: React.createElement(BadgesEditor, {
-        state: DEFAULT_STATE,
+        state: DEMO_STATE_BY_LOCALE.zh,
         onChange: () => {},
       }),
     }),
@@ -620,7 +620,7 @@ test("badge editor exposes reorder controls, presets, and an empty hint", () => 
       initialLocale: "en",
       persist: false,
       children: React.createElement(BadgesEditor, {
-        state: DEFAULT_STATE,
+        state: DEMO_STATE_BY_LOCALE.zh,
         onChange: () => {},
       }),
     }),
@@ -757,7 +757,7 @@ test("icon editors expose shared workflow presets", () => {
       initialLocale: "en",
       persist: false,
       children: React.createElement(BadgesEditor, {
-        state: DEFAULT_STATE,
+        state: DEMO_STATE_BY_LOCALE.zh,
         onChange: () => {},
       }),
     }),

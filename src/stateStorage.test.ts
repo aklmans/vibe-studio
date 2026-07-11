@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { DEFAULT_STATE, DEFAULT_STATE_BY_LOCALE } from "./types";
 import { DARK_PRESET, LIGHT_PRESET } from "./lib/theme";
 import {
+  hasStoredOverlayState,
   loadOverlayState,
   normalizeOverlayState,
   saveOverlayState,
@@ -114,8 +115,8 @@ test("normalizeOverlayState fills missing fields from the provided locale defaul
   );
 
   assert.equal(state.cover.title, "Custom Title");
-  assert.equal(state.cover.todayLabel, "TODAY'S BUILD");
-  assert.equal(state.cover.todayTopic, "Multi-Agent Coding Live");
+  assert.equal(state.cover.todayLabel, "TODAY'S TOPIC");
+  assert.equal(state.cover.todayTopic, "Today's stream plan");
   assert.equal(state.sidebar.agendas.workbench.sections[0].title, "Custom Section");
   // The provided one-section list stays one section (no padding from defaults).
   assert.equal(state.sidebar.agendas.workbench.sections.length, 1);
@@ -226,8 +227,8 @@ test("normalizeOverlayState migrates the old built-in cover avatar to the curren
 });
 
 test("normalizeOverlayState derives the cover visual type from legacy state", () => {
-  // New default → avatar cover.
-  assert.equal(normalizeOverlayState({}).cover.visual, "avatar");
+  // A fresh studio defaults to the pure typographic cover.
+  assert.equal(normalizeOverlayState({}).cover.visual, "title");
 
   // Legacy avatarVisible=false → pure title cover.
   assert.equal(
@@ -262,17 +263,24 @@ test("normalizeOverlayState derives the cover visual type from legacy state", ()
 test("normalizeOverlayState keeps cover portraits and scene subjects separate by default", () => {
   const def = normalizeOverlayState({});
 
-  assert.equal(def.cover.visual, "avatar");
-  assert.equal(def.cover.portraitUrl, "/avatar.png");
+  assert.equal(def.cover.visual, "title");
+  assert.equal(def.cover.portraitUrl, "");
   assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.equal(def.cover.avatarUrl, "/avatar.png");
+  assert.equal(def.cover.avatarUrl, "");
+
+  // A legacy avatar-visual state (predates portraitUrl) inherits its shared
+  // avatar as the portrait instead of collapsing to the neutral empty default.
+  const legacyAvatar = normalizeOverlayState({
+    cover: { visual: "avatar", avatarUrl: "/avatar.png", avatarVisible: true },
+  });
+  assert.equal(legacyAvatar.cover.portraitUrl, "/avatar.png");
 });
 
 test("normalizeOverlayState keeps cover images compatible and replaceable", () => {
   // Both built-in assets resolve to sensible defaults.
   const def = normalizeOverlayState({});
   assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.equal(def.cover.portraitUrl, "/avatar.png");
+  assert.equal(def.cover.portraitUrl, "");
 
   // An old custom subject keeps showing on the cover (sceneUrl inherits it).
   const custom = normalizeOverlayState({
@@ -437,4 +445,23 @@ test("normalizeOverlayState preserves object stack item labels and valid icon se
     { label: "Next.js", iconKey: "nextdotjs", iconMode: "brand" },
     { label: "Broken", iconKey: undefined, iconMode: "mono" },
   ]);
+});
+
+test("storage key parameter isolates drafts (demo vs studio)", () => {
+  const store = new Map<string, string>();
+  const storage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+  };
+
+  const demoState = { ...DEFAULT_STATE_BY_LOCALE.en };
+  saveOverlayState(demoState, storage, "vibe-overlay-state-demo");
+  assert.equal(store.has("vibe-overlay-state"), false);
+  assert.equal(store.has("vibe-overlay-state-demo"), true);
+
+  assert.equal(hasStoredOverlayState(storage), false);
+  assert.equal(hasStoredOverlayState(storage, "vibe-overlay-state-demo"), true);
+
+  const loaded = loadOverlayState(storage, DEFAULT_STATE_BY_LOCALE.en, "vibe-overlay-state-demo");
+  assert.equal(loaded.cover.title, DEFAULT_STATE_BY_LOCALE.en.cover.title);
 });

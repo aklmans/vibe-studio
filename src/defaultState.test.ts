@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_STATE_BY_LOCALE } from "./types";
+import { DEFAULT_STATE_BY_LOCALE, DEMO_STATE_BY_LOCALE } from "./types";
 
 test("zh defaults show the localized social links in display order", () => {
   assert.deepEqual(
@@ -17,7 +17,7 @@ test("zh defaults show the localized social links in display order", () => {
         iconKey: "bilibili",
         iconMode: "mono",
         label: "B站",
-        value: "Aklman",
+        value: "demo-live",
       },
       {
         visible: true,
@@ -100,18 +100,43 @@ test("en defaults show the localized social links in display order", () => {
   );
 });
 
-test("defaults keep Aklman as the demo host but avoid personal social handles", () => {
+test("studio defaults carry no personal identity", () => {
   const defaults = JSON.stringify(DEFAULT_STATE_BY_LOCALE);
 
-  assert.match(defaults, /Aklman/);
+  // The private studio's factory state belongs to nobody: no author name, no
+  // avatar, no personal handles. Identity arrives via first-run setup / the
+  // Brand layer.
+  assert.doesNotMatch(defaults, /Aklman/i);
+  assert.equal(DEFAULT_STATE_BY_LOCALE.zh.cover.hookText, "");
+  assert.equal(DEFAULT_STATE_BY_LOCALE.en.cover.hookText, "");
+  assert.equal(DEFAULT_STATE_BY_LOCALE.zh.cover.avatarUrl, "");
+  assert.equal(DEFAULT_STATE_BY_LOCALE.en.cover.visual, "title");
   for (const privateValue of [
     ["aklman", ".com"].join(""),
     ["aklman", "1"].join(""),
     ["aklman", "s"].join(""),
     ["@", "aklman", "2018"].join(""),
-    ["@", "Aklman", "2018"].join(""),
     ["205", "359", "827"].join(""),
   ]) {
     assert.doesNotMatch(defaults, new RegExp(privateValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  }
+});
+
+test("demo seed stays rich but avoids personal identity and handles", () => {
+  const demo = JSON.stringify(DEMO_STATE_BY_LOCALE);
+
+  // /demo is the showcase: a fully-dressed example stream with a fictional
+  // host — rich content, but still nobody's real accounts.
+  assert.equal(DEMO_STATE_BY_LOCALE.en.cover.title, "Building With Agents");
+  assert.equal(DEMO_STATE_BY_LOCALE.en.cover.visual, "avatar");
+  assert.equal(DEMO_STATE_BY_LOCALE.en.cover.avatarUrl, "/avatar.png");
+  assert.ok(DEMO_STATE_BY_LOCALE.zh.cover.badges.some((badge) => badge.visible));
+  assert.doesNotMatch(demo, /Aklman/i);
+  for (const privateValue of [
+    ["aklman", ".com"].join(""),
+    ["@", "aklman", "2018"].join(""),
+    ["205", "359", "827"].join(""),
+  ]) {
+    assert.doesNotMatch(demo, new RegExp(privateValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }
 });

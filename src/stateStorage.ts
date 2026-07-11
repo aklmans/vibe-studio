@@ -593,9 +593,12 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         cover?.sceneUrl,
         normalizeCoverAvatarUrl(cover?.avatarUrl, defaultValue.cover.sceneUrl),
       ),
+      // Cover portrait: a legacy avatar-visual state predates portraitUrl, so
+      // inherit its shared avatar (mapping /avatar.jpg forward) rather than
+      // falling back to the neutral default's empty portrait.
       portraitUrl: stringOrDefault(
         cover?.portraitUrl,
-        defaultValue.cover.portraitUrl,
+        normalizeCoverAvatarUrl(cover?.avatarUrl, defaultValue.cover.portraitUrl),
       ),
       todayLabel: stringOrDefault(
         cover?.todayLabel,
@@ -708,11 +711,12 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
 export function loadOverlayState(
   storage: StorageLike | null = browserStorage(),
   defaultValue: OverlayState = DEFAULT_STATE,
+  key: string = OVERLAY_STATE_STORAGE_KEY,
 ): OverlayState {
   if (!storage) return normalizeOverlayState(defaultValue);
 
   try {
-    const raw = storage.getItem(OVERLAY_STATE_STORAGE_KEY);
+    const raw = storage.getItem(key);
     return raw
       ? normalizeOverlayState(JSON.parse(raw), defaultValue)
       : normalizeOverlayState(defaultValue);
@@ -724,15 +728,33 @@ export function loadOverlayState(
 export function saveOverlayState(
   state: OverlayState,
   storage: StorageLike | null = browserStorage(),
+  key: string = OVERLAY_STATE_STORAGE_KEY,
 ): void {
   if (!storage) return;
 
   try {
     storage.setItem(
-      OVERLAY_STATE_STORAGE_KEY,
+      key,
       JSON.stringify(normalizeOverlayState(state, state)),
     );
   } catch {
     // Ignore quota/private-mode failures; the editor can continue in memory.
+  }
+}
+
+/**
+ * True first run = the studio has never persisted a draft. Used (together with
+ * the absence of a studio profile) to decide whether the first-run setup
+ * should greet the host.
+ */
+export function hasStoredOverlayState(
+  storage: StorageLike | null = browserStorage(),
+  key: string = OVERLAY_STATE_STORAGE_KEY,
+): boolean {
+  if (!storage) return false;
+  try {
+    return storage.getItem(key) !== null;
+  } catch {
+    return false;
   }
 }

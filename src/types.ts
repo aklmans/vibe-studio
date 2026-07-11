@@ -201,9 +201,9 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
   },
   stack: {
     items: [
-      { label: "Claude Opus 4.7", iconKey: "claude", iconMode: "mono" },
-      { label: "Cursor", iconKey: "cursor", iconMode: "mono" },
-      { label: "React + Vite", iconKey: "react", iconMode: "mono" },
+      { label: "OBS Studio", iconKey: "obs", iconMode: "mono" },
+      { label: "Notion", iconKey: "notion", iconMode: "mono" },
+      { label: "React", iconKey: "react", iconMode: "mono" },
     ],
   },
   mainScreen: {
@@ -213,29 +213,29 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
   brand: {
     logoUrl: "",
     seriesName: "Vibe 直播讲堂",
-    presenterLines: ["独立开发者", "Vibe Studio 作者"],
+    presenterLines: [],
   },
   cover: {
-    title: "Building With Agents",
+    title: "我的直播间",
     badges: [
-      { visible: true, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
-      { visible: true, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
+      { visible: false, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
+      { visible: false, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
       { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
       { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
     ],
-    avatarUrl: "/avatar.png",
-    avatarVisible: true,
-    visual: "avatar",
+    avatarUrl: "",
+    avatarVisible: false,
+    visual: "title",
     sceneUrl: "/vibe-studio-bg.png",
-    portraitUrl: "/avatar.png",
-    todayLabel: "今日构建",
-    todayTopic: "多 Agent Coding 实战",
+    portraitUrl: "",
+    todayLabel: "今日主题",
+    todayTopic: "今天的直播计划",
     manifestoVisible: false,
     manifestoLine1: "想清楚。",
     manifestoLine2: "和智能体一起搭。",
     manifestoLine3: "持续成长。",
     hookVisible: true,
-    hookText: "with Aklman",
+    hookText: "",
     closingVisible: false,
     closingPrefix: "享受",
     closingStruck: "编程",
@@ -243,7 +243,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     closingSuffix: "拥有美好人生。",
     socialVisible: true,
     socials: [
-      { visible: true, iconKey: "bilibili", iconMode: "mono", label: "B站", value: "Aklman", customColor: "" },
+      { visible: true, iconKey: "bilibili", iconMode: "mono", label: "B站", value: "demo-live", customColor: "" },
       { visible: true, iconKey: "website", iconMode: "mono", label: "个人网站", value: "example.com", customColor: "" },
       { visible: true, iconKey: "qq", iconMode: "mono", label: "QQ群", value: "123456789", customColor: "" },
       { visible: true, iconKey: "wechat", iconMode: "mono", label: "微信", value: "demo-live", customColor: "" },
@@ -338,9 +338,9 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     },
     stack: {
       items: [
-      { label: "Claude Opus 4.7", iconKey: "claude", iconMode: "mono" },
-      { label: "Cursor", iconKey: "cursor", iconMode: "mono" },
-      { label: "React + Vite", iconKey: "react", iconMode: "mono" },
+      { label: "OBS Studio", iconKey: "obs", iconMode: "mono" },
+      { label: "Notion", iconKey: "notion", iconMode: "mono" },
+      { label: "React", iconKey: "react", iconMode: "mono" },
     ],
     },
     mainScreen: {
@@ -350,29 +350,29 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     brand: {
       logoUrl: "",
       seriesName: "Vibe Live Sessions",
-      presenterLines: ["Indie developer", "Author of Vibe Studio"],
+      presenterLines: [],
     },
     cover: {
-      title: "Building With Agents",
+      title: "My Live Studio",
       badges: [
-        { visible: true, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
-        { visible: true, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
+        { visible: false, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
+        { visible: false, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
         { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
         { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
       ],
-      avatarUrl: "/avatar.png",
-      avatarVisible: true,
-      visual: "avatar",
+      avatarUrl: "",
+      avatarVisible: false,
+      visual: "title",
       sceneUrl: "/vibe-studio-bg.png",
-      portraitUrl: "/avatar.png",
-      todayLabel: "TODAY'S BUILD",
-      todayTopic: "Multi-Agent Coding Live",
+      portraitUrl: "",
+      todayLabel: "TODAY'S TOPIC",
+      todayTopic: "Today's stream plan",
       manifestoVisible: false,
       manifestoLine1: "Think clearly.",
       manifestoLine2: "Build with agents.",
       manifestoLine3: "Keep growing.",
       hookVisible: true,
-      hookText: "with Aklman",
+      hookText: "",
       closingVisible: false,
       closingPrefix: "Enjoy",
       closingStruck: "programming",
@@ -407,3 +407,82 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
 };
 
 export const DEFAULT_STATE = DEFAULT_STATE_BY_LOCALE.zh;
+
+/**
+ * The public demo's seed content. `/studio` starts from the neutral
+ * DEFAULT_STATE (a blank first run belongs to the host), while `/demo` is a
+ * showcase — it opens on this rich, fully-dressed example stream so a visitor
+ * immediately sees what a finished live room looks like. Never applied to the
+ * private studio.
+ */
+export const DEMO_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
+  zh: {
+    ...DEFAULT_STATE_BY_LOCALE.zh,
+    stack: {
+      items: [
+        { label: "Claude Opus 4.7", iconKey: "claude", iconMode: "mono" },
+        { label: "Cursor", iconKey: "cursor", iconMode: "mono" },
+        { label: "React + Vite", iconKey: "react", iconMode: "mono" },
+      ],
+    },
+    brand: {
+      ...DEFAULT_STATE_BY_LOCALE.zh.brand,
+      presenterLines: ["独立开发者", "Vibe Studio 作者"],
+    },
+    cover: {
+      ...DEFAULT_STATE_BY_LOCALE.zh.cover,
+      title: "Building With Agents",
+      badges: [
+        { visible: true, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
+        { visible: true, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
+        { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
+        { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
+      ],
+      avatarUrl: "/avatar.png",
+      avatarVisible: true,
+      visual: "avatar",
+      portraitUrl: "/avatar.png",
+      todayLabel: "今日构建",
+      todayTopic: "多 Agent Coding 实战",
+      hookText: "with 阿星",
+      socials: [
+        { visible: true, iconKey: "bilibili", iconMode: "mono", label: "B站", value: "demo-live", customColor: "" },
+        { visible: true, iconKey: "website", iconMode: "mono", label: "个人网站", value: "example.com", customColor: "" },
+        { visible: true, iconKey: "qq", iconMode: "mono", label: "QQ群", value: "123456789", customColor: "" },
+        { visible: true, iconKey: "wechat", iconMode: "mono", label: "微信", value: "demo-live", customColor: "" },
+        { visible: true, iconKey: "github", iconMode: "mono", label: "GitHub", value: "demo-org/vibe-live", customColor: "" },
+      ],
+    },
+  },
+  en: {
+    ...DEFAULT_STATE_BY_LOCALE.en,
+    stack: {
+      items: [
+        { label: "Claude Opus 4.7", iconKey: "claude", iconMode: "mono" },
+        { label: "Cursor", iconKey: "cursor", iconMode: "mono" },
+        { label: "React + Vite", iconKey: "react", iconMode: "mono" },
+      ],
+    },
+    brand: {
+      ...DEFAULT_STATE_BY_LOCALE.en.brand,
+      presenterLines: ["Indie developer", "Live studio host"],
+    },
+    cover: {
+      ...DEFAULT_STATE_BY_LOCALE.en.cover,
+      title: "Building With Agents",
+      badges: [
+        { visible: true, iconKey: "claude", iconMode: "brand", label: "Claude", customIconUrl: "" },
+        { visible: true, iconKey: "codex", iconMode: "brand", label: "Codex", customIconUrl: "" },
+        { visible: false, iconKey: "gemini", iconMode: "brand", label: "Gemini", customIconUrl: "" },
+        { visible: false, iconKey: "grok", iconMode: "brand", label: "Grok", customIconUrl: "" },
+      ],
+      avatarUrl: "/avatar.png",
+      avatarVisible: true,
+      visual: "avatar",
+      portraitUrl: "/avatar.png",
+      todayLabel: "TODAY'S BUILD",
+      todayTopic: "Multi-Agent Coding Live",
+      hookText: "with Astra",
+    },
+  },
+};

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
-import { DEFAULT_STATE_BY_LOCALE, type OverlayState } from "../types";
+import { DEFAULT_STATE_BY_LOCALE, DEMO_STATE_BY_LOCALE, type OverlayState } from "../types";
+import FirstRunWizard from "./FirstRunWizard";
+import {
+  DEMO_OVERLAY_STATE_STORAGE_KEY,
+  OVERLAY_STATE_STORAGE_KEY,
+} from "../lib/storage-keys";
 import OverlayCanvas from "./OverlayCanvas";
 import CoverCanvas from "./CoverCanvas";
 import PosterCanvas from "./PosterCanvas";
@@ -20,7 +25,7 @@ import {
   exportPoster,
   exportWallpaper,
 } from "../utils/exportImage";
-import { loadOverlayState, saveOverlayState } from "../stateStorage";
+import { hasStoredOverlayState, loadOverlayState, saveOverlayState } from "../stateStorage";
 import {
   UI_BORDERS,
   UI_COLORS,
@@ -171,9 +176,23 @@ interface OverlayBuilderAppProps {
 
 export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   const { t, locale } = useLocale();
+  // The demo keeps its own storage draft and rich seed content; the private
+  // studio starts neutral and layers the saved Brand profile on top.
+  const stateStorageKey = demoMode
+    ? DEMO_OVERLAY_STATE_STORAGE_KEY
+    : OVERLAY_STATE_STORAGE_KEY;
   const [studioProfile, setStudioProfile] = useState<StudioProfile | null>(() => loadStudioProfile());
   const [state, setStateRaw] = useState<OverlayState>(() =>
-    loadOverlayState(undefined, applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[loadLocale()], loadStudioProfile())),
+    demoMode
+      ? loadOverlayState(undefined, DEMO_STATE_BY_LOCALE[loadLocale()], DEMO_OVERLAY_STATE_STORAGE_KEY)
+      : loadOverlayState(undefined, applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[loadLocale()], loadStudioProfile())),
+  );
+  // First-run setup: only the private studio, only when nothing has ever been
+  // persisted (no draft, no brand profile). Computed once in the initializer —
+  // the app is client-only (`ssr: false`), and the persist effect below writes
+  // the draft right after mount, so this must be decided before effects run.
+  const [firstRunOpen, setFirstRunOpen] = useState(
+    () => !demoMode && !hasStoredOverlayState() && !loadStudioProfile(),
   );
   const [liveDateKey] = useState(() => formatDateKey(new Date()));
   const [previewMetrics, setPreviewMetrics] = useState<PreviewMetrics | null>(
@@ -289,8 +308,8 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   }, [state.theme]);
 
   useEffect(() => {
-    saveOverlayState(state);
-  }, [state]);
+    saveOverlayState(state, undefined, stateStorageKey);
+  }, [state, stateStorageKey]);
 
   // Push the current state to the live-state store (OBS sources mirror it) and
   // surface the real push status in the source-of-truth bar. Debounced so rapid
@@ -548,8 +567,34 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   }, []);
 
   const handleReset = useCallback(() => {
-    setState(applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[locale], studioProfile));
-  }, [setState, locale, studioProfile]);
+    // Demo resets to its rich seed; the studio resets to neutral defaults with
+    // the saved Brand layer re-applied.
+    setState(
+      demoMode
+        ? DEMO_STATE_BY_LOCALE[locale]
+        : applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[locale], studioProfile),
+    );
+  }, [setState, demoMode, locale, studioProfile]);
+
+  const handleFirstRunComplete = useCallback(
+    (profile: StudioProfile) => {
+      handleSaveStudioProfile(profile);
+      if (profile.avatarUrl) {
+        // The wizard's upload becomes the cover subject too, so the very first
+        // canvas the host sees carries their face, not an empty slot.
+        setStateRaw((current) => ({
+          ...current,
+          cover: {
+            ...current.cover,
+            visual: "avatar",
+            portraitUrl: profile.avatarUrl,
+          },
+        }));
+      }
+      setFirstRunOpen(false);
+    },
+    [handleSaveStudioProfile],
+  );
 
   const handleExportCurrent = useCallback(() => {
     exportForTab(state.activeTab, {
@@ -829,6 +874,13 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
           />
         )}
       </div>
+
+      {firstRunOpen && (
+        <FirstRunWizard
+          onComplete={handleFirstRunComplete}
+          onSkip={() => setFirstRunOpen(false)}
+        />
+      )}
 
       <CommandPalette
         open={cmdkOpen}
