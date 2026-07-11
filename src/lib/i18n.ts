@@ -328,6 +328,7 @@ export const dict = {
     "export.doneAll": "已导出 8 个文件",
     "export.moreOptions": "更多导出选项",
     "export.failed": "导出失败",
+    "export.timeout": "导出超时(20 秒),已重置 — 可直接重试。",
     "export.notReady": "导出节点未就绪",
 
     // ─── App ─────────────────────────────────────────────────────────
@@ -1060,6 +1061,7 @@ export const dict = {
     "export.doneAll": "Exported 8 files",
     "export.moreOptions": "More export options",
     "export.failed": "Export failed",
+    "export.timeout": "Export timed out (20s) and was reset — try again.",
     "export.notReady": "Export node not ready",
 
     // ─── App ─────────────────────────────────────────────────────────

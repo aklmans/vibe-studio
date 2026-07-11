@@ -41,6 +41,7 @@ import { getLayout } from "../lib/overlay-layout";
 import { produceState } from "../lib/state";
 import { exportForTab } from "../lib/export-targets";
 import { exportFileName } from "../lib/export-filename";
+import { ExportTimeoutError, withExportTimeout } from "../lib/export-timeout";
 import { publishLiveState } from "../lib/live-state-client";
 import { IDLE_OBS_SYNC, type ObsSyncState } from "./live-data/obs-sync";
 import {
@@ -467,10 +468,18 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
       setExportError(null);
       setExportNotice(null);
       try {
-        await fn();
+        // Watchdog: a hung capture (e.g. an embed fetch that never settles)
+        // must never leave the button in a permanent Exporting… state.
+        await withExportTimeout(fn());
         if (doneMessage) setExportNotice(doneMessage);
       } catch (err) {
-        setExportError(err instanceof Error ? err.message : t("export.failed"));
+        setExportError(
+          err instanceof ExportTimeoutError
+            ? t("export.timeout")
+            : err instanceof Error
+              ? err.message
+              : t("export.failed"),
+        );
       } finally {
         setExporting(null);
       }
