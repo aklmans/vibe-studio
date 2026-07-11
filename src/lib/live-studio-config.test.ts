@@ -245,12 +245,11 @@ test("overlayStateToConfig exports a reusable config", () => {
   });
   assert.equal(parsed?.sections.length, demo.sidebar.agendas.workbench.sections.length);
 
-  // The neutral studio default has no avatar; the exporter simply omits the
-  // empty url instead of writing "".
+  // The neutral studio default ships the built-in portrait.
   const neutral = parseLiveStudioConfigJson(
     formatLiveStudioConfigJson(overlayStateToConfig(DEFAULT_STATE)),
   );
-  assert.deepEqual(neutral?.profile, { avatarVisible: false });
+  assert.deepEqual(neutral?.profile, { avatarUrl: "/avatar.png", avatarVisible: true });
 });
 
 test("example live studio config is parseable and valid", () => {

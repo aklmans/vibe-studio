@@ -109,7 +109,10 @@ test("studio defaults carry no personal identity", () => {
   assert.doesNotMatch(defaults, /Aklman/i);
   assert.equal(DEFAULT_STATE_BY_LOCALE.zh.cover.hookText, "");
   assert.equal(DEFAULT_STATE_BY_LOCALE.en.cover.hookText, "");
-  assert.equal(DEFAULT_STATE_BY_LOCALE.zh.cover.avatarUrl, "");
+  // The built-in illustration is the PRODUCT default portrait (author's call):
+  // the camera avatar theme never degrades to a monogram placeholder.
+  assert.equal(DEFAULT_STATE_BY_LOCALE.zh.cover.avatarUrl, "/avatar.png");
+  assert.equal(DEFAULT_STATE_BY_LOCALE.en.cover.avatarUrl, "/avatar.png");
   assert.equal(DEFAULT_STATE_BY_LOCALE.en.cover.visual, "title");
   for (const privateValue of [
     ["aklman", ".com"].join(""),

@@ -1,7 +1,6 @@
 import { forwardRef, useId } from "react";
 import { OverlayState } from "../types";
 import { activeAgenda } from "../lib/agenda";
-import { avatarPlaceholder } from "../lib/avatar";
 import { fontFamilies, clampLines } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
 import SidebarSections from "./SidebarSections";
@@ -23,7 +22,9 @@ interface OverlayCanvasProps {
   layout?: OverlayLayout;
 }
 
-const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(255,255,255,0.9)", "VC", 68);
+// An empty avatar url falls back to the built-in default portrait —
+// the product ships with a face, never a monogram placeholder.
+const AVATAR_PLACEHOLDER = "/avatar.png";
 
 function pickIncompleteBullet(
   bullets: string[],

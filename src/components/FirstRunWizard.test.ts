@@ -53,6 +53,8 @@ test("wizard builds a v3 brand profile and never touches session content", () =>
   // Completion produces a StudioProfile (brand layer) — no cover/stack/agenda writes.
   assert.match(WIZARD_SRC, /version: 3/);
   assert.match(WIZARD_SRC, /author: trimmedName/);
+  // Skipping the avatar keeps the built-in default portrait, never an empty slot.
+  assert.match(WIZARD_SRC, /avatarUrl: avatarUrl \|\| "\/avatar\.png"/);
   assert.doesNotMatch(WIZARD_SRC, /sidebar|stack|agendas/);
 });
 

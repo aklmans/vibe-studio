@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import type { OverlayState } from "../types";
-import { avatarPlaceholder } from "../lib/avatar";
 import { patchSection } from "../lib/state";
 import { fontFamilies, wrapProse } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
@@ -23,7 +22,9 @@ interface WallpaperCanvasProps {
   onChange?: (next: OverlayState) => void;
 }
 
-const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(245,245,242,0.5)", "VC", 56);
+// An empty avatar url falls back to the built-in default portrait —
+// the product ships with a face, never a monogram placeholder.
+const AVATAR_PLACEHOLDER = "/avatar.png";
 
 const WallpaperCanvas = forwardRef<HTMLDivElement, WallpaperCanvasProps>(
   ({ state, preset, editable = false, onChange }, ref) => {

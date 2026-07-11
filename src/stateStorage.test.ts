@@ -227,8 +227,10 @@ test("normalizeOverlayState migrates the old built-in cover avatar to the curren
 });
 
 test("normalizeOverlayState derives the cover visual type from legacy state", () => {
-  // A fresh studio defaults to the pure typographic cover.
-  assert.equal(normalizeOverlayState({}).cover.visual, "title");
+  // A legacy stored state without an explicit visual derives the avatar cover
+  // (every legacy user had one); a FRESH state keeps the default title visual.
+  assert.equal(normalizeOverlayState({}).cover.visual, "avatar");
+  assert.equal(normalizeOverlayState(DEFAULT_STATE).cover.visual, "title");
 
   // Legacy avatarVisible=false → pure title cover.
   assert.equal(
@@ -263,10 +265,10 @@ test("normalizeOverlayState derives the cover visual type from legacy state", ()
 test("normalizeOverlayState keeps cover portraits and scene subjects separate by default", () => {
   const def = normalizeOverlayState({});
 
-  assert.equal(def.cover.visual, "title");
-  assert.equal(def.cover.portraitUrl, "");
+  assert.equal(def.cover.visual, "avatar");
+  assert.equal(def.cover.portraitUrl, "/avatar.png");
   assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.equal(def.cover.avatarUrl, "");
+  assert.equal(def.cover.avatarUrl, "/avatar.png");
 
   // A legacy avatar-visual state (predates portraitUrl) inherits its shared
   // avatar as the portrait instead of collapsing to the neutral empty default.
@@ -280,7 +282,7 @@ test("normalizeOverlayState keeps cover images compatible and replaceable", () =
   // Both built-in assets resolve to sensible defaults.
   const def = normalizeOverlayState({});
   assert.equal(def.cover.sceneUrl, "/vibe-studio-bg.png");
-  assert.equal(def.cover.portraitUrl, "");
+  assert.equal(def.cover.portraitUrl, "/avatar.png");
 
   // An old custom subject keeps showing on the cover (sceneUrl inherits it).
   const custom = normalizeOverlayState({

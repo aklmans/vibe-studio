@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import { OverlayState } from "../types";
-import { avatarPlaceholder } from "../lib/avatar";
 import { patchSection } from "../lib/state";
 import { fontFamilies, typography, wrapProse } from "../lib/typography";
 import { useLocale } from "../hooks/useLocale";
@@ -17,7 +16,9 @@ interface PosterCanvasProps {
   onChange?: (next: OverlayState) => void;
 }
 
-const AVATAR_PLACEHOLDER = avatarPlaceholder("rgba(245,245,242,0.5)", "VC", 56);
+// An empty avatar url falls back to the built-in default portrait —
+// the product ships with a face, never a monogram placeholder.
+const AVATAR_PLACEHOLDER = "/avatar.png";
 
 const PosterCanvas = forwardRef<HTMLDivElement, PosterCanvasProps>(
   ({ state, editable = false, onChange }, ref) => {

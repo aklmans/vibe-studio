@@ -74,8 +74,10 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
     onComplete({
       version: 3,
       author: trimmedName,
-      avatarUrl,
-      avatarVisible: Boolean(avatarUrl),
+      // No upload -> keep the built-in default portrait instead of an empty
+      // slot, so the camera's avatar theme never degrades to a placeholder.
+      avatarUrl: avatarUrl || "/avatar.png",
+      avatarVisible: true,
       socialVisible: socials.length > 0,
       socials,
     });
