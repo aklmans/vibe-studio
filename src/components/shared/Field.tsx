@@ -95,6 +95,8 @@ interface TextInputProps {
   mono?: boolean;
   style?: CSSProperties;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  /** Accessible name — set when no associated <label> names the field. */
+  ariaLabel?: string;
 }
 
 export function TextInput({
@@ -106,10 +108,12 @@ export function TextInput({
   mono = false,
   style,
   onKeyDown,
+  ariaLabel,
 }: TextInputProps) {
   return (
     <input
       data-testid={testId}
+      aria-label={ariaLabel}
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -148,6 +152,7 @@ export function SectionInput({
         onChange={onChange}
         testId={testId}
         placeholder={placeholder}
+        ariaLabel={label}
       />
     </div>
   );
@@ -258,6 +263,7 @@ export function ToggleButton({
         onClick={() => onChange(!checked)}
         role="switch"
         aria-checked={checked}
+        aria-label={label || undefined}
         style={{
           width: 38,
           height: 20,

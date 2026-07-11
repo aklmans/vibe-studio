@@ -165,6 +165,7 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
                 value={name}
                 onChange={setName}
                 placeholder={t("wizard.namePlaceholder")}
+                ariaLabel={t("wizard.nameLabel")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && name.trim()) setStep(1);
                 }}
@@ -238,6 +239,7 @@ export default function FirstRunWizard({ onComplete, onSkip }: FirstRunWizardPro
                 value={handle}
                 onChange={setHandle}
                 placeholder={t("wizard.handlePlaceholder")}
+                ariaLabel={t("wizard.socialLabel")}
                 mono
               />
               <p style={{ ...workbenchNoteStyle, margin: 0 }}>{t("wizard.socialHint")}</p>

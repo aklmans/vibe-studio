@@ -34,6 +34,7 @@ export default function InspectorGroup({
     >
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
         style={{
           width: "100%",
           background: "transparent",
