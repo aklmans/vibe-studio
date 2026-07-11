@@ -465,3 +465,20 @@ test("storage key parameter isolates drafts (demo vs studio)", () => {
   const loaded = loadOverlayState(storage, DEFAULT_STATE_BY_LOCALE.en, "vibe-overlay-state-demo");
   assert.equal(loaded.cover.title, DEFAULT_STATE_BY_LOCALE.en.cover.title);
 });
+
+test("normalizeOverlayState keeps per-section speakers and drops blanks", () => {
+  const state = normalizeOverlayState({
+    sidebar: {
+      agendas: {
+        lecture: {
+          sections: [
+            { title: "专题分享", bullets: [], speaker: "林教授" },
+            { title: "答疑", bullets: [], speaker: "   " },
+          ],
+        },
+      },
+    },
+  });
+  assert.equal(state.sidebar.agendas.lecture.sections[0].speaker, "林教授");
+  assert.equal("speaker" in state.sidebar.agendas.lecture.sections[1], false);
+});

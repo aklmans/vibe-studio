@@ -108,6 +108,7 @@ export function copyAgendaToProfile(
     title: section.title,
     bullets: [...section.bullets],
     ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+    ...(section.speaker !== undefined ? { speaker: section.speaker } : {}),
   }));
   return {
     ...state,

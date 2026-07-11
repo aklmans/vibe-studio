@@ -341,3 +341,14 @@ test("clampProfileProgressSegments only touches dangling progress slots", () => 
   ]);
   equal(next.lecture, segments.lecture); // other profile untouched (same ref)
 });
+
+test("copyAgendaToProfile carries per-section speakers", () => {
+  const state = structuredClone(DEFAULT_STATE);
+  state.sidebar.agendas.workbench.sections = [
+    { title: "One", bullets: [], speaker: "林教授" },
+    { title: "Two", bullets: [] },
+  ];
+  const next = copyAgendaToProfile(state, "workbench", "mobile");
+  equal(next.sidebar.agendas.mobile.sections[0].speaker, "林教授");
+  equal("speaker" in next.sidebar.agendas.mobile.sections[1], false);
+});

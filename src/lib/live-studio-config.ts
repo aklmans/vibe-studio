@@ -23,6 +23,8 @@ export interface LiveStudioConfigSection {
   bullets: string[];
   /** Planned duration in minutes — agenda timing for lecture-style streams. */
   minutes?: number;
+  /** Per-section speaker/guest name — the lecture card follows the active section. */
+  speaker?: string;
 }
 
 /** Positive whole minutes, capped at a sane ceiling; anything else is absent. */
@@ -151,7 +153,13 @@ function normalizeSections(value: unknown): LiveStudioConfigSection[] {
     // Bullets are optional: a pure agenda item is a title (+ planned minutes).
     if (!title) return sections;
     const minutes = cleanMinutes(source.minutes);
-    sections.push({ title, bullets, ...(minutes !== undefined ? { minutes } : {}) });
+    const speaker = cleanString(source.speaker);
+    sections.push({
+      title,
+      bullets,
+      ...(minutes !== undefined ? { minutes } : {}),
+      ...(speaker ? { speaker } : {}),
+    });
     return sections;
   }, []);
 }
@@ -284,6 +292,9 @@ function validateSections(value: unknown, issues: string[]): void {
     // present they must be an array of strings.
     if ("bullets" in source && source.bullets !== undefined && !Array.isArray(source.bullets)) {
       issues.push(`sections[${index}].bullets must be an array of strings.`);
+    }
+    if ("speaker" in source && source.speaker !== undefined && typeof source.speaker !== "string") {
+      issues.push(`sections[${index}].speaker must be a string.`);
     }
   });
 }
@@ -473,6 +484,7 @@ export function overlayStateToConfig(state: OverlayState): LiveStudioConfig {
       title: section.title,
       bullets: [...section.bullets],
       ...(cleanMinutes(section.minutes) !== undefined ? { minutes: cleanMinutes(section.minutes) } : {}),
+      ...(section.speaker && section.speaker.trim() ? { speaker: section.speaker } : {}),
     })),
   };
 }

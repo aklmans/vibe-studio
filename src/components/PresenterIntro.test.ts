@@ -84,3 +84,49 @@ test("the mobile intro card stays identity-only (no agenda checklist)", () => {
   assert.match(html, /data-testid="overlay-presenter-intro"/);
   assert.doesNotMatch(html, /data-testid="overlay-lecture-agenda"/);
 });
+
+test("the card introduces the active section's speaker with a hosted-by line", () => {
+  const base: OverlayState = {
+    ...DEFAULT_STATE,
+    layout: "lecture-left",
+    cover: { ...DEFAULT_STATE.cover, hookText: "with 阿彬" },
+    brand: { ...DEFAULT_STATE.brand, presenterLines: ["独立开发者"] },
+  };
+  const state = withAgenda(base, "lecture", {
+    ...base.sidebar.agendas.lecture,
+    activeSection: 1,
+    sections: [
+      { title: "开场", minutes: 5, bullets: [] },
+      { title: "专题分享", minutes: 20, bullets: [], speaker: "林教授" },
+      { title: "答疑", minutes: 10, bullets: [] },
+    ],
+    sectionsDone: [[], [], []],
+    completed: [false, false, false],
+  });
+
+  const html = renderIntro(state);
+
+  // Guest replaces the big name; the host demotes to a quiet hosted-by line,
+  // and the host's affiliation lines never sit under a guest's name.
+  assert.match(html, /data-testid="overlay-presenter-now-speaking"/);
+  assert.match(html, /data-testid="overlay-presenter-name"[^>]*>林教授</);
+  assert.match(html, /data-testid="overlay-presenter-host"[^>]*>主持 · 阿彬</);
+  assert.doesNotMatch(html, /独立开发者/);
+  // The run of show annotates its rows with their speakers.
+  assert.match(html, /data-testid="lecture-agenda-speaker-1"/);
+});
+
+test("without a section speaker the card stays the host's identity", () => {
+  const base: OverlayState = {
+    ...DEFAULT_STATE,
+    layout: "lecture-left",
+    cover: { ...DEFAULT_STATE.cover, hookText: "with 阿彬" },
+    brand: { ...DEFAULT_STATE.brand, presenterLines: ["独立开发者"] },
+  };
+  const html = renderIntro(base);
+
+  assert.doesNotMatch(html, /data-testid="overlay-presenter-now-speaking"/);
+  assert.match(html, /data-testid="overlay-presenter-name"[^>]*>阿彬</);
+  assert.match(html, /独立开发者/);
+  assert.doesNotMatch(html, /data-testid="overlay-presenter-host"/);
+});

@@ -28,11 +28,24 @@ export default function PresenterIntro({
   state: OverlayState;
   rect: Rect;
 }) {
+  const { t } = useLocale();
   const { brand, cover, colors } = state;
   const E = editorialPalette(colors);
   const name = presenterName(cover.hookText);
   const lines = brand.presenterLines.filter((line) => line.trim().length > 0);
   const showAgenda = activeAgendaProfile(state) === "lecture";
+  // A symposium-style lecture has one speaker per section: the card introduces
+  // whoever the ACTIVE section belongs to, falling back to the host.
+  const agenda = activeAgenda(state);
+  const activeIdx = Math.min(
+    Math.max(0, agenda.activeSection),
+    Math.max(0, agenda.sections.length - 1),
+  );
+  const activeSpeaker = showAgenda
+    ? (agenda.sections[activeIdx]?.speaker ?? "").trim()
+    : "";
+  const guest = Boolean(activeSpeaker) && activeSpeaker !== name;
+  const displayName = activeSpeaker || name;
 
   return (
     <div
@@ -86,7 +99,22 @@ export default function PresenterIntro({
             minHeight: 0,
           }}
         >
-          {name && (
+          {guest && (
+            <div
+              data-testid="overlay-presenter-now-speaking"
+              style={{
+                fontFamily: fontFamilies.mono,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: E.activeRule,
+              }}
+            >
+              {t("presenter.nowSpeaking")}
+            </div>
+          )}
+          {displayName && (
             <div
               data-testid="overlay-presenter-name"
               style={{
@@ -98,23 +126,40 @@ export default function PresenterIntro({
                 color: colors.textColor,
               }}
             >
-              {name}
+              {displayName}
             </div>
           )}
-          {lines.map((line, index) => (
+          {/* Affiliation lines belong to the HOST's identity; a guest gets a
+              quiet hosted-by line instead of someone else's titles. */}
+          {!guest &&
+            lines.map((line, index) => (
+              <div
+                key={index}
+                style={{
+                  ...clampLines(2),
+                  fontSize: 16,
+                  fontWeight: 500,
+                  lineHeight: 1.45,
+                  color: colors.mutedText,
+                }}
+              >
+                {line}
+              </div>
+            ))}
+          {guest && name && (
             <div
-              key={index}
+              data-testid="overlay-presenter-host"
               style={{
-                ...clampLines(2),
-                fontSize: 16,
+                ...clampLines(1),
+                fontSize: 15,
                 fontWeight: 500,
                 lineHeight: 1.45,
                 color: colors.mutedText,
               }}
             >
-              {line}
+              {t("presenter.hostedBy")} {name}
             </div>
-          ))}
+          )}
         </div>
 
         {showAgenda && <LectureAgendaList state={state} />}
@@ -267,6 +312,15 @@ function LectureAgendaList({ state }: { state: OverlayState }) {
                 }}
               >
                 {section.title || "—"}
+                {(section.speaker ?? "").trim() && (
+                  <span
+                    data-testid={`lecture-agenda-speaker-${idx}`}
+                    style={{ color: colors.subtleText, fontWeight: 500 }}
+                  >
+                    {" · "}
+                    {section.speaker}
+                  </span>
+                )}
               </span>
 
               {current ? (

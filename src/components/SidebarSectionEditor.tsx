@@ -3,6 +3,7 @@ import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import {
   MAX_SECTION_BULLETS,
   activeAgenda,
+  activeAgendaProfile,
   addBullet,
   removeBullet,
   withActiveAgenda,
@@ -54,6 +55,17 @@ export default function SidebarSectionEditor({
     onChange(withActiveAgenda(state, { ...agenda, sections }));
   };
 
+  // Per-section speaker (v1 content, optional): the lecture card introduces
+  // the active section's speaker. Empty clears the field entirely.
+  const updateSpeaker = (value: string) => {
+    const sections = agenda.sections.map((s, i) => {
+      if (i !== index) return s;
+      const { speaker: _drop, ...rest } = s;
+      return { ...rest, ...(value ? { speaker: value } : {}) };
+    });
+    onChange(withActiveAgenda(state, { ...agenda, sections }));
+  };
+
   const updateBullet = (bulletIdx: number, value: string) => {
     const sections = agenda.sections.map((s, i) => {
       if (i !== index) return s;
@@ -78,6 +90,15 @@ export default function SidebarSectionEditor({
         onChange={updateTitle}
         testId={`sidebar-s${index + 1}-title`}
       />
+      {activeAgendaProfile(state) === "lecture" && (
+        <SectionInput
+          label={t("label.speaker")}
+          value={section.speaker ?? ""}
+          onChange={updateSpeaker}
+          placeholder={t("label.speakerPlaceholder")}
+          testId={`sidebar-s${index + 1}-speaker`}
+        />
+      )}
       <SectionInput
         label={t("label.plannedMinutes")}
         value={section.minutes !== undefined ? String(section.minutes) : ""}

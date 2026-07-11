@@ -153,10 +153,15 @@ function normalizeSections(value: unknown, defaults: SidebarSection[]): SidebarS
       Math.floor(source.minutes) <= 999
         ? Math.floor(source.minutes)
         : undefined;
+    const speaker =
+      typeof source?.speaker === "string" && source.speaker.trim()
+        ? source.speaker
+        : undefined;
     return {
       title: stringOrDefault(source?.title, fallback.title),
       bullets: normalizeBullets(source?.bullets, fallback.bullets),
       ...(minutes !== undefined ? { minutes } : {}),
+      ...(speaker !== undefined ? { speaker } : {}),
     };
   });
 }

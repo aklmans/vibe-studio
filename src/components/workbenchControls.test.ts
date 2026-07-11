@@ -847,3 +847,26 @@ test("sections manager shows the planned-minutes total (review §7-fix)", () => 
   // Lecture defaults: 5 + 20 + 20 + 10 = 55 planned minutes.
   assert.match(html, /data-testid="inspector-sections-total-minutes"[^>]*>Σ 55m</);
 });
+
+test("the speaker field appears only where a presenter card renders (lecture)", () => {
+  const lecture = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayInspector, {
+        state: { ...DEFAULT_STATE, layout: "lecture-left" },
+        onChange: () => {},
+      }),
+    }),
+  );
+  assert.match(lecture, /data-testid="sidebar-s1-speaker"/);
+
+  const workbench = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayInspector, { state: DEFAULT_STATE, onChange: () => {} }),
+    }),
+  );
+  assert.doesNotMatch(workbench, /data-testid="sidebar-s1-speaker"/);
+});

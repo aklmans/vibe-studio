@@ -26,6 +26,9 @@ export interface SidebarSection {
   bullets: string[];
   /** Planned duration in minutes — agenda timing (v1 content, optional). */
   minutes?: number;
+  /** Per-section speaker/guest (v1 content, optional) — the lecture presenter
+   *  card introduces the ACTIVE section's speaker, falling back to the host. */
+  speaker?: string;
 }
 
 /**

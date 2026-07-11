@@ -12,24 +12,53 @@
     "portraitUrl": "/avatar.png",
     "sceneUrl": "/vibe-studio-bg.png"
   },
-  "badges": ["claude", "codex", "kimi"],
-  "stack": ["Codex", "Next.js", "OBS"],
+  "badges": [
+    "claude",
+    "codex",
+    "kimi"
+  ],
+  "stack": [
+    "Codex",
+    "Next.js",
+    "OBS"
+  ],
   "socials": [
-    { "icon": "github", "label": "GitHub", "value": "demo-org/vibe-live" },
-    { "icon": "website", "label": "Website", "value": "example.com" }
+    {
+      "icon": "github",
+      "label": "GitHub",
+      "value": "demo-org/vibe-live"
+    },
+    {
+      "icon": "website",
+      "label": "Website",
+      "value": "example.com"
+    }
   ],
   "sections": [
     {
       "title": "Today's Goal",
-      "bullets": ["Prepare the stream", "Build with agents", "Verify the output"]
+      "bullets": [
+        "Prepare the stream",
+        "Build with agents",
+        "Verify the output"
+      ],
+      "speaker": "Guest · Dr. Lin"
     },
     {
       "title": "Current Problem",
-      "bullets": ["What is stuck?", "What can shrink?", "What should we test next?"]
+      "bullets": [
+        "What is stuck?",
+        "What can shrink?",
+        "What should we test next?"
+      ]
     },
     {
       "title": "Session Log",
-      "bullets": ["Draft ready", "Config applied", "Ready to go live"]
+      "bullets": [
+        "Draft ready",
+        "Config applied",
+        "Ready to go live"
+      ]
     }
   ]
 }

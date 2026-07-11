@@ -413,3 +413,39 @@ test("configToOverlayState can target a non-active scene's agenda (review P1-9)"
     DEFAULT_STATE.sidebar.agendas.workbench.sections.length,
   );
 });
+
+test("sections carry an optional per-section speaker through the config round-trip", () => {
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "T",
+      subtitle: "S",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: [
+        { title: "One", minutes: 10, speaker: "林教授", bullets: [] },
+        { title: "Two", speaker: "   ", bullets: [] }, // blank speaker is dropped
+      ],
+    }),
+  );
+  assert.ok(config);
+  assert.equal(config.sections[0].speaker, "林教授");
+  assert.equal("speaker" in config.sections[1], false);
+
+  const reparsed = parseLiveStudioConfigJson(formatLiveStudioConfigJson(config));
+  assert.equal(reparsed?.sections[0].speaker, "林教授");
+
+  // Validation: a non-string speaker is rejected.
+  const invalid = validateLiveStudioConfig({
+    version: 1,
+    title: "T",
+    subtitle: "S",
+    badges: [],
+    stack: [],
+    socials: [],
+    sections: [{ title: "One", speaker: 42 }],
+  });
+  assert.equal(invalid.valid, false);
+  assert.ok(invalid.issues.some((issue) => issue.includes("speaker")));
+});

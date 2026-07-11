@@ -38,3 +38,9 @@ test("prompts pin the output language deterministically (review P1-10)", () => {
   assert.match(buildAgentPrompt(DEFAULT_STATE, "", "", "zh"), /in Simplified Chinese/);
   assert.match(buildAgentPrompt(DEFAULT_STATE, "", "", "en"), /in English/);
 });
+
+test("the handoff prompt declares the optional per-section speaker", () => {
+  const prompt = buildAgentPrompt(DEFAULT_STATE, "", "", "en");
+  assert.match(prompt, /sections: \[\{ title, minutes\?, speaker\?, bullets\?: string\[\] \}\]/);
+  assert.match(prompt, /speaker is the optional per-section presenter\/guest name/);
+});
