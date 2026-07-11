@@ -146,44 +146,22 @@ pnpm live:restart
 
 Tests use Node.js built-in test runner with `tsx`. Test files are colocated with source as `*.test.ts`.
 
-## OBS and Bilibili Livehime Setup
+## Put It On Stream (OBS) — 5 Minutes, Any OS
 
-For Bilibili accounts that cannot push directly from OBS, use OBS as the compositor and feed Bilibili Livehime through OBS Virtual Camera:
+The overlay is a transparent web page; OBS (or any tool with a browser source) renders it above your real captures. Nothing here is macOS- or Bilibili-specific.
 
-```text
-Vibe web app -> OBS Browser Source -> OBS scene composition -> OBS Virtual Camera -> Bilibili Livehime camera source
-```
+1. Run the app (`pnpm dev`) or use your deployed URL.
+2. In OBS, set the canvas to 1920×1080 (`Settings → Video`) — or 1080×1920 for the Mobile · vertical layout.
+3. Add a **Browser source**:
+   - URL: `http://localhost:3000/obs/overlay?camera=empty` (`?camera=avatar` draws the avatar theme in the camera slot)
+   - Width 1920 × Height 1080 (portrait: 1080 × 1920)
+4. Place your real sources (screen capture, camera, game) **below** the overlay — the layout's main/camera regions are transparent cutouts.
+5. Optional slices if you'd rather compose the frame yourself: `/obs/sidebar` (470×760) and `/obs/bottom-bar` (1856×180).
+6. Edits in the Studio push to the browser sources live (SSE) — no refresh needed.
 
-Prepare the local live environment with:
+While live, the **Composition · OBS** controls (local/private Studio only — in the Overlay inspector and mirrored in **Session Config → Broadcast**) can drive your local OBS over obs-websocket: pick a source for the main screen and the camera slot, swap display regions, and recall saved compositions. This is optional — the group stays a quiet "Connect OBS" row until OBS is reachable.
 
-```bash
-pnpm live:prepare
-```
-
-Useful lifecycle commands:
-
-```bash
-pnpm live:prepare:mobile   # Portrait setup — derives the Vibe Vertical OBS profile + collection.
-pnpm live:status    # Show Next/OBS/Livehime status.
-pnpm live:stop      # Stop OBS Virtual Camera, quit OBS, and stop the local Next server.
-pnpm live:restart   # Stop local live tooling, then run live:prepare again (accepts --layout mobile).
-```
-
-The script:
-
-1. Ensures the Next.js app is available on `http://localhost:3000`.
-2. Updates the OBS scene named `Vibe Live Overlay` in the matching scene collection.
-3. Points the overlay Browser Sources at:
-   - `http://localhost:3000/obs/overlay?camera=empty`
-   - `http://localhost:3000/obs/overlay?camera=avatar`
-4. Resets the expected OBS source order and visibility.
-5. Opens OBS with the resolved profile/collection and the `Vibe Live Overlay` scene.
-6. Starts OBS Virtual Camera after OBS has finished launching.
-7. Opens the web app and Bilibili Livehime.
-
-The script never clicks Bilibili's start-live button. Confirm the title, category, microphone, preview, and final start action manually in Livehime.
-
-While live, the **Composition · OBS** controls (local/private Studio only — in the Overlay inspector and mirrored in **Session Config → Broadcast**) pick the source for each region the active scene layout defines: the main screen can show display 1, display 2, or the app window; the camera slot can show the webcam, a second monitor, the avatar theme, or nothing. You can swap two display regions and recall whole compositions from saved presets — all driving your local OBS over obs-websocket. Switching the scene layout re-parks the captures onto the new layout's regions. For the second-monitor option, add a macOS Screen Capture source in OBS once, name it exactly `Vibe Second Screen Capture`, and point it at display 2; `pnpm live:prepare` will keep it parked in the camera slot.
+**macOS + Bilibili Livehime automation** (the author's setup: `pnpm live:prepare` and friends — profile/scene derivation, OBS Virtual Camera, Livehime hand-off, second-screen wiring) lives in [`docs/author-setup.md`](docs/author-setup.md).
 
 ## Scene Layouts
 
@@ -191,38 +169,19 @@ The overlay is layout-driven: a **scene layout** decides which regions (transpar
 
 - **Workbench** (1920×1080) — the classic coding-stream frame: main capture left, sidebar top right, camera (or the current-focus card) bottom right, bottom bar beneath.
 - **Lecture · left / right** (1920×1080) — a lecture frame: a header band (brand logo + series name, plus today's topic and a date + LIVE badge once the session starts), a presenter column (camera above an intro card with the stream title, presenter name and affiliation lines), and an exact-16:9 slides region.
-- **Mobile · vertical** (1080×1920) — a portrait frame stacked top to bottom: header, the screen share (main region), the camera below it, a slim bottom bar, and the presenter card. Both regions are OBS-backed cutouts, so the composition controls work. `pnpm live:prepare:mobile` sets the OBS side up automatically: on first run it derives a `Vibe Vertical` OBS profile (1080×1920 base canvas) and a `Vibe Vertical` scene collection from your landscape setup (same scene + source names, portrait browser sources, captures parked on the mobile rects), then opens OBS on that pair — just switch the Studio's scene layout to Mobile. It also exports as a frame for phone-app streaming.
+- **Mobile · vertical** (1080×1920) — a portrait frame stacked top to bottom: header, the screen share (main region), the camera below it, a slim bottom bar, and the presenter card. Both regions are OBS-backed cutouts, so the composition controls work. On macOS, `pnpm live:prepare:mobile` can derive the portrait OBS profile/collection automatically (see [`docs/author-setup.md`](docs/author-setup.md)); on any OS, a 1080×1920 OBS canvas + the browser source above is all it takes. It also exports as a frame for phone-app streaming.
 
 Every layout family owns its **own bottom bar**: the workbench bar (on-air / progress / stack), the lecture bar (on-air / **agenda** / **follow** — the two lecture mirrors share one), and the mobile bar are independent data sets, so customizing one never touches the others; switching layouts just switches which set renders and edits. The agenda segment renders "current section n/N + time in section / planned + up next" straight from your sections — each section can carry an optional planned duration in minutes (part of the v1 content, so the Agent can draft the timing too), and every section switch restarts the on-air timer. The follow segment features a specific social handle of your choice (falling back to the first visible one). All segment kinds are available in every layout's bottom-bar editor.
 
 **Agendas are bound to the scene layout**: each profile (workbench / lecture / mobile) owns a fully independent agenda — its own sections, done flags, active index and section timer, keyed the same way as the bottom bars. Switching layouts switches which agenda renders and edits; a lecture's run of show never leaks into the workbench sidebar and vice versa, and each scene's section timer keeps running across switches. The v1 config's `sections` are the ACTIVE scene's run of show — importing, exporting and AI edits all target the current scene and leave the other agendas untouched. Legacy states migrate their existing agenda to the workbench profile; lecture and mobile seed their own defaults (pure title + minutes items).
 
-An agenda holds **up to 12 sections**, and bullets are optional — a pure agenda item is just a title plus planned minutes. The shared sections manager (Overlay inspector and **Session Config → Session**, both titled with the scene it edits) adds, removes and reorders sections and their bullets; every structural change atomically keeps the active section, per-bullet done flags and the same profile's progress segments pointing at the right section. Selecting a section there drives the agenda (and stamps the section timer) too. On the workbench broadcast canvas the sidebar shows a **sliding window of 3 sections** starting at the active one (pulled back at the tail so the window stays full), with a small `0X–0Y / 0Z` indicator once there are more than 3 — with 3 or fewer, it renders exactly as before.
+An agenda holds **up to 12 sections**, and bullets are optional — a pure agenda item is just a title plus planned minutes. The shared sections manager (Overlay inspector and **Session Config → Session**, both titled with the scene it edits) adds, removes and reorders sections and their bullets; every structural change atomically keeps the active section, per-bullet done flags and the same profile's progress segments pointing at the right section. Selecting a section there picks it for editing only — driving the live agenda stays in the Broadcast drive console, and the on-air section keeps a quiet marker in the manager. On the workbench broadcast canvas the sidebar shows a **sliding window of 3 sections** starting at the active one (pulled back at the tail so the window stays full), with a small `0X–0Y / 0Z` indicator once there are more than 3 — with 3 or fewer, it renders exactly as before.
 
 In lecture layouts the presenter card carries the **run-of-show checklist** under the presenter identity: numbered rows with planned minutes. Completion is **manual** — the host checks a section off (in the sections manager or the agenda drive console); driving to the next section never marks the previous one. Checked sections read done (accent check + strike), the active one carries an accent rail plus the live "elapsed / planned" section timer, upcoming rows stay quiet. Past 5 sections it windows like the sidebar, with the same mono indicator.
 
 **Session Config → Broadcast → Agenda drive** is the on-air console: previous/next section (each drive restarts the section timer), jump to any section, restart the timer in place, and pick the follow-slot handle.
 
 The lecture header and presenter card read from the **Brand layer** (Session Config → Session): logo, series/programme name, and presenter lines — set once, reused every stream, never edited by the AI.
-
-`pnpm live:stop` intentionally leaves Bilibili Livehime open because closing it can interrupt an active stream. Close Livehime manually after ending the livestream.
-
-Important OBS note: do not start OBS with `--startvirtualcam`. On macOS this can trigger OBS's "The virtual camera is not installed" dialog before the camera system extension has finished loading. `pnpm live:prepare` intentionally starts OBS first, enables obs-websocket, then calls `StartVirtualCam` through WebSocket after OBS is ready.
-
-If OBS still reports that the virtual camera is not installed:
-
-1. Open `System Settings -> General -> Login Items & Extensions -> Camera Extensions`.
-2. Enable `OBS Virtual Camera`.
-3. Restart OBS, or restart macOS if the extension state looks stale.
-4. Run `pnpm live:prepare` again.
-
-You can verify the extension state with:
-
-```bash
-systemextensionsctl list
-```
-
-The expected entry is `OBS Virtual Camera` with `[activated enabled]`.
 
 ## Session Persistence (Live Data Database)
 
