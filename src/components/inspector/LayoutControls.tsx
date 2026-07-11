@@ -29,6 +29,9 @@ export default function LayoutControls({
   return (
     <LineSegmented
       testId="layout-picker"
+      // 2×2 grid: full scene names ("Lecture · right") stay readable instead
+      // of truncating into two indistinguishable "Lecture…" chips.
+      columns={2}
       active={state.layout}
       onSelect={(value) => {
         // Each layout reads its OWN bar profile, so switching layouts never

@@ -181,6 +181,7 @@ export function LineSegmented({
             key={opt.value}
             data-testid={opt.testId}
             aria-pressed={isActive}
+            title={typeof opt.label === "string" ? opt.label : undefined}
             onClick={() => onSelect(opt.value)}
             style={{
               minWidth: 0,

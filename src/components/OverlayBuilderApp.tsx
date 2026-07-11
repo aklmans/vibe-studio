@@ -793,6 +793,24 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
         }}
         data-appearance={state.theme}
       >
+        {demoMode && (
+          <div
+            data-testid="demo-notice"
+            role="note"
+            style={{
+              fontFamily: "var(--app-font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: UI_COLORS.textMuted,
+              borderBottom: UI_BORDERS.panel,
+              padding: "5px 16px",
+              flexShrink: 0,
+            }}
+          >
+            {t("demo.notice")}
+          </div>
+        )}
         <TopBar
           state={state}
           onChange={setState}
