@@ -61,6 +61,8 @@ export default function SectionsManager({
   const selectedSection = sections[selected];
   const isCompleted = agenda.completed[selected] === true;
   const atCap = sections.length >= MAX_AGENDA_SECTIONS;
+  // Planned-minutes total — a time-boxed lecture shouldn't need mental math.
+  const totalMinutes = sections.reduce((sum, section) => sum + (section.minutes ?? 0), 0);
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
@@ -167,6 +169,15 @@ export default function SectionsManager({
         {selectedSection?.minutes !== undefined && (
           <span style={{ fontFamily: mono, fontSize: 10, color: UI_COLORS.textMuted, flexShrink: 0 }}>
             {selectedSection.minutes}m
+          </span>
+        )}
+        {totalMinutes > 0 && (
+          <span
+            data-testid={`${testIdPrefix}-total-minutes`}
+            title={t("sections.totalMinutes")}
+            style={{ fontFamily: mono, fontSize: 10, color: UI_COLORS.textMuted, flexShrink: 0 }}
+          >
+            Σ {totalMinutes}m
           </span>
         )}
         <span

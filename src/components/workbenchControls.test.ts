@@ -833,3 +833,17 @@ test("sections manager edits without driving the live agenda (review P0-3)", () 
   assert.match(html, /data-testid="inspector-sections-completed"[^>]*aria-label="/);
   assert.match(html, /data-testid="inspector-sections-completed"[^>]*style="width:24px;height:24px/);
 });
+
+test("sections manager shows the planned-minutes total (review §7-fix)", () => {
+  const state = structuredClone(DEFAULT_STATE);
+  state.layout = "lecture-left";
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "en",
+      persist: false,
+      children: React.createElement(OverlayInspector, { state, onChange: () => {} }),
+    }),
+  );
+  // Lecture defaults: 5 + 20 + 20 + 10 = 55 planned minutes.
+  assert.match(html, /data-testid="inspector-sections-total-minutes"[^>]*>Σ 55m</);
+});
