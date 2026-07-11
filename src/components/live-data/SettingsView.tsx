@@ -15,6 +15,17 @@ import AvatarUploader from "../shared/AvatarUploader";
 import { TextInput, WorkbenchButton, workbenchInputStyle } from "../shared/Field";
 import { LineSegmented, RuleNote } from "../inspector/EditorRow";
 import StudioAppearanceControls, { SettingsSelector } from "./StudioAppearanceControls";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 import AIProviderSettings from "./AIProviderSettings";
 import ObsCompositionControls from "../inspector/ObsCompositionControls";
 import LayoutControls from "../inspector/LayoutControls";
@@ -63,6 +74,8 @@ interface SettingsViewProps {
   studioProfile?: StudioProfile | null;
   onSaveStudioProfile?: (profile: StudioProfile) => void;
   onClearStudioProfile?: () => void;
+  /** The explicit next-stream verb: keep brand + presentation, clear content. */
+  onPrepareNextSession?: () => void;
 }
 
 interface TabDef {
@@ -91,6 +104,7 @@ interface FieldEntry {
 // v1 portable core; Broadcast the runtime on-screen controls; Data the
 // lifecycle + JSON. Each entry anchors at settings-row-{id} for scroll-to.
 const FIELD_INDEX: FieldEntry[] = [
+  { id: "nextSession", group: "session", labelKey: "nextSession.button", descKey: "nextSession.hint", terms: ["next", "prepare", "new stream", "下一场", "新直播", "换话题"] },
   { id: "language", group: "session", labelKey: "settingsRow.languageTitle", descKey: "settingsRow.languageDesc", terms: ["language", "语言", "locale", "中英"] },
   { id: "title", group: "session", labelKey: "label.title", descKey: "settingsRow.titleDesc", terms: ["title", "标题", "headline"] },
   { id: "subtitle", group: "session", labelKey: "label.subtitle", descKey: "settingsRow.subtitleDesc", terms: ["subtitle", "topic", "副标题", "话题"] },
@@ -150,6 +164,7 @@ export default function SettingsView({
   studioProfile = null,
   onSaveStudioProfile = () => {},
   onClearStudioProfile = () => {},
+  onPrepareNextSession,
 }: SettingsViewProps) {
   const { t, locale, setLocale } = useLocale();
   const [activeTab, setActiveTab] = useState("session");
@@ -267,6 +282,49 @@ export default function SettingsView({
       hintKey: "settingsGroup.sessionHint",
       render: () => (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {onPrepareNextSession && (
+            <SettingRow
+              rowId="nextSession"
+              title={t("nextSession.button")}
+              description={t("nextSession.hint")}
+            >
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <WorkbenchButton
+                    testId="prepare-next-session"
+                    tone="accent"
+                    style={{ height: 30, padding: "0 12px" }}
+                  >
+                    {t("nextSession.button")}
+                  </WorkbenchButton>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("nextSession.title")}</AlertDialogTitle>
+                    <AlertDialogDescription data-testid="prepare-next-summary">
+                      <span style={{ display: "block", marginBottom: 8 }}>
+                        <strong>{t("nextSession.keepsLabel")}:</strong> {t("nextSession.keepsList")}
+                      </span>
+                      <span style={{ display: "block" }}>
+                        <strong>{t("nextSession.clearsLabel")}:</strong> {t("nextSession.clearsList")}
+                      </span>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel data-testid="prepare-next-cancel">
+                      {t("btn.cancel")}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      data-testid="prepare-next-confirm"
+                      onClick={onPrepareNextSession}
+                    >
+                      {t("nextSession.confirm")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </SettingRow>
+          )}
           <SettingRow rowId="language" title={t("settingsRow.languageTitle")} description={t("settingsRow.languageDesc")}>
             <SettingsSelector
               options={[
@@ -427,7 +485,7 @@ export default function SettingsView({
       titleKey: "settingsGroup.appearance",
       hintKey: "settingsGroup.appearanceHint",
       render: () => (
-        <StudioAppearanceControls state={state} onChange={onChange} onReset={onReset} testIdPrefix="studio-" />
+        <StudioAppearanceControls state={state} onChange={onChange} onReset={onReset} hasBrandProfile={Boolean(studioProfile)} testIdPrefix="studio-" />
       ),
     },
     {

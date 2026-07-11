@@ -21,6 +21,8 @@ interface StudioAppearanceControlsProps {
   state: OverlayState;
   onChange: (state: OverlayState) => void;
   onReset: () => void;
+  /** Whether a Brand profile is saved — decides what the reset honestly keeps. */
+  hasBrandProfile?: boolean;
   /** Prefix to namespace the testids (the Session Config group uses "studio-"). */
   testIdPrefix?: string;
 }
@@ -35,6 +37,7 @@ export default function StudioAppearanceControls({
   state,
   onChange,
   onReset,
+  hasBrandProfile = false,
   testIdPrefix = "",
 }: StudioAppearanceControlsProps) {
   const { t } = useLocale();
@@ -155,7 +158,17 @@ export default function StudioAppearanceControls({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("reset.title")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("reset.description")}</AlertDialogDescription>
+              {/* Honest enumeration — what survives depends on whether a Brand
+                  profile is saved; never claim "everything" is discarded. */}
+              <AlertDialogDescription data-testid={`${testIdPrefix}reset-summary`}>
+                <span style={{ display: "block", marginBottom: 8 }}>
+                  <strong>{t("reset.keepsLabel")}:</strong>{" "}
+                  {t(hasBrandProfile ? "reset.keeps.withProfile" : "reset.keeps.withoutProfile")}
+                </span>
+                <span style={{ display: "block" }}>
+                  <strong>{t("reset.clearsLabel")}:</strong> {t("reset.clears.list")}
+                </span>
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel data-testid={`${testIdPrefix}btn-reset-cancel`}>

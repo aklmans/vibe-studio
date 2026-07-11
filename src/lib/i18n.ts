@@ -225,9 +225,23 @@ export const dict = {
 
     // ─── Danger zone / Reset ─────────────────────────────────────────
     "reset.title": "恢复默认？",
-    "reset.description": "这将丢弃所有修改 — 段落、要点、底栏文字、封面/海报文案和颜色覆盖 — 并恢复出厂状态。此操作不可撤销。",
     "reset.button": "恢复默认",
     "reset.confirm": "全部恢复",
+    "reset.keepsLabel": "保留",
+    "reset.clearsLabel": "清除(无法找回)",
+    "reset.keeps.withProfile": "已保存的品牌层 — 名字、头像、社交、主题与配色、讲座页眉;以及当前场景布局。",
+    "reset.keeps.withoutProfile": "仅当前场景布局。尚未保存品牌层,名字和头像也会被清除。",
+    "reset.clears.list": "标题、副标题、各场景议程、条目、工具栈、徽章、底栏文字、封面/海报文案、颜色覆盖、直播计时。",
+
+    // ─── Prepare next session ────────────────────────────────────────
+    "nextSession.button": "准备下一场",
+    "nextSession.title": "准备下一场直播？",
+    "nextSession.hint": "品牌与外观不动,本场内容回到空白 — 之后可以手填或让 Agent 起草。",
+    "nextSession.keepsLabel": "保留",
+    "nextSession.keepsList": "名字、头像、社交、系列名与讲师行;当前布局、主题与配色;底栏结构。",
+    "nextSession.clearsLabel": "重置为默认",
+    "nextSession.clearsList": "标题、副标题、各场景议程、工具栈、徽章、直播计时。",
+    "nextSession.confirm": "清空内容,准备下一场",
 
     // ─── First-run setup ─────────────────────────────────────────────
     "wizard.title": "欢迎使用 Vibe Studio",
@@ -926,9 +940,23 @@ export const dict = {
 
     // ─── Danger zone / Reset ─────────────────────────────────────────
     "reset.title": "Reset to defaults?",
-    "reset.description": "This will discard all of your edits — sections, bullets, bottom-bar text, cover/poster copy, and color overrides — and load the factory state. This action cannot be undone.",
     "reset.button": "Reset Defaults",
     "reset.confirm": "Reset everything",
+    "reset.keepsLabel": "Keeps",
+    "reset.clearsLabel": "Clears (not recoverable)",
+    "reset.keeps.withProfile": "Your saved Brand layer — name, avatar, socials, theme + palette, lecture header — and the current scene layout.",
+    "reset.keeps.withoutProfile": "Only the current scene layout. No Brand layer is saved yet, so your name and avatar will be cleared too.",
+    "reset.clears.list": "Title, subtitle, every scene's agenda, bullets, stack, badges, bottom-bar text, cover/poster copy, color overrides, and the live timer.",
+
+    // ─── Prepare next session ────────────────────────────────────────
+    "nextSession.button": "Prepare next session",
+    "nextSession.title": "Prepare the next stream?",
+    "nextSession.hint": "Brand and appearance stay put; this stream's content goes back to a blank slate — fill it by hand or let the Agent draft it.",
+    "nextSession.keepsLabel": "Keeps",
+    "nextSession.keepsList": "Name, avatar, socials, series + presenter lines; current layout, theme + palette; bottom-bar structure.",
+    "nextSession.clearsLabel": "Resets to defaults",
+    "nextSession.clearsList": "Title, subtitle, every scene's agenda, stack, badges, and the live timer.",
+    "nextSession.confirm": "Clear content & prepare",
 
     // ─── First-run setup ─────────────────────────────────────────────
     "wizard.title": "Welcome to Vibe Studio",

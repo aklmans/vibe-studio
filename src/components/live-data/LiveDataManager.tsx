@@ -36,6 +36,8 @@ interface LiveDataManagerProps {
   onEndSession: () => void;
   /** Safe reset (reused by the inline Studio Appearance controls). */
   onReset: () => void;
+  /** The explicit next-stream verb: keep brand + presentation, clear content. */
+  onPrepareNextSession?: () => void;
   /** Close the Session Config Center dialog (returns to the previous tab). */
   onClose?: () => void;
   /** A one-shot deep-link request (gear / ⌘, → Studio Appearance). */
@@ -72,6 +74,7 @@ export default function LiveDataManager({
   onStartSession,
   onEndSession,
   onReset,
+  onPrepareNextSession,
   onClose,
   focus,
   onFocusConsumed,
@@ -248,6 +251,7 @@ export default function LiveDataManager({
               studioProfile={studioProfile}
               onSaveStudioProfile={onSaveStudioProfile}
               onClearStudioProfile={onClearStudioProfile}
+              onPrepareNextSession={onPrepareNextSession}
             />
           </div>
         </div>

@@ -21,6 +21,8 @@ interface CommandPaletteProps {
   onExportSidebar: () => void;
   onExportBottomBar: () => void;
   onOpenSettings: () => void;
+  /** Open Session Config on the Session group (prepare-next-session home). */
+  onPrepareNextSession?: () => void;
   onReset?: () => void;
 }
 
@@ -41,6 +43,7 @@ export default function CommandPalette({
   onExportSidebar,
   onExportBottomBar,
   onOpenSettings,
+  onPrepareNextSession,
 }: CommandPaletteProps) {
   const { t, locale, setLocale } = useLocale();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -427,6 +430,15 @@ export default function CommandPalette({
               >
                 {t("cmdk.settings")}
               </Item>
+              {onPrepareNextSession && (
+                <Item
+                  value="prepare next session new stream 准备下一场 换话题 下一场"
+                  onSelect={run(onPrepareNextSession)}
+                  testId="cmdk-prepare-next"
+                >
+                  {t("nextSession.button")}
+                </Item>
+              )}
               <Item
                 value="reset defaults 重置 reset"
                 onSelect={run(() => {

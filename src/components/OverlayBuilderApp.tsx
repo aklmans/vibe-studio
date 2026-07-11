@@ -26,6 +26,7 @@ import {
   exportWallpaper,
 } from "../utils/exportImage";
 import { hasStoredOverlayState, loadOverlayState, saveOverlayState } from "../stateStorage";
+import { prepareNextSessionState } from "../lib/next-session";
 import {
   UI_BORDERS,
   UI_COLORS,
@@ -568,13 +569,22 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
 
   const handleReset = useCallback(() => {
     // Demo resets to its rich seed; the studio resets to neutral defaults with
-    // the saved Brand layer re-applied.
-    setState(
-      demoMode
+    // the saved Brand layer re-applied. The current scene layout and app tab
+    // stay put — a reset never silently switches the scene or closes the
+    // Session Config dialog.
+    setStateRaw((current) => {
+      const base = demoMode
         ? DEMO_STATE_BY_LOCALE[locale]
-        : applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[locale], studioProfile),
-    );
-  }, [setState, demoMode, locale, studioProfile]);
+        : applyStudioProfileToState(DEFAULT_STATE_BY_LOCALE[locale], studioProfile);
+      return { ...base, layout: current.layout, activeTab: current.activeTab };
+    });
+  }, [demoMode, locale, studioProfile]);
+
+  // "Prepare next session" — keep brand + presentation, clear this stream's
+  // content back to the locale defaults (see src/lib/next-session.ts).
+  const handlePrepareNextSession = useCallback(() => {
+    setStateRaw((current) => prepareNextSessionState(current, studioProfile, locale));
+  }, [studioProfile, locale]);
 
   const handleFirstRunComplete = useCallback(
     (profile: StudioProfile) => {
@@ -617,6 +627,16 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
   // the Session Config dialog, deep-linked to its Studio Appearance group.
   const openSessionConfigAppearance = () => {
     setSessionConfigFocus({ mode: "settings", group: "appearance", nonce: Date.now() });
+    setState(
+      produceState(state, (draft) => {
+        draft.activeTab = "live";
+      }),
+    );
+  };
+  // Command-palette route for "prepare next session": open Session Config on
+  // the Session group, where the button (and its confirm) lives.
+  const openSessionConfigSession = () => {
+    setSessionConfigFocus({ mode: "settings", group: "session", nonce: Date.now() });
     setState(
       produceState(state, (draft) => {
         draft.activeTab = "live";
@@ -865,6 +885,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
             onStartSession={handleStartLiveSession}
             onEndSession={handleEndLiveSession}
             onReset={handleReset}
+            onPrepareNextSession={demoMode ? undefined : handlePrepareNextSession}
             onClose={closeSessionConfig}
             focus={sessionConfigFocus}
             onFocusConsumed={consumeSessionConfigFocus}
@@ -895,6 +916,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
         onExportBottomBar={handleExportBottomBar}
         onExportAll={handleExportAll}
         onOpenSettings={openSessionConfigAppearance}
+        onPrepareNextSession={demoMode ? undefined : openSessionConfigSession}
       />
     </>
   );
