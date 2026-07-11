@@ -6,6 +6,7 @@ import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
 import { buildAgentPrompt } from "../../lib/agent-prompt";
 import { parseConfigText, projectConfigText } from "../../lib/session-config-drift";
 import { configToOverlayState } from "../../lib/live-studio-config";
+import { activeAgendaProfile } from "../../lib/agenda";
 import { diffConfigProposal, type ConfigChange, type DiffGroup, type FieldDiff } from "../../lib/config-proposal";
 import type { SessionAgentStatus } from "../../lib/session-agent";
 import { fetchAgentStatus, runSessionAgent } from "../../lib/session-agent-client";
@@ -42,6 +43,9 @@ interface AgentViewProps {
   onOpenJson: () => void;
   /** Open the JSON drawer with text seeded into the editing buffer (review path). */
   onReviewJson?: (text: string) => void;
+  /** One-click apply of a proposal's config (sections land on the active scene).
+   *  Returns whether the apply succeeded. Review-in-JSON stays the advanced path. */
+  onApplyProposal?: (configText: string) => boolean;
   /** Navigate to a Settings group (e.g. AI Provider). Settings are never edited via chat. */
   onOpenSettings?: (group?: string) => void;
   /** Seed the connection status (tests); the mount effect refreshes it from the route. */
@@ -192,7 +196,7 @@ function messagesToTurns(messages: AgentConversationMessage[]): Turn[] {
  * provider, the pill reads "local · no model" and Copy handoff is the path. The
  * API key stays on the server; the client only knows provider / model names.
  */
-export default function AgentView({ state, dateKey, demoMode = false, onOpenJson, onReviewJson, onOpenSettings, initialStatus }: AgentViewProps) {
+export default function AgentView({ state, dateKey, demoMode = false, onOpenJson, onReviewJson, onApplyProposal, onOpenSettings, initialStatus }: AgentViewProps) {
   const { t, locale } = useLocale();
   const [brief, setBrief] = useState("");
   const [taskId, setTaskId] = useState("generate");
@@ -876,6 +880,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
               proposal={proposal}
               currentConfigText={projectConfigText(state)}
               state={state}
+              onApply={onApplyProposal}
               onReviewProposal={reviewProposal}
               onCopy={copyText}
               onOpenSettings={onOpenSettings}
@@ -892,6 +897,12 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
  * config. It summarizes what would change (a pure diff), but never applies:
  * Review in JSON is the only path into the drift-safe drawer.
  */
+const SCENE_LABEL: Record<ReturnType<typeof activeAgendaProfile>, TranslationKey> = {
+  workbench: "sceneProfile.workbench",
+  lecture: "sceneProfile.lecture",
+  mobile: "sceneProfile.mobile",
+};
+
 const DIFF_GROUPS: { id: DiffGroup; labelKey: TranslationKey }[] = [
   { id: "identity", labelKey: "agent.diffGroup.identity" },
   { id: "media", labelKey: "agent.diffGroup.media" },
@@ -901,14 +912,16 @@ const DIFF_GROUPS: { id: DiffGroup; labelKey: TranslationKey }[] = [
 
 /**
  * Proposal review rail — a grouped before/after field diff once the AI returns a
- * config, an optional read-only preview of the applied result (derived, never
- * written to state), and the single path forward: Review in JSON. It never
- * applies and never writes OverlayState / localStorage.
+ * config, an optional read-only preview (derived, never written to state), and
+ * two ways forward: a one-click Apply (sections land on the active scene, named
+ * on the button) and Review in JSON as the advanced path. Nothing is ever
+ * auto-applied — both are explicit user actions.
  */
 function ProposalRail({
   proposal,
   currentConfigText,
   state,
+  onApply,
   onReviewProposal,
   onCopy,
   onOpenSettings,
@@ -916,12 +929,14 @@ function ProposalRail({
   proposal: AiTurn;
   currentConfigText: string;
   state: OverlayState;
+  onApply?: (configText: string) => boolean;
   onReviewProposal?: (turn: AiTurn) => void;
   onCopy: (text: string) => void;
   onOpenSettings?: (group?: string) => void;
 }) {
   const { t } = useLocale();
   const [previewing, setPreviewing] = useState(false);
+  const [applied, setApplied] = useState(false);
   const diff = diffConfigProposal(currentConfigText, proposal.configText ?? "");
   const parsed = parseConfigText(proposal.configText ?? "");
   // Ephemeral preview — derived from the proposal each render, never written to
@@ -997,6 +1012,20 @@ function ProposalRail({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "auto" }}>
+        {onApply && parsed.ok && (
+          <WorkbenchButton
+            data-testid="agent-proposal-apply"
+            onClick={() => setApplied(onApply(proposal.configText ?? ""))}
+            disabled={applied}
+            tone="accent"
+            accentColor={UI_COLORS.accent}
+            style={{ height: 32, padding: "0 12px" }}
+          >
+            {applied
+              ? t("agent.applied")
+              : `${t("config.apply")} · ${t(SCENE_LABEL[activeAgendaProfile(state)])}`}
+          </WorkbenchButton>
+        )}
         {onReviewProposal && (
           <WorkbenchButton
             data-testid="agent-proposal-review"

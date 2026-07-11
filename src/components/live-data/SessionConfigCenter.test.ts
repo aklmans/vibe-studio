@@ -893,3 +893,13 @@ test("OBS composition folds to a quiet optional connect row when unreachable (re
   assert.match(src, /data-testid="obs-composition-connect"/);
   assert.match(src, /composition\.connectCta/);
 });
+
+test("proposal rail offers one-click Apply with Review-in-JSON as the advanced path (review §7-fix)", () => {
+  // Apply is explicit (button, active-scene target named), never automatic;
+  // the JSON review path stays available alongside it.
+  assert.match(AGENT_SRC, /data-testid="agent-proposal-apply"/);
+  assert.match(AGENT_SRC, /onApply\(proposal\.configText \?\? ""\)/);
+  assert.match(AGENT_SRC, /data-testid="agent-proposal-review"/);
+  const MANAGER_SRC = readFileSync(resolve("src/components/live-data/LiveDataManager.tsx"), "utf8");
+  assert.match(MANAGER_SRC, /applyConfigText\(state, configText\)/);
+});

@@ -8,6 +8,7 @@ import { IDLE_OBS_SYNC, type ObsSyncState } from "./obs-sync";
 import SessionConfigDialog from "./SessionConfigDialog";
 import SettingsView from "./SettingsView";
 import AgentView from "./AgentView";
+import { applyConfigText } from "../../lib/session-config-drift";
 import ConfigJsonDrawer from "./ConfigJsonDrawer";
 import type { StudioProfile } from "../../lib/studio-profile";
 
@@ -228,6 +229,14 @@ export default function LiveDataManager({
               demoMode={demoMode}
               onOpenJson={() => openJson()}
               onReviewJson={openJsonForReview}
+              onApplyProposal={(configText) => {
+                // Explicit one-click apply — same transaction as the drawer's
+                // Apply, sections landing on the active scene.
+                const result = applyConfigText(state, configText);
+                if (!result.ok || !result.nextState) return false;
+                onChange(result.nextState);
+                return true;
+              }}
               onOpenSettings={openSettings}
             />
           </div>
