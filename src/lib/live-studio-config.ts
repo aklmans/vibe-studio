@@ -1,5 +1,6 @@
 import type { CoverVisual, OverlayState } from "../types";
 import { activeAgenda, activeAgendaProfile } from "./agenda";
+import type { BarProfileId } from "./overlay-layout";
 import { createBadge } from "./badge-editor";
 import {
   badgeLabelForIconKey,
@@ -364,6 +365,8 @@ function liveStudioBottomBarSegments(): OverlayState["bottomBar"]["segments"] {
 export function configToOverlayState(
   state: OverlayState,
   config: LiveStudioConfig,
+  /** Which scene's agenda receives config.sections — defaults to the active scene. */
+  sectionsProfile?: BarProfileId,
 ): OverlayState {
   const sections = config.sections.map((section) => ({
     title: section.title,
@@ -372,7 +375,7 @@ export function configToOverlayState(
   }));
   const avatarVisible = config.profile?.avatarVisible;
 
-  const profile = activeAgendaProfile(state);
+  const profile = sectionsProfile ?? activeAgendaProfile(state);
   return {
     ...state,
     sidebar: {

@@ -1,4 +1,5 @@
 import type { OverlayState } from "../types";
+import type { BarProfileId } from "./overlay-layout";
 import {
   configToOverlayState,
   formatLiveStudioConfigJson,
@@ -113,6 +114,8 @@ export interface ApplyConfigResult {
 export function applyConfigText(
   state: OverlayState,
   text: string,
+  /** Which scene's agenda receives the config sections (default: active). */
+  sectionsProfile?: BarProfileId,
 ): ApplyConfigResult {
   const parse = parseConfigText(text);
   if (!parse.ok) {
@@ -121,7 +124,7 @@ export function applyConfigText(
   return {
     ok: true,
     parse,
-    nextState: configToOverlayState(state, parse.config),
+    nextState: configToOverlayState(state, parse.config, sectionsProfile),
     nextDrift: initialDriftState,
   };
 }

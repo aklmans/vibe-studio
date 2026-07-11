@@ -4,16 +4,32 @@ import { UI_COLORS, cssAlpha } from "../lib/design-tokens";
 import {
   MAX_AGENDA_SECTIONS,
   activeAgenda,
+  activeAgendaProfile,
   addSection,
   clampSectionIndex,
+  copyAgendaToProfile,
   moveSection,
   removeSection,
   toggleSectionCompleted,
 } from "../lib/agenda";
+import type { BarProfileId } from "../lib/overlay-layout";
 import { useLocale } from "../hooks/useLocale";
 import SectionChips from "./inspector/SectionChips";
 import SidebarSectionEditor from "./SidebarSectionEditor";
 import { WorkbenchButton } from "./shared/Field";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+
+const ALL_PROFILES: BarProfileId[] = ["workbench", "lecture", "mobile"];
 
 const mono = "var(--app-font-mono)";
 
@@ -219,6 +235,57 @@ export default function SectionsManager({
           index={selected}
           accentColor={UI_COLORS.accent}
         />
+      </div>
+
+      {/* Copy the whole agenda to another scene — the three agendas are
+          independent by design; this is the explicit bridge between them. */}
+      <div
+        data-testid={`${testIdPrefix}-copy-row`}
+        style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, paddingTop: 2 }}
+      >
+        <span
+          style={{
+            fontFamily: mono,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: UI_COLORS.textSubtle,
+          }}
+        >
+          {t("sections.copyTo")}
+        </span>
+        {ALL_PROFILES.filter((profile) => profile !== activeAgendaProfile(state)).map((profile) => (
+          <AlertDialog key={profile}>
+            <AlertDialogTrigger asChild>
+              <WorkbenchButton
+                testId={`${testIdPrefix}-copy-${profile}`}
+                style={{ height: 24, padding: "0 8px", minHeight: 24 }}
+              >
+                {t(`sceneProfile.${profile}` as Parameters<typeof t>[0])}
+              </WorkbenchButton>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("sections.copyTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("sections.copyDesc")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-testid={`${testIdPrefix}-copy-cancel`}>
+                  {t("btn.cancel")}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  data-testid={`${testIdPrefix}-copy-confirm-${profile}`}
+                  onClick={() =>
+                    onChange(copyAgendaToProfile(state, activeAgendaProfile(state), profile))
+                  }
+                >
+                  {t("sections.copyConfirm")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ))}
       </div>
     </div>
   );

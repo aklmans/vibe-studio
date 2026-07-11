@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { DEFAULT_STATE, type OverlayState } from "../types";
 import {
+  copyAgendaToProfile,
   MAX_AGENDA_SECTIONS,
   MAX_SECTION_BULLETS,
   activeAgenda,
@@ -270,4 +271,27 @@ test("sectionWindow keeps ≤3 sections untouched and slides from the active one
   // The lecture card's 5-row window.
   deepEqual(sectionWindow(0, 8, 5), { start: 0, end: 5 });
   deepEqual(sectionWindow(6, 8, 5), { start: 3, end: 8 });
+});
+
+test("copyAgendaToProfile replaces the target agenda and resets its progress (review P1-9)", () => {
+  const state = structuredClone(DEFAULT_STATE);
+  state.sidebar.agendas.workbench.sections = [
+    { title: "One", bullets: ["a"], minutes: 10 },
+    { title: "Two", bullets: [], minutes: 5 },
+  ];
+  state.sidebar.agendas.lecture.activeSection = 2;
+  state.sidebar.agendas.lecture.completed = [true, true, false, false];
+
+  const next = copyAgendaToProfile(state, "workbench", "lecture");
+
+  deepEqual(
+    next.sidebar.agendas.lecture.sections.map((section) => ({ t: section.title, m: section.minutes })),
+    [{ t: "One", m: 10 }, { t: "Two", m: 5 }],
+  );
+  equal(next.sidebar.agendas.lecture.activeSection, 0);
+  deepEqual(next.sidebar.agendas.lecture.completed, [false, false]);
+  equal(next.sidebar.agendas.lecture.activeSectionStartedAt, "");
+  // Source untouched; same-profile copy is a no-op.
+  equal(next.sidebar.agendas.workbench.sections[0].title, "One");
+  equal(copyAgendaToProfile(state, "mobile", "mobile"), state);
 });

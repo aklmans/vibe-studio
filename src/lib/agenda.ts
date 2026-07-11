@@ -70,6 +70,42 @@ function remapActiveProgressSegments(
 }
 
 /** Append a new agenda section (title only; bullets grow on demand). */
+/**
+ * Copy one scene profile's agenda (sections, bullets, planned minutes) onto
+ * another, replacing the target wholesale. Progress is deliberately reset —
+ * done flags, active index and the section timer belong to a live run, not to
+ * copied content.
+ */
+export function copyAgendaToProfile(
+  state: OverlayState,
+  from: BarProfileId,
+  to: BarProfileId,
+): OverlayState {
+  if (from === to) return state;
+  const source = state.sidebar.agendas[from];
+  const sections = source.sections.map((section) => ({
+    title: section.title,
+    bullets: [...section.bullets],
+    ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+  }));
+  return {
+    ...state,
+    sidebar: {
+      ...state.sidebar,
+      agendas: {
+        ...state.sidebar.agendas,
+        [to]: {
+          activeSection: 0,
+          activeSectionStartedAt: "",
+          sections,
+          sectionsDone: sections.map((section) => section.bullets.map(() => false)),
+          completed: sections.map(() => false),
+        },
+      },
+    },
+  };
+}
+
 export function addSection(state: OverlayState, title: string): OverlayState {
   const agenda = activeAgenda(state);
   if (agenda.sections.length >= MAX_AGENDA_SECTIONS) return state;

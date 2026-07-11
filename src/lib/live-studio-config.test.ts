@@ -389,3 +389,27 @@ test("config sections bind to the ACTIVE scene: lecture apply leaves workbench a
   const exported = overlayStateToConfig(applied);
   assert.deepEqual(exported.sections.map((s) => s.title), ["开场", "正题"]);
 });
+
+test("configToOverlayState can target a non-active scene's agenda (review P1-9)", () => {
+  const config = parseLiveStudioConfigJson(
+    JSON.stringify({
+      version: 1,
+      title: "T",
+      subtitle: "S",
+      badges: [],
+      stack: [],
+      socials: [],
+      sections: [{ title: "Only", minutes: 45, bullets: [] }],
+    }),
+  );
+  assert.ok(config);
+  // Active layout is workbench; target the lecture agenda explicitly.
+  const next = configToOverlayState(DEFAULT_STATE, config, "lecture");
+  assert.equal(next.sidebar.agendas.lecture.sections.length, 1);
+  assert.equal(next.sidebar.agendas.lecture.sections[0].title, "Only");
+  // The active (workbench) agenda is untouched.
+  assert.equal(
+    next.sidebar.agendas.workbench.sections.length,
+    DEFAULT_STATE.sidebar.agendas.workbench.sections.length,
+  );
+});

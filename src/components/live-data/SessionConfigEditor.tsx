@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { activeAgendaProfile } from "../../lib/agenda";
+import type { BarProfileId } from "../../lib/overlay-layout";
+import { choiceChipStyle } from "../shared/Field";
 import type { OverlayState } from "../../types";
 import { useLocale } from "../../hooks/useLocale";
 import { UI_BORDERS, UI_COLORS, cssAlpha } from "../../lib/design-tokens";
@@ -162,6 +165,10 @@ export default function SessionConfigEditor({
     null,
   );
   const [message, setMessage] = useState("");
+  // Where config.sections lands on Apply. Defaults to the active scene and is
+  // shown explicitly, so "which agenda receives this" is never a surprise.
+  const [sectionsTargetRaw, setSectionsTargetRaw] = useState<BarProfileId | null>(null);
+  const sectionsTarget: BarProfileId = sectionsTargetRaw ?? activeAgendaProfile(state);
   const [binding, setBinding] = useState(() => initialFileBinding(supportsBinding));
   const [lastImportName, setLastImportName] = useState<string | null>(null);
   const [lastExportAt, setLastExportAt] = useState<string | null>(null);
@@ -290,7 +297,7 @@ export default function SessionConfigEditor({
   };
 
   const handleApply = () => {
-    const result = applyConfigText(state, displayedText);
+    const result = applyConfigText(state, displayedText, sectionsTarget);
     const { validation: next, config } = parseToValidation(result.parse);
     setValidation(next);
     setPreviewConfig(config);
@@ -561,6 +568,26 @@ export default function SessionConfigEditor({
           >
             {t("config.import")}
           </ConfigButton>
+        </div>
+        <div
+          data-testid="config-sections-target"
+          style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}
+        >
+          <span style={{ fontFamily: "var(--app-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: UI_COLORS.textMuted }}>
+            {t("config.sectionsTarget")}
+          </span>
+          {(["workbench", "lecture", "mobile"] as BarProfileId[]).map((profile) => (
+            <button
+              key={profile}
+              type="button"
+              data-testid={`config-sections-target-${profile}`}
+              aria-pressed={sectionsTarget === profile}
+              onClick={() => setSectionsTargetRaw(profile)}
+              style={choiceChipStyle(sectionsTarget === profile)}
+            >
+              {t(`sceneProfile.${profile}` as Parameters<typeof t>[0])}
+            </button>
+          ))}
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {editing && (
