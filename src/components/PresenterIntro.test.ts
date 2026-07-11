@@ -20,7 +20,7 @@ function renderIntro(state: OverlayState): string {
   );
 }
 
-test("lecture intro card lists the LECTURE agenda with passed/current/upcoming states", () => {
+test("lecture intro card lists the LECTURE agenda; done is manual, not positional", () => {
   const base: OverlayState = { ...DEFAULT_STATE, layout: "lecture-left" };
   const state = withAgenda(base, "lecture", {
     ...base.sidebar.agendas.lecture,
@@ -35,14 +35,23 @@ test("lecture intro card lists the LECTURE agenda with passed/current/upcoming s
   assert.match(html, /开场/);
   assert.match(html, /第一部分/);
   assert.doesNotMatch(html, /今日目标/);
-  // Section 0 passed → struck; section 1 current → timer with the 20m plan.
+  // Driving to section 1 does NOT strike section 0 — completion is manual.
   assert.match(html, /data-testid="lecture-agenda-row-0"/);
-  assert.match(html, /line-through/);
+  assert.doesNotMatch(html, /line-through/);
+  // Current section carries the timer with the 20m plan.
   assert.match(html, /20:00/);
   // Planned minutes render on non-current rows.
   assert.match(html, /10m/);
   // 4 sections ≤ 5-row window → no indicator.
   assert.doesNotMatch(html, /data-testid="lecture-agenda-window"/);
+
+  // Checking a section off manually strikes it.
+  const checked = withAgenda(state, "lecture", {
+    ...state.sidebar.agendas.lecture,
+    completed: [true, false, false, false],
+  });
+  const checkedHtml = renderIntro(checked);
+  assert.match(checkedHtml, /line-through/);
 });
 
 test("lecture agenda card windows past 5 sections with a 0X–0Y / 0Z indicator", () => {
@@ -56,6 +65,7 @@ test("lecture agenda card windows past 5 sections with a 0X–0Y / 0Z indicator"
     activeSectionStartedAt: "",
     sections: many,
     sectionsDone: many.map(() => []),
+    completed: many.map(() => false),
   });
 
   const html = renderIntro(state);

@@ -53,6 +53,8 @@ export const liveSections = pgTable("live_sections", {
   title: text("title").notNull(),
   // Planned duration in minutes (agenda timing); null = not planned.
   minutes: integer("minutes"),
+  // Manual per-section completion (checked off by the host).
+  done: boolean("done").notNull().default(false),
 });
 
 export const liveTasks = pgTable("live_tasks", {

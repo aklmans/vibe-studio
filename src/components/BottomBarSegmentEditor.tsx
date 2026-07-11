@@ -72,12 +72,18 @@ export default function BottomBarSegmentEditor({
       )}
 
       {slot.kind === "progress" && (
-        <SectionChips
-          sections={activeAgenda(state).sections}
-          active={slot.sectionIndex}
-          onSelect={(sIdx) => writeSlot({ ...slot, sectionIndex: sIdx })}
-          testIdPrefix={`bottom-seg${index + 1}-progress`}
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <SectionChips
+            sections={activeAgenda(state).sections}
+            active={slot.sectionIndex}
+            onSelect={(sIdx) => writeSlot({ ...slot, sectionIndex: sIdx })}
+            testIdPrefix={`bottom-seg${index + 1}-progress`}
+          />
+          <RuleNote>
+            {String(slot.sectionIndex + 1).padStart(2, "0")} ·{" "}
+            {activeAgenda(state).sections[slot.sectionIndex]?.title || "—"}
+          </RuleNote>
+        </div>
       )}
 
       {slot.kind === "stack" && (

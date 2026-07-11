@@ -30,6 +30,7 @@ test("overlayStateToLiveData extracts every profile's agenda from overlay state"
         lecture: {
           ...base.sidebar.agendas.lecture,
           activeSection: 2,
+          completed: [true, false, false, false],
         },
       },
     },
@@ -66,6 +67,9 @@ test("overlayStateToLiveData extracts every profile's agenda from overlay state"
     base.sidebar.agendas.lecture.sections.length,
   );
   assert.equal(liveData.agendas.lecture.sections[0]?.minutes, 5);
+  // Manual completion persists per section.
+  assert.equal(liveData.agendas.lecture.sections[0]?.done, true);
+  assert.equal("done" in (liveData.agendas.lecture.sections[1] ?? {}), false);
   assert.deepEqual(liveData.stackItems, base.stack.items.map((item) => item.label));
   assert.deepEqual(liveData.bottomBar.segments, base.bottomBar.segments);
   assert.equal("cover" in liveData, false);
@@ -116,7 +120,7 @@ test("applyLiveDataToOverlayState updates per-profile agendas while preserving v
       lecture: {
         activeSection: 1,
         sections: [
-          { title: "开场", minutes: 5, tasks: [] },
+          { title: "开场", minutes: 5, done: true, tasks: [] },
           { title: "主体", minutes: 30, tasks: [] },
         ],
       },
@@ -142,6 +146,7 @@ test("applyLiveDataToOverlayState updates per-profile agendas while preserving v
   // The lecture agenda landed in its own profile, minutes intact…
   assert.equal(next.sidebar.agendas.lecture.activeSection, 1);
   assert.equal(next.sidebar.agendas.lecture.sections[1]?.minutes, 30);
+  assert.deepEqual(next.sidebar.agendas.lecture.completed, [true, false]);
   assert.deepEqual(next.sidebar.agendas.lecture.sections[0]?.bullets, []);
   // …and the runtime section timer survived the apply.
   assert.equal(

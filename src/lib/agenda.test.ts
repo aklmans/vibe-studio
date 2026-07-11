@@ -17,6 +17,7 @@ import {
   removeSection,
   restartSectionTimer,
   sectionWindow,
+  toggleSectionCompleted,
   withAgenda,
 } from "./agenda";
 
@@ -232,6 +233,26 @@ test("removeBullet drops the bullet and its done flag; zero bullets is legal", (
   }
   deepEqual(wb(drained).sections[0].bullets, []);
   deepEqual(wb(drained).sectionsDone[0], []);
+});
+
+test("completion is manual: drive never sets it, toggle does, structure ops carry it", () => {
+  // Driving forward leaves every completed flag untouched.
+  const driven = driveAgendaTo(DEFAULT_STATE, 2, NOW);
+  deepEqual(wb(driven).completed, [false, false, false]);
+
+  // Toggle checks a section off (and back on toggle again).
+  const checked = toggleSectionCompleted(DEFAULT_STATE, 0);
+  deepEqual(wb(checked).completed, [true, false, false]);
+  deepEqual(wb(toggleSectionCompleted(checked, 0)).completed, [false, false, false]);
+  equal(toggleSectionCompleted(DEFAULT_STATE, 99), DEFAULT_STATE);
+
+  // Move swaps the flag with its section; remove drops it; add appends false.
+  const moved = moveSection(checked, 0, 1);
+  deepEqual(wb(moved).completed, [false, true, false]);
+  const removed = removeSection(checked, 0);
+  deepEqual(wb(removed).completed, [false, false]);
+  const added = addSection(checked, "New");
+  deepEqual(wb(added).completed, [true, false, false, false]);
 });
 
 test("sectionWindow keeps ≤3 sections untouched and slides from the active one", () => {

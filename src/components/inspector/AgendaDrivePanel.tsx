@@ -1,7 +1,7 @@
 import type { OverlayState } from "../../types";
 import { UI_COLORS } from "../../lib/design-tokens";
 import { activeAgenda,
-  clampSectionIndex, driveAgendaTo, restartSectionTimer } from "../../lib/agenda";
+  clampSectionIndex, driveAgendaTo, restartSectionTimer, toggleSectionCompleted } from "../../lib/agenda";
 import { activeBarSegments, withActiveBarSegments } from "../../lib/bottomBar";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "./EditorRow";
@@ -115,16 +115,25 @@ export default function AgendaDrivePanel({
         </WorkbenchButton>
       </div>
 
-      {/* Jump directly to a section — wrapping chips scale to 12 sections. */}
+      {/* Jump directly to a section — fixed-width numbered chips scale to 12. */}
       <SectionChips
         sections={sections}
         active={idx}
+        completed={agenda.completed}
         onSelect={(target) => drive(target)}
         testIdPrefix="agenda-jump"
       />
 
-      {/* Timer restart */}
+      {/* Manual completion + timer restart */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <WorkbenchButton
+          testId="agenda-toggle-done"
+          onClick={() => onChange(toggleSectionCompleted(state, idx))}
+          tone={agenda.completed[idx] ? "neutral" : "accent"}
+          style={{ height: 28, padding: "0 10px" }}
+        >
+          {agenda.completed[idx] ? t("sections.unmarkCompleted") : `✓ ${t("sections.markCompleted")}`}
+        </WorkbenchButton>
         <WorkbenchButton
           testId="agenda-restart-timer"
           onClick={() => onChange(restartSectionTimer(state, new Date().toISOString()))}

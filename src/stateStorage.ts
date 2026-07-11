@@ -181,10 +181,12 @@ function normalizeSectionsDoneFor(
 function normalizeAgenda(value: unknown, defaults: AgendaState): AgendaState {
   const source = record(value);
   const sections = normalizeSections(source?.sections, defaults.sections);
+  const completedRaw = Array.isArray(source?.completed) ? (source?.completed as unknown[]) : [];
   return {
     sections,
     activeSection: normalizeActiveSection(source?.activeSection, sections.length),
     sectionsDone: normalizeSectionsDoneFor(source?.sectionsDone, sections),
+    completed: sections.map((_, i) => completedRaw[i] === true),
     activeSectionStartedAt: stringOrDefault(
       source?.activeSectionStartedAt,
       defaults.activeSectionStartedAt,

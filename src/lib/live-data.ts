@@ -40,6 +40,8 @@ export interface LiveSectionData {
   tasks: LiveTaskData[];
   /** Planned duration in minutes (agenda timing). */
   minutes?: number;
+  /** Manual per-section completion (checked off by the host). */
+  done?: boolean;
 }
 
 /** One scene profile's persisted agenda: its sections and active index. */
@@ -60,6 +62,7 @@ export interface LiveDataSnapshot {
 }
 
 function sameSectionContent(a: LiveSectionData, b: LiveSectionData): boolean {
+  // `done` is progress, not content — duplicates still fold (done merges OR-wise).
   return (
     a.title === b.title &&
     a.minutes === b.minutes &&
@@ -72,6 +75,7 @@ function mergeSectionData(a: LiveSectionData, b: LiveSectionData): LiveSectionDa
   return {
     title: a.title,
     ...(a.minutes !== undefined ? { minutes: a.minutes } : {}),
+    ...(a.done || b.done ? { done: true } : {}),
     tasks: a.tasks.map((task, index) => ({
       text: task.text,
       done: task.done || b.tasks[index]?.done === true,
@@ -98,6 +102,7 @@ function normalizeSections(sections: LiveSectionData[]): {
     normalized.push({
       title: section.title,
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      ...(section.done ? { done: true } : {}),
       tasks: section.tasks.map((task) => ({ ...task })),
     });
     indexMap.push(normalized.length - 1);
@@ -301,6 +306,7 @@ function agendaToLiveData(agenda: OverlayState["sidebar"]["agendas"][BarProfileI
     sections: agenda.sections.map((section, sectionIndex) => ({
       title: section.title,
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
+      ...(agenda.completed[sectionIndex] ? { done: true } : {}),
       tasks: section.bullets.map((text, taskIndex) => ({
         text,
         done: agenda.sectionsDone[sectionIndex]?.[taskIndex] ?? false,
@@ -347,6 +353,7 @@ export function applyLiveDataToOverlayState(
       ...(section.minutes !== undefined ? { minutes: section.minutes } : {}),
     })),
     sectionsDone: data.sections.map((section) => section.tasks.map((task) => task.done)),
+    completed: data.sections.map((section) => section.done === true),
   });
 
   return {

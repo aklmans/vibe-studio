@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { choiceChipStyle } from "../shared/Field";
 
 interface SectionChipsProps {
@@ -6,33 +5,30 @@ interface SectionChipsProps {
   active: number;
   onSelect: (index: number) => void;
   testIdPrefix: string;
+  /** Manual per-section completion — checked chips carry a small ✓. */
+  completed?: boolean[];
 }
 
 /**
- * A wrapping list of numbered section chips. Replaces equal-width segmented
- * rows wherever sections are listed — with up to 12 sections those cells
- * become unusably narrow, while chips wrap into as many rows as needed.
+ * Fixed-width numbered chips (01…12): every cell is identical, so rows stay
+ * perfectly aligned no matter how long the titles are. The selected section's
+ * TITLE renders separately (SectionsManager's selection line, the drive
+ * panel's current row) — the chip's title lives in its tooltip.
  */
 export default function SectionChips({
   sections,
   active,
   onSelect,
   testIdPrefix,
+  completed,
 }: SectionChipsProps) {
   const pad = (n: number) => String(n).padStart(2, "0");
-  const base: CSSProperties = {
-    lineHeight: 1,
-    padding: "5px 11px",
-    maxWidth: 180,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  };
 
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
       {sections.map((section, index) => {
         const isActive = index === active;
+        const isDone = completed?.[index] === true;
         return (
           <button
             key={index}
@@ -40,10 +36,21 @@ export default function SectionChips({
             data-testid={`${testIdPrefix}-${index}`}
             aria-pressed={isActive}
             onClick={() => onSelect(index)}
-            style={{ ...choiceChipStyle(isActive), ...base }}
+            title={`${pad(index + 1)} ${section.title || "—"}${
+              section.minutes ? ` · ${section.minutes}m` : ""
+            }`}
+            style={{
+              ...choiceChipStyle(isActive),
+              width: 52,
+              padding: "6px 0",
+              lineHeight: 1,
+              textAlign: "center",
+              fontVariantNumeric: "tabular-nums",
+              textDecoration: isDone && !isActive ? "line-through" : "none",
+            }}
           >
-            {pad(index + 1)} {section.title || "—"}
-            {section.minutes ? ` · ${section.minutes}m` : ""}
+            {pad(index + 1)}
+            {isDone ? " ✓" : ""}
           </button>
         );
       })}

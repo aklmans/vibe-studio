@@ -134,7 +134,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                       style={{
                         width: 7,
                         height: 7,
-                        borderRadius: 2,
+                        borderRadius: 0,
                         background: doneBullets[i] ? accent : "transparent",
                         border: `1px solid ${
                           doneBullets[i] ? accent : E.line
@@ -174,9 +174,9 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                     {done ? (
                       <div
                         style={{
-                          width: 15,
-                          height: 15,
-                          borderRadius: "50%",
+                          width: 14,
+                          height: 14,
+                          borderRadius: 0,
                           background: `${accent}26`,
                           border: `1px solid ${accent}`,
                           display: "flex",
@@ -201,7 +201,7 @@ export default function SidebarSections({ state }: SidebarSectionsProps) {
                         style={{
                           width: current ? 9 : 5,
                           height: current ? 9 : 5,
-                          borderRadius: "50%",
+                          borderRadius: 0,
                           background: current ? accent : `${mutedText}66`,
                           border: current ? `2px solid ${E.lineStrong}` : "none",
                           marginTop: current ? 6 : 7,

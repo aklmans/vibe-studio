@@ -18,8 +18,8 @@ const LECTURE_AGENDA_WINDOW = 5;
 /**
  * The lecture presenter card, under the camera: this stream's title (content),
  * then the presenter's name and affiliation lines (Brand layer). In lecture
- * layouts a run-of-show checklist follows — sections before the active one
- * read as done, the active one carries the live section timer.
+ * layouts a run-of-show checklist follows — the host checks sections off
+ * manually; the active one carries the live section timer.
  */
 export default function PresenterIntro({
   state,
@@ -125,9 +125,10 @@ export default function PresenterIntro({
 
 /**
  * The lecture run of show, under the presenter identity: numbered sections
- * with their planned minutes. Sections BEFORE the active one are passed —
- * accent check + strike; the active one carries an accent rail and the live
- * "elapsed / planned" section timer; upcoming rows stay quiet. More sections
+ * with their planned minutes. A section reads done only when the host checks
+ * it off (accent check + strike) — driving to the next section never marks
+ * the previous one. The active section carries an accent rail and the live
+ * "elapsed / planned" section timer; other rows stay quiet. More sections
  * than the window → the same sliding window as the workbench sidebar, with a
  * mono 0X–0Y / 0Z indicator.
  */
@@ -182,8 +183,8 @@ function LectureAgendaList({ state }: { state: OverlayState }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
         {windowed.map(({ section, idx }) => {
-          const passed = idx < activeIdx;
-          const current = idx === activeIdx;
+          const passed = agenda.completed[idx] === true;
+          const current = idx === activeIdx && !passed;
           return (
             <div
               key={idx}

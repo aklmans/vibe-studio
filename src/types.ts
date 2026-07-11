@@ -39,7 +39,11 @@ export interface AgendaState {
   /** ISO timestamp of the last agenda drive (runtime, not in the v1 config).
    *  "" = untracked; the agenda timer then falls back to the live start. */
   activeSectionStartedAt: string;
+  /** Per-bullet done flags (one row per section, one flag per bullet). */
   sectionsDone: boolean[][];
+  /** Per-SECTION manual completion — the host checks a section off
+   *  explicitly; driving the agenda forward never sets it. */
+  completed: boolean[];
   sections: SidebarSection[];
 }
 
@@ -137,6 +141,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
           [false, false, false],
           [false, false, false],
         ],
+        completed: [false, false, false],
         sections: [
           {
             title: "今日目标",
@@ -158,6 +163,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
         activeSection: 0,
         activeSectionStartedAt: "",
         sectionsDone: [[], [], [], []],
+        completed: [false, false, false, false],
         sections: [
           { title: "开场", minutes: 5, bullets: [] },
           { title: "第一部分", minutes: 20, bullets: [] },
@@ -169,6 +175,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
         activeSection: 0,
         activeSectionStartedAt: "",
         sectionsDone: [[], [], []],
+        completed: [false, false, false],
         sections: [
           { title: "开场", minutes: 5, bullets: [] },
           { title: "今日主题", minutes: 15, bullets: [] },
@@ -273,6 +280,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
             [false, false, false],
             [false, false, false],
           ],
+          completed: [false, false, false],
           sections: [
             {
               title: "Today's Goal",
@@ -292,6 +300,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
           activeSection: 0,
           activeSectionStartedAt: "",
           sectionsDone: [[], [], [], []],
+          completed: [false, false, false, false],
           sections: [
             { title: "Opening", minutes: 5, bullets: [] },
             { title: "Part One", minutes: 20, bullets: [] },
@@ -303,6 +312,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
           activeSection: 0,
           activeSectionStartedAt: "",
           sectionsDone: [[], [], []],
+          completed: [false, false, false],
           sections: [
             { title: "Opening", minutes: 5, bullets: [] },
             { title: "Main Topic", minutes: 15, bullets: [] },

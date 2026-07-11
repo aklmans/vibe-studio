@@ -77,6 +77,7 @@ export function addSection(state: OverlayState, title: string): OverlayState {
     ...agenda,
     sections: [...agenda.sections, { title, bullets: [] }],
     sectionsDone: [...agenda.sectionsDone, []],
+    completed: [...agenda.completed, false],
   });
 }
 
@@ -88,6 +89,7 @@ export function removeSection(state: OverlayState, index: number): OverlayState 
 
   const nextSections = sections.filter((_, i) => i !== index);
   const nextDone = agenda.sectionsDone.filter((_, i) => i !== index);
+  const nextCompleted = agenda.completed.filter((_, i) => i !== index);
   const nextActive = Math.min(
     agenda.activeSection > index ? agenda.activeSection - 1 : agenda.activeSection,
     nextSections.length - 1,
@@ -98,6 +100,7 @@ export function removeSection(state: OverlayState, index: number): OverlayState 
       ...agenda,
       sections: nextSections,
       sectionsDone: nextDone,
+      completed: nextCompleted,
       activeSection: nextActive,
     }),
     bottomBar: {
@@ -135,6 +138,7 @@ export function moveSection(
       ...agenda,
       sections: swap(sections),
       sectionsDone: swap(agenda.sectionsDone),
+      completed: swap(agenda.completed),
       activeSection: mapIndex(agenda.activeSection),
     }),
     bottomBar: {
@@ -218,6 +222,19 @@ export function sectionWindow(
   if (total <= size) return { start: 0, end: total };
   const start = Math.min(Math.max(0, active), total - size);
   return { start, end: start + size };
+}
+
+/** Manually check a section off (or un-check it). This is the ONLY way a
+ *  section reads as completed — driving the agenda forward never sets it. */
+export function toggleSectionCompleted(state: OverlayState, index: number): OverlayState {
+  const agenda = activeAgenda(state);
+  if (index < 0 || index >= agenda.sections.length) return state;
+  return withActiveAgenda(state, {
+    ...agenda,
+    completed: agenda.sections.map((_, i) =>
+      i === index ? !agenda.completed[i] : agenda.completed[i] === true,
+    ),
+  });
 }
 
 /** Restart the current section's timer without moving the agenda. */

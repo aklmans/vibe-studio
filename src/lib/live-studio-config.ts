@@ -388,6 +388,7 @@ export function configToOverlayState(
           activeSectionStartedAt: "",
           sections,
           sectionsDone: sections.map((section) => section.bullets.map(() => false)),
+          completed: sections.map(() => false),
         },
       },
     },

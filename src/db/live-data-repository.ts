@@ -225,6 +225,7 @@ async function readLiveDataBySessionId(
       .map((section) => ({
         title: section.title,
         ...(typeof section.minutes === "number" ? { minutes: section.minutes } : {}),
+        ...(section.done ? { done: true } : {}),
         tasks: (tasksBySection.get(section.id) ?? []).map((task) => ({
           text: task.text,
           done: task.done,
@@ -268,6 +269,7 @@ async function replaceLiveDataChildren(
           sortOrder: sectionIndex,
           title: section.title,
           minutes: section.minutes ?? null,
+          done: section.done === true,
         })
         .returning();
       if (!sectionRow) continue;

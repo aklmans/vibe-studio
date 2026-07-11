@@ -173,7 +173,7 @@ Every layout family owns its **own bottom bar**: the workbench bar (on-air / pro
 
 An agenda holds **up to 12 sections**, and bullets are optional — a pure agenda item is just a title plus planned minutes. The shared sections manager (Overlay inspector and **Session Config → Session**, both titled with the scene it edits) adds, removes and reorders sections and their bullets; every structural change atomically keeps the active section, per-bullet done flags and the same profile's progress segments pointing at the right section. Selecting a section there drives the agenda (and stamps the section timer) too. On the workbench broadcast canvas the sidebar shows a **sliding window of 3 sections** starting at the active one (pulled back at the tail so the window stays full), with a small `0X–0Y / 0Z` indicator once there are more than 3 — with 3 or fewer, it renders exactly as before.
 
-In lecture layouts the presenter card carries the **run-of-show checklist** under the presenter identity: numbered rows with planned minutes, sections before the active one marked done (accent check + strike), the active one carrying an accent rail plus the live "elapsed / planned" section timer, upcoming rows quiet. Past 5 sections it windows like the sidebar, with the same mono indicator.
+In lecture layouts the presenter card carries the **run-of-show checklist** under the presenter identity: numbered rows with planned minutes. Completion is **manual** — the host checks a section off (in the sections manager or the agenda drive console); driving to the next section never marks the previous one. Checked sections read done (accent check + strike), the active one carries an accent rail plus the live "elapsed / planned" section timer, upcoming rows stay quiet. Past 5 sections it windows like the sidebar, with the same mono indicator.
 
 **Session Config → Broadcast → Agenda drive** is the on-air console: previous/next section (each drive restarts the section timer), jump to any section, restart the timer in place, and pick the follow-slot handle.
 
@@ -210,7 +210,7 @@ pnpm db:push
 pnpm dev
 ```
 
-The schema lives in `src/db/schema.ts`, with checked-in SQL migrations under `drizzle/` (through `0005_agenda_profiles.sql` — per-scene agendas). Database APIs are mounted under `/api/sessions`, while `/api/live-state` remains the real-time OBS bridge.
+The schema lives in `src/db/schema.ts`, with checked-in SQL migrations under `drizzle/` (through `0006_section_done.sql` — per-scene agendas + manual section completion). Database APIs are mounted under `/api/sessions`, while `/api/live-state` remains the real-time OBS bridge.
 
 ## Session Config Agent (optional AI)
 
