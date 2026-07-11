@@ -884,3 +884,12 @@ test("Data & Sync hides sync vocabulary behind a collapsed Advanced area (review
   const SETTINGS_VIEW_SRC = readFileSync(resolve("src/components/live-data/SettingsView.tsx"), "utf8");
   assert.match(SETTINGS_VIEW_SRC, /setAdvancedOpen\(true\)/); // search reveals it
 });
+
+test("OBS composition folds to a quiet optional connect row when unreachable (review P1-7)", () => {
+  const src = readFileSync(resolve("src/components/inspector/ObsCompositionControls.tsx"), "utf8");
+  // Until connected (and before the host engages), only the calm CTA renders —
+  // no persistent error banner on first paint.
+  assert.match(src, /!engaged && connection !== "connected"/);
+  assert.match(src, /data-testid="obs-composition-connect"/);
+  assert.match(src, /composition\.connectCta/);
+});

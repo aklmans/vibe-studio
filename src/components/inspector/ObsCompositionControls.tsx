@@ -50,6 +50,11 @@ export default function ObsCompositionControls({
   const [missingSources, setMissingSources] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  // Quiet-by-default: until OBS is actually reachable, the whole group folds
+  // into one calm "Connect OBS (optional)" row. Errors and the RETRY affordance
+  // only appear after the host explicitly engages — designing and exporting
+  // never need OBS, so its absence must not read as breakage.
+  const [engaged, setEngaged] = useState(false);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const layoutId = state.layout;
@@ -218,6 +223,47 @@ export default function ObsCompositionControls({
           : reason === "unreachable"
             ? t("composition.status.unreachable")
             : t("composition.status.error");
+
+  if (!engaged && connection !== "connected") {
+    return (
+      <div data-testid="obs-composition" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <button
+          type="button"
+          data-testid="obs-composition-connect"
+          onClick={() => {
+            setEngaged(true);
+            refreshStatus();
+          }}
+          style={{
+            appearance: "none",
+            border: `1px solid ${UI_COLORS.controlBorder}`,
+            background: "transparent",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "7px 10px",
+            borderRadius: 0,
+            fontFamily: mono,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            color: UI_COLORS.textMuted,
+            alignSelf: "flex-start",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{ width: 5, height: 5, borderRadius: "50%", background: UI_COLORS.textSubtle, flexShrink: 0 }}
+          />
+          {t("composition.connectCta")}
+        </button>
+        <p style={{ margin: 0, fontSize: 10, lineHeight: 1.5, color: UI_COLORS.textSubtle }}>
+          {t("composition.connectHint")}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="obs-composition" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
