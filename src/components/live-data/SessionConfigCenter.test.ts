@@ -873,3 +873,14 @@ test("Agent shows the active task intent and the handoff reflects the brief", ()
   assert.match(a, /Brief: rebuild the intro/);
   assert.match(b, /Brief: wrap up the stream/);
 });
+
+test("Data & Sync hides sync vocabulary behind a collapsed Advanced area (review P1-6)", () => {
+  const html = renderCenter();
+  // The toggle is collapsed by default; the technical body stays mounted but
+  // hidden, so authority chips / JSON / file binding never greet a new host.
+  assert.match(html, /data-testid="data-advanced-toggle"[^>]*aria-expanded="false"/);
+  assert.match(html, /data-testid="data-advanced-body"[^>]*display:none/);
+  // Plain-language group hints — no config-file name in the Session hint.
+  const SETTINGS_VIEW_SRC = readFileSync(resolve("src/components/live-data/SettingsView.tsx"), "utf8");
+  assert.match(SETTINGS_VIEW_SRC, /setAdvancedOpen\(true\)/); // search reveals it
+});

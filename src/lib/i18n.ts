@@ -233,6 +233,10 @@ export const dict = {
     "reset.keeps.withoutProfile": "仅当前场景布局。尚未保存品牌层,名字和头像也会被清除。",
     "reset.clears.list": "标题、副标题、各场景议程、条目、工具栈、徽章、底栏文字、封面/海报文案、颜色覆盖、直播计时。",
 
+    // ─── Advanced (Data & Sync) ─────────────────────────────────────
+    "settings.advanced": "高级",
+    "settings.advancedHint": "同步状态、会话生命周期、JSON 导入导出与文件绑定 —— 日常使用可以完全忽略。",
+
     // ─── Prepare next session ────────────────────────────────────────
     "nextSession.button": "准备下一场",
     "nextSession.title": "准备下一场直播？",
@@ -424,7 +428,7 @@ export const dict = {
     "settingsGroup.stack": "Stack",
     "settingsGroup.profile": "Studio Profile",
     "settingsGroup.profileHint": "写一次，多次复用；保存后会成为新直播和重置时的默认身份资料。",
-    "drawer.openJson": "打开 JSON",
+    "drawer.openJson": "打开 JSON（高级）",
     "drawer.close": "关闭",
     "drawer.jumpTo": "跳转到",
     "settingsGroup.core": "Session Core",
@@ -499,7 +503,7 @@ export const dict = {
     "settingsGroup.general": "General",
     "settingsGroup.generalHint": "语言与页面级偏好。",
     "settingsGroup.session": "Session",
-    "settingsGroup.sessionHint": "本场直播的可移植配置 —— 与 live-session.config.json（v1）一一对应。",
+    "settingsGroup.sessionHint": "本场内容 —— 每场直播都会换的部分：标题、议程、工具栈、徽章。",
     "settingsGroup.broadcast": "Broadcast",
     "settingsGroup.broadcastHint": "画面合成与底栏等运行时呈现 —— 控制本机 OBS,不写入配置文件。",
     "settingsGroup.cover": "Cover",
@@ -507,7 +511,7 @@ export const dict = {
     "settingsGroup.branding": "Branding",
     "settingsGroup.brandingHint": "徽标、工具栈与社交链接。",
     "settingsGroup.data": "Data & Sync",
-    "settingsGroup.dataHint": "本地草稿 / 数据库 / OBS、会话生命周期与 JSON 导入导出。",
+    "settingsGroup.dataHint": "直播状态与数据 —— 开播计时；同步与 JSON 属于下方的高级区。",
     "settingsGroup.assets": "Socials / Badges / Profile",
     "settingsGroup.assetsHint": "品牌资产 — 头像、封面视觉、徽标、社交,在此直接编辑(与 Cover / Poster 面板共用)。",
     "settingsGroup.advanced": "Advanced / JSON",
@@ -948,6 +952,10 @@ export const dict = {
     "reset.keeps.withoutProfile": "Only the current scene layout. No Brand layer is saved yet, so your name and avatar will be cleared too.",
     "reset.clears.list": "Title, subtitle, every scene's agenda, bullets, stack, badges, bottom-bar text, cover/poster copy, color overrides, and the live timer.",
 
+    // ─── Advanced (Data & Sync) ─────────────────────────────────────
+    "settings.advanced": "Advanced",
+    "settings.advancedHint": "Sync status, session lifecycle, JSON import/export and file binding — safe to ignore day to day.",
+
     // ─── Prepare next session ────────────────────────────────────────
     "nextSession.button": "Prepare next session",
     "nextSession.title": "Prepare the next stream?",
@@ -1139,7 +1147,7 @@ export const dict = {
     "settingsGroup.stack": "Stack",
     "settingsGroup.profile": "Studio Profile",
     "settingsGroup.profileHint": "Write once, reuse often. Saved values become the default identity for new streams and reset.",
-    "drawer.openJson": "Open JSON",
+    "drawer.openJson": "Open JSON (advanced)",
     "drawer.close": "Close",
     "drawer.jumpTo": "Jump to",
     "settingsGroup.core": "Session Core",
@@ -1214,7 +1222,7 @@ export const dict = {
     "settingsGroup.general": "General",
     "settingsGroup.generalHint": "Language and page-level preferences.",
     "settingsGroup.session": "Session",
-    "settingsGroup.sessionHint": "The portable config for this stream — mirrors live-session.config.json (v1).",
+    "settingsGroup.sessionHint": "This stream's content — the part that changes every stream: title, agenda, stack, badges.",
     "settingsGroup.broadcast": "Broadcast",
     "settingsGroup.broadcastHint": "Runtime on-screen controls — OBS composition and the bottom bar. Drives your local OBS; not in the config file.",
     "settingsGroup.cover": "Cover",
@@ -1222,7 +1230,7 @@ export const dict = {
     "settingsGroup.branding": "Branding",
     "settingsGroup.brandingHint": "Badges, tool stack, and social links.",
     "settingsGroup.data": "Data & Sync",
-    "settingsGroup.dataHint": "Local draft / DB / OBS, session lifecycle and JSON import / export.",
+    "settingsGroup.dataHint": "Live status & data — the on-air timer; sync details and JSON live in Advanced below.",
     "settingsGroup.assets": "Socials / Badges / Profile",
     "settingsGroup.assetsHint": "Brand assets — avatar, cover visual, badges and socials, edited here directly (shared with the Cover / Poster inspector).",
     "settingsGroup.advanced": "Advanced / JSON",

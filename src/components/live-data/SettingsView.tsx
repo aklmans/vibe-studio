@@ -168,6 +168,9 @@ export default function SettingsView({
 }: SettingsViewProps) {
   const { t, locale, setLocale } = useLocale();
   const [activeTab, setActiveTab] = useState("session");
+  // Data & Sync's technical block (authority chips, lifecycle, JSON, file
+  // binding) is an opt-in advanced area — collapsed by default.
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +202,8 @@ export default function SettingsView({
   const goToField = (entry: FieldEntry) => {
     setSearch("");
     setActiveTab(entry.group);
+    // Search targets inside the collapsed advanced area must reveal it first.
+    if (["status", "json", "file"].includes(entry.id)) setAdvancedOpen(true);
     window.requestAnimationFrame(() => {
       const target =
         document.getElementById(`settings-row-${entry.id}`) ??
@@ -502,27 +507,67 @@ export default function SettingsView({
       hintKey: "settingsGroup.dataHint",
       render: () => (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <SourceOfTruthBar
-            dateKey={dateKey}
-            persistence={persistence}
-            obsSync={obsSync}
-            onReload={onReload}
-            onStartSession={onStartSession}
-            onEndSession={onEndSession}
-            onOpenJson={() => onOpenJson()}
-          />
           <SettingRow rowId="liveTimer" title={t("group.liveSession")} description={t("settingsRow.onAirDesc")}>
             <div data-testid="live-data-live-session">
               <LiveSessionEditor state={state} onChange={onChange} />
             </div>
           </SettingRow>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "0 2px" }}>
-            <RuleNote>{t("settingsRow.persistenceNote")}</RuleNote>
-            <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>
-            <RuleNote>{t("settingsRow.fileStrategyNote")}</RuleNote>
-            <WorkbenchButton data-testid="open-json-advanced" onClick={() => onOpenJson()} style={{ alignSelf: "flex-start", height: 32, padding: "0 12px" }}>
-              {t("drawer.openJson")}
-            </WorkbenchButton>
+          {/* Advanced — sync topology, lifecycle, JSON and file binding. The
+              implementation vocabulary lives here, collapsed by default, so
+              the everyday surface stays in plain language. */}
+          <div style={{ borderTop: `1px solid ${UI_COLORS.border}`, paddingTop: 12 }}>
+            <button
+              type="button"
+              data-testid="data-advanced-toggle"
+              aria-expanded={advancedOpen}
+              onClick={() => setAdvancedOpen((v) => !v)}
+              style={{
+                appearance: "none",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: 0,
+                fontFamily: "var(--app-font-mono)",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: UI_COLORS.textMuted,
+              }}
+            >
+              <span aria-hidden style={{ display: "inline-block", transform: advancedOpen ? "rotate(90deg)" : "none", transition: "transform 0.12s" }}>▸</span>
+              {t("settings.advanced")}
+            </button>
+            <p style={{ margin: "6px 0 0", fontSize: 11, color: UI_COLORS.textSubtle, lineHeight: 1.5 }}>
+              {t("settings.advancedHint")}
+            </p>
+            {/* Stays mounted (visibility toggled) — the IA remains statically
+                inspectable and JSON drift stays synced, same as the panels. */}
+            <div
+              data-testid="data-advanced-body"
+              style={{ display: advancedOpen ? "flex" : "none", flexDirection: "column", gap: 18, marginTop: 14 }}
+            >
+                <SourceOfTruthBar
+                  dateKey={dateKey}
+                  persistence={persistence}
+                  obsSync={obsSync}
+                  onReload={onReload}
+                  onStartSession={onStartSession}
+                  onEndSession={onEndSession}
+                  onOpenJson={() => onOpenJson()}
+                />
+                <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "0 2px" }}>
+                  <RuleNote>{t("settingsRow.persistenceNote")}</RuleNote>
+                  <RuleNote>{t("settingsRow.advancedNote")}</RuleNote>
+                  <RuleNote>{t("settingsRow.fileStrategyNote")}</RuleNote>
+                  <WorkbenchButton data-testid="open-json-advanced" onClick={() => onOpenJson()} style={{ alignSelf: "flex-start", height: 32, padding: "0 12px" }}>
+                    {t("drawer.openJson")}
+                  </WorkbenchButton>
+                </div>
+              </div>
           </div>
         </div>
       ),
