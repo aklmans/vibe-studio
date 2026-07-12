@@ -245,12 +245,12 @@ export default function SocialsEditor({
                 options={[
                   {
                     value: "mono",
-                    label: "Mono",
+                    label: t("iconMode.mono"),
                     testId: `${testIdPrefix}-${visibleIndex}-mode-mono`,
                   },
                   {
                     value: "brand",
-                    label: "Brand",
+                    label: t("iconMode.brand"),
                     testId: `${testIdPrefix}-${visibleIndex}-mode-brand`,
                   },
                 ]}

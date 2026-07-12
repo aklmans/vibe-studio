@@ -259,7 +259,7 @@ export default function ConfigJsonDrawer({
                 e.currentTarget.style.borderColor = UI_COLORS.controlBorder;
               }}
             >
-              {key}
+              {t(`drawer.module.${key}`)}
             </button>
           ))}
         </div>
