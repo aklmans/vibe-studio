@@ -561,7 +561,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
                   maxHeight: 260,
                   overflowY: "auto",
                   border: UI_BORDERS.control,
-                  borderRadius: 8,
+                  borderRadius: 0,
                   background: UI_COLORS.appSurface,
                   boxShadow: "0 16px 38px rgba(0,0,0,0.22)",
                   padding: 6,
@@ -771,7 +771,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
               alignItems: "flex-end",
               gap: 8,
               border: UI_BORDERS.control,
-              borderRadius: 10,
+              borderRadius: 0,
               background: UI_COLORS.inputInset,
               padding: "8px 8px 8px 12px",
             }}
@@ -1094,7 +1094,7 @@ function ProposalPreview({ previewState }: { previewState: OverlayState }) {
   return (
     <div
       data-testid="agent-proposal-preview"
-      style={{ border: `1px solid ${UI_COLORS.border}`, borderRadius: 8, background: UI_COLORS.inputInset, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}
+      style={{ border: `1px solid ${UI_COLORS.border}`, borderRadius: 0, background: UI_COLORS.inputInset, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}
     >
       <span style={{ ...subLabel, color: UI_COLORS.accentText }}>{t("agent.previewLabel")}</span>
       <span style={{ fontFamily: "var(--app-font-serif)", fontSize: 15, fontWeight: 500, color: UI_COLORS.text }}>{previewState.cover.title || "∅"}</span>
@@ -1158,7 +1158,7 @@ const preStyle: CSSProperties = {
   color: UI_COLORS.textSoft,
   background: UI_COLORS.inputInset,
   border: UI_BORDERS.control,
-  borderRadius: 6,
+  borderRadius: 0,
   padding: "10px 12px",
   whiteSpace: "pre-wrap",
   overflowWrap: "anywhere",
@@ -1200,7 +1200,7 @@ function AiTurnBody({
           data-testid={`agent-turn-proposal-ready-${turn.id}`}
           style={{
             border: `1px solid ${UI_COLORS.border}`,
-            borderRadius: 8,
+            borderRadius: 0,
             background: cssAlpha(UI_COLORS.accent, 7),
             padding: "10px 12px",
             display: "flex",
@@ -1298,7 +1298,7 @@ function UserBubble({ testId, children }: { testId: string; children: ReactNode 
         flexDirection: "column",
         background: UI_COLORS.inputInset,
         border: `1px solid ${UI_COLORS.controlBorder}`,
-        borderRadius: 10,
+        borderRadius: 0,
         padding: "8px 12px",
         fontSize: 13,
         lineHeight: 1.5,

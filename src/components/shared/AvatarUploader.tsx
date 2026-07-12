@@ -117,7 +117,7 @@ export default function AvatarUploader({
             style={{
               width: 40,
               height: 40,
-              borderRadius: previewShape === "round" ? "50%" : 4,
+              borderRadius: previewShape === "round" ? "50%" : 0,
               objectFit: previewShape === "round" ? "cover" : "contain",
               border: `1px solid ${UI_COLORS.controlBorder}`,
             }}

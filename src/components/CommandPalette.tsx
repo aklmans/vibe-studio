@@ -599,7 +599,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
         fontFamily: "var(--app-font-mono)",
         fontSize: 10,
         padding: "2px 6px",
-        borderRadius: 2,
+        borderRadius: 0,
         border: `1px solid ${UI_COLORS.controlBorder}`,
         background: UI_COLORS.inputInset,
         color: UI_COLORS.text,

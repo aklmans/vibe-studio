@@ -128,14 +128,14 @@ export default function EditableText({
     ? {
         outline: `1px solid ${ringColor}`,
         outlineOffset: 2,
-        borderRadius: 2,
+        borderRadius: 0,
         background: cssAlpha(UI_COLORS.accent, 10),
       }
     : hover
       ? {
           outline: `1px dashed ${ringColor}`,
           outlineOffset: 2,
-          borderRadius: 2,
+          borderRadius: 0,
           cursor: "text",
         }
       : { cursor: "text" };

@@ -213,8 +213,7 @@ export default function SettingsView({
       const previousTransition = target.style.transition;
       const previousOutline = target.style.outline;
       const previousOutlineOffset = target.style.outlineOffset;
-      const previousBorderRadius = target.style.borderRadius;
-      target.scrollIntoView({ block: "center", behavior: "smooth" });
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
       if (previousTabIndex === null) target.setAttribute("tabindex", "-1");
       target.focus({ preventScroll: true });
       // A brief highlight ring so the user sees where the jump landed (the
@@ -222,15 +221,13 @@ export default function SettingsView({
       target.style.transition = "outline-color 0.2s";
       target.style.outline = `2px solid ${UI_COLORS.accent}`;
       target.style.outlineOffset = "3px";
-      target.style.borderRadius = "4px";
-      window.setTimeout(() => {
+        window.setTimeout(() => {
         if (previousTabIndex === null) target.removeAttribute("tabindex");
         else target.setAttribute("tabindex", previousTabIndex);
         target.style.transition = previousTransition;
         target.style.outline = previousOutline;
         target.style.outlineOffset = previousOutlineOffset;
-        target.style.borderRadius = previousBorderRadius;
-      }, 1100);
+        }, 1100);
     });
   };
 
@@ -632,7 +629,7 @@ export default function SettingsView({
               boxSizing: "border-box",
               height: 30,
               border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 6,
+              borderRadius: 0,
               background: UI_COLORS.inputInset,
               color: UI_COLORS.text,
               fontFamily: "var(--app-font-mono)",
@@ -797,7 +794,7 @@ function highlightMatch(text: string, query: string): ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background: cssAlpha(UI_COLORS.accent, 24), color: "inherit", borderRadius: 2, padding: "0 1px" }}>
+      <mark style={{ background: cssAlpha(UI_COLORS.accent, 24), color: "inherit", borderRadius: 0, padding: "0 1px" }}>
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}

@@ -178,7 +178,7 @@ export default function ConfigJsonDrawer({
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 aria-hidden
-                style={{ width: 3, height: 14, borderRadius: 2, background: UI_COLORS.accent }}
+                style={{ width: 3, height: 14, borderRadius: 0, background: UI_COLORS.accent }}
               />
               <span
                 style={{

@@ -109,7 +109,7 @@ const textareaStyle: CSSProperties = {
   minHeight: 286,
   resize: "vertical",
   border: UI_BORDERS.control,
-  borderRadius: 4,
+  borderRadius: 0,
   background: UI_COLORS.inputInset,
   padding: "12px 14px",
   lineHeight: 1.55,
@@ -416,7 +416,7 @@ export default function SessionConfigEditor({
                 validation?.valid === false
                   ? UI_BORDERS.danger
                   : UI_BORDERS.control,
-              borderRadius: 4,
+              borderRadius: 0,
               padding: "4px 8px",
               lineHeight: 1.4,
             }}
@@ -437,7 +437,7 @@ export default function SessionConfigEditor({
           gap: 8,
           padding: "10px 12px",
           border: UI_BORDERS.control,
-          borderRadius: 4,
+          borderRadius: 0,
           background: UI_COLORS.inputInset,
         }}
       >
@@ -518,7 +518,7 @@ export default function SessionConfigEditor({
             color: UI_COLORS.text,
             background: UI_COLORS.previewBadgeSurface,
             border: `1px solid ${cssAlpha(UI_COLORS.accent, 38)}`,
-            borderRadius: 4,
+            borderRadius: 0,
             padding: "8px 12px",
           }}
         >
@@ -799,7 +799,7 @@ function PreviewBlock({
             style={{
               ...previewValueStyle,
               border: UI_BORDERS.control,
-              borderRadius: 3,
+              borderRadius: 0,
               padding: "3px 7px",
               background: UI_COLORS.inputInset,
             }}
@@ -835,7 +835,7 @@ function AccentMark({ muted = false }: { muted?: boolean }) {
       style={{
         width: 3,
         height: 14,
-        borderRadius: 2,
+        borderRadius: 0,
         background: muted ? cssAlpha(UI_COLORS.accent, 52) : UI_COLORS.accent,
       }}
     />

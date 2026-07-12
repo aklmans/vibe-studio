@@ -296,7 +296,7 @@ export default function SocialsEditor({
                     width: 22,
                     height: 18,
                     border: `1px solid ${UI_COLORS.controlBorder}`,
-                    borderRadius: 3,
+                    borderRadius: 0,
                     padding: 1,
                     background: "transparent",
                     cursor: "pointer",

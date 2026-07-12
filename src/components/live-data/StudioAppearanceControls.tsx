@@ -287,7 +287,7 @@ function ColorRow({
         style={{
           width: 18,
           height: 18,
-          borderRadius: 2,
+          borderRadius: 0,
           background: value,
           border: `1px solid ${UI_COLORS.controlBorder}`,
         }}
@@ -302,7 +302,7 @@ function ColorRow({
             width: 24,
             height: 22,
             border: `1px solid ${UI_COLORS.controlBorder}`,
-            borderRadius: 2,
+            borderRadius: 0,
             padding: 1,
             background: "transparent",
             cursor: "pointer",

@@ -115,7 +115,7 @@ export const PREVIEW_HEADER_STYLES = {
     color: UI_COLORS.accentText,
     background: UI_COLORS.previewBadgeSurface,
     padding: "4px 9px",
-    borderRadius: 5,
+    borderRadius: 0,
     border: UI_BORDERS.control,
     letterSpacing: "0.06em",
     flexShrink: 0,
@@ -156,7 +156,7 @@ export const PREVIEW_HEADER_STYLES = {
     color: UI_COLORS.danger,
     background: UI_COLORS.dangerSurface,
     border: UI_BORDERS.danger,
-    borderRadius: 6,
+    borderRadius: 0,
     padding: "4px 12px",
     maxWidth: "100%",
   },
@@ -908,7 +908,7 @@ export default function App({ demoMode = false }: OverlayBuilderAppProps) {
                       fontSize: 10,
                       color: UI_COLORS.accentText,
                       border: UI_BORDERS.control,
-                      borderRadius: 5,
+                      borderRadius: 0,
                       padding: "4px 9px",
                       letterSpacing: "0.06em",
                       maxWidth: "100%",
@@ -1107,7 +1107,7 @@ function PreviewFrame({
         // Shared by every canvas tab (Overlay / Cover / Poster / Wallpaper) and
         // never part of the exported PNG, which renders from offscreen nodes.
         border: `1px solid ${UI_COLORS.border}`,
-        borderRadius: 2,
+        borderRadius: 0,
         boxSizing: "border-box",
       }}
     >
@@ -1123,7 +1123,7 @@ function PreviewFrame({
             UI_COLORS.previewShadow,
           // Exports are square-cornered, so the preview frame is too — it must
           // not promise a rounded corner the PNG won't have.
-          borderRadius: 2,
+          borderRadius: 0,
         }}
       >
         {/* Inner canvas at native resolution, scaled top-left */}
@@ -1136,7 +1136,7 @@ function PreviewFrame({
             position: "absolute",
             top: 0,
             left: 0,
-            borderRadius: 2,
+            borderRadius: 0,
             overflow: "hidden",
           }}
         >
