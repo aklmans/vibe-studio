@@ -567,6 +567,10 @@ export function normalizeOverlayState(value: unknown, defaultValue: OverlayState
         mainScreen?.cameraVisible,
         defaultValue.mainScreen.cameraVisible,
       ),
+      fullscreen: boolOrDefault(
+        mainScreen?.fullscreen,
+        defaultValue.mainScreen.fullscreen,
+      ),
     },
     // Added with the lecture layouts; state saved before then has no `brand`.
     brand: {

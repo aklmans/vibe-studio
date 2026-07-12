@@ -89,3 +89,31 @@ test("OverlayCanvas main screen is a transparent OBS frame, not a filled placeho
   assert.match(html, /data-testid="overlay-main-screen-frame"[^>]*background:transparent/);
   assert.doesNotMatch(html, /VIBE STUDIO/);
 });
+
+test("fullscreen focus renders only the full-bleed main frame", () => {
+  const state = {
+    ...DEFAULT_STATE,
+    mainScreen: { ...DEFAULT_STATE.mainScreen, fullscreen: true },
+  };
+  const html = renderToStaticMarkup(
+    React.createElement(LocaleProvider, {
+      initialLocale: "zh",
+      persist: false,
+      children: React.createElement(OverlayCanvas, { state }),
+    }),
+  );
+
+  // The thin main frame fills the whole canvas — the room stays recognizable.
+  assert.match(
+    html,
+    /data-testid="overlay-main-screen-frame"[^>]*style="[^"]*left:0;top:0;width:1920px;height:1080px/,
+  );
+  // Every other panel hides regardless of its own visibility toggle…
+  assert.doesNotMatch(html, /data-testid="overlay-sidebar"/);
+  assert.doesNotMatch(html, /data-testid="overlay-camera"/);
+  assert.doesNotMatch(html, /data-testid="overlay-current-focus"/);
+  assert.doesNotMatch(html, /data-testid="overlay-bottom-bar"/);
+  // …and the untouched toggles mean leaving fullscreen restores everything.
+  assert.equal(state.sidebar.visible, true);
+  assert.equal(state.bottomBar.visible, true);
+});

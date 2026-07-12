@@ -7,7 +7,7 @@ import SidebarSections from "./SidebarSections";
 import SocialList from "./SocialList";
 import BottomBarSegments from "./BottomBarSegments";
 import { getObsCameraFrameColors, type ObsCameraMode } from "../lib/obs-camera";
-import { getLayout, type OverlayLayout, type Rect } from "../lib/overlay-layout";
+import { effectiveLayout, type OverlayLayout, type Rect } from "../lib/overlay-layout";
 import OverlayHeader from "./OverlayHeader";
 import PresenterIntro from "./PresenterIntro";
 import { editorialPalette } from "./lib/editorial-palette";
@@ -128,7 +128,8 @@ const OverlayCanvas = forwardRef<HTMLDivElement, OverlayCanvasProps>(
     const { sidebar, bottomBar, mainScreen, cover, colors } = state;
     // The OBS browser source renders this same component from pushed state, so
     // following state.layout is what carries the layout through to OBS.
-    const layout = layoutProp ?? getLayout(state.layout);
+    // Fullscreen focus renders the same scene's full-bleed variant.
+    const layout = layoutProp ?? effectiveLayout(state.layout, state.mainScreen.fullscreen);
     // A layout may omit a panel entirely; absent rect = the layout has no such panel.
     const mainRect = layout.regions.main;
     const cameraPanelRect = layout.panels.cameraPanel;

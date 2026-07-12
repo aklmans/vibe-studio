@@ -246,3 +246,27 @@ export function isLayoutId(value: unknown): value is LayoutId {
 export function getLayout(id: LayoutId = DEFAULT_LAYOUT_ID): OverlayLayout {
   return LAYOUTS[id];
 }
+
+/**
+ * Focus mode: the layout's fullscreen variant — the main region fills the
+ * whole canvas (the thin main-screen frame stays, so the room remains
+ * recognizably yours) and every other region/panel disappears. A DERIVED
+ * view of the same scene: the id, canvas and profiles stay the base
+ * layout's, so agendas, bars and OBS naming are untouched.
+ */
+export function fullscreenVariant(layout: OverlayLayout): OverlayLayout {
+  return {
+    ...layout,
+    regions: {
+      main: { left: 0, top: 0, width: layout.canvas.width, height: layout.canvas.height },
+    },
+    panels: {},
+  };
+}
+
+/** The layout every surface should RENDER: the scene layout, or its
+ *  fullscreen variant while the host focuses the main screen. */
+export function effectiveLayout(id: LayoutId, fullscreen: boolean): OverlayLayout {
+  const layout = getLayout(id);
+  return fullscreen ? fullscreenVariant(layout) : layout;
+}

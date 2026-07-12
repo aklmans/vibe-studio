@@ -9,6 +9,7 @@ import {
   LECTURE_RIGHT_LAYOUT,
   MOBILE_LAYOUT,
   WORKBENCH_LAYOUT,
+  fullscreenVariant,
   type OverlayLayout,
 } from "./overlay-layout";
 import {
@@ -377,4 +378,26 @@ test("type guards accept exactly the wire values", () => {
     equal(isCameraSource(value), true, value);
   }
   equal(isCameraSource("app"), false);
+});
+
+test("fullscreen focus parks the main capture full-bleed and hides every camera source", () => {
+  const layout = fullscreenVariant(WORKBENCH_LAYOUT);
+  const ops = compositionOps({ main: "display-1", camera: "camera" }, layout);
+
+  const mainTransform = ops.transforms.find((op) => op.source === "Vibe Main Display Capture");
+  assert.ok(mainTransform);
+  assert.deepEqual(
+    {
+      x: mainTransform.transform.positionX,
+      y: mainTransform.transform.positionY,
+      w: mainTransform.transform.boundsWidth,
+      h: mainTransform.transform.boundsHeight,
+    },
+    { x: 0, y: 0, w: 1920, h: 1080 },
+  );
+
+  // No camera region → the chosen camera is ignored and its source disabled.
+  const cameraEnable = ops.enables.find((op) => op.source === "Vibe Camera Capture");
+  assert.ok(cameraEnable);
+  assert.equal(cameraEnable.enabled, false);
 });

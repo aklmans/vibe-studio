@@ -75,6 +75,10 @@ export interface OverlayState {
   mainScreen: {
     visible: boolean;
     cameraVisible: boolean;
+    /** Focus mode: the main region fills the whole canvas and every other
+     *  panel (sidebar, camera, bars) hides. A runtime broadcast state — never
+     *  part of the v1 config; leaving it restores the untouched toggles. */
+    fullscreen: boolean;
   };
   /**
    * Reusable brand identity the lecture/mobile layouts render in their header
@@ -216,6 +220,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
   mainScreen: {
     visible: true,
     cameraVisible: true,
+    fullscreen: false,
   },
   brand: {
     logoUrl: "",
@@ -353,6 +358,7 @@ export const DEFAULT_STATE_BY_LOCALE: Record<Locale, OverlayState> = {
     mainScreen: {
       visible: true,
       cameraVisible: true,
+      fullscreen: false,
     },
     brand: {
       logoUrl: "",

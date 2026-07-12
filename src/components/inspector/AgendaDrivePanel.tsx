@@ -3,6 +3,7 @@ import { UI_COLORS } from "../../lib/design-tokens";
 import { activeAgenda,
   clampSectionIndex, driveAgendaTo, restartSectionTimer, toggleSectionCompleted } from "../../lib/agenda";
 import { activeBarSegments, withActiveBarSegments } from "../../lib/bottomBar";
+import { patchSection } from "../../lib/state";
 import { useLocale } from "../../hooks/useLocale";
 import { LineSegmented } from "./EditorRow";
 import SectionChips from "./SectionChips";
@@ -133,6 +134,18 @@ export default function AgendaDrivePanel({
           style={{ height: 28, padding: "0 10px" }}
         >
           {agenda.completed[idx] ? t("sections.unmarkCompleted") : `✓ ${t("sections.markCompleted")}`}
+        </WorkbenchButton>
+        <WorkbenchButton
+          testId="agenda-fullscreen-main"
+          onClick={() =>
+            onChange(patchSection(state, "mainScreen", { fullscreen: !state.mainScreen.fullscreen }))
+          }
+          tone={state.mainScreen.fullscreen ? "neutral" : "accent"}
+          style={{ height: 28, padding: "0 10px" }}
+        >
+          {state.mainScreen.fullscreen
+            ? t("agendaDrive.fullscreenExit")
+            : `⛶ ${t("agendaDrive.fullscreenEnter")}`}
         </WorkbenchButton>
         <WorkbenchButton
           testId="agenda-restart-timer"

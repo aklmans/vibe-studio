@@ -28,15 +28,18 @@ export interface ObsCompositionApplyResult {
   error?: string;
 }
 
-/** The layout decides the region rects, so probe and apply must both carry it. */
+/** The layout (and its fullscreen focus variant) decides the region rects,
+ *  so probe and apply must both carry them. */
 export async function fetchObsCompositionStatus(
   layout: LayoutId = DEFAULT_LAYOUT_ID,
+  fullscreen = false,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ObsCompositionStatus> {
   try {
-    const response = await fetchImpl(`${ENDPOINT}?layout=${encodeURIComponent(layout)}`, {
-      method: "GET",
-    });
+    const response = await fetchImpl(
+      `${ENDPOINT}?layout=${encodeURIComponent(layout)}${fullscreen ? "&fullscreen=1" : ""}`,
+      { method: "GET" },
+    );
     if (!response.ok) return { connected: false, reason: `http-${response.status}` };
     const data = (await response.json().catch(() => null)) as ObsCompositionStatus | null;
     return data && typeof data.connected === "boolean"
@@ -50,13 +53,14 @@ export async function fetchObsCompositionStatus(
 export async function applyObsComposition(
   state: CompositionState,
   layout: LayoutId = DEFAULT_LAYOUT_ID,
+  fullscreen = false,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ObsCompositionApplyResult> {
   try {
     const response = await fetchImpl(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...state, layout }),
+      body: JSON.stringify({ ...state, layout, fullscreen }),
     });
     const data = (await response.json().catch(() => null)) as ObsCompositionApplyResult | null;
     if (data && typeof data.ok === "boolean") return data;

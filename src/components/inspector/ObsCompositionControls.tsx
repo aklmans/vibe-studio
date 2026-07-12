@@ -20,6 +20,7 @@ import {
 } from "../../lib/obs-composition-client";
 import { getLayout } from "../../lib/overlay-layout";
 import { WorkbenchButton, choiceChipStyle } from "../shared/Field";
+import { RuleNote } from "./EditorRow";
 import ObsCompositionPresets from "./ObsCompositionPresets";
 
 const mono = "var(--app-font-mono)";
@@ -58,6 +59,7 @@ export default function ObsCompositionControls({
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const layoutId = state.layout;
+  const fullscreen = state.mainScreen.fullscreen;
   // A layout without a camera region (mobile) never talks to OBS from here: the
   // vertical video comes from the phone app. The component stays mounted so the
   // layout history still tracks — switching workbench → mobile → lecture must
@@ -69,14 +71,14 @@ export default function ObsCompositionControls({
   const refreshStatus = useCallback(() => {
     const seq = ++probeSeq.current;
     setConnection("checking");
-    void fetchObsCompositionStatus(layoutId).then((status) => {
+    void fetchObsCompositionStatus(layoutId, fullscreen).then((status) => {
       if (seq !== probeSeq.current) return;
       setConnection(status.connected ? "connected" : "disconnected");
       setReason(status.reason ?? null);
       setMissingSources(status.missingSources ?? []);
       if (status.current) setComposition(status.current);
     });
-  }, [layoutId]);
+  }, [layoutId, fullscreen]);
 
   // The notice's auto-dismiss must survive layout changes; unmount-only cleanup.
   useEffect(() => {
@@ -107,7 +109,7 @@ export default function ObsCompositionControls({
       if (state.mainScreen.cameraVisible !== cameraVisible) {
         onChange(patchSection(state, "mainScreen", { cameraVisible }));
       }
-      void applyObsComposition(next, layoutId)
+      void applyObsComposition(next, layoutId, fullscreen)
         .then((result) => {
           if (result.ok) {
             if (result.missingSources) setMissingSources(result.missingSources);
@@ -130,7 +132,7 @@ export default function ObsCompositionControls({
         })
         .finally(() => setApplying(false));
     },
-    [applying, composition, onChange, state, t],
+    [applying, composition, onChange, state, t, layoutId, fullscreen],
   );
 
   // Mount: probe OBS to reflect reality. Layout change: the sources are still
@@ -139,18 +141,19 @@ export default function ObsCompositionControls({
   // instead, re-APPLY the current composition so the captures move to the new
   // slots (the layout "drives the OBS slots", as the picker hint promises).
   // When OBS isn't connected (or an apply is mid-flight) fall back to a probe.
-  const prevLayoutRef = useRef<typeof layoutId | null>(null);
+  const geometryKey = `${layoutId}:${fullscreen ? "full" : "std"}`;
+  const prevGeometryRef = useRef<string | null>(null);
   useEffect(() => {
-    const prev = prevLayoutRef.current;
-    if (prev === layoutId) return; // refired for other dep changes — not a layout change
-    prevLayoutRef.current = layoutId;
+    const prev = prevGeometryRef.current;
+    if (prev === geometryKey) return; // refired for other dep changes — not a geometry change
+    prevGeometryRef.current = geometryKey;
     if (!obsCapable) return; // inert layout: no probe, no apply — just record it
     if (prev !== null && connection === "connected" && !applying) {
       apply(composition);
     } else {
       refreshStatus();
     }
-  }, [layoutId, obsCapable, connection, applying, composition, apply, refreshStatus]);
+  }, [geometryKey, obsCapable, connection, applying, composition, apply, refreshStatus]);
 
   const selectMain = (main: MainSource) =>
     apply(normalizeComposition({ ...composition, main }, "main"));
@@ -172,7 +175,7 @@ export default function ObsCompositionControls({
   );
 
   const cameraOptions = useMemo(
-    (): RegionOption<CameraSource>[] => [
+    (): RegionOption<CameraSource>[] => ([
       {
         value: "display-1",
         label: t("composition.source.screen1"),
@@ -186,8 +189,10 @@ export default function ObsCompositionControls({
       { value: "camera", label: t("composition.source.camera"), disabled: sourceMissing(CAMERA_SLOT_SOURCE) },
       { value: "avatar", label: t("composition.source.avatar"), disabled: false },
       { value: "off", label: t("composition.source.off"), disabled: false },
-    ],
-    [composition.main, sourceMissing, t],
+    ] as RegionOption<CameraSource>[]).map((option) =>
+      fullscreen ? { ...option, disabled: true } : option,
+    ),
+    [composition.main, sourceMissing, t, fullscreen],
   );
 
   if (!obsCapable) {
@@ -343,6 +348,9 @@ export default function ObsCompositionControls({
           onSelect={selectCamera}
           columns={3}
         />
+        {fullscreen && (
+          <RuleNote>{t("composition.fullscreenNote")}</RuleNote>
+        )}
 
         <WorkbenchButton
           data-testid="composition-swap"

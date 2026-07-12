@@ -368,6 +368,21 @@ export default function CommandPalette({
 
             <Group heading={t("cmdk.group.visibility")}>
               <Item
+                value="toggle-fullscreen 全屏 fullscreen main focus 聚焦 主画面"
+                onSelect={run(() =>
+                  onChange(
+                    patchSection(state, "mainScreen", {
+                      fullscreen: !state.mainScreen.fullscreen,
+                    }),
+                  ),
+                )}
+                testId="cmdk-toggle-fullscreen"
+              >
+                {state.mainScreen.fullscreen
+                  ? t("agendaDrive.fullscreenExit")
+                  : t("agendaDrive.fullscreenEnter")}
+              </Item>
+              <Item
                 value="toggle-main 显示切换 main screen 主画面"
                 onSelect={run(() => toggleVisibility("main"))}
                 testId="cmdk-toggle-main"

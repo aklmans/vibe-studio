@@ -57,6 +57,14 @@ export default function OverlayInspector({
         testId="group-overlay-visibility"
       >
         <ToggleButton
+          label={t("toggle.fullscreenMain")}
+          checked={state.mainScreen.fullscreen}
+          onChange={(v) =>
+            onChange(patchSection(state, "mainScreen", { fullscreen: v }))
+          }
+          testId="toggle-fullscreen-main"
+        />
+        <ToggleButton
           label={t("toggle.mainScreen")}
           checked={state.mainScreen.visible}
           onChange={(v) =>

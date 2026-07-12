@@ -10,6 +10,8 @@ import {
   MOBILE_LAYOUT,
   WORKBENCH_LAYOUT,
   cameraCutoutFor,
+  effectiveLayout,
+  fullscreenVariant,
   getLayout,
   isLayoutId,
   type Rect,
@@ -170,4 +172,31 @@ test("every layout declares its bar profile; lecture mirrors share one", () => {
   equal(LECTURE_LEFT_LAYOUT.barProfile, "lecture");
   equal(LECTURE_RIGHT_LAYOUT.barProfile, "lecture");
   equal(MOBILE_LAYOUT.barProfile, "mobile");
+});
+
+test("fullscreenVariant fills the canvas with the main region and drops everything else", () => {
+  for (const layout of [WORKBENCH_LAYOUT, LECTURE_LEFT_LAYOUT, MOBILE_LAYOUT]) {
+    const full = fullscreenVariant(layout);
+    deepStrictEqual(full.regions.main, {
+      left: 0,
+      top: 0,
+      width: layout.canvas.width,
+      height: layout.canvas.height,
+    });
+    equal(full.regions.camera, undefined);
+    deepStrictEqual(full.panels, {});
+    // A DERIVED view of the same scene — identity and profiles are untouched,
+    // so agendas, bars and OBS naming stay bound to the base layout.
+    equal(full.id, layout.id);
+    equal(full.barProfile, layout.barProfile);
+    deepStrictEqual(full.canvas, layout.canvas);
+  }
+});
+
+test("effectiveLayout returns the base layout or its fullscreen variant", () => {
+  equal(effectiveLayout("workbench", false), WORKBENCH_LAYOUT);
+  const full = effectiveLayout("lecture-left", true);
+  equal(full.id, "lecture-left");
+  deepStrictEqual(full.regions.main, { left: 0, top: 0, width: 1920, height: 1080 });
+  equal(effectiveLayout("mobile", true).regions.main.height, 1920);
 });

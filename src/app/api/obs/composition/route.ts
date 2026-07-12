@@ -22,7 +22,7 @@ import {
   readObsWebSocketConfig,
   type ObsConnection,
 } from "../../../../lib/obs-ws";
-import { DEFAULT_LAYOUT_ID, getLayout, isLayoutId } from "../../../../lib/overlay-layout";
+import { DEFAULT_LAYOUT_ID, effectiveLayout, isLayoutId } from "../../../../lib/overlay-layout";
 import { isShowcase } from "../../../../lib/site-mode";
 
 export const runtime = "nodejs";
@@ -43,15 +43,20 @@ async function openConnection(): Promise<OpenResult> {
   }
 }
 
-/** The scene layout decides the region rects, so both probe and apply need it. */
-function layoutFrom(value: unknown) {
-  return getLayout(isLayoutId(value) ? value : DEFAULT_LAYOUT_ID);
+/** The scene layout (or its fullscreen focus variant) decides the region
+ *  rects, so both probe and apply need them. */
+function layoutFrom(value: unknown, fullscreen: unknown) {
+  return effectiveLayout(
+    isLayoutId(value) ? value : DEFAULT_LAYOUT_ID,
+    fullscreen === true || fullscreen === "1",
+  );
 }
 
 export async function GET(request: Request) {
   if (isShowcase()) return new Response(null, { status: 404 });
 
-  const layout = layoutFrom(new URL(request.url).searchParams.get("layout"));
+  const params = new URL(request.url).searchParams;
+  const layout = layoutFrom(params.get("layout"), params.get("fullscreen"));
   const opened = await openConnection();
   if ("error" in opened) {
     return Response.json({ connected: false, reason: opened.error });
@@ -70,7 +75,7 @@ export async function POST(request: Request) {
   if (isShowcase()) return new Response(null, { status: 404 });
 
   const body = (await request.json().catch(() => null)) as
-    | (Partial<CompositionState> & { layout?: unknown })
+    | (Partial<CompositionState> & { layout?: unknown; fullscreen?: unknown })
     | null;
   if (!body || !isMainSource(body.main) || !isCameraSource(body.camera)) {
     return Response.json(
@@ -94,7 +99,7 @@ export async function POST(request: Request) {
     );
   }
   try {
-    const result = await applyComposition(opened.connection, state, layoutFrom(body.layout));
+    const result = await applyComposition(opened.connection, state, layoutFrom(body.layout, body.fullscreen));
     if (!result.ok) {
       return Response.json({ connected: true, ...result }, { status: 422 });
     }

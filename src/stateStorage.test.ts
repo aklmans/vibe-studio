@@ -487,3 +487,11 @@ test("normalizeOverlayState keeps per-section speakers and drops blanks", () => 
   // All-blank speakerLines are dropped, not stored as noise.
   assert.equal("speakerLines" in state.sidebar.agendas.lecture.sections[1], false);
 });
+
+test("mainScreen.fullscreen normalizes to false and survives when stored", () => {
+  assert.equal(normalizeOverlayState({}).mainScreen.fullscreen, false);
+  assert.equal(
+    normalizeOverlayState({ mainScreen: { fullscreen: true } }).mainScreen.fullscreen,
+    true,
+  );
+});
