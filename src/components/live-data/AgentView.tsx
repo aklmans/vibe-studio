@@ -730,7 +730,7 @@ export default function AgentView({ state, dateKey, demoMode = false, onOpenJson
               data-testid="agent-slash-menu"
               role="listbox"
               aria-label={t("agent.slashHint")}
-              style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", border: UI_BORDERS.control, borderRadius: 8, background: UI_COLORS.appSurface, overflow: "hidden" }}
+              style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", border: UI_BORDERS.control, borderRadius: 0, background: UI_COLORS.appSurface, overflow: "hidden" }}
             >
               {slashMatches.map((s, i) => {
                 const active = i === slashIndex;

@@ -246,7 +246,7 @@ export default function ExportMenu({
               minWidth: 224,
               background: UI_COLORS.appSurface,
               border: `1px solid ${UI_COLORS.controlBorder}`,
-              borderRadius: 4,
+              borderRadius: 0,
               padding: "5px 0",
               zIndex: 50,
               boxShadow: UI_COLORS.commandShadow,

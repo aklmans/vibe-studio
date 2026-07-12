@@ -114,7 +114,7 @@ export default function SessionConfigDialog({
           height: "min(82vh, 860px)",
           background: UI_COLORS.appSurface,
           border: `1px solid ${UI_COLORS.border}`,
-          borderRadius: 12,
+          borderRadius: 0,
           boxShadow: UI_COLORS.commandShadow,
           zIndex: 41,
           display: "flex",

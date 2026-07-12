@@ -515,9 +515,10 @@ test("command palette follows the website search overlay structure", () => {
   const source = readFileSync(resolve("src/components/CommandPalette.tsx"), "utf8");
 
   assert.match(source, /top:\s*80/);
-  // The frame is unified with the Session Config dialog: a soft hairline + rounded.
+  // The frame is unified with the Session Config dialog: a soft hairline,
+  // square-cornered like every editorial floating surface.
   assert.match(source, /border:\s*`1px solid \$\{UI_COLORS\.border\}`/);
-  assert.match(source, /borderRadius:\s*12/);
+  assert.match(source, /borderRadius:\s*0/);
   // The scrim matches too: the shared overlay scrim + a light blur, no frost.
   assert.match(source, /background:\s*UI_COLORS\.overlayScrim/);
   assert.doesNotMatch(source, /saturate/);
@@ -553,7 +554,7 @@ test("command palette renders like an editorial search popup", () => {
 
   assert.match(html, /data-testid="cmdk-dialog"[^>]*top:80px/);
   assert.match(html, /data-testid="cmdk-dialog"[^>]*border:1px solid var\(--live-border\)/);
-  assert.match(html, /data-testid="cmdk-dialog"[^>]*border-radius:12px/);
+  assert.match(html, /data-testid="cmdk-dialog"[^>]*border-radius:0/);
   assert.match(html, /data-testid="cmdk-input"[^>]*font-family:var\(--app-font-serif\)/);
   assert.match(html, /data-testid="cmdk-tab-poster"/);
   assert.match(html, /data-current="true"/);

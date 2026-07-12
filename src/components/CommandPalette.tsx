@@ -172,7 +172,7 @@ export default function CommandPalette({
           maxHeight: "min(720px, 82vh)",
           background: UI_COLORS.appSurface,
           border: `1px solid ${UI_COLORS.border}`,
-          borderRadius: 12,
+          borderRadius: 0,
           boxShadow: UI_COLORS.commandShadow,
           zIndex: 110,
           overflow: "hidden",
