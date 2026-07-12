@@ -45,8 +45,23 @@ test("finishing an empty wizard is the same as skipping it", () => {
 });
 
 test("first-run wizard copy is localized in both languages", () => {
-  assert.match(renderWizard("zh"), /欢迎使用 Vibe Studio/);
-  assert.match(renderWizard("en"), /Welcome to Vibe Studio/);
+  assert.match(renderWizard("zh"), /把这里变成你的直播间/);
+  assert.match(renderWizard("en"), /Make this your live room/);
+});
+
+test("wizard pairs the walk-through with a live brand-card preview", () => {
+  const html = renderWizard();
+
+  // The step rail names all three steps up front; step 1 is current.
+  assert.match(html, /data-testid="wizard-rail-0"[^>]*aria-current="step"/);
+  assert.match(html, /data-testid="wizard-rail-2"/);
+  // The preview pane renders the brand card from the very first keystroke:
+  // built-in portrait (dimmed until an upload), name ghost, platform ghost.
+  assert.match(html, /data-testid="wizard-preview"/);
+  assert.match(html, /src="\/avatar\.png"/);
+  assert.match(html, /Your name/);
+  // Square editorial furniture — the dialog is a broadcast-family surface.
+  assert.match(html, /role="dialog"[^>]*style="[^"]*border-radius:0/);
 });
 
 test("wizard builds a v3 brand profile and never touches session content", () => {

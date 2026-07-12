@@ -270,8 +270,8 @@ export const dict = {
     "nextSession.confirm": "清空内容,准备下一场",
 
     // ─── First-run setup ─────────────────────────────────────────────
-    "wizard.title": "欢迎使用 Vibe Studio",
-    "wizard.tagline": "三步把这里变成你的直播间。这些信息存入品牌层:每场直播都复用,AI 永远不会改动。",
+    "wizard.title": "把这里变成你的直播间",
+    "wizard.tagline": "三步完成,信息存入品牌层 —— 每场直播复用,AI 永不改动。",
     "wizard.stepName": "名字",
     "wizard.stepAvatar": "头像",
     "wizard.stepSocial": "平台",
@@ -288,8 +288,14 @@ export const dict = {
     "wizard.back": "上一步",
     "wizard.next": "下一步",
     "wizard.skipStep": "跳过这步",
-    "wizard.finish": "完成,开始使用",
+    "wizard.finish": "完成,进入工作室",
     "wizard.skipAll": "跳过引导",
+    "wizard.dropHint": "拖入图片,或点击上传",
+    "wizard.previewLabel": "实时预览 · 品牌层",
+    "wizard.previewHost": "主播",
+    "wizard.previewNameGhost": "你的名字",
+    "wizard.previewHandleGhost": "平台 · 账号",
+    "wizard.previewDefaultAvatar": "内置肖像 · 可稍后更换",
 
     // ─── Command palette ─────────────────────────────────────────────
     "cmdk.label": "Vibe Studio 命令面板",
@@ -1018,8 +1024,8 @@ export const dict = {
     "nextSession.confirm": "Clear content & prepare",
 
     // ─── First-run setup ─────────────────────────────────────────────
-    "wizard.title": "Welcome to Vibe Studio",
-    "wizard.tagline": "Three steps make this your live room. These go into the Brand layer: reused every stream, never touched by the AI.",
+    "wizard.title": "Make this your live room",
+    "wizard.tagline": "Three steps, saved to the Brand layer — reused every stream, never touched by the AI.",
     "wizard.stepName": "Name",
     "wizard.stepAvatar": "Avatar",
     "wizard.stepSocial": "Platform",
@@ -1036,8 +1042,14 @@ export const dict = {
     "wizard.back": "Back",
     "wizard.next": "Next",
     "wizard.skipStep": "Skip this step",
-    "wizard.finish": "Finish & start",
+    "wizard.finish": "Finish · enter the studio",
     "wizard.skipAll": "Skip setup",
+    "wizard.dropHint": "Drop an image, or click to upload",
+    "wizard.previewLabel": "Live preview · Brand layer",
+    "wizard.previewHost": "Host",
+    "wizard.previewNameGhost": "Your name",
+    "wizard.previewHandleGhost": "Platform · handle",
+    "wizard.previewDefaultAvatar": "Built-in portrait · swap any time",
 
     // ─── Command palette ─────────────────────────────────────────────
     "cmdk.label": "Vibe Studio command palette",
